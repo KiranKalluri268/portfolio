@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import BackNavigationButton from "@/components/BackNavigationButton";
 import SkillsWeb from "@/components/skills/SkillsWeb";
+import { buildSkillWebGraph } from "@/components/skills/skill-web-layout";
 import { getSkillWebData } from "@/lib/content/skills";
 
 export const metadata: Metadata = {
@@ -16,6 +17,7 @@ export const metadata: Metadata = {
 
 export default function SkillsPage() {
   const skillWeb = getSkillWebData();
+  const graph = buildSkillWebGraph(skillWeb);
 
   return (
     <main className="relative z-10 h-[100svh] overflow-hidden text-white">
@@ -25,7 +27,7 @@ export default function SkillsPage() {
         </BackNavigationButton>
       </div>
       <h1 className="sr-only">Interactive skills and technology universe</h1>
-      <SkillsWeb data={skillWeb} />
+      <SkillsWeb data={skillWeb} graph={graph} />
     </main>
   );
 }

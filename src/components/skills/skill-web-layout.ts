@@ -22,6 +22,7 @@ export interface GraphEdge {
   from: GraphNode;
   to: GraphNode;
   accent: string;
+  path: string;
 }
 
 const NODE_BOUNDS = {
@@ -157,6 +158,7 @@ export function buildSkillWebGraph(data: SkillWebData) {
       from: center,
       to: domainNode,
       accent: domain.accent,
+      path: "",
     });
 
     const categoryMiddle = (domain.categories.length - 1) / 2;
@@ -178,6 +180,7 @@ export function buildSkillWebGraph(data: SkillWebData) {
         from: domainNode,
         to: categoryNode,
         accent: domain.accent,
+        path: "",
       });
 
       category.skills.forEach((skill, skillIndex) => {
@@ -205,6 +208,7 @@ export function buildSkillWebGraph(data: SkillWebData) {
           from: categoryNode,
           to: skillNode,
           accent: domain.accent,
+          path: "",
         });
       });
     });
@@ -216,6 +220,7 @@ export function buildSkillWebGraph(data: SkillWebData) {
     node.y = roundCoordinate(node.y);
   }
   assertCollisionFree(nodes);
+  for (const edge of edges) edge.path = skillWebEdgePath(edge);
   return { nodes, edges };
 }
 

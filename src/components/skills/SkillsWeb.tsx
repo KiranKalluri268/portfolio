@@ -12,12 +12,11 @@ import {
 } from "react";
 import type { SkillWebData } from "@/lib/content/types";
 import {
-  buildSkillWebGraph,
   CENTER_X,
   CENTER_Y,
-  skillWebEdgePath,
   WORLD_HEIGHT,
   WORLD_WIDTH,
+  type GraphEdge,
   type GraphNode,
 } from "./skill-web-layout";
 
@@ -56,7 +55,13 @@ function midpoint(first: PointerPosition, second: PointerPosition) {
   };
 }
 
-export default function SkillsWeb({ data }: { data: SkillWebData }) {
+export default function SkillsWeb({
+  data,
+  graph,
+}: {
+  data: SkillWebData;
+  graph: { nodes: GraphNode[]; edges: GraphEdge[] };
+}) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const pointersRef = useRef(new Map<number, PointerPosition>());
   const dragOriginRef = useRef<{ pointer: PointerPosition; view: ViewState } | null>(null);
@@ -68,7 +73,6 @@ export default function SkillsWeb({ data }: { data: SkillWebData }) {
   const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [directoryOpen, setDirectoryOpen] = useState(false);
-  const graph = useMemo(() => buildSkillWebGraph(data), [data]);
   const nodeById = useMemo(
     () => new Map(graph.nodes.map((node) => [node.id, node])),
     [graph.nodes],
@@ -278,8 +282,15 @@ export default function SkillsWeb({ data }: { data: SkillWebData }) {
   return (
     <div
       ref={viewportRef}
-      className={`relative h-full w-full overflow-hidden bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.12),transparent_34%),radial-gradient(circle_at_24%_28%,rgba(168,85,247,0.1),transparent_20%),#02030a] select-none ${dragging ? "cursor-grabbing" : "cursor-grab"}`}
-      style={{ touchAction: "none" }}
+      className={`relative h-full w-full overflow-hidden select-none ${dragging ? "cursor-grabbing" : "cursor-grab"}`}
+      style={{
+        touchAction: "none",
+        backgroundColor: "rgba(2, 3, 10, 0.34)",
+        backgroundImage: [
+          "radial-gradient(circle at center, rgba(37,99,235,0.12), transparent 34%)",
+          "radial-gradient(circle at 24% 28%, rgba(168,85,247,0.1), transparent 20%)",
+        ].join(","),
+      }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerEnd}
@@ -330,7 +341,7 @@ export default function SkillsWeb({ data }: { data: SkillWebData }) {
             return (
               <g key={edge.id}>
                 <path
-                  d={skillWebEdgePath(edge)}
+                  d={edge.path}
                   fill="none"
                   stroke={edge.accent}
                   strokeWidth={isActive ? 2.2 : 1}
@@ -339,7 +350,7 @@ export default function SkillsWeb({ data }: { data: SkillWebData }) {
                   className="transition-all duration-300"
                 />
                 <circle className="skill-web-particle" r="3" fill={edge.accent} opacity={isActive ? 0.8 : 0.1}>
-                  <animateMotion dur="5s" repeatCount="indefinite" path={skillWebEdgePath(edge)} />
+                  <animateMotion dur="5s" repeatCount="indefinite" path={edge.path} />
                 </circle>
               </g>
             );
