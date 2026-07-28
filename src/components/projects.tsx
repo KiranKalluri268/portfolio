@@ -5,9 +5,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import Image from "next/image";
 import Link from "next/link";
-import type { VirtualScrollData } from "lenis";
 import type { Project } from "@/types";
-import { useScrollActions } from "@/context/SmoothScrollContext";
 import projectData from "@/data/projects.json";
 
 const projects: Project[] = projectData.projects.map((project) => ({
@@ -21,10 +19,8 @@ const projects: Project[] = projectData.projects.map((project) => ({
 
 const PANEL_COUNT = projects.length + 2;
 const LAST_PANEL_INDEX = PANEL_COUNT - 1;
-const SNAP_THRESHOLD = 0.4;
 
 export default function ProjectsSection() {
-  const { lenis } = useScrollActions();
   const sectionRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -36,7 +32,6 @@ export default function ProjectsSection() {
     if (!section || !track || !title) return;
 
     gsap.registerPlugin(ScrollTrigger);
-    let cleanupSnap: (() => void) | undefined;
 
     const context = gsap.context(() => {
       gsap.set(track, { x: 0, force3D: true, willChange: "transform" });
@@ -76,152 +71,12 @@ export default function ProjectsSection() {
           duration: 0.12,
           ease: "sine.inOut",
         }, 0.84);
-
-      if (!lenis || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-      const trigger = timeline.scrollTrigger;
-      if (!trigger) return;
-
-      const anchors = Array.from(
-        { length: PANEL_COUNT },
-        (_, index) => index / LAST_PANEL_INDEX,
-      );
-      const nearestAnchorIndex = (progress: number) => Math.round(
-        gsap.utils.clamp(0, 1, progress) * LAST_PANEL_INDEX,
-      );
-
-      let settleTimer: ReturnType<typeof setTimeout> | undefined;
-      let gestureStartIndex: number | null = null;
-      let gestureDelta = 0;
-      let touchStartX = 0;
-      let touchStartY = 0;
-      let isTouchGesture = false;
-      let isHorizontalTouchGesture = false;
-
-      const resetGesture = () => {
-        gestureStartIndex = null;
-        gestureDelta = 0;
-        isTouchGesture = false;
-        isHorizontalTouchGesture = false;
-      };
-
-      const settle = () => {
-        settleTimer = undefined;
-        if (!trigger.isActive || gestureStartIndex === null || gestureDelta === 0) {
-          resetGesture();
-          return;
-        }
-
-        const currentIndex = gestureStartIndex;
-        if (
-          (gestureDelta < 0 && currentIndex === 0) ||
-          (gestureDelta > 0 && currentIndex === LAST_PANEL_INDEX)
-        ) {
-          resetGesture();
-          return;
-        }
-
-        const range = trigger.end - trigger.start;
-        let destinationIndex = currentIndex;
-
-        if (isTouchGesture && isHorizontalTouchGesture) {
-          const swipeThreshold = Math.min(64, window.innerWidth * 0.12);
-          if (Math.abs(gestureDelta) >= swipeThreshold) {
-            destinationIndex = gsap.utils.clamp(
-              0,
-              LAST_PANEL_INDEX,
-              currentIndex + (gestureDelta > 0 ? 1 : -1),
-            );
-          }
-        } else {
-          const intendedScroll = isTouchGesture ? window.scrollY : lenis.targetScroll;
-          const intendedProgress = gsap.utils.clamp(
-            0,
-            1,
-            (intendedScroll - trigger.start) / range,
-          );
-
-          if (gestureDelta > 0) {
-            const nextIndex = currentIndex + 1;
-            const threshold = gsap.utils.interpolate(
-              anchors[currentIndex],
-              anchors[nextIndex],
-              SNAP_THRESHOLD,
-            );
-            if (intendedProgress >= threshold) destinationIndex = nextIndex;
-          } else {
-            const previousIndex = currentIndex - 1;
-            const threshold = gsap.utils.interpolate(
-              anchors[currentIndex],
-              anchors[previousIndex],
-              SNAP_THRESHOLD,
-            );
-            if (intendedProgress <= threshold) destinationIndex = previousIndex;
-          }
-        }
-
-        const destination = trigger.start + anchors[destinationIndex] * range;
-        const dampingEnd = 1 - 9 * Math.exp(-8);
-        lenis.scrollTo(destination, {
-          duration: 0.45,
-          easing: (progress) =>
-            (1 - (1 + 8 * progress) * Math.exp(-8 * progress)) / dampingEnd,
-        });
-        resetGesture();
-      };
-
-      const handleVirtualScroll = ({ deltaX, deltaY, event }: VirtualScrollData) => {
-        if (!trigger.isActive || event.type === "touchmove") return;
-        const delta = Math.abs(deltaY) >= Math.abs(deltaX) ? deltaY : deltaX;
-        if (delta === 0) return;
-        if (gestureStartIndex === null) {
-          gestureStartIndex = nearestAnchorIndex(trigger.progress);
-        }
-        gestureDelta += delta;
-        if (settleTimer) clearTimeout(settleTimer);
-        settleTimer = setTimeout(settle, 100);
-      };
-
-      const handleTouchStart = (event: TouchEvent) => {
-        if (!trigger.isActive || event.touches.length !== 1) return;
-        isTouchGesture = true;
-        touchStartX = event.touches[0].clientX;
-        touchStartY = event.touches[0].clientY;
-        gestureStartIndex = nearestAnchorIndex(trigger.progress);
-        gestureDelta = 0;
-      };
-
-      const handleTouchMove = (event: TouchEvent) => {
-        if (!isTouchGesture || event.touches.length !== 1) return;
-        const deltaX = touchStartX - event.touches[0].clientX;
-        const deltaY = touchStartY - event.touches[0].clientY;
-        isHorizontalTouchGesture = Math.abs(deltaX) > Math.abs(deltaY);
-        gestureDelta = isHorizontalTouchGesture ? deltaX : deltaY;
-      };
-
-      const handleTouchEnd = () => {
-        if (!isTouchGesture) return;
-        settle();
-      };
-
-      lenis.on("virtual-scroll", handleVirtualScroll);
-      section.addEventListener("touchstart", handleTouchStart, { passive: true });
-      section.addEventListener("touchmove", handleTouchMove, { passive: true });
-      section.addEventListener("touchend", handleTouchEnd, { passive: true });
-      cleanupSnap = () => {
-        if (settleTimer) clearTimeout(settleTimer);
-        lenis.off("virtual-scroll", handleVirtualScroll);
-        section.removeEventListener("touchstart", handleTouchStart);
-        section.removeEventListener("touchmove", handleTouchMove);
-        section.removeEventListener("touchend", handleTouchEnd);
-      };
     }, section);
 
     return () => {
-      cleanupSnap?.();
       context.revert();
     };
-  }, [lenis]);
+  }, []);
 
   return (
     <section

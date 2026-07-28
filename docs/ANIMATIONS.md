@@ -37,7 +37,7 @@ One pinned ScrollTrigger maps scroll progress to word readability. Previously re
 
 ### Projects
 
-One scrubbed GSAP timeline translates the project track while pinning the section. A controlled snap operation moves to the nearest logical panel after input settles. Do not add CSS scroll snapping or a second transform owner to the track.
+One scrubbed GSAP timeline translates the project track while pinning the section. Lenis keeps the underlying vertical scroll smooth without forcing the viewport to a panel after input settles. Do not add custom or CSS scroll snapping, or a second transform owner to the track.
 
 ### Experience
 
@@ -60,7 +60,7 @@ When `prefers-reduced-motion: reduce` is active:
 - Lenis smooth-wheel behavior is disabled.
 - Hero typing resolves to readable final content.
 - About scroll animation resolves to readable content.
-- Project snapping and optional scroll effects are reduced or skipped.
+- Optional project scroll effects are reduced or skipped.
 - Experience scaling and skill marquee motion are disabled.
 - Black-hole video and shooting-star animation are paused.
 - Global CSS reduces transition and animation duration.

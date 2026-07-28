@@ -44,7 +44,7 @@ The scene indicator is portaled to `document.body`, keeping mobile controls abov
 - Project cards
 - “See all projects” panel
 
-A separate snap controller chooses the nearest panel after scrolling settles. Touch gestures affect the Projects section only on touch-capable devices. Navigation to another section still uses the shared Lenis API.
+Natural vertical scrolling drives the pinned timeline continuously; there is no separate snap controller. Arrow buttons, arrow/WASD keys, and section-to-section movement all use the shared Lenis API.
 
 ## Background layers
 

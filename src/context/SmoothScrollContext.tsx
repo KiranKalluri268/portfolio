@@ -125,11 +125,39 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
   }, [scrollToSection]);
 
   const scrollNext = useCallback(() => {
+    const projectsTrigger = ScrollTrigger.getById("projects-horizontal-pin");
+    if (activeSectionRef.current === "projects" && projectsTrigger) {
+      const range = projectsTrigger.end - projectsTrigger.start;
+      const steps = Math.max(1, Math.round(range / window.innerHeight));
+      const currentStep = Math.round(projectsTrigger.progress * steps);
+
+      if (currentStep < steps) {
+        const destination = projectsTrigger.start + ((currentStep + 1) / steps) * range;
+        if (lenisRef.current) lenisRef.current.scrollTo(destination, { duration: 0.8 });
+        else window.scrollTo({ top: destination, behavior: "smooth" });
+        return;
+      }
+    }
+
     const index = SECTION_IDS.indexOf(activeSectionRef.current);
     scrollToSection(SECTION_IDS[Math.min(index + 1, SECTION_IDS.length - 1)]);
   }, [scrollToSection]);
 
   const scrollPrev = useCallback(() => {
+    const projectsTrigger = ScrollTrigger.getById("projects-horizontal-pin");
+    if (activeSectionRef.current === "projects" && projectsTrigger) {
+      const range = projectsTrigger.end - projectsTrigger.start;
+      const steps = Math.max(1, Math.round(range / window.innerHeight));
+      const currentStep = Math.round(projectsTrigger.progress * steps);
+
+      if (currentStep > 0) {
+        const destination = projectsTrigger.start + ((currentStep - 1) / steps) * range;
+        if (lenisRef.current) lenisRef.current.scrollTo(destination, { duration: 0.8 });
+        else window.scrollTo({ top: destination, behavior: "smooth" });
+        return;
+      }
+    }
+
     const index = SECTION_IDS.indexOf(activeSectionRef.current);
     scrollToSection(SECTION_IDS[Math.max(index - 1, 0)]);
   }, [scrollToSection]);

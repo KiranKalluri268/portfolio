@@ -11,7 +11,7 @@ A responsive, animated software engineering portfolio built with Next.js, React,
 - Lenis smooth scrolling integrated with the GSAP ticker
 - GSAP `ScrollTrigger` animations without wheel-event hijacking
 - Scroll-animated About section backed by editable JSON
-- Pinned horizontal Projects carousel with snapping and touch gestures
+- Pinned horizontal Projects carousel driven by natural Lenis scrolling
 - Responsive alternating Experience timeline with mobile-specific focus behavior
 - Direction-aware, scroll-responsive skill marquees
 - Interactive canvas star field with shooting-star lifecycle
