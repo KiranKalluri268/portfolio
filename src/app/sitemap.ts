@@ -1,8 +1,11 @@
 import type { MetadataRoute } from "next";
+import { getAllProjects } from "@/lib/content/projects";
+import { getAllSkills } from "@/lib/content/skills";
 
 const SITE_URL = "https://saikirankalluri.vercel.app";
 
 export default function sitemap(): MetadataRoute.Sitemap {
+    const lastModified = new Date();
     return [
         {
             url: SITE_URL,
@@ -18,9 +21,27 @@ export default function sitemap(): MetadataRoute.Sitemap {
         },
         {
             url: `${SITE_URL}/projects`,
-            lastModified: new Date(),
+            lastModified,
             changeFrequency: "monthly",
             priority: 0.9,
         },
+        {
+            url: `${SITE_URL}/skills`,
+            lastModified,
+            changeFrequency: "monthly",
+            priority: 0.8,
+        },
+        ...getAllProjects().map((project) => ({
+            url: `${SITE_URL}/projects/${project.slug}`,
+            lastModified,
+            changeFrequency: "monthly" as const,
+            priority: 0.8,
+        })),
+        ...getAllSkills().map((skill) => ({
+            url: `${SITE_URL}/skills/${skill.slug}`,
+            lastModified,
+            changeFrequency: "monthly" as const,
+            priority: 0.7,
+        })),
     ];
 }

@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useActiveSection, useScrollActions, type SectionId } from "@/context/SmoothScrollContext";

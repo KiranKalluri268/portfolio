@@ -69,7 +69,9 @@ The video pauses when the tab is hidden, before entry, or when reduced motion is
 
 - `src/data/about.json` controls About copy and emphasis.
 - `src/data/resume.json` is the single source for both résumé HTML and PDF output.
-- `src/data/projects.json` supplies both the homepage carousel and `/projects` case studies.
+- `src/data/projects/*.json` supplies the homepage carousel, `/projects`, and statically generated project detail routes.
+- `src/data/skills/*.json` supplies the skill marquee, `/skills`, and statically generated skill detail routes.
+- `src/lib/content` discovers, validates, sorts, and relates project and skill content on the server.
 - Homepage experience data currently lives in `ExperienceTimeline.tsx`.
 
 The `/resume` route renders accessible HTML. `DownloadResumeButton` dynamically imports `@react-pdf/renderer`, keeping PDF generation code out of the initial homepage bundle.

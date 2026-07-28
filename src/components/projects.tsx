@@ -89,11 +89,15 @@ export default function ProjectsSection({ projects }: { projects: ProjectContent
             key={project.id}
             className="flex h-[100dvh] min-h-[100svh] w-screen shrink-0 flex-col items-center justify-center px-4 py-16 text-center sm:px-8 lg:p-12"
           >
-            <h3 className="mb-[clamp(0.5rem,2dvh,1rem)] max-w-3xl text-base font-semibold sm:text-2xl lg:text-3xl">{project.title}</h3>
-            <div
-              className="relative mb-[clamp(0.5rem,2dvh,1rem)] h-[clamp(7.5rem,30dvh,18.75rem)] w-full max-w-3xl"
-              role="img"
-              aria-label={`Screenshot of ${project.title}`}
+            <h3 className="mb-[clamp(0.5rem,2dvh,1rem)] max-w-3xl text-base font-semibold sm:text-2xl lg:text-3xl">
+              <Link href={`/projects/${project.slug}`} className="rounded hover:text-blue-200">
+                {project.title}
+              </Link>
+            </h3>
+            <Link
+              href={`/projects/${project.slug}`}
+              className="relative mb-[clamp(0.5rem,2dvh,1rem)] block h-[clamp(7.5rem,30dvh,18.75rem)] w-full max-w-3xl rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-400"
+              aria-label={`Read the ${project.title} case study`}
             >
               <Image
                 src={project.image}
@@ -104,7 +108,7 @@ export default function ProjectsSection({ projects }: { projects: ProjectContent
                 sizes="(max-width: 640px) calc(100vw - 2rem), 768px"
                 loading={project.id === 1 ? "eager" : "lazy"}
               />
-            </div>
+            </Link>
             <p className="mb-[clamp(0.75rem,2.5dvh,1.5rem)] max-w-xl text-sm leading-relaxed sm:text-base lg:text-lg">{project.summary}</p>
             <nav className="space-x-4" aria-label={`Links for ${project.title}`}>
               <Link

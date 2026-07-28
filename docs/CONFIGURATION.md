@@ -53,11 +53,41 @@ Edit `src/data/about.json`. Preserve valid JSON and keep emphasis ranges aligned
 
 Edit `src/data/resume.json`. Both `/resume` and the downloaded PDF consume this file, so content remains synchronized.
 
-### Projects and experience
+### Projects, skills, and experience
 
-Project content is shared by the homepage carousel and projects page through:
+Each project is one JSON file in:
 
-- `src/data/projects.json`
+- `src/data/projects/`
+
+The filename is for organization; the `slug` field controls the URL. A published
+project automatically receives `/projects/[slug]`. Set `showInProjectsSection`
+to control the homepage carousel, `featured` to control the projects listing,
+and `projectsSectionOrder` to control ordering.
+
+Each skill is one JSON file in:
+
+- `src/data/skills/`
+
+Skills automatically receive `/skills/[slug]`. Project files connect to skills
+through the skill slugs in their `skills` arrays. These relationships generate
+clickable technology badges on project pages and related-project cards on skill
+pages. Do not duplicate project lists inside skill files.
+
+Skill marquee groups and directions are configured in:
+
+- `src/data/skill-categories.json`
+
+Set `showInSkillsSection` to control marquee visibility and
+`skillsSectionOrder` to control ordering. Optional icons should use a public URL
+such as `/icons/skills/react.svg`; `iconText` is used as the fallback.
+
+All image and icon paths are relative to `public`, so use `/images/example.jpg`
+rather than `public/images/example.jpg`. Draft entries remain editable but are
+excluded from generated pages until `status` is changed to `published`.
+
+The server loaders in `src/lib/content` validate required fields, duplicate
+slugs, unknown categories, and project references to unknown skills during the
+build.
 
 Experience content currently lives in:
 

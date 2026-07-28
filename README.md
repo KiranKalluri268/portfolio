@@ -89,6 +89,9 @@ npm run build
 | `/` | Main portfolio narrative |
 | `/resume` | Accessible JSON-driven résumé and PDF download |
 | `/projects` | Responsive project overview and case studies |
+| `/projects/[slug]` | JSON-driven project case study |
+| `/skills` | Browsable skill index |
+| `/skills/[slug]` | JSON-driven skill background and related projects |
 | `/api/contact` | Server-side contact form endpoint |
 | `/opengraph-image` | Generated 1200×630 social preview |
 | `/robots.txt` | Search crawler rules |
@@ -102,7 +105,8 @@ src/
 ├── background/          Star canvas and transparent black-hole media
 ├── components/          Portfolio sections and navigation controls
 ├── context/             Audio lifecycle and Lenis/scroll coordination
-├── data/                Editable About and résumé content
+├── data/                Editable About, résumé, project, and skill content
+├── lib/content/         Server-side content discovery, validation, and relationships
 └── types/               Shared TypeScript interfaces
 public/
 ├── audio/               Portfolio soundtrack
