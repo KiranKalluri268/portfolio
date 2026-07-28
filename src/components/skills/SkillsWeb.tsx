@@ -10,12 +10,17 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import type { SkillContent, SkillWebData } from "@/lib/content/types";
+import type { SkillWebData } from "@/lib/content/types";
+import {
+  buildSkillWebGraph,
+  CENTER_X,
+  CENTER_Y,
+  skillWebEdgePath,
+  WORLD_HEIGHT,
+  WORLD_WIDTH,
+  type GraphNode,
+} from "./skill-web-layout";
 
-const WORLD_WIDTH = 2800;
-const WORLD_HEIGHT = 2500;
-const CENTER_X = WORLD_WIDTH / 2;
-const CENTER_Y = WORLD_HEIGHT / 2;
 const MIN_SCALE = 0.28;
 const MAX_SCALE = 1.65;
 
@@ -23,25 +28,6 @@ interface ViewState {
   x: number;
   y: number;
   scale: number;
-}
-
-interface GraphNode {
-  id: string;
-  parentId?: string;
-  kind: "center" | "domain" | "category" | "skill";
-  x: number;
-  y: number;
-  label: string;
-  description: string;
-  accent: string;
-  skill?: SkillContent;
-}
-
-interface GraphEdge {
-  id: string;
-  from: GraphNode;
-  to: GraphNode;
-  accent: string;
 }
 
 interface PointerPosition {
@@ -57,115 +43,6 @@ interface GestureSnapshot {
 
 function clampScale(scale: number) {
   return Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale));
-}
-
-function polar(radius: number, angle: number) {
-  const radians = angle * Math.PI / 180;
-  return {
-    x: CENTER_X + Math.cos(radians) * radius,
-    y: CENTER_Y + Math.sin(radians) * radius,
-  };
-}
-
-function buildGraph(data: SkillWebData) {
-  const nodes: GraphNode[] = [{
-    id: "center",
-    kind: "center",
-    x: CENTER_X,
-    y: CENTER_Y,
-    label: data.center.label,
-    description: data.center.eyebrow,
-    accent: "#ffffff",
-  }];
-  const edges: GraphEdge[] = [];
-  const center = nodes[0];
-
-  for (const domain of data.domains) {
-    const domainPosition = polar(350, domain.angle);
-    const domainNode: GraphNode = {
-      id: `domain:${domain.slug}`,
-      parentId: center.id,
-      kind: "domain",
-      ...domainPosition,
-      label: domain.label,
-      description: domain.description,
-      accent: domain.accent,
-    };
-    nodes.push(domainNode);
-    edges.push({
-      id: `${center.id}-${domainNode.id}`,
-      from: center,
-      to: domainNode,
-      accent: domain.accent,
-    });
-
-    const categoryMiddle = (domain.categories.length - 1) / 2;
-    domain.categories.forEach((category, categoryIndex) => {
-      const categoryAngle = domain.angle + (categoryIndex - categoryMiddle) * 16;
-      const categoryPosition = polar(665, categoryAngle);
-      const categoryNode: GraphNode = {
-        id: `category:${category.slug}`,
-        parentId: domainNode.id,
-        kind: "category",
-        ...categoryPosition,
-        label: category.label,
-        description: category.description,
-        accent: domain.accent,
-      };
-      nodes.push(categoryNode);
-      edges.push({
-        id: `${domainNode.id}-${categoryNode.id}`,
-        from: domainNode,
-        to: categoryNode,
-        accent: domain.accent,
-      });
-
-      category.skills.forEach((skill, skillIndex) => {
-        const row = Math.floor(skillIndex / 2);
-        const itemsInRow = Math.min(2, category.skills.length - row * 2);
-        const column = skillIndex % 2 - (itemsInRow - 1) / 2;
-        const skillRadius = 875 + row * 102;
-        const skillPosition = polar(skillRadius, categoryAngle);
-        const categoryRadians = categoryAngle * Math.PI / 180;
-        skillPosition.x += -Math.sin(categoryRadians) * column * 158;
-        skillPosition.y += Math.cos(categoryRadians) * column * 158;
-        const skillNode: GraphNode = {
-          id: `skill:${skill.slug}`,
-          parentId: categoryNode.id,
-          kind: "skill",
-          ...skillPosition,
-          label: skill.name,
-          description: skill.shortDescription,
-          accent: domain.accent,
-          skill,
-        };
-        nodes.push(skillNode);
-        edges.push({
-          id: `${categoryNode.id}-${skillNode.id}`,
-          from: categoryNode,
-          to: skillNode,
-          accent: domain.accent,
-        });
-      });
-    });
-  }
-
-  return { nodes, edges };
-}
-
-function edgePath(edge: GraphEdge) {
-  const dx = edge.to.x - edge.from.x;
-  const dy = edge.to.y - edge.from.y;
-  const bend = edge.from.kind === "center" ? 0.36 : 0.44;
-  const control1 = {
-    x: edge.from.x + dx * bend,
-    y: edge.from.y + dy * bend,
-  };
-  const control2 = {
-    x: edge.to.x - dx * bend,
-    y: edge.to.y - dy * bend,
-  };
-  return `M ${edge.from.x} ${edge.from.y} C ${control1.x} ${control1.y}, ${control2.x} ${control2.y}, ${edge.to.x} ${edge.to.y}`;
 }
 
 function distanceBetween(first: PointerPosition, second: PointerPosition) {
@@ -191,7 +68,7 @@ export default function SkillsWeb({ data }: { data: SkillWebData }) {
   const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [directoryOpen, setDirectoryOpen] = useState(false);
-  const graph = useMemo(() => buildGraph(data), [data]);
+  const graph = useMemo(() => buildSkillWebGraph(data), [data]);
   const nodeById = useMemo(
     () => new Map(graph.nodes.map((node) => [node.id, node])),
     [graph.nodes],
@@ -453,7 +330,7 @@ export default function SkillsWeb({ data }: { data: SkillWebData }) {
             return (
               <g key={edge.id}>
                 <path
-                  d={edgePath(edge)}
+                  d={skillWebEdgePath(edge)}
                   fill="none"
                   stroke={edge.accent}
                   strokeWidth={isActive ? 2.2 : 1}
@@ -462,7 +339,7 @@ export default function SkillsWeb({ data }: { data: SkillWebData }) {
                   className="transition-all duration-300"
                 />
                 <circle className="skill-web-particle" r="3" fill={edge.accent} opacity={isActive ? 0.8 : 0.1}>
-                  <animateMotion dur="5s" repeatCount="indefinite" path={edgePath(edge)} />
+                  <animateMotion dur="5s" repeatCount="indefinite" path={skillWebEdgePath(edge)} />
                 </circle>
               </g>
             );
