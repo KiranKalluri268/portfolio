@@ -14,6 +14,7 @@ A responsive, animated software engineering portfolio built with Next.js, React,
 - Pinned horizontal Projects carousel driven by natural Lenis scrolling
 - Responsive alternating Experience timeline with mobile-specific focus behavior
 - Direction-aware, scroll-responsive skill marquees
+- Interactive, data-driven skill universe with radial branches, pan, zoom, pinch, and accessible list navigation
 - Interactive canvas star field with shooting-star lifecycle
 - Cross-browser transparent black-hole video using WebM and QuickTime sources
 - Accessible HTML résumé generated from JSON, with client-side PDF download
@@ -90,7 +91,7 @@ npm run build
 | `/resume` | Accessible JSON-driven résumé and PDF download |
 | `/projects` | Responsive project overview and case studies |
 | `/projects/[slug]` | JSON-driven project case study |
-| `/skills` | Browsable skill index |
+| `/skills` | Interactive skill universe organized by domain and subcategory |
 | `/skills/[slug]` | JSON-driven skill background and related projects |
 | `/api/contact` | Server-side contact form endpoint |
 | `/opengraph-image` | Generated 1200×630 social preview |

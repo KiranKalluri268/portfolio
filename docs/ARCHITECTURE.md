@@ -71,7 +71,27 @@ The video pauses when the tab is hidden, before entry, or when reduced motion is
 - `src/data/resume.json` is the single source for both résumé HTML and PDF output.
 - `src/data/projects/*.json` supplies the homepage carousel, `/projects`, and statically generated project detail routes.
 - `src/data/skills/*.json` supplies the skill marquee, `/skills`, and statically generated skill detail routes.
+- `src/data/skill-web.json` defines the center identity, primary domains, subcategories, branch colors, and radial ordering for the interactive `/skills` universe.
 - `src/lib/content` discovers, validates, sorts, and relates project and skill content on the server.
+
+### Interactive skill universe
+
+The `/skills` server route loads and validates the hierarchy, then passes a
+serializable graph to the client-side `SkillsWeb` component. The component
+creates a deterministic radial layout with four levels:
+
+1. `SAIKIRAN`
+2. Primary domains
+3. Subcategories
+4. Linked skill pages
+
+The viewport owns only local interaction state. Wheel and pinch gestures zoom
+around the interaction point; pointer dragging pans the plane. Domain and
+subcategory buttons focus their branches, while skill nodes navigate to the
+existing `/skills/[slug]` pages. A list dialog exposes the same hierarchy
+without spatial navigation. The pure layout module applies deterministic
+rectangle-based collision resolution across leaves from every parent branch
+and asserts that no skill node overlaps another rendered node.
 - Homepage experience data currently lives in `ExperienceTimeline.tsx`.
 
 The `/resume` route renders accessible HTML. `DownloadResumeButton` dynamically imports `@react-pdf/renderer`, keeping PDF generation code out of the initial homepage bundle.

@@ -73,9 +73,24 @@ through the skill slugs in their `skills` arrays. These relationships generate
 clickable technology badges on project pages and related-project cards on skill
 pages. Do not duplicate project lists inside skill files.
 
+Each skill has two independent category fields:
+
+- `category` selects its row in the homepage marquee.
+- `webCategory` selects its subcategory in the `/skills` universe.
+
 Skill marquee groups and directions are configured in:
 
 - `src/data/skill-categories.json`
+
+The interactive skill universe is configured in:
+
+- `src/data/skill-web.json`
+
+This file controls the center label, primary domains, branch descriptions,
+colors, radial angles, and nested subcategories. To move a skill within the
+universe, edit only that skill's `webCategory`. To add a new branch, add its
+subcategory to `skill-web.json`, then reference the new slug from skill files.
+Empty subcategories remain visible as areas currently being explored.
 
 Set `showInSkillsSection` to control marquee visibility and
 `skillsSectionOrder` to control ordering. Optional icons should use a public URL
