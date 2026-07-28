@@ -1,6 +1,6 @@
 {
   "slug": "mysql", "name": "MySQL", "shortDescription": "A relational database for structured application data and SQL queries.",
-  "status": "published", "category": "data-cloud", "iconText": "SQL", "showInSkillsSection": true, "skillsSectionOrder": 17,
+  "status": "published", "category": "data-cloud", "webCategory": "databases", "iconText": "SQL", "showInSkillsSection": true, "skillsSectionOrder": 17,
   "whatItIs": ["MySQL stores structured data in related tables queried with SQL."],
   "howILearned": ["I learned MySQL through relational data modeling and query practice."],
   "howIUseIt": ["I use it when application data benefits from relations, constraints, and transactional consistency."],

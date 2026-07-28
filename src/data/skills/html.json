@@ -1,6 +1,6 @@
 {
   "slug": "html", "name": "HTML5", "shortDescription": "The semantic structure and content layer of web interfaces.",
-  "status": "published", "category": "web-frameworks", "iconText": "HTML", "showInSkillsSection": true, "skillsSectionOrder": 8,
+  "status": "published", "category": "web-frameworks", "webCategory": "frontend", "iconText": "HTML", "showInSkillsSection": true, "skillsSectionOrder": 8,
   "whatItIs": ["HTML defines the structure, meaning, and accessibility foundation of web content."],
   "howILearned": ["I learned HTML through web development and continued improving semantic and accessible markup."],
   "howIUseIt": ["I use semantic elements, accessible labels, forms, and document structure in every web project."],

@@ -1,6 +1,6 @@
 {
   "slug": "dynamodb", "name": "DynamoDB", "shortDescription": "AWS's managed NoSQL database designed for predictable, scalable access patterns.",
-  "status": "published", "category": "data-cloud", "iconText": "DDB", "showInSkillsSection": true, "skillsSectionOrder": 20,
+  "status": "published", "category": "data-cloud", "webCategory": "databases", "iconText": "DDB", "showInSkillsSection": true, "skillsSectionOrder": 20,
   "whatItIs": ["DynamoDB is a managed key-value and document database on AWS."],
   "howILearned": ["I learned DynamoDB while building CertiSafe's application data layer."],
   "howIUseIt": ["I use it for serverless-style application data with explicit access patterns."],

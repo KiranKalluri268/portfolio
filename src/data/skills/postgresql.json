@@ -1,6 +1,6 @@
 {
   "slug": "postgresql", "name": "PostgreSQL", "shortDescription": "A powerful relational database with rich SQL and data-integrity features.",
-  "status": "published", "category": "data-cloud", "iconText": "PG", "showInSkillsSection": true, "skillsSectionOrder": 18,
+  "status": "published", "category": "data-cloud", "webCategory": "databases", "iconText": "PG", "showInSkillsSection": true, "skillsSectionOrder": 18,
   "whatItIs": ["PostgreSQL is an open-source relational database with strong standards support and extensibility."],
   "howILearned": ["I learned PostgreSQL through database-backed application development."],
   "howIUseIt": ["I use it for structured data, relationships, constraints, and reliable querying."],

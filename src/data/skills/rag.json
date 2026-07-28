@@ -1,6 +1,6 @@
 {
   "slug": "rag", "name": "Retrieval-Augmented Generation", "shortDescription": "A pattern that grounds language-model responses in retrieved application data.",
-  "status": "published", "category": "ai-programming", "iconText": "RAG", "showInSkillsSection": true, "skillsSectionOrder": 14,
+  "status": "published", "category": "ai-programming", "webCategory": "ai-systems", "iconText": "RAG", "showInSkillsSection": true, "skillsSectionOrder": 14,
   "whatItIs": ["RAG retrieves relevant information before generation so responses can use specific source context."],
   "howILearned": ["I learned RAG by building natural-language access to engagement and participation data."],
   "howIUseIt": ["I use retrieval to connect user questions with relevant structured or indexed project data."],

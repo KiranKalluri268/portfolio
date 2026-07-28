@@ -1,6 +1,6 @@
 {
   "slug": "supabase", "name": "Supabase", "shortDescription": "A backend platform built around PostgreSQL, authentication, storage, and APIs.",
-  "status": "published", "category": "data-cloud", "iconText": "SB", "showInSkillsSection": true, "skillsSectionOrder": 19,
+  "status": "published", "category": "data-cloud", "webCategory": "cloud-platforms", "iconText": "SB", "showInSkillsSection": true, "skillsSectionOrder": 19,
   "whatItIs": ["Supabase packages PostgreSQL with application services such as auth, storage, and generated APIs."],
   "howILearned": ["I learned Supabase by exploring hosted backend workflows for web applications."],
   "howIUseIt": ["I use it to prototype and build database-backed application features quickly."],

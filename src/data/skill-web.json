@@ -1,0 +1,68 @@
+{
+  "center": {
+    "label": "SAIKIRAN",
+    "eyebrow": "SKILL UNIVERSE"
+  },
+  "domains": [
+    {
+      "slug": "software-development",
+      "label": "Software Development",
+      "description": "Products, interfaces, services, data, and mobile applications.",
+      "accent": "#60a5fa",
+      "angle": -90,
+      "categories": [
+        { "slug": "frontend", "label": "Frontend", "description": "Interfaces and browser experiences." },
+        { "slug": "backend", "label": "Backend", "description": "Server runtimes and application APIs." },
+        { "slug": "databases", "label": "Databases", "description": "Relational, document, and managed data stores." },
+        { "slug": "mobile-apps", "label": "Mobile", "description": "Cross-platform mobile experiences." },
+        { "slug": "realtime-systems", "label": "Real-time", "description": "Live communication and synchronized experiences." }
+      ]
+    },
+    {
+      "slug": "cloud",
+      "label": "Cloud",
+      "description": "Managed platforms, hosted services, and application infrastructure.",
+      "accent": "#22d3ee",
+      "angle": -18,
+      "categories": [
+        { "slug": "cloud-platforms", "label": "Platforms", "description": "Cloud infrastructure and managed backends." },
+        { "slug": "cloud-services", "label": "Services", "description": "Specialized services integrated into products." }
+      ]
+    },
+    {
+      "slug": "devops",
+      "label": "DevOps",
+      "description": "Tools and practices that make software delivery repeatable.",
+      "accent": "#34d399",
+      "angle": 54,
+      "categories": [
+        { "slug": "delivery", "label": "Delivery", "description": "Packaging and shipping applications." },
+        { "slug": "developer-tools", "label": "Developer Tools", "description": "Version control and development environments." }
+      ]
+    },
+    {
+      "slug": "creative-3d",
+      "label": "Creative & 3D",
+      "description": "Visual design, data storytelling, and spatial exploration.",
+      "accent": "#f472b6",
+      "angle": 126,
+      "categories": [
+        { "slug": "design-prototyping", "label": "Design", "description": "Interface design and visual communication." },
+        { "slug": "data-visualization", "label": "Data Visualization", "description": "Communicating information through visual systems." },
+        { "slug": "three-d", "label": "3D", "description": "Spatial design and interactive three-dimensional work." }
+      ]
+    },
+    {
+      "slug": "ai-ml",
+      "label": "AI / ML",
+      "description": "Model development and intelligent product workflows.",
+      "accent": "#a78bfa",
+      "angle": 198,
+      "categories": [
+        { "slug": "ml-frameworks", "label": "Machine Learning", "description": "Models, training, and inference frameworks." },
+        { "slug": "ai-systems", "label": "AI Systems", "description": "Retrieval and language-model applications." },
+        { "slug": "programming-languages", "label": "Languages", "description": "Languages used for intelligent systems." }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "slug": "tensorflow-js", "name": "TensorFlow.js", "shortDescription": "A JavaScript machine-learning library for training and inference in browsers and Node.js.",
-  "status": "published", "category": "ai-programming", "iconText": "TF", "showInSkillsSection": true, "skillsSectionOrder": 12,
+  "status": "published", "category": "ai-programming", "webCategory": "ml-frameworks", "iconText": "TF", "showInSkillsSection": true, "skillsSectionOrder": 12,
   "whatItIs": ["TensorFlow.js brings machine-learning models and tensor operations to JavaScript runtimes."],
   "howILearned": ["I learned TensorFlow.js while moving engagement inference into the browser for ThirdEyeAI."],
   "howIUseIt": ["I use it for privacy-first client-side model inference."],

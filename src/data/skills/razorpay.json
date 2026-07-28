@@ -1,6 +1,6 @@
 {
   "slug": "razorpay", "name": "Razorpay", "shortDescription": "A payment platform for accepting and managing online payments.",
-  "status": "published", "category": "services", "iconText": "R", "showInSkillsSection": false, "skillsSectionOrder": 32,
+  "status": "published", "category": "services", "webCategory": "cloud-services", "iconText": "R", "showInSkillsSection": false, "skillsSectionOrder": 32,
   "whatItIs": ["Razorpay provides hosted payment flows and APIs for online transactions."],
   "howILearned": ["I learned Razorpay integration while adding paid access to ResumeByAI."],
   "howIUseIt": ["I use it to connect payment completion with application access."],

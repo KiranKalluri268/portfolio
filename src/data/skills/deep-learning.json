@@ -1,6 +1,6 @@
 {
   "slug": "deep-learning", "name": "Deep Learning", "shortDescription": "Machine-learning techniques based on multi-layer neural networks.",
-  "status": "published", "category": "ai-programming", "iconText": "DL", "showInSkillsSection": true, "skillsSectionOrder": 15,
+  "status": "published", "category": "ai-programming", "webCategory": "ml-frameworks", "iconText": "DL", "showInSkillsSection": true, "skillsSectionOrder": 15,
   "whatItIs": ["Deep learning uses neural networks to learn useful representations from data."],
   "howILearned": ["I learned deep-learning concepts through model-building projects and experimentation."],
   "howIUseIt": ["I use neural networks for engagement classification and score-prediction problems."],

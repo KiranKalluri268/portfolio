@@ -1,6 +1,6 @@
 {
   "slug": "express", "name": "Express", "shortDescription": "A minimal Node.js framework for HTTP APIs and backend services.",
-  "status": "published", "category": "web-frameworks", "iconText": "Ex", "showInSkillsSection": true, "skillsSectionOrder": 6,
+  "status": "published", "category": "web-frameworks", "webCategory": "backend", "iconText": "Ex", "showInSkillsSection": true, "skillsSectionOrder": 6,
   "whatItIs": ["Express provides routing and middleware primitives for Node.js web services."],
   "howILearned": ["I learned Express by creating backend APIs for full-stack projects."],
   "howIUseIt": ["I use it to define routes, middleware, validation, and service integrations."],

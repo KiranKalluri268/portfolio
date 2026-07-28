@@ -1,6 +1,6 @@
 {
   "slug": "python", "name": "Python", "shortDescription": "A general-purpose language used for machine learning, data work, and backend automation.",
-  "status": "published", "category": "ai-programming", "iconText": "Py", "showInSkillsSection": true, "skillsSectionOrder": 10,
+  "status": "published", "category": "ai-programming", "webCategory": "programming-languages", "iconText": "Py", "showInSkillsSection": true, "skillsSectionOrder": 10,
   "whatItIs": ["Python is a readable, broad ecosystem for application development, data processing, and machine learning."],
   "howILearned": ["I learned Python through programming practice and machine-learning projects."],
   "howIUseIt": ["I use it for model development, data preparation, experimentation, and automation."],

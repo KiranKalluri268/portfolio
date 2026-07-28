@@ -75,6 +75,7 @@ export interface SkillContent {
   shortDescription: string;
   status: ContentStatus;
   category: string;
+  webCategory: string;
   proficiency?: "learning" | "comfortable" | "advanced";
   icon?: string;
   iconAlt?: string;
@@ -88,4 +89,40 @@ export interface SkillContent {
   lessonsLearned: string[];
   resources: SkillResource[];
   seo: ContentSeo;
+}
+
+export interface SkillWebCategoryContent {
+  slug: string;
+  label: string;
+  description: string;
+}
+
+export interface SkillWebDomainContent {
+  slug: string;
+  label: string;
+  description: string;
+  accent: string;
+  angle: number;
+  categories: SkillWebCategoryContent[];
+}
+
+export interface SkillWebConfig {
+  center: {
+    label: string;
+    eyebrow: string;
+  };
+  domains: SkillWebDomainContent[];
+}
+
+export interface SkillWebCategory extends SkillWebCategoryContent {
+  skills: SkillContent[];
+}
+
+export interface SkillWebDomain extends Omit<SkillWebDomainContent, "categories"> {
+  categories: SkillWebCategory[];
+}
+
+export interface SkillWebData {
+  center: SkillWebConfig["center"];
+  domains: SkillWebDomain[];
 }

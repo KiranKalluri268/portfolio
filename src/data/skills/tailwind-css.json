@@ -1,6 +1,6 @@
 {
   "slug": "tailwind-css", "name": "Tailwind CSS", "shortDescription": "A utility-first CSS framework for composing responsive interfaces.",
-  "status": "published", "category": "web-frameworks", "iconText": "TW", "showInSkillsSection": true, "skillsSectionOrder": 7,
+  "status": "published", "category": "web-frameworks", "webCategory": "frontend", "iconText": "TW", "showInSkillsSection": true, "skillsSectionOrder": 7,
   "whatItIs": ["Tailwind CSS provides small utility classes for styling directly from component markup."],
   "howILearned": ["I learned Tailwind by building responsive interfaces and reusable visual patterns."],
   "howIUseIt": ["I use it for layout, responsive behavior, theming, interaction states, and rapid UI iteration."],

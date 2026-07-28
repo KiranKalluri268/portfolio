@@ -1,6 +1,6 @@
 {
   "slug": "docker", "name": "Docker", "shortDescription": "A container platform for packaging applications with consistent runtime dependencies.",
-  "status": "published", "category": "data-cloud", "iconText": "Docker", "showInSkillsSection": true, "skillsSectionOrder": 22,
+  "status": "published", "category": "data-cloud", "webCategory": "delivery", "iconText": "Docker", "showInSkillsSection": true, "skillsSectionOrder": 22,
   "whatItIs": ["Docker packages applications and their runtime dependencies into portable containers."],
   "howILearned": ["I learned Docker by containerizing development and application environments."],
   "howIUseIt": ["I use it to make local, test, and deployment environments more consistent."],

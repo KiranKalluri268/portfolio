@@ -1,6 +1,6 @@
 {
   "slug": "react", "name": "React", "shortDescription": "A component-based library for building interactive user interfaces.",
-  "status": "published", "category": "web-frameworks", "iconText": "⚛", "showInSkillsSection": true, "skillsSectionOrder": 1,
+  "status": "published", "category": "web-frameworks", "webCategory": "frontend", "iconText": "⚛", "showInSkillsSection": true, "skillsSectionOrder": 1,
   "whatItIs": ["React organizes interfaces as reusable components driven by state and properties."],
   "howILearned": ["I learned React by building full-stack interfaces and refining reusable component patterns."],
   "howIUseIt": ["I use React for interactive application interfaces, shared UI components, and client-side state."],

@@ -1,6 +1,6 @@
 {
   "slug": "typescript", "name": "TypeScript", "shortDescription": "JavaScript with static types for safer, more maintainable applications.",
-  "status": "published", "category": "web-frameworks", "iconText": "TS", "showInSkillsSection": true, "skillsSectionOrder": 4,
+  "status": "published", "category": "web-frameworks", "webCategory": "frontend", "iconText": "TS", "showInSkillsSection": true, "skillsSectionOrder": 4,
   "whatItIs": ["TypeScript adds compile-time type checking and expressive data models to JavaScript."],
   "howILearned": ["I learned TypeScript by applying it to React and Next.js projects."],
   "howIUseIt": ["I use it to model application data, component contracts, APIs, and reusable utilities."],

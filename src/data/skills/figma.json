@@ -1,6 +1,6 @@
 {
   "slug": "figma", "name": "Figma", "shortDescription": "A collaborative interface-design and prototyping platform.",
-  "status": "published", "category": "tools", "iconText": "F", "showInSkillsSection": true, "skillsSectionOrder": 25,
+  "status": "published", "category": "tools", "webCategory": "design-prototyping", "iconText": "F", "showInSkillsSection": true, "skillsSectionOrder": 25,
   "whatItIs": ["Figma supports interface design, reusable components, prototyping, and design collaboration."],
   "howILearned": ["I learned Figma while planning and refining application interfaces."],
   "howIUseIt": ["I use it to explore layouts, component structure, visual hierarchy, and interaction ideas."],
