@@ -1,0 +1,82 @@
+{
+  "id": 1,
+  "slug": "third-eye-ai",
+  "title": "ThirdEyeAI – Real-time Engagement Detection & Meeting Platform",
+  "summary": "An AI-powered learning platform combining a WebRTC meeting engine, privacy-first engagement detection, instructor analytics, and natural-language session insights.",
+  "status": "published",
+  "featured": true,
+  "showInProjectsSection": true,
+  "projectsSectionOrder": 1,
+  "image": "/images/project3.webp",
+  "imageAlt": "ThirdEyeAI meeting and engagement analytics interface",
+  "role": "Full-stack and machine learning development",
+  "skills": ["react", "node-js", "express", "mongodb", "tensorflow-js", "webrtc", "python", "rag"],
+  "overview": [
+    "ThirdEyeAI explores how online learning platforms can provide useful engagement signals without sending participant video to a central inference server.",
+    "The application combines a meeting experience, browser-based engagement analysis, instructor-facing analytics, and natural-language exploration of session data."
+  ],
+  "problem": "Remote instructors have limited visibility into participant engagement, while conventional video-analysis systems can create privacy and infrastructure concerns.",
+  "solution": "Run engagement inference in each participant's browser and share only derived engagement information with the instructor-facing analytics experience.",
+  "howItWorks": [
+    {
+      "title": "Meeting session",
+      "description": "Participants join a WebRTC-based meeting and interact through the browser."
+    },
+    {
+      "title": "Private inference",
+      "description": "TensorFlow.js performs engagement inference on the client so raw video does not need to be uploaded for analysis."
+    },
+    {
+      "title": "Instructor insights",
+      "description": "Derived session signals are summarized for instructors and can be explored through a retrieval-augmented natural-language workflow."
+    }
+  ],
+  "buildingProcess": [
+    {
+      "title": "Model development",
+      "description": "Developed and evaluated a hybrid ensemble using a 1D CNN and 1D ResNet with the DAiSEE dataset."
+    },
+    {
+      "title": "Browser integration",
+      "description": "Moved inference into TensorFlow.js and integrated it with the meeting experience."
+    },
+    {
+      "title": "Analytics workflow",
+      "description": "Connected engagement results to instructor visualizations and a retrieval-augmented query flow."
+    }
+  ],
+  "challenges": [
+    {
+      "challenge": "Balancing useful engagement analytics with participant privacy.",
+      "solution": "Kept video processing in the browser and shared derived signals instead of raw frames.",
+      "lesson": "System architecture can make privacy a default property rather than an optional policy."
+    }
+  ],
+  "features": [
+    "WebRTC meeting experience",
+    "Client-side engagement inference",
+    "Instructor engagement visualization",
+    "Natural-language session queries"
+  ],
+  "highlights": [
+    "Engineered a hybrid ensemble bagging model using a 1D CNN and 1D ResNet trained on the DAiSEE dataset.",
+    "Moved engagement inference into the browser with TensorFlow.js.",
+    "Integrated retrieval-augmented generation for querying participation and distraction data."
+  ],
+  "outcomes": [
+    { "value": "94.25%", "label": "engagement-detection accuracy" },
+    { "value": "Client-side", "label": "privacy-first inference" }
+  ],
+  "lessonsLearned": [
+    "How client-side inference changes privacy and scaling tradeoffs.",
+    "How to connect machine-learning output to an understandable product experience.",
+    "How retrieval can make structured analytics accessible through natural language."
+  ],
+  "gallery": [],
+  "repositoryUrl": "https://github.com/KiranKalluri268/ThirdEye_Client",
+  "liveUrl": "https://thirdeyeai.vercel.app/",
+  "seo": {
+    "title": "ThirdEyeAI Project Case Study",
+    "description": "How I built a privacy-first engagement detection and WebRTC meeting platform."
+  }
+}

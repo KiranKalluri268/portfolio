@@ -5,25 +5,13 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import Image from "next/image";
 import Link from "next/link";
-import type { Project } from "@/types";
-import projectData from "@/data/projects.json";
+import type { ProjectContent } from "@/lib/content/types";
 
-const projects: Project[] = projectData.projects.map((project) => ({
-  id: project.id,
-  title: project.title,
-  description: project.summary,
-  image: project.image,
-  github: project.links.github,
-  live: project.links.live,
-}));
-
-const PANEL_COUNT = projects.length + 2;
-const LAST_PANEL_INDEX = PANEL_COUNT - 1;
-
-export default function ProjectsSection() {
+export default function ProjectsSection({ projects }: { projects: ProjectContent[] }) {
   const sectionRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const lastPanelIndex = projects.length + 1;
 
   useLayoutEffect(() => {
     const section = sectionRef.current;
@@ -48,7 +36,7 @@ export default function ProjectsSection() {
           id: "projects-horizontal-pin",
           trigger: section,
           start: "top top",
-          end: () => `+=${window.innerHeight * LAST_PANEL_INDEX}`,
+          end: () => `+=${window.innerHeight * lastPanelIndex}`,
           pin: true,
           scrub: true,
           invalidateOnRefresh: true,
@@ -76,7 +64,7 @@ export default function ProjectsSection() {
     return () => {
       context.revert();
     };
-  }, []);
+  }, [lastPanelIndex]);
 
   return (
     <section
@@ -117,11 +105,17 @@ export default function ProjectsSection() {
                 loading={project.id === 1 ? "eager" : "lazy"}
               />
             </div>
-            <p className="mb-[clamp(0.75rem,2.5dvh,1.5rem)] max-w-xl text-sm leading-relaxed sm:text-base lg:text-lg">{project.description}</p>
+            <p className="mb-[clamp(0.75rem,2.5dvh,1.5rem)] max-w-xl text-sm leading-relaxed sm:text-base lg:text-lg">{project.summary}</p>
             <nav className="space-x-4" aria-label={`Links for ${project.title}`}>
-              {project.github && (
+              <Link
+                href={`/projects/${project.slug}`}
+                className="rounded px-2 py-1 underline"
+              >
+                Case Study
+              </Link>
+              {project.repositoryUrl && (
                 <a
-                  href={project.github}
+                  href={project.repositoryUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="rounded px-2 py-1 underline"
@@ -130,9 +124,9 @@ export default function ProjectsSection() {
                   GitHub
                 </a>
               )}
-              {project.live && (
+              {project.liveUrl && (
                 <a
-                  href={project.live}
+                  href={project.liveUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="rounded px-2 py-1 underline"

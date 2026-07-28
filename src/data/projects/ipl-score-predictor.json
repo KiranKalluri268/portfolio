@@ -1,0 +1,71 @@
+{
+  "id": 3,
+  "slug": "ipl-score-predictor",
+  "title": "IPL Score Predictor AI",
+  "summary": "A deep neural network built with Keras to estimate the final score of an ongoing IPL innings from live match context.",
+  "status": "published",
+  "featured": false,
+  "showInProjectsSection": true,
+  "projectsSectionOrder": 3,
+  "image": "/images/project2.png",
+  "imageAlt": "IPL score predictor interface",
+  "role": "Machine learning development",
+  "skills": ["python", "keras", "deep-learning"],
+  "overview": [
+    "The IPL Score Predictor estimates an innings' final score from its current match state.",
+    "It turns changing match variables into an approachable prediction workflow backed by a Keras neural network."
+  ],
+  "problem": "An innings evolves continuously, so a useful estimate must account for the score, resources remaining, recent performance, and the teams involved.",
+  "solution": "Represent the current match context as model inputs and use a trained deep neural network to estimate the likely final total.",
+  "howItWorks": [
+    {
+      "title": "Match context",
+      "description": "The application collects runs, wickets, overs, recent performance, and team information."
+    },
+    {
+      "title": "Model inference",
+      "description": "A Keras model processes the current context and predicts the final score."
+    }
+  ],
+  "buildingProcess": [
+    {
+      "title": "Feature preparation",
+      "description": "Selected and prepared match-state inputs that influence an innings' final score."
+    },
+    {
+      "title": "Model development",
+      "description": "Built and evaluated a deep neural network with Keras."
+    },
+    {
+      "title": "Prediction interface",
+      "description": "Connected model inputs and output to a practical score-estimation experience."
+    }
+  ],
+  "challenges": [
+    {
+      "challenge": "Representing a changing match in a form a model can use consistently.",
+      "solution": "Combined current score information with recent-performance and team context.",
+      "lesson": "Feature design is as important as model architecture for applied prediction problems."
+    }
+  ],
+  "features": [
+    "Live match-context inputs",
+    "Neural-network score prediction",
+    "Team-aware estimation"
+  ],
+  "highlights": [
+    "Models current runs, wickets, overs, recent performance, and team information.",
+    "Turns changing match conditions into a practical final-score estimate."
+  ],
+  "outcomes": [],
+  "lessonsLearned": [
+    "How to prepare structured inputs for a neural network.",
+    "How to turn a trained model into an interactive application."
+  ],
+  "gallery": [],
+  "repositoryUrl": "https://github.com/KiranKalluri268/MS_AI_IPL-Score-Predictor",
+  "seo": {
+    "title": "IPL Score Predictor Project Case Study",
+    "description": "How I built a Keras neural network that predicts IPL innings scores."
+  }
+}

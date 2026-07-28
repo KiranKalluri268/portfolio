@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import BackNavigationButton from "@/components/BackNavigationButton";
-import projectData from "@/data/projects.json";
+import { getAllProjects } from "@/lib/content/projects";
+import type { ProjectContent } from "@/lib/content/types";
 
 export const metadata: Metadata = {
   title: "Projects",
@@ -19,15 +20,13 @@ export const metadata: Metadata = {
   },
 };
 
-type ProjectCase = (typeof projectData.projects)[number];
-
-function ProjectLinks({ project }: { project: ProjectCase }) {
+function ProjectLinks({ project }: { project: ProjectContent }) {
   const links = [
-    project.links.github
-      ? { label: "View source", shortLabel: "Source", href: project.links.github }
+    project.repositoryUrl
+      ? { label: "View source", shortLabel: "Source", href: project.repositoryUrl }
       : null,
-    project.links.live
-      ? { label: "Open live project", shortLabel: "Live project", href: project.links.live }
+    project.liveUrl
+      ? { label: "Open live project", shortLabel: "Live project", href: project.liveUrl }
       : null,
   ].filter((link): link is { label: string; shortLabel: string; href: string } => link !== null);
 
@@ -71,7 +70,7 @@ function TechnologyList({ technologies }: { technologies: string[] }) {
   );
 }
 
-function FeaturedProject({ project, index }: { project: ProjectCase; index: number }) {
+function FeaturedProject({ project, index }: { project: ProjectContent; index: number }) {
   return (
     <article className="overflow-hidden rounded-3xl border border-white/10 bg-black/60 shadow-2xl backdrop-blur-md">
       <div className="grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
@@ -99,7 +98,7 @@ function FeaturedProject({ project, index }: { project: ProjectCase; index: numb
           </div>
 
           <p className="leading-relaxed text-gray-300">{project.summary}</p>
-          <TechnologyList technologies={project.technologies} />
+          <TechnologyList technologies={project.skills} />
 
           <ul className="space-y-3 text-sm leading-relaxed text-gray-300 sm:text-base">
             {project.highlights.map((highlight) => (
@@ -128,7 +127,7 @@ function FeaturedProject({ project, index }: { project: ProjectCase; index: numb
   );
 }
 
-function AdditionalProject({ project }: { project: ProjectCase }) {
+function AdditionalProject({ project }: { project: ProjectContent }) {
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-black/60 backdrop-blur-md transition-colors duration-300 hover:border-blue-400/25">
       <div className="relative aspect-[16/9] overflow-hidden bg-white/[0.025]">
@@ -147,7 +146,7 @@ function AdditionalProject({ project }: { project: ProjectCase }) {
           <h3 className="text-xl font-bold sm:text-2xl">{project.title}</h3>
         </div>
         <p className="text-sm leading-relaxed text-gray-300 sm:text-base">{project.summary}</p>
-        <TechnologyList technologies={project.technologies} />
+        <TechnologyList technologies={project.skills} />
         <ul className="space-y-2 text-sm leading-relaxed text-gray-400">
           {project.highlights.map((highlight) => (
             <li key={highlight} className="flex gap-3">
@@ -165,8 +164,9 @@ function AdditionalProject({ project }: { project: ProjectCase }) {
 }
 
 export default function ProjectsPage() {
-  const featured = projectData.projects.filter((project) => project.featured);
-  const additional = projectData.projects.filter((project) => !project.featured);
+  const projects = getAllProjects();
+  const featured = projects.filter((project) => project.featured);
+  const additional = projects.filter((project) => !project.featured);
 
   return (
     <main className="relative z-10 min-h-[100svh] overflow-hidden px-4 py-8 text-white sm:px-6 sm:py-12 lg:px-10">
@@ -181,7 +181,7 @@ export default function ProjectsPage() {
             Projects &amp; case studies
           </h1>
           <p className="mt-6 max-w-3xl text-base leading-relaxed text-gray-300 sm:text-lg">
-            {projectData.intro}
+            A selection of products and experiments spanning full-stack systems, applied AI, cloud infrastructure, and mobile development.
           </p>
         </header>
 

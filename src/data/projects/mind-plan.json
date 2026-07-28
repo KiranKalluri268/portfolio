@@ -1,0 +1,71 @@
+{
+  "id": 5,
+  "slug": "mind-plan",
+  "title": "MindPlan",
+  "summary": "A Flutter productivity application for managing goals, prioritizing work with the Eisenhower Matrix, and reviewing daily productivity.",
+  "status": "published",
+  "featured": false,
+  "showInProjectsSection": true,
+  "projectsSectionOrder": 5,
+  "image": "/images/project4.webp",
+  "imageAlt": "MindPlan mobile productivity interface",
+  "role": "Mobile application development",
+  "skills": ["flutter", "dart", "mobile-development"],
+  "overview": [
+    "MindPlan is a mobile productivity application that connects long-term goals with daily planning.",
+    "It uses the Eisenhower Matrix to help users make prioritization decisions explicit."
+  ],
+  "problem": "Daily task lists can become disconnected from long-term goals and provide little guidance about what should be handled first.",
+  "solution": "Combine goal management, daily tasks, priority classification, and productivity review in one mobile workflow.",
+  "howItWorks": [
+    {
+      "title": "Goal planning",
+      "description": "Users define goals that provide context for daily work."
+    },
+    {
+      "title": "Priority decisions",
+      "description": "Tasks are organized with the Eisenhower Matrix according to urgency and importance."
+    },
+    {
+      "title": "Daily review",
+      "description": "The application helps users review daily productivity and progress."
+    }
+  ],
+  "buildingProcess": [
+    {
+      "title": "Workflow design",
+      "description": "Connected goals, tasks, prioritization, and review into a coherent mobile flow."
+    },
+    {
+      "title": "Flutter implementation",
+      "description": "Built the application interface and behavior with Flutter and Dart."
+    }
+  ],
+  "challenges": [
+    {
+      "challenge": "Keeping long-term planning useful during daily task decisions.",
+      "solution": "Connected goals directly to daily planning and made prioritization part of the core workflow.",
+      "lesson": "Productivity tools work best when planning levels reinforce one another."
+    }
+  ],
+  "features": [
+    "Goal management",
+    "Daily task planning",
+    "Eisenhower Matrix prioritization",
+    "Productivity review"
+  ],
+  "highlights": [
+    "Connects long-term goals with daily task planning.",
+    "Uses the Eisenhower Matrix to make prioritization explicit."
+  ],
+  "outcomes": [],
+  "lessonsLearned": [
+    "How to structure a multi-step mobile productivity workflow.",
+    "How Flutter and Dart support reusable cross-platform interfaces."
+  ],
+  "gallery": [],
+  "seo": {
+    "title": "MindPlan Project Case Study",
+    "description": "How I built a Flutter productivity application around goals and prioritization."
+  }
+}

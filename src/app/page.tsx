@@ -1,5 +1,3 @@
-'use client';
-
 import NavBar from '@/components/NavBar1';
 import Hero from '@/components/hero';
 import AboutSection from '@/components/AboutSection';
@@ -13,8 +11,11 @@ import SkipLink from '@/components/SkipLink';
 import SceneIndicator from '@/components/SceneIndicator';
 import NavigationControls from '@/components/NavigationControls';
 import SceneWrapper from '@/components/SceneWrapper';
+import { getHomepageProjects } from '@/lib/content/projects';
 
 export default function Home() {
+  const projects = getHomepageProjects();
+
   return (
     <>
       <ErrorBoundary>
@@ -54,7 +55,7 @@ export default function Home() {
           </SceneWrapper>
           <SceneWrapper index={2}>
             <ErrorBoundary>
-              <ProjectsSection />
+              <ProjectsSection projects={projects} />
             </ErrorBoundary>
           </SceneWrapper>
           <SceneWrapper index={3}>
