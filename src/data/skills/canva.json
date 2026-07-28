@@ -1,0 +1,10 @@
+{
+  "slug": "canva", "name": "Canva", "shortDescription": "A visual-design platform for graphics, presentations, and communication assets.",
+  "status": "published", "category": "tools", "iconText": "C", "showInSkillsSection": true, "skillsSectionOrder": 26,
+  "whatItIs": ["Canva provides accessible tools and templates for producing visual communication assets."],
+  "howILearned": ["I learned Canva through creating project and presentation visuals."],
+  "howIUseIt": ["I use it for quick visual assets, presentation material, and content composition."],
+  "concepts": ["Layout", "Typography", "Visual hierarchy", "Brand consistency"],
+  "lessonsLearned": ["Simple hierarchy and consistency are more effective than unnecessary decoration."],
+  "seo": { "title": "Canva Skill and Experience", "description": "How I use Canva for visual communication." }
+}

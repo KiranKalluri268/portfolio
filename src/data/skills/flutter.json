@@ -1,0 +1,10 @@
+{
+  "slug": "flutter", "name": "Flutter", "shortDescription": "A cross-platform UI toolkit for building mobile applications from one codebase.",
+  "status": "published", "category": "mobile", "iconText": "Fl", "showInSkillsSection": false, "skillsSectionOrder": 33,
+  "whatItIs": ["Flutter renders reusable widgets across supported mobile platforms."],
+  "howILearned": ["I learned Flutter while building MindPlan."],
+  "howIUseIt": ["I use it to compose mobile interfaces and application workflows from reusable widgets."],
+  "concepts": ["Widgets", "State", "Navigation", "Responsive layouts"],
+  "lessonsLearned": ["Consistent widget composition makes mobile screens easier to evolve."],
+  "seo": { "title": "Flutter Skill and Project Experience", "description": "How I used Flutter to build MindPlan." }
+}

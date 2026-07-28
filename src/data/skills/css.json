@@ -1,0 +1,10 @@
+{
+  "slug": "css", "name": "CSS3", "shortDescription": "The layout, visual styling, and responsive presentation layer of the web.",
+  "status": "published", "category": "web-frameworks", "iconText": "CSS", "showInSkillsSection": true, "skillsSectionOrder": 9,
+  "whatItIs": ["CSS controls layout, typography, visual states, responsiveness, and animation."],
+  "howILearned": ["I learned CSS by recreating layouts and solving responsive interface problems."],
+  "howIUseIt": ["I use modern layout systems, responsive queries, custom properties, and transitions."],
+  "concepts": ["Grid", "Flexbox", "Cascade", "Responsive design"],
+  "lessonsLearned": ["A small, consistent layout system prevents most responsive edge cases."],
+  "seo": { "title": "CSS3 Skill and Experience", "description": "How I use CSS for responsive web interfaces." }
+}

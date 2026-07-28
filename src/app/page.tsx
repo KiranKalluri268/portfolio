@@ -12,9 +12,11 @@ import SceneIndicator from '@/components/SceneIndicator';
 import NavigationControls from '@/components/NavigationControls';
 import SceneWrapper from '@/components/SceneWrapper';
 import { getHomepageProjects } from '@/lib/content/projects';
+import { getSkillsByCategory } from '@/lib/content/skills';
 
 export default function Home() {
   const projects = getHomepageProjects();
+  const skillGroups = getSkillsByCategory();
 
   return (
     <>
@@ -65,7 +67,7 @@ export default function Home() {
           </SceneWrapper>
           <SceneWrapper index={4}>
             <ErrorBoundary>
-              <SkillsCarousel />
+              <SkillsCarousel groups={skillGroups} />
             </ErrorBoundary>
           </SceneWrapper>
           <SceneWrapper index={5}>

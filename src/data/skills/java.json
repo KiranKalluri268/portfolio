@@ -1,0 +1,10 @@
+{
+  "slug": "java", "name": "Java", "shortDescription": "A strongly typed object-oriented language used across application and backend development.",
+  "status": "published", "category": "ai-programming", "iconText": "Java", "showInSkillsSection": true, "skillsSectionOrder": 11,
+  "whatItIs": ["Java is a compiled language with a mature runtime and strong object-oriented foundations."],
+  "howILearned": ["I learned Java through programming fundamentals and application exercises."],
+  "howIUseIt": ["I use Java to practice structured programming, object modeling, and algorithmic problem solving."],
+  "concepts": ["OOP", "Collections", "Exceptions", "Generics"],
+  "lessonsLearned": ["Explicit interfaces make responsibilities easier to understand."],
+  "seo": { "title": "Java Skill and Experience", "description": "How I learned and use Java." }
+}

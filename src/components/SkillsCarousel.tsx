@@ -1,102 +1,28 @@
 "use client";
 
 import { type Ref, useLayoutEffect, useRef } from "react";
-import type { SkillCategory } from "@/types";
+import Image from "next/image";
+import Link from "next/link";
+import type { SkillCategoryContent, SkillContent } from "@/lib/content/types";
 import { useScrollActions } from "@/context/SmoothScrollContext";
 import gsap from "gsap";
-import {
-  FaCss3Alt,
-  FaGitAlt,
-  FaHtml5,
-  FaJava,
-  FaJs,
-  FaPython,
-  FaReact,
-} from "react-icons/fa";
-import {
-  SiAmazondynamodb,
-  SiAmazonwebservices,
-  SiCanva,
-  SiCloudinary,
-  SiDocker,
-  SiExpress,
-  SiFigma,
-  SiLangchain,
-  SiLinux,
-  SiMongodb,
-  SiMysql,
-  SiNextdotjs,
-  SiNodedotjs,
-  SiPostgresql,
-  SiSupabase,
-  SiTableau,
-  SiTailwindcss,
-  SiTensorflow,
-  SiTypescript,
-} from "react-icons/si";
 
-const skillCategories: SkillCategory[] = [
-  {
-    title: "Web & Frameworks",
-    skills: [
-      { name: "React", icon: <FaReact /> },
-      { name: "Next.js", icon: <SiNextdotjs /> },
-      { name: "JavaScript", icon: <FaJs /> },
-      { name: "TypeScript", icon: <SiTypescript /> },
-      { name: "Node.js", icon: <SiNodedotjs /> },
-      { name: "Express", icon: <SiExpress /> },
-      { name: "Tailwind CSS", icon: <SiTailwindcss /> },
-      { name: "HTML5", icon: <FaHtml5 /> },
-      { name: "CSS3", icon: <FaCss3Alt /> },
-    ],
-  },
-  {
-    title: "AI & Programming",
-    skills: [
-      { name: "Python", icon: <FaPython /> },
-      { name: "Java", icon: <FaJava /> },
-      { name: "TensorFlow.js", icon: <SiTensorflow /> },
-      { name: "LangChain", icon: <SiLangchain /> },
-      { name: "RAG", icon: <span className="font-bold">RAG</span> },
-      { name: "Deep Learning", icon: <span className="font-bold">DL</span> },
-    ],
-  },
-  {
-    title: "Data & Cloud",
-    skills: [
-      { name: "MongoDB", icon: <SiMongodb /> },
-      { name: "MySQL", icon: <SiMysql /> },
-      { name: "PostgreSQL", icon: <SiPostgresql /> },
-      { name: "Supabase", icon: <SiSupabase /> },
-      { name: "DynamoDB", icon: <SiAmazondynamodb /> },
-      { name: "AWS", icon: <SiAmazonwebservices /> },
-      { name: "Docker", icon: <SiDocker /> },
-    ],
-  },
-  {
-    title: "Tools",
-    skills: [
-      { name: "Git", icon: <FaGitAlt /> },
-      { name: "Linux", icon: <SiLinux /> },
-      { name: "Figma", icon: <SiFigma /> },
-      { name: "Canva", icon: <SiCanva /> },
-      { name: "Tableau", icon: <SiTableau /> },
-      { name: "Cloudinary", icon: <SiCloudinary /> },
-    ],
-  },
-];
+export interface SkillCategoryGroup {
+  category: SkillCategoryContent;
+  skills: SkillContent[];
+}
 
 interface SkillRowProps {
-  category: SkillCategory;
+  group: SkillCategoryGroup;
   reverse: boolean;
 }
 
 function SkillGroup({
-  category,
+  group,
   duplicate = false,
   elementRef,
 }: {
-  category: SkillCategory;
+  group: SkillCategoryGroup;
   duplicate?: boolean;
   elementRef?: Ref<HTMLDivElement>;
 }) {
@@ -106,24 +32,30 @@ function SkillGroup({
       className="flex shrink-0 items-center justify-start"
       aria-hidden={duplicate || undefined}
     >
-      {category.skills.map((skill) => (
-        <div
-          key={`${category.title}-${skill.name}`}
+      {group.skills.map((skill) => (
+        <Link
+          key={`${group.category.slug}-${skill.slug}`}
+          href={`/skills/${skill.slug}`}
           className="mr-3 flex h-24 w-[104px] min-w-[104px] shrink-0 flex-col items-center justify-center rounded text-gray-300 transition-colors duration-200 hover:text-white focus:outline-none focus:ring-2 focus:ring-orange sm:mr-6 sm:w-[124px] sm:min-w-[124px]"
           title={skill.name}
-          role={duplicate ? undefined : "img"}
-          aria-label={duplicate ? undefined : skill.name}
+          aria-label={duplicate ? undefined : `Learn more about ${skill.name}`}
           tabIndex={duplicate ? -1 : 0}
         >
-          <div className="select-none text-2xl sm:text-4xl">{skill.icon}</div>
+          <div className="flex h-10 items-center justify-center select-none text-xl font-bold sm:text-2xl">
+            {skill.icon ? (
+              <Image src={skill.icon} alt="" width={40} height={40} className="h-10 w-10 object-contain" />
+            ) : (
+              skill.iconText ?? skill.name.slice(0, 2)
+            )}
+          </div>
           <span className="mt-1 whitespace-nowrap text-xs select-none">{skill.name}</span>
-        </div>
+        </Link>
       ))}
     </div>
   );
 }
 
-function SkillRow({ category, reverse }: SkillRowProps) {
+function SkillRow({ group, reverse }: SkillRowProps) {
   const { lenis } = useScrollActions();
   const rowRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -221,27 +153,27 @@ function SkillRow({ category, reverse }: SkillRowProps) {
         maskImage:
           "linear-gradient(to right, transparent 0%, black 7%, black 93%, transparent 100%)",
       }}
-      aria-label={category.title}
+      aria-label={group.category.label}
     >
-      <h2 className="sr-only">{category.title}</h2>
+      <h2 className="sr-only">{group.category.label}</h2>
       <div
         ref={trackRef}
         className="flex w-max will-change-transform"
         onMouseEnter={() => gsap.getTweensOf(trackRef.current).forEach((tween) => tween.pause())}
         onMouseLeave={() => gsap.getTweensOf(trackRef.current).forEach((tween) => tween.play())}
       >
-        <SkillGroup category={category} elementRef={groupRef} />
-        <SkillGroup category={category} duplicate />
-        <SkillGroup category={category} duplicate />
-        <SkillGroup category={category} duplicate />
-        <SkillGroup category={category} duplicate />
-        <SkillGroup category={category} duplicate />
+        <SkillGroup group={group} elementRef={groupRef} />
+        <SkillGroup group={group} duplicate />
+        <SkillGroup group={group} duplicate />
+        <SkillGroup group={group} duplicate />
+        <SkillGroup group={group} duplicate />
+        <SkillGroup group={group} duplicate />
       </div>
     </div>
   );
 }
 
-export default function SkillsCarousel() {
+export default function SkillsCarousel({ groups }: { groups: SkillCategoryGroup[] }) {
   return (
     <section
       id="skills"
@@ -251,8 +183,12 @@ export default function SkillsCarousel() {
     >
       <div className="relative left-[2vw] w-full space-y-6 py-16 sm:left-[5vw] sm:w-[82%] sm:space-y-10 sm:py-20 md:w-[72%] lg:w-[62%] xl:w-[62%]">
         <h2 className="mb-6 text-center text-3xl font-bold sm:mb-10 sm:text-4xl">Tech Stack</h2>
-        {skillCategories.map((category, index) => (
-          <SkillRow key={category.title} category={category} reverse={index % 2 === 1} />
+        {groups.filter((group) => group.skills.length > 0).map((group) => (
+          <SkillRow
+            key={group.category.slug}
+            group={group}
+            reverse={group.category.marqueeDirection === "right"}
+          />
         ))}
       </div>
     </section>

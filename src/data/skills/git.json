@@ -1,0 +1,10 @@
+{
+  "slug": "git", "name": "Git", "shortDescription": "A distributed version-control system for tracking and collaborating on source code.",
+  "status": "published", "category": "tools", "iconText": "Git", "showInSkillsSection": true, "skillsSectionOrder": 23,
+  "whatItIs": ["Git records source history and supports branching, review, and collaborative development."],
+  "howILearned": ["I learned Git through daily project work and team collaboration."],
+  "howIUseIt": ["I use focused commits, branches, diffs, and history to manage changes safely."],
+  "concepts": ["Commits", "Branches", "Merges", "Rebasing"],
+  "lessonsLearned": ["Small, meaningful commits make both review and recovery easier."],
+  "seo": { "title": "Git Skill and Development Experience", "description": "How I use Git to manage software projects." }
+}

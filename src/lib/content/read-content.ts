@@ -49,6 +49,16 @@ export function readJsonDirectory(folder: string): Array<{ source: string; value
     });
 }
 
+export function readJsonFile(fileName: string): { source: string; value: unknown } {
+  const source = fileName;
+  const contents = readFileSync(path.join(DATA_DIRECTORY, fileName), "utf8");
+  try {
+    return { source, value: JSON.parse(contents) as unknown };
+  } catch (error) {
+    throw new Error(`${source}: invalid JSON`, { cause: error });
+  }
+}
+
 export function assertUniqueSlugs(
   entries: Array<{ slug: string }>,
   collectionName: string,
