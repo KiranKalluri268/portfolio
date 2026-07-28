@@ -32,6 +32,10 @@ const NODE_BOUNDS = {
 } satisfies Record<GraphNode["kind"], { width: number; height: number }>;
 const NODE_GAP = 18;
 
+function roundCoordinate(value: number) {
+  return Math.round(value * 1000) / 1000;
+}
+
 function polar(radius: number, angle: number) {
   const radians = angle * Math.PI / 180;
   return {
@@ -207,6 +211,10 @@ export function buildSkillWebGraph(data: SkillWebData) {
   }
 
   resolveNodeCollisions(nodes);
+  for (const node of nodes) {
+    node.x = roundCoordinate(node.x);
+    node.y = roundCoordinate(node.y);
+  }
   assertCollisionFree(nodes);
   return { nodes, edges };
 }
@@ -223,5 +231,10 @@ export function skillWebEdgePath(edge: GraphEdge) {
     x: edge.to.x - dx * bend,
     y: edge.to.y - dy * bend,
   };
-  return `M ${edge.from.x} ${edge.from.y} C ${control1.x} ${control1.y}, ${control2.x} ${control2.y}, ${edge.to.x} ${edge.to.y}`;
+  return [
+    `M ${roundCoordinate(edge.from.x)} ${roundCoordinate(edge.from.y)}`,
+    `C ${roundCoordinate(control1.x)} ${roundCoordinate(control1.y)},`,
+    `${roundCoordinate(control2.x)} ${roundCoordinate(control2.y)},`,
+    `${roundCoordinate(edge.to.x)} ${roundCoordinate(edge.to.y)}`,
+  ].join(" ");
 }
