@@ -135,6 +135,82 @@ export interface ResumeInternship {
   highlights: string[];
 }
 
+/* ── CV ────────────────────────────────────────────────────────────────────
+ * The /cv route is the long form of /resume: every role, project, and skill
+ * in the portfolio, flattened into one serializable structure so the HTML
+ * page and the client-side PDF renderer read from exactly the same data.
+ */
+
+export interface CvWorkItem {
+  title: string;
+  description: string;
+  kind?: string;
+  impact?: string;
+  technologies: string[];
+  projectTitle?: string;
+}
+
+export interface CvRole {
+  slug: string;
+  role: string;
+  company: string;
+  employmentType?: string;
+  period: string;
+  location?: string;
+  workMode?: string;
+  summary: string;
+  overview: string[];
+  workItems: CvWorkItem[];
+  highlights: string[];
+  technologies: string[];
+  lessonsLearned: string[];
+  recommendations: ExperienceRecommendation[];
+}
+
+export interface CvProject {
+  slug: string;
+  title: string;
+  role: string;
+  summary: string;
+  overview: string[];
+  problem?: string;
+  solution?: string;
+  features: string[];
+  highlights: string[];
+  outcomes: ProjectOutcome[];
+  technologies: string[];
+  repositoryUrl?: string;
+  liveUrl?: string;
+}
+
+export interface CvSkillGroup {
+  label: string;
+  skills: Array<{ name: string; shortDescription: string }>;
+}
+
+export interface CvData {
+  basics: {
+    name: string;
+    location: string;
+    phone: string;
+    email: string;
+    links: Array<{ label: string; url: string }>;
+  };
+  profile: string;
+  roles: CvRole[];
+  projects: CvProject[];
+  skillGroups: CvSkillGroup[];
+  education: {
+    degree: string;
+    institution: string;
+    period: string;
+    cgpa: string;
+  };
+  certifications: string[];
+  languages: string[];
+  strengths: string[];
+}
+
 export interface SkillCategoryContent {
   slug: string;
   label: string;

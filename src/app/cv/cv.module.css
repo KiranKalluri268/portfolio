@@ -1,0 +1,387 @@
+/* The CV is the long form of the resume: same paper metaphor and typography,
+   but it flows across several pages instead of being squeezed onto one. */
+
+.page {
+  min-height: 100svh;
+  overflow-x: auto;
+  background: #171717;
+  padding: 2rem 1rem;
+}
+
+.actions {
+  box-sizing: border-box;
+  display: flex;
+  width: min(210mm, 100%);
+  margin: 0 auto 1rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.actionCopy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
+}
+
+.cvNote {
+  max-width: 34rem;
+  margin: 0;
+  color: #b7b7b7;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.cvNote a {
+  color: #93c5fd;
+  text-underline-offset: 2px;
+}
+
+.backLink {
+  flex: 0 0 auto;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #e5e5e5;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.backLink:hover {
+  color: #60a5fa;
+}
+
+.paper {
+  box-sizing: border-box;
+  width: min(210mm, 100%);
+  margin: 0 auto;
+  padding: 12mm 13mm;
+  background: #fff;
+  color: #111;
+  box-shadow: 0 18px 55px rgb(0 0 0 / 45%);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.name {
+  margin: 0 0 2px;
+  font-size: 18pt;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.headline {
+  margin: 0 0 6px;
+  color: #444;
+  font-size: 11pt;
+  font-weight: 700;
+}
+
+.contactLine,
+.links,
+.paragraph,
+.education,
+.footerLine {
+  margin: 0;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 5px;
+  margin-top: 2px;
+}
+
+.links a {
+  color: #005bbb;
+  text-decoration: underline;
+  text-underline-offset: 1px;
+}
+
+.contactLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.separator {
+  color: #666;
+}
+
+.section {
+  margin-top: 14px;
+  /* Keep a heading with at least the start of its content when printing. */
+  break-inside: auto;
+}
+
+.sectionTitle {
+  margin: 0 0 6px;
+  border-bottom: 1.5px solid #333;
+  padding-bottom: 3px;
+  font-size: 12pt;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  break-after: avoid;
+}
+
+.entry {
+  margin-top: 10px;
+  break-inside: avoid;
+}
+
+.entryHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0 10px;
+}
+
+.entryTitle {
+  margin: 0;
+  font-size: 11pt;
+  font-weight: 700;
+}
+
+.entryMeta {
+  color: #444;
+  font-size: 9.5pt;
+  font-style: italic;
+  white-space: nowrap;
+}
+
+.entrySubtitle {
+  margin: 1px 0 0;
+  color: #333;
+  font-size: 10pt;
+  font-weight: 700;
+}
+
+.summary {
+  margin: 4px 0 0;
+}
+
+.paragraph + .paragraph {
+  margin-top: 5px;
+}
+
+.subheading {
+  margin: 8px 0 3px;
+  font-size: 10pt;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #333;
+}
+
+.workItem {
+  margin-top: 7px;
+  border-left: 2px solid #d4d4d4;
+  padding-left: 9px;
+  break-inside: avoid;
+}
+
+.workItemTitle {
+  margin: 0;
+  font-size: 10.5pt;
+  font-weight: 700;
+}
+
+.kind {
+  margin-left: 6px;
+  border: 0.6px solid #999;
+  border-radius: 8px;
+  padding: 0 5px;
+  color: #444;
+  font-size: 7.5pt;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.workItemBody {
+  margin: 2px 0 0;
+}
+
+.impact {
+  margin: 3px 0 0;
+  color: #333;
+}
+
+.techLine {
+  margin: 3px 0 0;
+  color: #444;
+  font-size: 9.5pt;
+}
+
+.techLabel {
+  font-weight: 700;
+}
+
+.list {
+  margin: 4px 0 0 0;
+  padding-left: 17px;
+}
+
+.list li {
+  margin-bottom: 2px;
+  padding-left: 2px;
+}
+
+.quote {
+  margin: 8px 0 0;
+  border-left: 2.5px solid #999;
+  padding: 2px 0 2px 11px;
+  break-inside: avoid;
+}
+
+.quote p {
+  margin: 0;
+  font-style: italic;
+}
+
+.quote p + p {
+  margin-top: 4px;
+}
+
+.quoteAttribution {
+  margin: 5px 0 0;
+  font-size: 9.5pt;
+  font-style: normal;
+  color: #333;
+}
+
+.quoteAuthor {
+  font-weight: 700;
+}
+
+.skillGroup {
+  margin-top: 5px;
+}
+
+.skillLabel {
+  font-weight: 700;
+}
+
+.footer {
+  margin-top: 14px;
+  border-top: 1px solid #999;
+  padding-top: 5px;
+}
+
+.footerLabel {
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 0;
+  }
+
+  .actions {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    margin: 0;
+    padding: 0.75rem max(0.75rem, env(safe-area-inset-right)) 0.75rem max(0.75rem, env(safe-area-inset-left));
+    align-items: flex-start;
+    flex-wrap: nowrap;
+    gap: 0.75rem;
+    background: rgb(23 23 23 / 90%);
+    backdrop-filter: blur(8px);
+  }
+
+  .cvNote {
+    max-width: 13rem;
+    font-size: 0.65rem;
+    line-height: 1.35;
+  }
+
+  .actionCopy {
+    gap: 0.3rem;
+  }
+
+  .backLink {
+    font-size: 0.72rem;
+  }
+
+  .paper {
+    min-width: 100%;
+    padding: 1.25rem max(1rem, env(safe-area-inset-right)) 1.5rem max(1rem, env(safe-area-inset-left));
+    box-shadow: none;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .name {
+    font-size: 22px;
+  }
+
+  .headline {
+    font-size: 15px;
+  }
+
+  .sectionTitle {
+    font-size: 15px;
+  }
+
+  .entryTitle,
+  .workItemTitle {
+    font-size: 15px;
+  }
+
+  .entryMeta {
+    font-size: 12.5px;
+    white-space: normal;
+  }
+
+  .entrySubtitle,
+  .subheading,
+  .techLine,
+  .quoteAttribution {
+    font-size: 13px;
+  }
+
+  .contactLine,
+  .links,
+  .paragraph,
+  .education,
+  .footerLine {
+    overflow-wrap: anywhere;
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm 13mm;
+  }
+
+  .page {
+    min-height: auto;
+    overflow: visible;
+    padding: 0;
+    background: #fff;
+  }
+
+  .actions {
+    display: none;
+  }
+
+  .paper {
+    width: auto;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    print-color-adjust: exact;
+  }
+}
