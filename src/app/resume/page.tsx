@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import Link from "next/link";
 import resume from "@/data/resume.json";
 import BackNavigationButton from "@/components/BackNavigationButton";
 import { getResumeInternships } from "@/lib/content/experience";
@@ -38,7 +39,8 @@ export default function ResumePage() {
             ← Back to portfolio
           </BackNavigationButton>
           <p className={styles.resumeNote}>
-            This is not an embedded PDF. The resume is built from structured JSON and rendered as accessible HTML
+            This is not an embedded PDF. The resume is built from structured JSON and rendered as accessible HTML.
+            For the long form with every role and project, see the <Link href="/cv">CV</Link>.
           </p>
         </div>
         <DownloadResumeButton internships={internships} />
