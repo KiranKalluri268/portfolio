@@ -16,16 +16,16 @@
   "resumePeriod": "Aug 2025 – Jan 2026",
   "location": "Remote",
   "workMode": "Remote",
-  "summary": "Worked across four healthcare products as a forward deployed engineer — from voice-enabled prescriptions and cloud video for a C++ dental imaging system, to a desktop automation platform and a remote caregiving app.",
+  "summary": "Worked across four healthcare products as a forward deployed engineer — from voice-enabled prescriptions, to cloud video and live streaming written into a C++ desktop application, to a desktop automation platform and a remote caregiving app.",
   "highlights": [
     "Delivered features across four products, working directly with clients to implement them and optimize existing workflows.",
     "Built voice input and commands with the ElevenLabs and Bhashini APIs, and deployed the platform to AWS with GitHub Actions CI/CD and CloudWatch alerting.",
-    "Added AWS S3 video storage and AWS IVS live streaming to a C++ dental imaging application, and built the accompanying web application from scratch.",
+    "Worked inside a C++ desktop application to add AWS S3 video storage and AWS IVS live streaming, and built its companion Next.js web application from scratch.",
     "Built a mobile-driven desktop automation system and a caregiving platform with WebRTC consultations, Razorpay payments, and an admin dashboard."
   ],
   "overview": [
     "As a forward deployed engineer the work sat close to the client: gathering requirements directly, then implementing against them across the company's products.",
-    "It spanned four products and a wide range of the stack — a MERN prescription platform, a C++ dental imaging system with a web front end, a desktop automation tool, and a Next.js caregiving platform."
+    "It spanned four products and a wide range of the stack — a MERN prescription platform, a C++ desktop application for dental imaging with a Next.js front end, a desktop automation tool, and a Next.js caregiving platform."
   ],
   "workItems": [
     {
@@ -33,31 +33,64 @@
       "description": "A MERN web application implementing electronic prescriptions: creating new ones, converting existing records, and storing them securely. I implemented voice input and commands using the ElevenLabs and Bhashini APIs, then deployed the project to AWS — setting up the infrastructure through to CloudWatch alerts — with CI/CD through GitHub Actions.",
       "kind": "feature",
       "projectSlug": "digichikitsak",
-      "skills": ["react", "node-js", "express", "mongodb", "aws", "git"]
+      "skills": [
+        "react",
+        "node-js",
+        "express",
+        "mongodb",
+        "aws",
+        "git"
+      ]
     },
     {
       "title": "Elphie — cloud video and live streaming for dental imaging",
-      "description": "Elphie pairs a C++ application, which drives an intraoral camera and runs a caries-detection model, with a web application. My contribution was storing the camera feed in AWS S3 and adding live streaming through AWS IVS so a patient's family or dental students can watch an examination. I built the web application from scratch to show recordings and carry the live stream, with AWS Cognito authentication and appointment booking — a doctor selects a patient, streams live from the C++ app, and the recording is stored against that patient automatically before the diagnosis is written up.",
+      "description": "Elphie pairs a C++ desktop application, which drives an intraoral camera and runs a caries-detection model, with a web application. I worked inside the C++ application itself to upload the captured video to AWS S3 and publish a live stream through AWS IVS, so a patient's family or dental students can watch an examination as it happens. I also built the web application from scratch as a Next.js monolith to show recordings and carry the live stream, with AWS Cognito authentication and appointment booking — a doctor selects a patient, streams live from the C++ app, and the recording is stored against that patient automatically before the diagnosis is written up.",
       "kind": "infrastructure",
       "projectSlug": "elphie",
-      "skills": ["aws"]
+      "skills": [
+        "cpp",
+        "aws",
+        "next-js",
+        "react"
+      ]
     },
     {
       "title": "Axion — mobile-driven desktop automation",
       "description": "A desktop automation tool in three parts: a cloud relay, a mobile-first Next.js web application, and a Python desktop application. A user types a prompt or speaks into the web app, which creates a task and pushes it to the relay; the desktop app picks it up and executes it. Every step of the run is visible from the phone, and the user can steer the task midway.",
       "kind": "feature",
       "projectSlug": "axion",
-      "skills": ["next-js", "react", "python"]
+      "skills": [
+        "next-js",
+        "react",
+        "python"
+      ]
     },
     {
       "title": "HealthyMitra — remote caregiving platform",
       "description": "A Next.js monolith letting caregivers look after patients digitally through care circles, which users join as patient or caregiver. Caregivers book appointments and diagnostic reports for their patient and get instant updates from doctors and diagnostic centres; patients can reach doctors any time through chat with WebRTC audio and video calls. Users post updates to their circle with per-post visibility — everyone, caregivers only, doctors, or a selected few. I also implemented Razorpay payments and an admin dashboard covering the platform.",
       "kind": "feature",
       "projectSlug": "healthymitra",
-      "skills": ["next-js", "react", "webrtc", "razorpay"]
+      "skills": [
+        "next-js",
+        "react",
+        "webrtc",
+        "razorpay"
+      ]
     }
   ],
-  "skills": ["react", "next-js", "node-js", "express", "mongodb", "python", "webrtc", "razorpay", "aws", "git"],
+  "skills": [
+    "react",
+    "next-js",
+    "node-js",
+    "express",
+    "mongodb",
+    "python",
+    "cpp",
+    "webrtc",
+    "razorpay",
+    "aws",
+    "git"
+  ],
   "outcomes": [],
   "recommendations": [
     {

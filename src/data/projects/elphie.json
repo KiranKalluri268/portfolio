@@ -2,19 +2,24 @@
   "id": 8,
   "slug": "elphie",
   "title": "Elphie – Dental Imaging Capture and Live Streaming",
-  "summary": "A dental imaging system pairing a C++ application that drives an intraoral camera and detects caries with a web application I built from scratch for recorded video, live streaming, appointments, and diagnoses.",
+  "summary": "A dental imaging system pairing a C++ desktop application that drives an intraoral camera and detects caries with a Next.js web application I built from scratch for recorded video, live streaming, appointments, and diagnoses.",
   "status": "published",
   "featured": false,
   "showInProjectsSection": false,
   "projectsSectionOrder": 8,
-  "role": "Cloud video, live streaming, and web application development",
-  "skills": ["aws"],
+  "role": "C++ cloud video integration and web application development",
+  "skills": [
+    "cpp",
+    "aws",
+    "next-js",
+    "react"
+  ],
   "overview": [
     "Elphie combines a C++ desktop application and a web application. The C++ side controls an external intraoral camera, takes its feed, and runs a model that detects caries while the dentist examines the patient.",
-    "My contribution was everything around that feed: getting it into cloud storage, making it watchable live, and building the web application that presents it and ties it to patients and appointments."
+    "My contribution was everything around that feed. I worked inside the C++ application itself to get the video into cloud storage and to publish it as a live stream, then built the web application that presents it and ties it to patients and appointments."
   ],
   "problem": "The camera feed and its findings stayed on the capture machine, so recordings were not retained centrally and nobody outside the room — family members or dental students — could follow an examination.",
-  "solution": "Stored the video feed in AWS S3 and added live streaming through AWS IVS, then built a web application that plays back recordings, carries the live stream, and links each session to a patient record and diagnosis.",
+  "solution": "Wrote the cloud video path into the C++ application — uploading captured video to AWS S3 and publishing a live stream through AWS IVS — then built a Next.js web application that plays back recordings, carries the live stream, and links each session to a patient record and diagnosis.",
   "howItWorks": [
     {
       "title": "Capture and detection",
@@ -22,7 +27,7 @@
     },
     {
       "title": "Storage and streaming",
-      "description": "The feed is stored in AWS S3, and AWS IVS carries a live stream so a patient's family or dental students can watch the examination as it happens."
+      "description": "From inside the C++ application the feed is uploaded to AWS S3, and a live stream is published through AWS IVS so a patient's family or dental students can watch the examination as it happens."
     },
     {
       "title": "Patient-linked sessions",
@@ -35,19 +40,24 @@
   ],
   "buildingProcess": [
     {
-      "title": "Cloud video storage",
-      "description": "Added AWS S3 storage for the camera feed coming out of the C++ application."
+      "title": "Cloud video storage in the C++ application",
+      "description": "Worked in the existing C++ desktop codebase to upload the captured camera feed to AWS S3."
     },
     {
-      "title": "Live streaming",
-      "description": "Added a live streaming feature using AWS IVS so an examination can be watched remotely while it happens."
+      "title": "Live streaming from the desktop app",
+      "description": "Added AWS IVS live streaming, published from the C++ application, so an examination can be watched remotely while it happens."
     },
     {
-      "title": "Web application",
-      "description": "Built the web application from scratch to show recorded videos and carry the live stream, with AWS Cognito authentication, appointment booking, and diagnosis entry."
+      "title": "Next.js web application",
+      "description": "Built the web application from scratch as a Next.js monolith to show recorded videos and carry the live stream, with AWS Cognito authentication, appointment booking, and diagnosis entry."
     }
   ],
   "challenges": [
+    {
+      "challenge": "The cloud video work had to happen inside an existing C++ desktop application that was already driving camera hardware and running a detection model.",
+      "solution": "Read the existing native codebase carefully before changing it, then added the S3 upload and IVS publishing paths into it directly rather than trying to move video handling out to another process.",
+      "lesson": "Adding network calls to a native application makes failure handling a first-class concern, because there is no page reload to fall back on."
+    },
     {
       "challenge": "A live examination had to end up as a stored recording attached to the right patient, without adding manual filing steps for the dentist.",
       "solution": "Tied the flow together through the web application: the doctor picks the patient first, then streams from the C++ application, and the recording is stored with that patient's details automatically.",
@@ -55,26 +65,26 @@
     }
   ],
   "features": [
-    "Cloud storage of the intraoral camera feed in AWS S3",
-    "Live streaming of examinations through AWS IVS",
+    "Cloud storage of the intraoral camera feed in AWS S3, written into the C++ application",
+    "Live streaming of examinations through AWS IVS, published from the C++ application",
     "Video library and live stream playback in the web application",
     "AWS Cognito authentication",
     "Appointment booking",
     "Patient-linked recordings and diagnosis entry"
   ],
   "highlights": [
-    "Added AWS S3 storage and AWS IVS live streaming for an intraoral camera feed driven by a C++ application.",
-    "Built the accompanying web application from scratch, with AWS Cognito authentication, appointment booking, and diagnosis entry.",
+    "Worked inside a production C++ desktop application to add AWS S3 video storage and AWS IVS live streaming for an intraoral camera feed.",
+    "Built the companion web application from scratch as a Next.js monolith, with AWS Cognito authentication, appointment booking, and diagnosis entry.",
     "Connected live capture to patient records so streamed examinations are stored against the right patient automatically."
   ],
   "outcomes": [],
   "lessonsLearned": [
-    "How to bridge a native desktop application and a web application through cloud video services.",
+    "How to work inside an unfamiliar native C++ codebase and extend it with cloud services.",
     "How live streaming changes what a clinical tool can be used for, including teaching and family visibility."
   ],
   "gallery": [],
   "seo": {
     "title": "Elphie Project Case Study",
-    "description": "Dental imaging with AWS S3 video storage, AWS IVS live streaming, and a web application for recordings, appointments, and diagnoses."
+    "description": "Dental imaging with AWS S3 video storage and AWS IVS live streaming written into a C++ desktop application, plus a Next.js web app for recordings, appointments, and diagnoses."
   }
 }
