@@ -2,13 +2,20 @@
   "id": 10,
   "slug": "healthymitra",
   "title": "HealthyMitra – Care Circles for Remote Caregiving",
-  "summary": "A Next.js platform built around care circles, letting family caregivers book appointments and diagnostics for a patient, receive updates from doctors and labs, hold audio and video consultations, and share posts with per-post visibility.",
+  "summary": "A Next.js platform built around care circles, letting family caregivers book appointments and diagnostics for a patient, receive updates from doctors and labs, hold audio and video consultations, and share posts with per-post visibility — deployed on AWS ECS with automated CI/CD.",
   "status": "published",
   "featured": false,
   "showInProjectsSection": false,
   "projectsSectionOrder": 10,
-  "role": "Full-stack development",
-  "skills": ["next-js", "react", "webrtc", "razorpay"],
+  "role": "Full-stack development and cloud deployment",
+  "skills": [
+    "next-js",
+    "react",
+    "webrtc",
+    "razorpay",
+    "aws",
+    "git"
+  ],
   "overview": [
     "HealthyMitra is a Next.js monolith that makes it possible for caregivers — a son or daughter, for example — to look after a patient such as a parent digitally.",
     "It is organised around care circles. Every user has one, and users can join each other's circles as either a patient or a caregiver, which is what determines who can act on whose behalf."
@@ -31,6 +38,10 @@
     {
       "title": "Shared updates with controlled visibility",
       "description": "Users post updates into their care circle and set the audience per post: everyone in the circle, caregivers only, doctors, or a selected few."
+    },
+    {
+      "title": "Deployment",
+      "description": "The platform runs on AWS ECS, with GitHub Actions building and deploying it automatically."
     }
   ],
   "buildingProcess": [
@@ -45,6 +56,10 @@
     {
       "title": "Payments and administration",
       "description": "Implemented Razorpay payments and an admin dashboard that shows and controls everything in the platform."
+    },
+    {
+      "title": "Deployment and CI/CD",
+      "description": "Deployed the platform on AWS ECS and built a GitHub Actions pipeline so releases deploy automatically."
     }
   ],
   "challenges": [
@@ -61,12 +76,14 @@
     "Chat with doctors, including WebRTC audio and video calls",
     "Care circle posts with per-post visibility control",
     "Razorpay payments",
-    "Admin dashboard covering the whole platform"
+    "Admin dashboard covering the whole platform",
+    "Deployed on AWS ECS with GitHub Actions CI/CD"
   ],
   "highlights": [
     "Built a care-circle model letting caregivers act for their patients, book appointments and diagnostics, and receive instant updates from doctors and labs.",
     "Implemented a chat interface with WebRTC audio and video calling for doctor consultations.",
-    "Added per-post visibility control, Razorpay payments, and an admin dashboard covering the platform."
+    "Added per-post visibility control, Razorpay payments, and an admin dashboard covering the platform.",
+    "Deployed the platform on AWS ECS and implemented CI/CD with GitHub Actions."
   ],
   "outcomes": [],
   "lessonsLearned": [
@@ -76,6 +93,6 @@
   "gallery": [],
   "seo": {
     "title": "HealthyMitra Project Case Study",
-    "description": "A Next.js caregiving platform with care circles, appointment and diagnostics booking, WebRTC consultations, per-post visibility, and Razorpay payments."
+    "description": "A Next.js caregiving platform with care circles, appointment and diagnostics booking, WebRTC consultations, per-post visibility, and Razorpay payments, deployed on AWS ECS with GitHub Actions CI/CD."
   }
 }

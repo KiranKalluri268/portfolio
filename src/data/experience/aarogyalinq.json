@@ -70,14 +70,16 @@
     },
     {
       "title": "HealthyMitra — remote caregiving platform",
-      "description": "A Next.js monolith letting caregivers look after patients digitally through care circles, which users join as patient or caregiver. Caregivers book appointments and diagnostic reports for their patient and get instant updates from doctors and diagnostic centres; patients can reach doctors any time through chat with WebRTC audio and video calls. Users post updates to their circle with per-post visibility — everyone, caregivers only, doctors, or a selected few. I also implemented Razorpay payments and an admin dashboard covering the platform.",
+      "description": "A Next.js monolith letting caregivers look after patients digitally through care circles, which users join as patient or caregiver. Caregivers book appointments and diagnostic reports for their patient and get instant updates from doctors and diagnostic centres; patients can reach doctors any time through chat with WebRTC audio and video calls. Users post updates to their circle with per-post visibility — everyone, caregivers only, doctors, or a selected few. I also implemented Razorpay payments and an admin dashboard covering the platform, and deployed it on AWS ECS with CI/CD through GitHub Actions.",
       "kind": "feature",
       "projectSlug": "healthymitra",
       "skills": [
         "next-js",
         "react",
         "webrtc",
-        "razorpay"
+        "razorpay",
+        "aws",
+        "git"
       ]
     }
   ],
