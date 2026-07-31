@@ -33,7 +33,7 @@ A responsive, animated software engineering portfolio built with Next.js, React,
 | Contact delivery | Resend REST API through a Next.js route handler |
 | Icons | React Icons |
 | Deployment | Vercel |
-| Verification | ESLint, TypeScript through `next build`, GitHub Actions |
+| Verification | ESLint, TypeScript through `next build`, Vitest, GitHub Actions |
 
 ## Getting started
 
@@ -70,18 +70,33 @@ Never commit `.env.local` or expose `RESEND_API_KEY` through a `NEXT_PUBLIC_` va
 ## Commands
 
 ```bash
-npm run dev      # Start the Turbopack development server
-npm run lint     # Run ESLint across the repository
-npm run build    # Type-check and create an optimized production build
-npm run start    # Serve the completed production build
+npm run dev           # Start the Turbopack development server
+npm run lint          # Run ESLint across the repository
+npm run test          # Run the Vitest suite once
+npm run test:watch    # Run Vitest in watch mode
+npm run test:coverage # Run Vitest with a coverage report
+npm run build         # Type-check and create an optimized production build
+npm run start         # Serve the completed production build
 ```
 
 Recommended verification before committing:
 
 ```bash
 npm run lint
+npm run test
 npm run build
 ```
+
+## Testing
+
+Vitest and React Testing Library cover the parts of the codebase most likely to break silently:
+
+- `src/lib/content/*` — JSON content validation, sorting, filtering, and the project/skill relationship graph
+- `src/components/skills/skill-web-layout.ts` — the deterministic radial skill-graph layout and its collision-free guarantee
+- `src/app/api/contact/route.ts` — request validation, Resend delivery, and IP-based rate limiting
+- `src/components/Contact.tsx` — client-side form validation and submit/success/error states
+
+Tests run in a Node environment by default; component tests that need a DOM opt in with a `// @vitest-environment jsdom` docblock. GitHub Actions runs `npm run lint`, `npm run test`, and `npm run build` on every push and pull request to `main`.
 
 ## Application routes
 

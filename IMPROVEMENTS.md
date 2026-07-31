@@ -197,17 +197,17 @@ Document the actual project, including:
 - Contact form configuration
 - Accessibility and reduced-motion behavior
 
-### 21. Add automated tests and CI checks
+### 21. Add automated tests and CI checks — In progress
 
-At minimum, test:
+**Done:** Vitest is wired up with a Node environment by default and an opt-in jsdom environment for component tests. Coverage now includes content validation/sorting/relationships (`src/lib/content`), the skill-web radial layout and its collision-free guarantee (`src/components/skills/skill-web-layout.ts`), contact API validation/rate limiting/Resend delivery (`src/app/api/contact/route.ts`), and the contact form's client-side validation and submit/success/error states (`src/components/Contact.tsx`). GitHub Actions now runs `npm run lint`, `npm run test`, and `npm run build` on every push and pull request to `main`.
 
-- Scene navigation boundaries
-- Carousel boundaries
-- Contact form validation and submission states
+**Still missing:**
+
+- Scene/section navigation boundaries (Lenis + `SmoothScrollContext`)
+- Projects carousel boundaries
 - Keyboard navigation
 - Audio-disabled rendering
-
-CI should run type-checking, ESLint, production build, and accessibility/performance checks where practical.
+- Accessibility/performance checks in CI
 
 ### ~~22. Remove unused code and legacy context paths~~ — Completed (`SpaceBackground.tsx` intentionally retained)
 

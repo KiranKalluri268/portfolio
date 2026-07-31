@@ -39,8 +39,11 @@ Run:
 
 ```bash
 npm run lint
+npm run test
 npm run build
 ```
+
+Add or update Vitest coverage in `src/lib/content`, `src/components/skills/skill-web-layout.ts`, `src/app/api/contact/route.ts`, or `src/components/Contact.tsx` when you change their behavior.
 
 For visual changes, manually verify:
 

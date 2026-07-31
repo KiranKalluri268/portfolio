@@ -19,7 +19,7 @@ Complete the copy, semantic-date, and image-quality audits.
 ## Next
 
 1. Review the audited copy and experience dates on desktop and mobile.
-2. Add automated tests and strengthen CI.
+2. Extend automated test coverage to scene/carousel navigation, keyboard navigation, and audio-disabled rendering.
 3. Add production error monitoring and structured operational logging.
 
 ## Later
@@ -29,6 +29,7 @@ Complete the copy, semantic-date, and image-quality audits.
 
 ## Recently completed
 
+- Vitest test suite (content layer, skill-web layout, contact API, contact form) plus `npm run lint` and `npm run test` in CI
 - Comprehensive README and operational documentation
 - Responsive `/projects` case-study page backed by shared structured data
 - MIT code license and CC BY 4.0 content/design license
@@ -49,12 +50,14 @@ Complete the copy, semantic-date, and image-quality audits.
 Current branch verification:
 
 - `npm run lint` — Passed
+- `npm run test` — Passed (61 tests)
 - `npm run build` — Passed
 
 Before merging a feature branch:
 
 ```bash
 npm run lint
+npm run test
 npm run build
 ```
 
