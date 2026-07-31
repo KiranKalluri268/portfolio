@@ -59,6 +59,22 @@
   ],
   "skills": ["react", "next-js", "node-js", "express", "mongodb", "python", "webrtc", "razorpay", "aws", "git"],
   "outcomes": [],
+  "recommendations": [
+    {
+      "quote": [
+        "Saikiran was an exceptional Forward Deployed Engineer Intern during his time on our team at AarogyalinQ Private Limited. He demonstrated an impressive amount of autonomy, collaborating directly with enterprise clients and consistently delivered production-grade solutions.",
+        "He took complete ownership of engineering responsive voice-input workflows on our main website by successfully integrating the Bhashini and ElevenLabs conversational APIs, while also setting up the automated CI/CD pipelines for its deployment. Furthermore, he handled complex cross-functional integration by scaling infrastructure for our existing C++ desktop application, embedding AWS S3 for secure media asset storage and AWS IVS for low-latency live video streaming pipelines.",
+        "Saikiran is a sharp, algorithmic problem-solver who adapts rapidly to new technologies and would be a phenomenal asset to any high-velocity engineering team."
+      ],
+      "author": "Manik Sejwal",
+      "authorTitle": "An inventor working in behavioural science",
+      "relationship": "Managed Saikiran directly",
+      "dateLabel": "June 6, 2026",
+      "date": "2026-06-06",
+      "sourceUrl": "https://www.linkedin.com/in/saikiran-kalluri/details/recommendations/",
+      "sourceLabel": "View on LinkedIn"
+    }
+  ],
   "lessonsLearned": [
     "How working directly with clients changes the way requirements turn into implementation.",
     "How to move between very different stacks — MERN, C++ with cloud video, Python, and Next.js — inside one role.",

@@ -8,7 +8,9 @@
   "showInProjectsSection": false,
   "projectsSectionOrder": 6,
   "role": "Design, development, and deployment",
-  "skills": ["aws"],
+  "skills": [
+    "aws"
+  ],
   "overview": [
     "Aude's main application generates data for many clients, and the team had no single place to confirm that data was correct for all of them at once.",
     "I built a separate internal web application that talks directly to the database, checks the main app's output per client, and surfaces the results in one dashboard aimed squarely at the engineers who debug it."
@@ -44,18 +46,18 @@
     },
     {
       "title": "Deploying behind the existing authentication",
-      "description": "Deployed to AWS EC2 and served it from the same domain as the main application so it could reuse the existing PropelAuth session instead of introducing a second authentication system."
+      "description": "Deployed to AWS and served the app from the same origin as the main application so it could reuse the existing single sign-on instead of introducing a second authentication system."
     }
   ],
   "challenges": [
     {
-      "challenge": "Reusing the main product's PropelAuth authentication for a second, separately deployed application, which PropelAuth does not support natively.",
-      "solution": "Deployed the app on AWS EC2 and routed a dedicated path on the main application's existing load balancer to the new target group, so both applications are served from one domain and share the same session. The app checks for a valid session and redirects to the existing login UI when there is none.",
-      "lesson": "Sharing an origin can be a legitimate architectural answer to an authentication constraint, rather than reaching for a second identity system."
+      "challenge": "Reusing the main product's existing authentication for a second, separately deployed internal application.",
+      "solution": "Deployed the diagnostics app on AWS and served it from the same origin as the main application, so a signed-in engineer carries straight over and is sent to the existing login when they are not.",
+      "lesson": "Deployment topology can answer an authentication constraint that would otherwise call for a whole second identity system."
     },
     {
-      "challenge": "The dashboard exposes internal data, so being logged in is not sufficient authorization.",
-      "solution": "Layered a second check on top of the session: a user must belong to the organization and hold a specific role before the diagnostics app will serve them, keeping access limited to the intended engineers.",
+      "challenge": "The dashboard exposes internal data, so being signed in is not by itself sufficient authorization.",
+      "solution": "Layered an authorization check on top of the session so the app only serves authorized members of the engineering team.",
       "lesson": "Authentication and authorization are separate problems, and internal tooling needs both."
     }
   ],
@@ -64,22 +66,22 @@
     "Troubleshooting-first dashboard showing failures at a glance",
     "Deep linking so a specific investigation can be shared as a URL",
     "User's-eye UI view paired with the API response behind it",
-    "Role-restricted access on top of the existing single sign-on"
+    "Access limited to authorized team members on top of the existing single sign-on"
   ],
   "highlights": [
     "Built an internal diagnostics dashboard that verifies per-client data integrity straight from the database.",
     "Designed the interface for engineers: failures visible at a glance, deep-linkable investigations, and a user's-eye view paired with its API response.",
-    "Deployed on AWS EC2 behind the main application's existing load balancer so it reuses the existing single sign-on, with an additional role check restricting access."
+    "Deployed on AWS so it reuses the main product's existing single sign-on, with access restricted to authorized members of the engineering team."
   ],
   "outcomes": [],
   "lessonsLearned": [
     "How to design an interface around a debugging workflow instead of around the data model.",
     "That deep-linkable state turns an investigation into something a team can share and reproduce.",
-    "How routing and shared origins can solve an authentication constraint without adding a second identity system."
+    "How deployment topology can resolve an authentication constraint without adding a second identity system."
   ],
   "gallery": [],
   "seo": {
     "title": "Aude Diagnostics Dashboard Case Study",
-    "description": "An internal data-integrity dashboard with per-client checks, deep-linkable investigations, and single sign-on reuse behind a shared load balancer."
+    "description": "An internal data-integrity dashboard with per-client checks, deep-linkable investigations, and reuse of the product's existing single sign-on."
   }
 }

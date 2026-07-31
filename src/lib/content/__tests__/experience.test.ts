@@ -40,8 +40,46 @@ describe("getAllExperiences", () => {
       expect(Array.isArray(experience.workItems)).toBe(true);
       expect(Array.isArray(experience.outcomes)).toBe(true);
       expect(Array.isArray(experience.lessonsLearned)).toBe(true);
+      expect(Array.isArray(experience.recommendations)).toBe(true);
       for (const item of experience.workItems) {
         expect(Array.isArray(item.skills)).toBe(true);
+      }
+    }
+  });
+});
+
+describe("recommendations", () => {
+  it("gives every recommendation an attributable author, title, and non-empty quote", () => {
+    for (const experience of getAllExperiences({ includeDrafts: true })) {
+      for (const recommendation of experience.recommendations) {
+        expect(recommendation.author.trim()).not.toBe("");
+        expect(recommendation.authorTitle.trim()).not.toBe("");
+        expect(recommendation.quote.length).toBeGreaterThan(0);
+        for (const paragraph of recommendation.quote) {
+          expect(paragraph.trim()).not.toBe("");
+        }
+      }
+    }
+  });
+
+  it("pairs a source link with a label so it never renders as a bare URL", () => {
+    for (const experience of getAllExperiences({ includeDrafts: true })) {
+      for (const recommendation of experience.recommendations) {
+        if (recommendation.sourceUrl) {
+          expect(recommendation.sourceUrl).toMatch(/^https?:\/\//);
+          expect(recommendation.sourceLabel?.trim()).toBeTruthy();
+        }
+      }
+    }
+  });
+
+  it("uses a machine-readable date whenever a date label is shown", () => {
+    for (const experience of getAllExperiences({ includeDrafts: true })) {
+      for (const recommendation of experience.recommendations) {
+        if (recommendation.date) {
+          expect(recommendation.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+          expect(recommendation.dateLabel?.trim()).toBeTruthy();
+        }
       }
     }
   });

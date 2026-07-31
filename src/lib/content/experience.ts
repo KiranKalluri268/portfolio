@@ -9,6 +9,7 @@ import {
 } from "./read-content";
 import type {
   ExperienceContent,
+  ExperienceRecommendation,
   ExperienceWorkItem,
   ResumeInternship,
 } from "./types";
@@ -42,6 +43,22 @@ function validateWorkItem(value: unknown, source: string): ExperienceWorkItem {
     ...(value as unknown as ExperienceWorkItem),
     skills: (value.skills as string[] | undefined) ?? [],
   };
+}
+
+function validateRecommendation(value: unknown, source: string): ExperienceRecommendation {
+  assertRecord(value, source);
+  assertStringArray(value.quote, "quote", source);
+  if ((value.quote as string[]).length === 0) {
+    throw new Error(`${source}: "quote" must contain at least one paragraph`);
+  }
+  assertString(value.author, "author", source);
+  assertString(value.authorTitle, "authorTitle", source);
+  // A link without a label renders as a bare URL, so require them together.
+  if (value.sourceUrl !== undefined) {
+    assertString(value.sourceUrl, "sourceUrl", source);
+    assertString(value.sourceLabel, "sourceLabel", source);
+  }
+  return value as unknown as ExperienceRecommendation;
 }
 
 function validateExperience(value: unknown, source: string): ExperienceContent {
@@ -86,6 +103,13 @@ function validateExperience(value: unknown, source: string): ExperienceContent {
     throw new Error(`${source}: "outcomes" must be an array`);
   }
 
+  if (value.recommendations !== undefined && !Array.isArray(value.recommendations)) {
+    throw new Error(`${source}: "recommendations" must be an array`);
+  }
+  const recommendations = ((value.recommendations as unknown[] | undefined) ?? []).map(
+    (item, index) => validateRecommendation(item, `${source}.recommendations[${index}]`),
+  );
+
   assertRecord(value.seo, `${source}.seo`);
   assertString(value.seo.title, "title", `${source}.seo`);
   assertString(value.seo.description, "description", `${source}.seo`);
@@ -98,6 +122,7 @@ function validateExperience(value: unknown, source: string): ExperienceContent {
     lessonsLearned: (value.lessonsLearned as string[] | undefined) ?? [],
     outcomes: (value.outcomes as ExperienceContent["outcomes"] | undefined) ?? [],
     workItems,
+    recommendations,
   };
 }
 

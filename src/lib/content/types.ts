@@ -81,6 +81,22 @@ export interface ExperienceWorkItem {
   projectSlug?: string;
 }
 
+/** A recommendation written by someone who managed the role. Quoted verbatim;
+ *  `quote` holds one entry per paragraph. */
+export interface ExperienceRecommendation {
+  quote: string[];
+  author: string;
+  authorTitle: string;
+  /** e.g. "Managed Saikiran directly" */
+  relationship?: string;
+  dateLabel?: string;
+  /** Machine-readable form of dateLabel, e.g. "2026-06-11". */
+  date?: string;
+  /** Where the recommendation can be read in its original context. */
+  sourceUrl?: string;
+  sourceLabel?: string;
+}
+
 export interface ExperienceContent {
   slug: string;
   role: string;
@@ -106,6 +122,7 @@ export interface ExperienceContent {
   skills: string[];
   outcomes: ProjectOutcome[];
   lessonsLearned: string[];
+  recommendations: ExperienceRecommendation[];
   seo: ContentSeo;
 }
 

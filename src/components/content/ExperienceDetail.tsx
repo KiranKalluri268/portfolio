@@ -3,6 +3,7 @@ import BackNavigationButton from "@/components/BackNavigationButton";
 import SkillLink from "./SkillLink";
 import type {
   ExperienceContent,
+  ExperienceRecommendation,
   ExperienceWorkItem,
   ProjectContent,
   SkillContent,
@@ -130,6 +131,55 @@ function WorkTimeline({
   );
 }
 
+/** A recommendation from someone who managed the role, quoted verbatim. */
+function Recommendation({ recommendation }: { recommendation: ExperienceRecommendation }) {
+  return (
+    <figure className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] p-6 sm:p-8">
+      <span
+        className="pointer-events-none absolute -top-6 left-4 select-none font-serif text-8xl leading-none text-accent/15"
+        aria-hidden="true"
+      >
+        &ldquo;
+      </span>
+
+      <blockquote className="relative space-y-4 text-base leading-relaxed text-gray-200 sm:text-lg">
+        {recommendation.quote.map((paragraph) => (
+          <p key={paragraph}>{paragraph}</p>
+        ))}
+      </blockquote>
+
+      <figcaption className="mt-6 border-t border-white/10 pt-5">
+        <span className="block font-semibold text-white">{recommendation.author}</span>
+        <span className="mt-1 block text-sm text-accent-soft">{recommendation.authorTitle}</span>
+        <span className="mt-2 block text-xs uppercase tracking-wider text-gray-500">
+          {recommendation.relationship}
+          {recommendation.relationship && recommendation.dateLabel && (
+            <span aria-hidden="true"> · </span>
+          )}
+          {recommendation.dateLabel && (
+            recommendation.date ? (
+              <time dateTime={recommendation.date}>{recommendation.dateLabel}</time>
+            ) : (
+              recommendation.dateLabel
+            )
+          )}
+        </span>
+        {recommendation.sourceUrl && (
+          <a
+            href={recommendation.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-flex items-center gap-1.5 rounded text-sm font-semibold text-blue-300 underline underline-offset-4 transition-colors hover:text-blue-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-400"
+          >
+            {recommendation.sourceLabel}
+            <span aria-hidden="true">↗</span>
+          </a>
+        )}
+      </figcaption>
+    </figure>
+  );
+}
+
 export default function ExperienceDetail({
   experience,
   skills,
@@ -222,6 +272,20 @@ export default function ExperienceDetail({
                 skillsBySlug={skillsBySlug}
                 projectsBySlug={projectsBySlug}
               />
+            </Section>
+          )}
+
+          {experience.recommendations.length > 0 && (
+            <Section
+              title={
+                experience.recommendations.length === 1 ? "Recommendation" : "Recommendations"
+              }
+            >
+              <div className="space-y-6">
+                {experience.recommendations.map((recommendation) => (
+                  <Recommendation key={recommendation.author} recommendation={recommendation} />
+                ))}
+              </div>
             </Section>
           )}
 
