@@ -4,6 +4,7 @@ import Link from "next/link";
 import BackNavigationButton from "@/components/BackNavigationButton";
 import { getCvData } from "@/lib/content/cv";
 import type { CvProject, CvRole } from "@/lib/content/types";
+import DownloadCvButton from "./DownloadCvButton";
 import styles from "./cv.module.css";
 
 export const metadata: Metadata = {
@@ -206,6 +207,7 @@ export default function CvPage() {
             <Link href="/resume">résumé</Link>.
           </p>
         </div>
+        <DownloadCvButton cv={cv} />
       </div>
 
       <article className={styles.paper} aria-label={`${cv.basics.name} curriculum vitae`}>
