@@ -55,4 +55,28 @@ describe("getHomepageProjects", () => {
       expect(project.showInProjectsSection).toBe(true);
     }
   });
+
+  it("gives every carousel project an image, since the carousel is image-led", () => {
+    for (const project of getHomepageProjects()) {
+      expect(project.image).toBeTruthy();
+    }
+  });
+});
+
+describe("project imagery", () => {
+  it("allows a project to omit its screenshot", () => {
+    // Client and internal work often has nothing shareable to show; the UI
+    // falls back to a generated monogram panel instead.
+    const projects = getAllProjects({ includeDrafts: true });
+    expect(projects.some((project) => !project.image)).toBe(true);
+  });
+
+  it("requires alt text whenever an image is present", () => {
+    for (const project of getAllProjects({ includeDrafts: true })) {
+      if (project.image) {
+        expect(typeof project.imageAlt).toBe("string");
+        expect(project.imageAlt?.trim()).not.toBe("");
+      }
+    }
+  });
 });

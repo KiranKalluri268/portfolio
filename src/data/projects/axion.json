@@ -1,0 +1,79 @@
+{
+  "id": 9,
+  "slug": "axion",
+  "title": "Axion – Mobile-Driven Desktop Automation",
+  "summary": "A three-part automation system that lets a user drive and automate their desktop from their phone: a mobile-first Next.js web app, a cloud relay, and a Python desktop agent, with live step-by-step visibility and mid-run steering.",
+  "status": "published",
+  "featured": false,
+  "showInProjectsSection": false,
+  "projectsSectionOrder": 9,
+  "role": "Full-stack development",
+  "skills": ["next-js", "react", "python"],
+  "overview": [
+    "Axion lets someone control and automate their desktop from their phone. It is built from three pieces: a mobile-first Next.js web application, a cloud relay, and a Python desktop application.",
+    "The user types a prompt or speaks into the web app; that becomes a task which travels through the relay to the desktop agent, which carries it out."
+  ],
+  "problem": "Desktop automation normally has to be set up and watched at the desktop itself, which is exactly where the user is not when they want it to run.",
+  "solution": "Split the system so intent is captured on the phone, transport is handled by a cloud relay, and execution stays on the desktop — with each step streamed back so the user can follow along and intervene.",
+  "howItWorks": [
+    {
+      "title": "Task creation on mobile",
+      "description": "The user types a prompt or uses voice input in the mobile-first web application, which creates a task."
+    },
+    {
+      "title": "Cloud relay",
+      "description": "The task is pushed to a cloud relay that sits between the phone and the desktop."
+    },
+    {
+      "title": "Desktop execution",
+      "description": "The Python desktop application picks the task up from the relay and executes it on the machine."
+    },
+    {
+      "title": "Watch and steer",
+      "description": "Every step of the run is visible from the phone, and the user can steer the task midway instead of only seeing the final result."
+    }
+  ],
+  "buildingProcess": [
+    {
+      "title": "Mobile-first web application",
+      "description": "Built the Next.js web application around prompt and voice entry on a phone, and around following a run in progress."
+    },
+    {
+      "title": "Cloud relay",
+      "description": "Built the relay that carries tasks from the web application to the desktop agent."
+    },
+    {
+      "title": "Python desktop agent",
+      "description": "Built the desktop application that receives tasks and automates actions on the machine."
+    }
+  ],
+  "challenges": [
+    {
+      "challenge": "An automated run that the user cannot see or correct is difficult to trust.",
+      "solution": "Streamed each step back to the phone and allowed the user to steer the task while it is still running.",
+      "lesson": "Visibility and the ability to intervene matter as much as the automation itself."
+    }
+  ],
+  "features": [
+    "Prompt and voice task entry from a mobile-first web app",
+    "Cloud relay between phone and desktop",
+    "Python desktop agent that executes tasks",
+    "Step-by-step visibility of a running task",
+    "Mid-run steering"
+  ],
+  "highlights": [
+    "Built a three-part system — mobile-first Next.js web app, cloud relay, and Python desktop agent — for driving desktop automation from a phone.",
+    "Turned prompt or voice input into tasks that are relayed to the desktop and executed there.",
+    "Streamed every step of a run back to the phone and allowed the user to steer the task midway."
+  ],
+  "outcomes": [],
+  "lessonsLearned": [
+    "How to design a system that spans a phone, a relay, and a desktop agent without any of them being able to assume the others are reachable.",
+    "That keeping a human able to intervene mid-run is a design requirement for automation, not an extra."
+  ],
+  "gallery": [],
+  "seo": {
+    "title": "Axion Project Case Study",
+    "description": "Mobile-driven desktop automation built from a Next.js web app, a cloud relay, and a Python desktop agent with live step visibility and mid-run steering."
+  }
+}

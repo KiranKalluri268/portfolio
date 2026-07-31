@@ -36,8 +36,10 @@ export interface ProjectContent {
   featured: boolean;
   showInProjectsSection: boolean;
   projectsSectionOrder: number;
-  image: string;
-  imageAlt: string;
+  /** Optional: internal and client work often has no shareable screenshot, in
+   *  which case the UI falls back to a generated monogram panel. */
+  image?: string;
+  imageAlt?: string;
   role: string;
   year?: number;
   repositoryUrl?: string;

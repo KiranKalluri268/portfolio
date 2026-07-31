@@ -9,6 +9,10 @@ export default function SkillLink({
   skill: SkillContent;
   className?: string;
 }) {
+  const candidate = skill.iconText ?? skill.name.slice(0, 2);
+  const monogram =
+    candidate.toLowerCase() === skill.name.toLowerCase() ? null : candidate;
+
   return (
     <Link
       href={`/skills/${skill.slug}`}
@@ -17,9 +21,13 @@ export default function SkillLink({
       {skill.icon ? (
         <Image src={skill.icon} alt="" width={20} height={20} className="h-5 w-5 object-contain" />
       ) : (
-        <span className="flex h-5 min-w-5 items-center justify-center text-[0.65rem] font-bold" aria-hidden="true">
-          {skill.iconText ?? skill.name.slice(0, 2)}
-        </span>
+        // The monogram stands in for a missing icon, so it is dropped when it
+        // would just repeat the name it sits next to ("AWS AWS", "Git Git").
+        monogram !== null && (
+          <span className="flex h-5 min-w-5 items-center justify-center text-[0.65rem] font-bold" aria-hidden="true">
+            {monogram}
+          </span>
+        )
       )}
       <span>{skill.name}</span>
     </Link>

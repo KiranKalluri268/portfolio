@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import BackNavigationButton from "@/components/BackNavigationButton";
+import ProjectThumbnail from "./ProjectThumbnail";
 import SkillLink from "./SkillLink";
 import type { ProjectContent, SkillContent } from "@/lib/content/types";
 
@@ -82,14 +82,10 @@ export default function ProjectDetail({
         </header>
 
         <div className="relative aspect-[16/9] overflow-hidden rounded-3xl border border-white/10 bg-black/60 shadow-2xl">
-          <Image
-            src={project.image}
-            alt={project.imageAlt}
-            fill
+          <ProjectThumbnail
+            project={project}
             priority
-            quality={90}
             sizes="(max-width: 1200px) calc(100vw - 2rem), 1152px"
-            className="object-cover"
           />
         </div>
 

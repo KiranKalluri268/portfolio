@@ -24,7 +24,9 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
       title: project.seo.title,
       description: project.seo.description,
       url: `/projects/${project.slug}`,
-      images: [{ url: project.image, alt: project.imageAlt }],
+      ...(project.image
+        ? { images: [{ url: project.image, alt: project.imageAlt ?? "" }] }
+        : {}),
     },
   };
 }

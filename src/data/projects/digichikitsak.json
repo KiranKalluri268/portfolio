@@ -1,0 +1,69 @@
+{
+  "id": 7,
+  "slug": "digichikitsak",
+  "title": "Digichikitsak – Digital Prescription Platform",
+  "summary": "A MERN platform for electronic prescriptions that creates new ones, converts existing records, and stores them securely, with multilingual voice input and full AWS deployment.",
+  "status": "published",
+  "featured": false,
+  "showInProjectsSection": false,
+  "projectsSectionOrder": 7,
+  "role": "Feature development and cloud deployment",
+  "skills": ["react", "node-js", "express", "mongodb", "aws", "git"],
+  "overview": [
+    "Digichikitsak is a MERN web application built around electronic prescriptions: creating new ones, converting existing records into digital form, and storing them securely.",
+    "My work covered two areas — making the application usable by voice, and taking it to production on AWS."
+  ],
+  "problem": "Prescription workflows are typing-heavy and time-consuming for clinicians, and the application needed a reliable path to production.",
+  "solution": "Added voice input and voice commands so the application can be driven by speech, and set up the AWS infrastructure and automated deployment pipeline behind it.",
+  "howItWorks": [
+    {
+      "title": "Digital prescriptions",
+      "description": "The platform creates new electronic prescriptions, converts existing records into digital form, and stores them securely."
+    },
+    {
+      "title": "Voice input and commands",
+      "description": "Speech is handled through the ElevenLabs and Bhashini APIs, letting clinicians dictate and issue commands instead of typing."
+    },
+    {
+      "title": "Automated deployment",
+      "description": "GitHub Actions builds and deploys to AWS, with CloudWatch alerts reporting on the running system."
+    }
+  ],
+  "buildingProcess": [
+    {
+      "title": "Voice integration",
+      "description": "Integrated the ElevenLabs and Bhashini APIs to add voice input and voice commands to the application."
+    },
+    {
+      "title": "Infrastructure setup",
+      "description": "Set up the AWS infrastructure for the project from scratch, through to configuring CloudWatch alerts."
+    },
+    {
+      "title": "CI/CD",
+      "description": "Built a GitHub Actions pipeline so deployments to AWS run automatically."
+    }
+  ],
+  "challenges": [],
+  "features": [
+    "Electronic prescription creation and digital conversion",
+    "Secure prescription storage",
+    "Voice input and voice commands via ElevenLabs and Bhashini",
+    "AWS infrastructure with CloudWatch alerting",
+    "Automated deployment through GitHub Actions"
+  ],
+  "highlights": [
+    "Integrated voice input and voice commands using the ElevenLabs and Bhashini APIs.",
+    "Set up the project's AWS infrastructure end to end, including CloudWatch alerts.",
+    "Built a GitHub Actions CI/CD pipeline for automated deployment."
+  ],
+  "outcomes": [],
+  "lessonsLearned": [
+    "How speech interfaces change the design of a data-entry-heavy clinical workflow.",
+    "How to take a project from local development to monitored production infrastructure."
+  ],
+  "gallery": [],
+  "seo": {
+    "title": "Digichikitsak Project Case Study",
+    "description": "A MERN electronic prescription platform with ElevenLabs and Bhashini voice input, deployed to AWS with GitHub Actions CI/CD and CloudWatch alerting."
+  }
+}

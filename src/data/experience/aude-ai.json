@@ -15,41 +15,54 @@
   "resumePeriod": "Jan 2026 – Present",
   "location": "Remote",
   "workMode": "Remote",
-  "summary": "Building a diagnostic web application that monitors real-time data integrity and surfaces system health across the tools the team already uses.",
+  "summary": "Building internal tooling for Aude: a diagnostics dashboard that verifies the main product is producing correct data for every client, deployed behind the existing single sign-on.",
   "highlights": [
-    "Designed and developed a diagnostic web application for monitoring real-time data integrity and consistent end-user delivery.",
-    "Engineered an end-to-end feedback mechanism that aggregates user input and visualizes it in the diagnostic dashboard.",
-    "Integrated GitHub, Jira, and Slack data sources to automate performance and system-health tracking."
+    "Built an internal diagnostics web application that reads directly from the database and verifies per-client data integrity for the main product.",
+    "Designed the dashboard for troubleshooting, with failures visible at a glance, deep-linkable investigations, and a user's-eye UI view paired with its API response.",
+    "Deployed on AWS EC2 behind the main application's existing load balancer to reuse its single sign-on, with an additional role check restricting access.",
+    "Proposed and shipped skeleton loading states, now in production."
   ],
   "overview": [
-    "Aude.ai needed visibility into whether data reaching end users stayed accurate and complete as it moved through the system.",
-    "The work centred on a diagnostic dashboard that brings monitoring, user feedback, and cross-platform health metrics into one place."
+    "The internship started with the existing Aude web application — exploring it, then finding and fixing bugs, mostly on the UI.",
+    "That grew into building and deploying a separate internal diagnostics tool for the engineering team, and contributing to the product's UX discussions."
   ],
   "workItems": [
     {
-      "title": "Diagnostic web application",
-      "description": "Designed and developed a diagnostic web application for monitoring real-time data integrity and consistent end-user delivery.",
-      "kind": "feature",
+      "title": "Product onboarding and UI bug fixes",
+      "description": "Explored the existing Aude web application and fixed bugs across it, mostly on the UI. This built up the familiarity with the product's data flows that the diagnostics work depended on later.",
+      "kind": "improvement",
       "skills": []
     },
     {
-      "title": "End-to-end feedback mechanism",
-      "description": "Engineered a feedback mechanism that aggregates user input and visualizes it within the diagnostic dashboard, shortening the debugging and product upgrade cycle for the development team.",
+      "title": "Internal diagnostics dashboard",
+      "description": "Built a separate web application that talks directly to the database, checks whether the main app is generating correct data for every client, and shows the state of all of them in one dashboard. The interface is built for the engineers who debug it: what is not working is visible at a glance, an investigation can be deep-linked and shared as a URL, and a user's-eye view shows the UI as the user sees it next to the API response behind it.",
       "kind": "feature",
+      "projectSlug": "aude-diagnostics",
       "skills": []
     },
     {
-      "title": "Cross-platform data source integrations",
-      "description": "Integrated GitHub, Jira, and Slack data sources to automate the tracking of performance and system-health metrics.",
-      "kind": "integration",
+      "title": "Deployment behind the existing single sign-on",
+      "description": "Deployed the diagnostics app to AWS EC2 and routed its path on the main application's existing load balancer to a separate target group, so both apps share a domain and therefore the existing PropelAuth session — something PropelAuth does not support natively for two applications. The app redirects to the existing login when there is no session, and additionally requires organization membership and a specific role before granting access.",
+      "kind": "infrastructure",
+      "projectSlug": "aude-diagnostics",
+      "skills": ["aws"]
+    },
+    {
+      "title": "Skeleton loading states",
+      "description": "Took part in UX improvement discussions and proposed skeleton loading for the app, which had no loading view. The proposal was approved, I implemented it, and it is now in production.",
+      "kind": "improvement",
       "skills": []
     }
   ],
-  "skills": [],
+  "skills": ["aws"],
   "outcomes": [],
-  "lessonsLearned": [],
+  "lessonsLearned": [
+    "How to design an internal tool around a debugging workflow rather than around the data model.",
+    "That sharing an origin can resolve an authentication constraint without introducing a second identity system.",
+    "That a well-argued UX proposal can go from discussion to production as an intern."
+  ],
   "seo": {
     "title": "Software Engineer Intern at Aude.ai",
-    "description": "Building a diagnostic web application for real-time data integrity monitoring, user feedback aggregation, and automated system-health tracking."
+    "description": "Building an internal data-integrity diagnostics dashboard, deploying it behind existing single sign-on on AWS, and shipping UX improvements."
   }
 }

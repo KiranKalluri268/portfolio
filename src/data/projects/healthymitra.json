@@ -1,0 +1,81 @@
+{
+  "id": 10,
+  "slug": "healthymitra",
+  "title": "HealthyMitra – Care Circles for Remote Caregiving",
+  "summary": "A Next.js platform built around care circles, letting family caregivers book appointments and diagnostics for a patient, receive updates from doctors and labs, hold audio and video consultations, and share posts with per-post visibility.",
+  "status": "published",
+  "featured": false,
+  "showInProjectsSection": false,
+  "projectsSectionOrder": 10,
+  "role": "Full-stack development",
+  "skills": ["next-js", "react", "webrtc", "razorpay"],
+  "overview": [
+    "HealthyMitra is a Next.js monolith that makes it possible for caregivers — a son or daughter, for example — to look after a patient such as a parent digitally.",
+    "It is organised around care circles. Every user has one, and users can join each other's circles as either a patient or a caregiver, which is what determines who can act on whose behalf."
+  ],
+  "problem": "Caring for a family member remotely means coordinating appointments, reports, doctors, and updates across people who are not in the same place, with no shared place to hold any of it.",
+  "solution": "A care circle that ties a patient, their caregivers, and their doctors together, so bookings, updates, consultations, and shared posts all happen in one context with explicit control over who sees what.",
+  "howItWorks": [
+    {
+      "title": "Care circles",
+      "description": "Every user has a care circle. Users join each other's circles as a patient or as a caregiver, which establishes who can act for whom."
+    },
+    {
+      "title": "Booking on behalf of a patient",
+      "description": "Caregivers book appointments and diagnostic reports for their patient, and receive instant updates from doctors and diagnostic centres."
+    },
+    {
+      "title": "Talking to a doctor",
+      "description": "Patients can reach doctors at any time through a chat interface that also supports audio and video calls over WebRTC."
+    },
+    {
+      "title": "Shared updates with controlled visibility",
+      "description": "Users post updates into their care circle and set the audience per post: everyone in the circle, caregivers only, doctors, or a selected few."
+    }
+  ],
+  "buildingProcess": [
+    {
+      "title": "Care circle model",
+      "description": "Built the care circle as the core structure, with patient and caregiver roles determining what each member can do."
+    },
+    {
+      "title": "Consultations",
+      "description": "Built the chat interface and added WebRTC audio and video calling for consultations."
+    },
+    {
+      "title": "Payments and administration",
+      "description": "Implemented Razorpay payments and an admin dashboard that shows and controls everything in the platform."
+    }
+  ],
+  "challenges": [
+    {
+      "challenge": "Health updates shared in a family context are not uniformly sensitive — some are for everyone in the circle, some only for caregivers or doctors.",
+      "solution": "Made visibility a per-post choice, letting the author target everyone in the care circle, caregivers only, doctors, or a selected few.",
+      "lesson": "When content is personal, per-item visibility is more honest than a single circle-wide setting."
+    }
+  ],
+  "features": [
+    "Care circles with patient and caregiver roles",
+    "Appointment and diagnostic report booking on behalf of a patient",
+    "Instant updates from doctors and diagnostic centres",
+    "Chat with doctors, including WebRTC audio and video calls",
+    "Care circle posts with per-post visibility control",
+    "Razorpay payments",
+    "Admin dashboard covering the whole platform"
+  ],
+  "highlights": [
+    "Built a care-circle model letting caregivers act for their patients, book appointments and diagnostics, and receive instant updates from doctors and labs.",
+    "Implemented a chat interface with WebRTC audio and video calling for doctor consultations.",
+    "Added per-post visibility control, Razorpay payments, and an admin dashboard covering the platform."
+  ],
+  "outcomes": [],
+  "lessonsLearned": [
+    "How role structure inside a care circle drives nearly every permission decision in the product.",
+    "That privacy controls in a health context need to be granular enough to match how families actually share."
+  ],
+  "gallery": [],
+  "seo": {
+    "title": "HealthyMitra Project Case Study",
+    "description": "A Next.js caregiving platform with care circles, appointment and diagnostics booking, WebRTC consultations, per-post visibility, and Razorpay payments."
+  }
+}

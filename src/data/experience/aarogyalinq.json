@@ -16,41 +16,56 @@
   "resumePeriod": "Aug 2025 – Jan 2026",
   "location": "Remote",
   "workMode": "Remote",
-  "summary": "Worked directly with clients to ship features across a web application and a C++ application, adding multilingual voice input and cloud video capability.",
+  "summary": "Worked across four healthcare products as a forward deployed engineer — from voice-enabled prescriptions and cloud video for a C++ dental imaging system, to a desktop automation platform and a remote caregiving app.",
   "highlights": [
-    "Collaborated with clients to implement new features and optimize existing workflows.",
-    "Integrated voice input and commands using the Bhashini and ElevenLabs APIs.",
-    "Added AWS S3 video storage and AWS IVS live streaming to a C++ application."
+    "Delivered features across four products, working directly with clients to implement them and optimize existing workflows.",
+    "Built voice input and commands with the ElevenLabs and Bhashini APIs, and deployed the platform to AWS with GitHub Actions CI/CD and CloudWatch alerting.",
+    "Added AWS S3 video storage and AWS IVS live streaming to a C++ dental imaging application, and built the accompanying web application from scratch.",
+    "Built a mobile-driven desktop automation system and a caregiving platform with WebRTC consultations, Razorpay payments, and an admin dashboard."
   ],
   "overview": [
-    "As a forward deployed engineer, the work sat close to the client: gathering requirements directly, then implementing against them across the company's products.",
-    "The role spanned two codebases — a web application that gained voice interaction, and a C++ application that gained cloud video storage and live streaming."
+    "As a forward deployed engineer the work sat close to the client: gathering requirements directly, then implementing against them across the company's products.",
+    "It spanned four products and a wide range of the stack — a MERN prescription platform, a C++ dental imaging system with a web front end, a desktop automation tool, and a Next.js caregiving platform."
   ],
   "workItems": [
     {
-      "title": "Client feature delivery and workflow optimization",
-      "description": "Collaborated directly with clients to implement new features and optimize existing workflows.",
+      "title": "Digichikitsak — voice-enabled prescriptions and AWS deployment",
+      "description": "A MERN web application implementing electronic prescriptions: creating new ones, converting existing records, and storing them securely. I implemented voice input and commands using the ElevenLabs and Bhashini APIs, then deployed the project to AWS — setting up the infrastructure through to CloudWatch alerts — with CI/CD through GitHub Actions.",
       "kind": "feature",
-      "skills": []
+      "projectSlug": "digichikitsak",
+      "skills": ["react", "node-js", "express", "mongodb", "aws", "git"]
     },
     {
-      "title": "Voice input and commands",
-      "description": "Integrated voice input and commands into the company's web application using the Bhashini API and the ElevenLabs API.",
-      "kind": "integration",
-      "skills": []
-    },
-    {
-      "title": "Cloud video storage and live streaming",
-      "description": "Added cloud functionality to a C++ application by enabling video storage in AWS S3 and live streaming through AWS IVS, improving accessibility and performance.",
+      "title": "Elphie — cloud video and live streaming for dental imaging",
+      "description": "Elphie pairs a C++ application, which drives an intraoral camera and runs a caries-detection model, with a web application. My contribution was storing the camera feed in AWS S3 and adding live streaming through AWS IVS so a patient's family or dental students can watch an examination. I built the web application from scratch to show recordings and carry the live stream, with AWS Cognito authentication and appointment booking — a doctor selects a patient, streams live from the C++ app, and the recording is stored against that patient automatically before the diagnosis is written up.",
       "kind": "infrastructure",
+      "projectSlug": "elphie",
       "skills": ["aws"]
+    },
+    {
+      "title": "Axion — mobile-driven desktop automation",
+      "description": "A desktop automation tool in three parts: a cloud relay, a mobile-first Next.js web application, and a Python desktop application. A user types a prompt or speaks into the web app, which creates a task and pushes it to the relay; the desktop app picks it up and executes it. Every step of the run is visible from the phone, and the user can steer the task midway.",
+      "kind": "feature",
+      "projectSlug": "axion",
+      "skills": ["next-js", "react", "python"]
+    },
+    {
+      "title": "HealthyMitra — remote caregiving platform",
+      "description": "A Next.js monolith letting caregivers look after patients digitally through care circles, which users join as patient or caregiver. Caregivers book appointments and diagnostic reports for their patient and get instant updates from doctors and diagnostic centres; patients can reach doctors any time through chat with WebRTC audio and video calls. Users post updates to their circle with per-post visibility — everyone, caregivers only, doctors, or a selected few. I also implemented Razorpay payments and an admin dashboard covering the platform.",
+      "kind": "feature",
+      "projectSlug": "healthymitra",
+      "skills": ["next-js", "react", "webrtc", "razorpay"]
     }
   ],
-  "skills": ["aws"],
+  "skills": ["react", "next-js", "node-js", "express", "mongodb", "python", "webrtc", "razorpay", "aws", "git"],
   "outcomes": [],
-  "lessonsLearned": [],
+  "lessonsLearned": [
+    "How working directly with clients changes the way requirements turn into implementation.",
+    "How to move between very different stacks — MERN, C++ with cloud video, Python, and Next.js — inside one role.",
+    "How much of healthcare software design is really about permissions and who is allowed to see what."
+  ],
   "seo": {
     "title": "Forward Deployed Engineer Intern at AarogyalinQ",
-    "description": "Client-facing feature delivery, Bhashini and ElevenLabs voice integration, and AWS S3 and IVS cloud video for a C++ application."
+    "description": "Client-facing delivery across four healthcare products: voice-enabled prescriptions, AWS cloud video and live streaming, desktop automation, and a caregiving platform."
   }
 }

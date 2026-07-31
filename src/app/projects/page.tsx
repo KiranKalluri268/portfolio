@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import BackNavigationButton from "@/components/BackNavigationButton";
 import ProjectLink from "@/components/content/ProjectLink";
+import ProjectThumbnail from "@/components/content/ProjectThumbnail";
 import SkillLink from "@/components/content/SkillLink";
 import { getAllProjects } from "@/lib/content/projects";
 import { getSkillsForProject } from "@/lib/content/relationships";
@@ -88,12 +88,9 @@ function FeaturedProject({
     <article className="overflow-hidden rounded-3xl border border-white/10 bg-black/60 shadow-2xl backdrop-blur-md">
       <div className="grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
         <ProjectLink project={project} className={`relative block min-h-64 overflow-hidden sm:min-h-80 lg:min-h-[34rem] ${index % 2 === 1 ? "lg:order-2" : ""}`}>
-            <Image
-              src={project.image}
-              alt={project.imageAlt}
-              fill
+            <ProjectThumbnail
+              project={project}
               priority={index === 0}
-              quality={90}
               sizes="(max-width: 1024px) calc(100vw - 2rem), 52vw"
               className="object-cover transition-transform duration-700 hover:scale-[1.025]"
             />
@@ -144,11 +141,8 @@ function AdditionalProject({ project, skills }: { project: ProjectContent; skill
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-black/60 backdrop-blur-md transition-colors duration-300 hover:border-accent-soft/25">
       <ProjectLink project={project} className="relative block aspect-[16/9] overflow-hidden bg-white/[0.025]">
-        <Image
-          src={project.image}
-          alt={project.imageAlt}
-          fill
-          quality={90}
+        <ProjectThumbnail
+          project={project}
           sizes="(max-width: 768px) calc(100vw - 2rem), 33vw"
           className={project.id === 4 ? "object-contain" : "object-cover"}
         />

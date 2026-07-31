@@ -16,6 +16,12 @@ const KIND_LABELS: Record<NonNullable<ExperienceWorkItem["kind"]>, string> = {
   improvement: "Improvement",
 };
 
+/** Case-study titles carry a descriptive subtitle after an en dash, which is
+ *  too long to sit inside a sentence. Link text uses the leading name only. */
+function shortProjectName(title: string) {
+  return title.split(/\s[–—-]\s/)[0].trim();
+}
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="border-t border-white/10 py-10 sm:py-14">
@@ -112,7 +118,7 @@ function WorkTimeline({
                   href={`/projects/${project.slug}`}
                   className="mt-4 inline-flex items-center gap-1.5 rounded text-sm font-semibold text-blue-300 underline underline-offset-4 transition-colors hover:text-blue-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-400"
                 >
-                  Read the {project.title} case study
+                  Read the {shortProjectName(project.title)} case study
                   <span aria-hidden="true">→</span>
                 </Link>
               )}
