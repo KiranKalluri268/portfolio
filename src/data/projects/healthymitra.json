@@ -13,6 +13,7 @@
     "react",
     "webrtc",
     "razorpay",
+    "docker",
     "aws",
     "git"
   ],
@@ -59,7 +60,7 @@
     },
     {
       "title": "Deployment and CI/CD",
-      "description": "Deployed the platform on AWS ECS and built a GitHub Actions pipeline so releases deploy automatically."
+      "description": "Containerised the platform with Docker, deployed it on AWS ECS, and built a GitHub Actions pipeline so releases deploy automatically."
     }
   ],
   "challenges": [
@@ -77,13 +78,13 @@
     "Care circle posts with per-post visibility control",
     "Razorpay payments",
     "Admin dashboard covering the whole platform",
-    "Deployed on AWS ECS with GitHub Actions CI/CD"
+    "Containerised with Docker, deployed on AWS ECS with GitHub Actions CI/CD"
   ],
   "highlights": [
     "Built a care-circle model letting caregivers act for their patients, book appointments and diagnostics, and receive instant updates from doctors and labs.",
     "Implemented a chat interface with WebRTC audio and video calling for doctor consultations.",
     "Added per-post visibility control, Razorpay payments, and an admin dashboard covering the platform.",
-    "Deployed the platform on AWS ECS and implemented CI/CD with GitHub Actions."
+    "Containerised the platform with Docker, deployed it on AWS ECS, and implemented CI/CD with GitHub Actions."
   ],
   "outcomes": [],
   "lessonsLearned": [

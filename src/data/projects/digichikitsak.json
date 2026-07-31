@@ -13,6 +13,7 @@
     "node-js",
     "express",
     "mongodb",
+    "docker",
     "aws",
     "git"
   ],
@@ -43,7 +44,7 @@
     },
     {
       "title": "Infrastructure setup",
-      "description": "Set up the AWS infrastructure for the project from scratch, running the application on ECS, through to configuring CloudWatch alerts."
+      "description": "Set up the AWS infrastructure for the project from scratch, containerising the application with Docker and running it on ECS, through to configuring CloudWatch alerts."
     },
     {
       "title": "CI/CD",
@@ -55,12 +56,12 @@
     "Electronic prescription creation and digital conversion",
     "Secure prescription storage",
     "Voice input and voice commands via ElevenLabs and Bhashini",
-    "AWS ECS infrastructure with CloudWatch alerting",
+    "Containerised with Docker and run on AWS ECS with CloudWatch alerting",
     "Automated deployment through GitHub Actions"
   ],
   "highlights": [
     "Integrated voice input and voice commands using the ElevenLabs and Bhashini APIs.",
-    "Set up the project's AWS infrastructure end to end, running it on ECS with CloudWatch alerts.",
+    "Set up the project's AWS infrastructure end to end, containerising it with Docker and running it on ECS with CloudWatch alerts.",
     "Built a GitHub Actions CI/CD pipeline for automated deployment to AWS ECS."
   ],
   "outcomes": [],

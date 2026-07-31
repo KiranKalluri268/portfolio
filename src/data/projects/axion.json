@@ -14,11 +14,12 @@
     "node-js",
     "express",
     "mongodb",
-    "python"
+    "python",
+    "docker"
   ],
   "overview": [
     "Axion lets someone control and automate their desktop from their phone. It is built from three pieces: a mobile-first Next.js web application, a MERN cloud relay, and a Python desktop application.",
-    "The user types a prompt or speaks into the web app; that becomes a task which travels through the relay to the desktop agent, which carries it out."
+    "The user types a prompt or speaks into the web app; that becomes a task which travels through the relay to the desktop agent, which carries it out. The services run in Docker containers."
   ],
   "problem": "Desktop automation normally has to be set up and watched at the desktop itself, which is exactly where the user is not when they want it to run.",
   "solution": "Split the system so intent is captured on the phone, transport is handled by a cloud relay, and execution stays on the desktop — with each step streamed back so the user can follow along and intervene.",
