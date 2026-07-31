@@ -13,7 +13,7 @@ const AudioToggle = () => {
   return (
     <button
       onClick={toggleAudioIndicator}
-      className="ml-6 flex items-center space-x-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black rounded px-2 py-1"
+      className="ml-6 flex items-center space-x-0.5 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-black rounded px-2 py-1"
       aria-label={audioEnabled ? "Pause audio playback" : "Play audio playback"}
       aria-pressed={audioEnabled}
       type="button"

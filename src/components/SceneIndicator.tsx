@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useActiveSection, useScrollActions, type SectionId } from "@/context/SmoothScrollContext";
 import { useAudio } from "@/context/AudioContextProvider";
+import { useCoarsePointer } from "@/hooks/useMediaQuery";
 import type { SceneIndex } from "@/types";
 
 interface SceneInfo {
@@ -19,12 +20,15 @@ const scenes: SceneInfo[] = [
   { index: 5, id: "contact", name: "Contact" },
 ];
 
+const TOOLTIP_GAP = 20;
+
 export default function SceneIndicator() {
   const { hasEntered } = useAudio();
   const activeSection = useActiveSection();
   const { scrollToSection, toggleProjectsEndpoint } = useScrollActions();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [portalReady, setPortalReady] = useState(false);
+  const isCoarsePointer = useCoarsePointer();
 
   const tooltipRef = useRef<HTMLDivElement>(null);
 
@@ -35,14 +39,26 @@ export default function SceneIndicator() {
   }, []);
 
   useEffect(() => {
-    if (hoveredIndex === null) return;
+    // Touch devices get a tooltip anchored to the dot instead, so there is no
+    // pointer to track.
+    if (hoveredIndex === null || isCoarsePointer) return;
     const updateMouse = (event: PointerEvent) => {
-      if (!tooltipRef.current) return;
-      tooltipRef.current.style.transform = `translate3d(${event.clientX + 20}px, ${event.clientY + 20}px, 0)`;
+      const tooltip = tooltipRef.current;
+      if (!tooltip) return;
+      const { offsetWidth, offsetHeight } = tooltip;
+      const overflowsRight = event.clientX + TOOLTIP_GAP + offsetWidth > window.innerWidth;
+      const overflowsBottom = event.clientY + TOOLTIP_GAP + offsetHeight > window.innerHeight;
+      const x = overflowsRight
+        ? Math.max(0, event.clientX - TOOLTIP_GAP - offsetWidth)
+        : event.clientX + TOOLTIP_GAP;
+      const y = overflowsBottom
+        ? Math.max(0, event.clientY - TOOLTIP_GAP - offsetHeight)
+        : event.clientY + TOOLTIP_GAP;
+      tooltip.style.transform = `translate3d(${x}px, ${y}px, 0)`;
     };
     window.addEventListener("pointermove", updateMouse, { passive: true });
     return () => window.removeEventListener("pointermove", updateMouse);
-  }, [hoveredIndex]);
+  }, [hoveredIndex, isCoarsePointer]);
 
   const handleDotClick = (section: SectionId) => {
     if (section === activeSection) {
@@ -55,6 +71,8 @@ export default function SceneIndicator() {
 
   if (!portalReady || !hasEntered) return null;
 
+  const activeScene = scenes.find((scene) => scene.id === activeSection);
+
   return createPortal(
     <>
       <nav
@@ -62,64 +80,87 @@ export default function SceneIndicator() {
         aria-label="Scene navigation indicator"
         role="navigation"
       >
-        <div className="relative flex flex-row justify-between items-center ">
+        <div className="relative flex flex-col items-center">
+          <div className="relative flex flex-row items-center justify-between">
 
-          {/* Dots */}
-          {scenes.map((scene) => {
-            const isActive = activeSection === scene.id;
-            const isHovered = hoveredIndex === scene.index;
+            {/* Dots */}
+            {scenes.map((scene) => {
+              const isActive = activeSection === scene.id;
+              const isHovered = hoveredIndex === scene.index;
 
-            // Size calculation: active > hovered > normal
-            const dotSize = 4; // Smaller consistent size
+              // Active state changes size as well as colour, so it survives
+              // glare, dim displays, and colour-vision deficiency.
+              const dotSize = isActive ? 8 : 4;
 
-            return (
-              <div key={scene.index} className="relative flex flex-col items-center">
-                <button
-                  className="relative z-10 flex min-h-9 min-w-9 cursor-pointer items-center justify-center border-none bg-transparent p-3 outline-none sm:min-h-12 sm:min-w-12 sm:p-6"
-                  aria-label={`Go to ${scene.name} section${isActive ? " (current)" : ""}`}
-                  aria-current={isActive ? "page" : undefined}
-                  onClick={() => handleDotClick(scene.id)}
-                  onMouseEnter={() => setHoveredIndex(scene.index)}
-                  onMouseLeave={() => setHoveredIndex(null)}
-                  type="button"
-                >
-                  {/* Dot */}
-                  <div
-                    className="relative rounded-full"
-                    style={{
-                      width: dotSize,
-                      height: dotSize,
-                      backgroundColor: isActive ? "#ef4444" : "white", // Red-500 if active, else white
-                      boxShadow: isActive
-                        ? "0 0 16px 4px rgba(250, 3, 3, 0.9)"
-                        : isHovered
-                          ? "0 0 10px 2px rgba(255, 255, 255, 0.8)"
-                          : "0 0 6px rgba(255, 255, 255, 0.35)",
-                    }}
+              return (
+                <div key={scene.index} className="relative flex flex-col items-center">
+                  <button
+                    className="relative z-10 flex min-h-9 min-w-9 cursor-pointer items-center justify-center border-none bg-transparent p-3 outline-none sm:min-h-12 sm:min-w-12 sm:p-6"
+                    aria-label={`Go to ${scene.name} section${isActive ? " (current)" : ""}`}
+                    aria-current={isActive ? "page" : undefined}
+                    onClick={() => handleDotClick(scene.id)}
+                    onMouseEnter={() => setHoveredIndex(scene.index)}
+                    onMouseLeave={() => setHoveredIndex(null)}
+                    type="button"
                   >
-                  </div>
-                </button>
-              </div>
-            );
-          })}
+                    {/* Dot */}
+                    <div
+                      className="relative rounded-full transition-[width,height,background-color,box-shadow] duration-300 ease-out"
+                      style={{
+                        width: dotSize,
+                        height: dotSize,
+                        backgroundColor: isActive ? "var(--color-accent-warm)" : "white",
+                        boxShadow: isActive
+                          ? "0 0 16px 4px color-mix(in oklab, var(--color-accent-warm-deep) 90%, transparent)"
+                          : isHovered
+                            ? "0 0 10px 2px rgba(255, 255, 255, 0.8)"
+                            : "0 0 6px rgba(255, 255, 255, 0.35)",
+                      }}
+                    >
+                    </div>
+                  </button>
+
+                  {/* Touch devices have no cursor to follow, so the label anchors
+                      above its own dot. */}
+                  {isCoarsePointer && isHovered && (
+                    <span
+                      className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1 -translate-x-1/2 whitespace-nowrap rounded-md border border-white/10 bg-black/70 px-2 py-1 text-xs font-semibold tracking-wide text-white backdrop-blur-md"
+                      aria-hidden="true"
+                    >
+                      {scene.name}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* The current section, always visible. Previously this existed only
+              as a hover tooltip, so touch users could not read it at all. */}
+          <span
+            className="pointer-events-none -mt-1 pb-2 text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-white/65 sm:mt-0 sm:pb-0 sm:text-xs"
+            aria-hidden="true"
+          >
+            {activeScene?.name}
+          </span>
         </div>
       </nav>
 
       {/* Floating Cursor Tooltip */}
-        {hoveredIndex !== null && (
-          <div
-            ref={tooltipRef}
-            style={{
-              position: "fixed",
-              left: 0,
-              top: 0,
-              pointerEvents: "none",
-              zIndex: 9999, // Ensure it's on top of everything
-            }}
-            className="whitespace-nowrap text-white text-sm font-semibold tracking-wide bg-black/40 px-3 py-1 rounded-md backdrop-blur-md border border-white/10"
-          >
-            {scenes[hoveredIndex].name}
-          </div>
+      {!isCoarsePointer && hoveredIndex !== null && (
+        <div
+          ref={tooltipRef}
+          style={{
+            position: "fixed",
+            left: 0,
+            top: 0,
+            pointerEvents: "none",
+            zIndex: 9999, // Ensure it's on top of everything
+          }}
+          className="whitespace-nowrap text-white text-sm font-semibold tracking-wide bg-black/40 px-3 py-1 rounded-md backdrop-blur-md border border-white/10"
+        >
+          {scenes[hoveredIndex].name}
+        </div>
       )}
     </>,
     document.body,

@@ -64,6 +64,14 @@ const socialLinks: SocialLink[] = [
   },
 ];
 
+const fieldClasses = (hasError: boolean) =>
+  [
+    "w-full rounded-control border bg-white/5 px-3 py-2 text-white",
+    "placeholder:text-white/40 transition-colors",
+    "focus:outline-none focus:ring-2 focus:ring-accent",
+    hasError ? "border-red-500" : "border-white/20 hover:border-white/35",
+  ].join(" ");
+
 export default function ContactSection() {
   const [form, setForm] = useState<ContactForm>({ name: "", email: "", message: "" });
   const [errors, setErrors] = useState<FormErrors>({});
@@ -120,7 +128,7 @@ export default function ContactSection() {
       style={{ zIndex: 10 }}
     >
       <div
-        className="relative w-full max-w-xs sm:max-w-sm flex flex-col items-center"
+        className="relative flex w-full max-w-md flex-col items-center sm:max-w-lg"
       >
         <div>
           <h2 className="text-3xl font-bold sm:mb-4 mb-2">Contact Me</h2>
@@ -128,12 +136,17 @@ export default function ContactSection() {
         </div>
 
         {submitted ? (
-          <div
-            className="animate-fade-in mb-8 text-green-500 font-semibold"
-            role="status"
-            aria-live="polite"
-          >
-            Thanks for reaching out! I will get back to you soon.
+          <div className="animate-fade-in mb-8 flex flex-col items-center gap-5">
+            <p className="font-semibold text-green-500" role="status" aria-live="polite">
+              Thanks for reaching out! I will get back to you soon.
+            </p>
+            <button
+              type="button"
+              onClick={() => setSubmitted(false)}
+              className="rounded-full border border-white/25 bg-black/40 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:border-accent hover:text-accent-soft"
+            >
+              Send another message
+            </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} noValidate className="w-full space-y-4 text-left sm:space-y-6" aria-label="Contact form">
@@ -147,11 +160,12 @@ export default function ContactSection() {
                 type="text"
                 value={form.name}
                 onChange={handleChange}
-                className={`w-full rounded-md border sm:px-3 sm:py-2 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.name ? "border-red-500" : "border-gray-300"
-                  }`}
+                className={fieldClasses(Boolean(errors.name))}
+                aria-invalid={errors.name ? true : undefined}
+                aria-describedby={errors.name ? "name-error" : undefined}
                 required
               />
-              {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+              {errors.name && <p id="name-error" className="mt-1 text-sm text-red-500">{errors.name}</p>}
             </div>
 
             <div>
@@ -164,11 +178,12 @@ export default function ContactSection() {
                 type="email"
                 value={form.email}
                 onChange={handleChange}
-                className={`w-full rounded-md border sm:px-3 sm:py-2 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.email ? "border-red-500" : "border-gray-300"
-                  }`}
+                className={fieldClasses(Boolean(errors.email))}
+                aria-invalid={errors.email ? true : undefined}
+                aria-describedby={errors.email ? "email-error" : undefined}
                 required
               />
-              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+              {errors.email && <p id="email-error" className="mt-1 text-sm text-red-500">{errors.email}</p>}
             </div>
 
             <div>
@@ -181,23 +196,22 @@ export default function ContactSection() {
                 rows={4}
                 value={form.message}
                 onChange={handleChange}
-                className={`w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.message ? "border-red-500" : "border-gray-300"
-                  }`}
+                className={fieldClasses(Boolean(errors.message))}
+                aria-invalid={errors.message ? true : undefined}
+                aria-describedby={errors.message ? "message-error" : undefined}
                 required
               />
-              {errors.message && <p className="text-red-500 text-sm mt-1">{errors.message}</p>}
+              {errors.message && <p id="message-error" className="mt-1 text-sm text-red-500">{errors.message}</p>}
             </div>
 
-            <div className="flex items-center justify-center gap-x-25">
+            <div className="flex items-center justify-center">
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-white text-black px-6 py-3 rounded-lg hover:bg-black hover:text-white hover:scale-105 transition-transform transform focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-wait disabled:opacity-60 disabled:hover:scale-100"
+                className="rounded-full bg-white px-6 py-3 font-semibold text-black transition-[background-color,transform] hover:scale-105 hover:bg-accent-soft focus:outline-none focus:ring-2 focus:ring-accent disabled:cursor-wait disabled:opacity-60 disabled:hover:scale-100"
               >
                 {isSubmitting ? "Sending..." : "Send Message"}
               </button>
-
-
             </div>
             {submitError && (
               <p className="text-center text-sm text-red-500" role="alert" aria-live="assertive">
@@ -215,7 +229,7 @@ export default function ContactSection() {
               target={url.startsWith("mailto") ? undefined : "_blank"}
               rel={url.startsWith("mailto") ? undefined : "noopener noreferrer"}
               aria-label={name}
-              className="hover:text-blue-500 transition-colors"
+              className="hover:text-accent transition-colors"
               onMouseEnter={() => setHoveredLink(name)}
               onMouseLeave={() => setHoveredLink(null)}
             >

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import AudioToggle from './AudioToggle';
 import Tooltip from './Tooltip';
 
@@ -13,9 +14,9 @@ export default function NavBar() {
       role="banner"
     >
       <div className="text-2xl font-bold sm:text-3xl" id="site-title">
-        <a href="#main-content" aria-label="Saikiran Kalluri Portfolio - Home" className="outline-none">
+        <Link href="/" aria-label="Saikiran Kalluri Portfolio - Home">
           KS
-        </a>
+        </Link>
       </div>
       <nav aria-label="Main navigation" role="navigation">
         <ul className="flex space-x-6 text-lg items-center" role="list">

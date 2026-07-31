@@ -109,11 +109,10 @@ function SkillGroup({
       {category.skills.map((skill) => (
         <div
           key={`${category.title}-${skill.name}`}
-          className="mr-3 flex h-24 w-[104px] min-w-[104px] shrink-0 flex-col items-center justify-center rounded text-gray-300 transition-colors duration-200 hover:text-white focus:outline-none focus:ring-2 focus:ring-orange sm:mr-6 sm:w-[124px] sm:min-w-[124px]"
+          className="mr-3 flex h-24 w-[104px] min-w-[104px] shrink-0 flex-col items-center justify-center rounded-control text-gray-300 transition-colors duration-200 hover:text-white sm:mr-6 sm:w-[124px] sm:min-w-[124px]"
           title={skill.name}
           role={duplicate ? undefined : "img"}
           aria-label={duplicate ? undefined : skill.name}
-          tabIndex={duplicate ? -1 : 0}
         >
           <div className="select-none text-2xl sm:text-4xl">{skill.icon}</div>
           <span className="mt-1 whitespace-nowrap text-xs select-none">{skill.name}</span>

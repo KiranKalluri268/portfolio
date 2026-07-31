@@ -39,15 +39,49 @@ export default function AboutSection() {
 
     gsap.registerPlugin(ScrollTrigger);
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const rootStyles = getComputedStyle(document.documentElement);
+    const readToken = (name: string, fallback: string) =>
+      rootStyles.getPropertyValue(name).trim() || fallback;
+    const accentColor = readToken("--color-accent-soft", "#60a5fa");
+    const unreadColor = readToken("--color-muted", "#64748b");
+
+    // The resume link fades in with scroll progress, but a keyboard user reaches
+    // it long before then. Focus overrides the scroll-driven state rather than
+    // pulling the link out of the tab order.
+    let linkFocused = false;
+    let linkProgress = 0;
+
+    const applyLinkVisibility = () => {
+      if (linkFocused) {
+        resumeLink.style.opacity = "1";
+        resumeLink.style.pointerEvents = "auto";
+        return;
+      }
+      resumeLink.style.opacity = String(0.08 + linkProgress * 0.92);
+      resumeLink.style.pointerEvents = linkProgress > 0.2 ? "auto" : "none";
+    };
+
+    const handleLinkFocus = () => {
+      linkFocused = true;
+      applyLinkVisibility();
+    };
+    const handleLinkBlur = () => {
+      linkFocused = false;
+      applyLinkVisibility();
+    };
+
+    resumeLink.addEventListener("focus", handleLinkFocus);
+    resumeLink.addEventListener("blur", handleLinkBlur);
+
     const context = gsap.context(() => {
       if (reducedMotion) {
         gsap.set(words, {
           opacity: 1,
           color: (_, word: HTMLSpanElement) =>
-            word.dataset.accent === "true" ? "#60a5fa" : "#ffffff",
+            word.dataset.accent === "true" ? accentColor : "#ffffff",
         });
         gsap.set(resumeLink, { opacity: 1, pointerEvents: "auto" });
-        resumeLink.tabIndex = 0;
         return;
       }
 
@@ -107,16 +141,14 @@ export default function AboutSection() {
               : isActiveLine
                 ? 0.1 + wordProgress * 0.9
                 : 0.1;
-          const accentColor = word.dataset.accent === "true" ? "#60a5fa" : "#ffffff";
+          const readColor = word.dataset.accent === "true" ? accentColor : "#ffffff";
 
           word.style.opacity = String(opacity);
-          word.style.color = wordProgress > 0 || isReadLine ? accentColor : "#64748b";
+          word.style.color = wordProgress > 0 || isReadLine ? readColor : unreadColor;
         });
 
-        const linkProgress = gsap.utils.clamp(0, 1, (progress - 0.87) / 0.05);
-        resumeLink.style.opacity = String(0.08 + linkProgress * 0.92);
-        resumeLink.style.pointerEvents = linkProgress > 0.2 ? "auto" : "none";
-        resumeLink.tabIndex = linkProgress > 0.2 ? 0 : -1;
+        linkProgress = gsap.utils.clamp(0, 1, (progress - 0.87) / 0.05);
+        applyLinkVisibility();
       };
 
       measureLines();
@@ -131,7 +163,11 @@ export default function AboutSection() {
       });
     }, section);
 
-    return () => context.revert();
+    return () => {
+      resumeLink.removeEventListener("focus", handleLinkFocus);
+      resumeLink.removeEventListener("blur", handleLinkBlur);
+      context.revert();
+    };
   }, [hasEntered]);
 
   return (
@@ -168,8 +204,7 @@ export default function AboutSection() {
           <Link
             ref={resumeLinkRef}
             href="/resume"
-            tabIndex={-1}
-            className="pointer-events-none mt-7 inline-flex items-center rounded-full border border-blue-400/50 bg-blue-500/10 px-4 py-2 text-sm font-semibold tracking-wide text-white opacity-[0.08] shadow-[0_0_22px_rgba(96,165,250,0.12)] transition-[background-color,border-color,box-shadow] hover:border-blue-300 hover:bg-blue-500/20 hover:shadow-[0_0_28px_rgba(96,165,250,0.25)] sm:mt-9 sm:text-base"
+            className="pointer-events-none mt-7 inline-flex items-center rounded-full border border-accent-soft/50 bg-accent/10 px-4 py-2 text-sm font-semibold tracking-wide text-white opacity-[0.08] shadow-[0_0_22px_rgba(96,165,250,0.12)] transition-[background-color,border-color,box-shadow] hover:border-accent-soft hover:bg-accent/20 hover:shadow-[0_0_28px_rgba(96,165,250,0.25)] sm:mt-9 sm:text-base"
           >
             View my resume →
           </Link>

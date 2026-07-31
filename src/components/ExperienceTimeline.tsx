@@ -145,10 +145,12 @@ export default function ExperienceTimeline() {
         start,
         end,
         restingScale,
+        restingOpacity,
       }: {
         start: string;
         end: string;
         restingScale: number;
+        restingOpacity: number;
       }) => {
         gsap.utils.toArray<HTMLElement>(".experience-row").forEach((row) => {
           const cards = row.querySelectorAll<HTMLElement>(".experience-card-scale");
@@ -161,32 +163,53 @@ export default function ExperienceTimeline() {
               invalidateOnRefresh: true,
             },
           })
-            .fromTo(cards, { scale: restingScale }, {
+            // Paired power2.out / power2.in meet with zero slope at the peak,
+            // so a row decelerates into focus with no kink at the centre —
+            // the same curve the projects carousel uses.
+            .fromTo(cards, {
+              scale: restingScale,
+              opacity: restingOpacity,
+            }, {
               scale: 1,
+              opacity: 1,
               duration: 0.5,
-              ease: "sine.out",
+              ease: "power2.out",
+              force3D: true,
             })
             .to(cards, {
               scale: restingScale,
+              opacity: restingOpacity,
               duration: 0.5,
-              ease: "sine.in",
+              ease: "power2.in",
+              force3D: true,
             });
         });
       };
 
+      // Dimming carries most of the focus cue, which is what lets the scale go
+      // this deep: an out-of-focus row reads as "not the one you're reading"
+      // rather than as small body copy you are expected to parse.
+      // A narrow trigger window matters as much as the resting values. At
+      // "top 90%" a row was already ~87% faded in by the time it reached the
+      // lower third, so the neighbouring row never looked meaningfully
+      // out of focus. This keeps rows dim until they are close to centre.
       media.add("(min-width: 768px)", () => {
         createFocusAnimations({
-          start: "top 90%",
-          end: "bottom 10%",
+          start: "top 75%",
+          end: "bottom 25%",
           restingScale: 0.82,
+          restingOpacity: 0.35,
         });
       });
 
+      // Mobile stacks both cards vertically, so a row already fills most of the
+      // viewport. Less shrink, less dimming.
       media.add("(max-width: 767px)", () => {
         createFocusAnimations({
           start: "top 82%",
           end: "bottom 18%",
-          restingScale: 0.86,
+          restingScale: 0.9,
+          restingOpacity: 0.45,
         });
       });
       ScrollTrigger.refresh();
@@ -220,15 +243,17 @@ export default function ExperienceTimeline() {
           >
             <defs>
               <linearGradient id="experience-line-gradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#3b82f6" />
-                <stop offset="55%" stopColor="#8b5cf6" />
-                <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.25" />
+                {/* `style` rather than the presentation attribute, because
+                    var() does not resolve in SVG presentation attributes. */}
+                <stop offset="0%" style={{ stopColor: "var(--color-accent)" }} />
+                <stop offset="55%" style={{ stopColor: "var(--color-accent-violet)" }} />
+                <stop offset="100%" style={{ stopColor: "var(--color-accent)" }} stopOpacity="0.25" />
               </linearGradient>
             </defs>
             <path
               ref={glowPathRef}
               fill="none"
-              stroke="#3b82f6"
+              style={{ stroke: "var(--color-accent)" }}
               strokeWidth="7"
               strokeLinecap="round"
               strokeOpacity="0.2"
@@ -281,13 +306,13 @@ function ExperienceRow({ experience, index, dotRef }: ExperienceRowProps) {
       aria-label={`${experience.title} at ${experience.company}`}
     >
       <div
-        className={`experience-card-scale relative z-10 col-start-2 row-start-1 origin-center ${detailColumn} md:row-start-1 ${isReversed ? "md:origin-left" : "md:origin-right"}`}
+        className={`experience-card-scale relative z-10 will-change-[transform,opacity] col-start-2 row-start-1 origin-center ${detailColumn} md:row-start-1 ${isReversed ? "md:origin-left" : "md:origin-right"}`}
       >
-        <div className="h-full rounded-2xl border border-white/10 bg-black/55 p-5 shadow-xl backdrop-blur-sm transition-[background-color,border-color,box-shadow] duration-300 hover:border-blue-400/25 hover:bg-white/5 hover:shadow-blue-500/10 sm:p-6">
+        <div className="h-full rounded-2xl border border-white/10 bg-black/55 p-5 shadow-xl backdrop-blur-sm transition-[background-color,border-color,box-shadow] duration-300 hover:border-accent-soft/25 hover:bg-white/5 hover:shadow-accent/10 sm:p-6">
           <h3 className="mb-3 text-xl font-bold tracking-wide sm:text-2xl">
             {experience.title}
           </h3>
-          <p className="mb-4 font-medium text-blue-400">{experience.company}</p>
+          <p className="mb-4 font-medium text-accent-soft">{experience.company}</p>
           <dl className="space-y-3 text-sm text-gray-300">
             <div>
               <dt className="text-xs uppercase tracking-wider text-gray-500">Period</dt>
@@ -319,13 +344,13 @@ function ExperienceRow({ experience, index, dotRef }: ExperienceRowProps) {
 
       <span
         ref={dotRef}
-        className="relative z-10 col-start-1 row-start-2 -translate-y-full self-start justify-self-center rounded-full border border-white/70 bg-blue-500 shadow-[0_0_14px_rgba(59,130,246,0.9)] md:col-start-2 md:row-start-1 md:translate-y-0 md:place-self-center"
+        className="relative z-10 col-start-1 row-start-2 -translate-y-full self-start justify-self-center rounded-full border border-white/70 bg-accent shadow-[0_0_14px_rgba(59,130,246,0.9)] md:col-start-2 md:row-start-1 md:translate-y-0 md:place-self-center"
         style={{ width: 16, height: 16 }}
         aria-hidden="true"
       />
 
       <div
-        className={`experience-card-scale relative z-10 col-start-2 row-start-2 origin-center ${descriptionColumn} md:row-start-1 ${isReversed ? "md:origin-right" : "md:origin-left"}`}
+        className={`experience-card-scale relative z-10 will-change-[transform,opacity] col-start-2 row-start-2 origin-center ${descriptionColumn} md:row-start-1 ${isReversed ? "md:origin-right" : "md:origin-left"}`}
       >
         <div className="h-full rounded-2xl border border-white/10 bg-black/55 p-5 shadow-xl backdrop-blur-sm transition-[background-color,border-color,box-shadow] duration-300 hover:border-purple-400/25 hover:bg-white/5 hover:shadow-purple-500/10 sm:p-6">
           <h4 className="mb-4 text-sm font-semibold uppercase tracking-widest text-gray-400">
@@ -334,7 +359,7 @@ function ExperienceRow({ experience, index, dotRef }: ExperienceRowProps) {
           <ul className="space-y-3 text-sm leading-relaxed text-gray-300 sm:text-base">
             {experience.description.map((item) => (
               <li key={item} className="flex gap-3">
-                <span className="mt-[0.65em] h-1.5 w-1.5 shrink-0 rounded-full bg-blue-400" aria-hidden="true" />
+                <span className="mt-[0.65em] h-1.5 w-1.5 shrink-0 rounded-full bg-accent-soft" aria-hidden="true" />
                 <span>{item}</span>
               </li>
             ))}

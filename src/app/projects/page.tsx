@@ -44,8 +44,8 @@ function ProjectLinks({ project }: { project: ProjectCase }) {
           target="_blank"
           rel="noopener noreferrer"
           className={index === 0
-            ? "flex-1 whitespace-nowrap rounded-full border border-white/20 bg-white px-3 py-2 text-center text-xs font-semibold text-black transition-colors hover:bg-blue-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-400 sm:flex-none sm:px-5 sm:py-2.5 sm:text-sm"
-            : "flex-1 whitespace-nowrap rounded-full border border-white/20 bg-black/45 px-3 py-2 text-center text-xs font-semibold text-white transition-colors hover:border-blue-400/60 hover:text-blue-300 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-400 sm:flex-none sm:px-5 sm:py-2.5 sm:text-sm"}
+            ? "flex-1 whitespace-nowrap rounded-full border border-white/20 bg-white px-3 py-2 text-center text-xs font-semibold text-black transition-colors hover:bg-blue-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft sm:flex-none sm:px-5 sm:py-2.5 sm:text-sm"
+            : "flex-1 whitespace-nowrap rounded-full border border-white/20 bg-black/45 px-3 py-2 text-center text-xs font-semibold text-white transition-colors hover:border-accent-soft/60 hover:text-accent-soft focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft sm:flex-none sm:px-5 sm:py-2.5 sm:text-sm"}
         >
           <span className="sm:hidden">{link.shortLabel}</span>
           <span className="hidden sm:inline">{link.label}</span>{" "}
@@ -62,7 +62,7 @@ function TechnologyList({ technologies }: { technologies: string[] }) {
       {technologies.map((technology) => (
         <li
           key={technology}
-          className="rounded-full border border-blue-400/20 bg-blue-500/8 px-3 py-1 text-xs text-blue-200 sm:text-sm"
+          className="rounded-full border border-accent-soft/20 bg-accent/8 px-3 py-1 text-xs text-blue-200 sm:text-sm"
         >
           {technology}
         </li>
@@ -90,7 +90,7 @@ function FeaturedProject({ project, index }: { project: ProjectCase; index: numb
 
         <div className="flex flex-col justify-center gap-6 p-6 sm:p-9 lg:p-12">
           <div>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-blue-400">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-accent-soft">
               Featured case study · {project.role}
             </p>
             <h2 className="text-2xl font-bold leading-tight sm:text-3xl lg:text-4xl">
@@ -104,7 +104,7 @@ function FeaturedProject({ project, index }: { project: ProjectCase; index: numb
           <ul className="space-y-3 text-sm leading-relaxed text-gray-300 sm:text-base">
             {project.highlights.map((highlight) => (
               <li key={highlight} className="flex gap-3">
-                <span className="mt-[0.65em] h-1.5 w-1.5 shrink-0 rounded-full bg-blue-400" aria-hidden="true" />
+                <span className="mt-[0.65em] h-1.5 w-1.5 shrink-0 rounded-full bg-accent-soft" aria-hidden="true" />
                 <span>{highlight}</span>
               </li>
             ))}
@@ -130,7 +130,7 @@ function FeaturedProject({ project, index }: { project: ProjectCase; index: numb
 
 function AdditionalProject({ project }: { project: ProjectCase }) {
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-black/60 backdrop-blur-md transition-colors duration-300 hover:border-blue-400/25">
+    <article className="flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-black/60 backdrop-blur-md transition-colors duration-300 hover:border-accent-soft/25">
       <div className="relative aspect-[16/9] overflow-hidden bg-white/[0.025]">
         <Image
           src={project.image}
@@ -143,7 +143,7 @@ function AdditionalProject({ project }: { project: ProjectCase }) {
       </div>
       <div className="flex flex-1 flex-col gap-5 p-6 sm:p-7">
         <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-blue-400">{project.role}</p>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-accent-soft">{project.role}</p>
           <h3 className="text-xl font-bold sm:text-2xl">{project.title}</h3>
         </div>
         <p className="text-sm leading-relaxed text-gray-300 sm:text-base">{project.summary}</p>
@@ -151,7 +151,7 @@ function AdditionalProject({ project }: { project: ProjectCase }) {
         <ul className="space-y-2 text-sm leading-relaxed text-gray-400">
           {project.highlights.map((highlight) => (
             <li key={highlight} className="flex gap-3">
-              <span className="mt-[0.65em] h-1.5 w-1.5 shrink-0 rounded-full bg-blue-400" aria-hidden="true" />
+              <span className="mt-[0.65em] h-1.5 w-1.5 shrink-0 rounded-full bg-accent-soft" aria-hidden="true" />
               <span>{highlight}</span>
             </li>
           ))}
@@ -171,12 +171,12 @@ export default function ProjectsPage() {
   return (
     <main className="relative z-10 min-h-[100svh] overflow-hidden px-4 py-8 text-white sm:px-6 sm:py-12 lg:px-10">
       <div className="mx-auto w-full max-w-7xl">
-        <BackNavigationButton className="mb-14 cursor-pointer rounded-full border border-white/15 bg-black/55 px-4 py-2 text-sm text-gray-200 backdrop-blur-md transition-colors hover:border-blue-400/40 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-400 sm:mb-20">
+        <BackNavigationButton className="mb-14 cursor-pointer rounded-full border border-white/15 bg-black/55 px-4 py-2 text-sm text-gray-200 backdrop-blur-md transition-colors hover:border-accent-soft/40 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft sm:mb-20">
           <span aria-hidden="true">←</span> Back to portfolio
         </BackNavigationButton>
 
         <header className="mb-14 max-w-4xl sm:mb-20">
-          <p className="mb-4 text-sm font-semibold uppercase tracking-[0.28em] text-blue-400">Selected work</p>
+          <p className="mb-4 text-sm font-semibold uppercase tracking-[0.28em] text-accent-soft">Selected work</p>
           <h1 className="text-4xl font-bold leading-none tracking-tight sm:text-6xl lg:text-7xl">
             Projects &amp; case studies
           </h1>
@@ -194,7 +194,7 @@ export default function ProjectsPage() {
 
         <section className="py-20 sm:py-28" aria-labelledby="additional-projects-heading">
           <div className="mb-8 sm:mb-12">
-            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.24em] text-blue-400">More experiments</p>
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.24em] text-accent-soft">More experiments</p>
             <h2 id="additional-projects-heading" className="text-3xl font-bold sm:text-4xl">Additional projects</h2>
           </div>
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -210,10 +210,10 @@ export default function ProjectsPage() {
             View my experience and technical background, or get in touch to discuss a project, role, or collaboration.
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
-            <Link href="/resume" className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-blue-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-400">
+            <Link href="/resume" className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-blue-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft">
               View résumé
             </Link>
-            <Link href="/#contact" className="rounded-full border border-white/20 bg-black/45 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:border-blue-400/60 hover:text-blue-300 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-400">
+            <Link href="/#contact" className="rounded-full border border-white/20 bg-black/45 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:border-accent-soft/60 hover:text-accent-soft focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft">
               Contact me
             </Link>
           </div>

@@ -7,14 +7,25 @@ interface TooltipProps {
   isVisible: boolean;
 }
 
+const GAP = 20;
+
 export default function Tooltip({ text, isVisible }: TooltipProps) {
   const tooltipRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isVisible) return;
     const updateMouse = (event: PointerEvent) => {
-      if (!tooltipRef.current) return;
-      tooltipRef.current.style.transform = `translate3d(${event.clientX + 20}px, ${event.clientY + 20}px, 0)`;
+      const tooltip = tooltipRef.current;
+      if (!tooltip) return;
+      // Flip to the other side of the cursor rather than running off-screen.
+      const { offsetWidth, offsetHeight } = tooltip;
+      const x = event.clientX + GAP + offsetWidth > window.innerWidth
+        ? Math.max(0, event.clientX - GAP - offsetWidth)
+        : event.clientX + GAP;
+      const y = event.clientY + GAP + offsetHeight > window.innerHeight
+        ? Math.max(0, event.clientY - GAP - offsetHeight)
+        : event.clientY + GAP;
+      tooltip.style.transform = `translate3d(${x}px, ${y}px, 0)`;
     };
     window.addEventListener("pointermove", updateMouse, { passive: true });
     return () => window.removeEventListener("pointermove", updateMouse);

@@ -1,27 +1,12 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useScrollActions } from "@/context/SmoothScrollContext";
 import { useAudio } from "@/context/AudioContextProvider";
-
-const reducedMotionQuery = "(prefers-reduced-motion: reduce)";
-
-function subscribeToReducedMotion(callback: () => void) {
-  const query = window.matchMedia(reducedMotionQuery);
-  query.addEventListener("change", callback);
-  return () => query.removeEventListener("change", callback);
-}
-
-function useReducedMotion() {
-  return useSyncExternalStore(
-    subscribeToReducedMotion,
-    () => window.matchMedia(reducedMotionQuery).matches,
-    () => false,
-  );
-}
+import { useReducedMotion } from "@/hooks/useMediaQuery";
 
 export default function Hero() {
-  const { scrollNext } = useScrollActions();
+  const { scrollNext, scrollToSection } = useScrollActions();
   const { hasEntered } = useAudio();
   const reduceMotion = useReducedMotion();
   const words = useMemo(
@@ -179,18 +164,46 @@ export default function Hero() {
             )}
           </h1>
 
+          {/* The typed roles wrap between one and two lines as they cycle.
+              Reserving two lines keeps the CTA row below from bouncing. */}
           <h2
-            className="hero-role mt-4 max-w-full break-words text-[clamp(2.15rem,10vw,7.5rem)] font-bold font-[family-name:var(--font-tektur)] leading-none md:font-[family-name:var(--font-foldit)]"
+            className="hero-role mt-4 min-h-[calc(2*clamp(2.15rem,10vw,7.5rem))] max-w-full break-words text-[clamp(2.15rem,10vw,7.5rem)] font-bold font-[family-name:var(--font-tektur)] leading-none md:font-[family-name:var(--font-foldit)]"
             style={{
               textShadow:
                 "0.1rem 0 0.3rem rgba(255, 255, 255, 0.8), 0 0 0.6rem rgba(18, 33, 163, 0.5)",
             }}
-            aria-live="polite"
-            aria-atomic="true"
           >
-            <span className="text-blue-500">{visibleSecondLine}</span>
-            {!reduceMotion && showSecondCursor && <span className="animate-blink text-blue-500" aria-hidden="true">|</span>}
+            {/* The visible line retypes character by character. Announcing that
+                live would fire on every keystroke, so assistive technology gets
+                the full set of roles as static text instead. */}
+            <span className="sr-only">
+              {words.map((word) => word.replace(/\.+$/, "")).join(", ")}
+            </span>
+            <span className="text-accent" aria-hidden="true">{visibleSecondLine}</span>
+            {!reduceMotion && showSecondCursor && <span className="animate-blink text-accent" aria-hidden="true">|</span>}
           </h2>
+
+          <div
+            className={`hero-cta mt-8 flex flex-col gap-3 transition-[opacity,transform] duration-700 ease-out sm:flex-row sm:items-center sm:gap-4 ${visibleH1State === 'done'
+              ? 'translate-y-0 opacity-100'
+              : 'pointer-events-none translate-y-3 opacity-0'
+              }`}
+          >
+            <button
+              type="button"
+              onClick={() => scrollToSection('projects')}
+              className="w-full rounded-full bg-white px-6 py-3 text-center text-sm font-semibold text-black transition-colors hover:bg-accent-soft sm:w-auto sm:text-base"
+            >
+              View my work
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToSection('contact')}
+              className="w-full rounded-full border border-white/25 bg-black/40 px-6 py-3 text-center text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:border-accent hover:text-accent-soft sm:w-auto sm:text-base"
+            >
+              Get in touch
+            </button>
+          </div>
         </div>
       </div>
 

@@ -1,8 +1,28 @@
 @import "tailwindcss";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* `static` so every token lands in the stylesheet even when no utility
+   references it — GSAP and inline styles read several of these at runtime. */
+@theme static {
+  /* Cool accent — links, focus rings, UI chrome. */
+  --color-accent: #3b82f6;
+  --color-accent-soft: #60a5fa;
+  --color-accent-violet: #8b5cf6;
+
+  /* Warm accent — echoes the blackhole accretion disc in the background. */
+  --color-accent-warm: #ff7a18;
+  --color-accent-warm-deep: #e0450a;
+
+  /* Copy that is present but not yet read. */
+  --color-muted: #64748b;
+
+  /* Opaque dark fill for states we cannot make translucent, e.g. autofill. */
+  --color-surface: #101014;
+
+  /* Radius by role rather than by size. */
+  --radius-control: 0.5rem;
+  --radius-card: 1rem;
+  --radius-panel: 1.5rem;
+}
 
 html, body {
   margin: 0;
@@ -17,12 +37,6 @@ html {
 
 body {
   font-family: var(--font-tektur), sans-serif;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* Internet Explorer 10+ */
-}
-
-body::-webkit-scrollbar {
-  display: none; /* Safari and Chrome */
 }
 
 /* Ensure canvas is visible */
@@ -54,6 +68,16 @@ canvas {
 }
 
 .animate-pop-in { animation: popIn 0.4s ease-out both; }
+
+/* Typing caret. Previously referenced without ever being defined, so the
+   caret rendered as a static bar. */
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.animate-blink { animation: blink 1.06s step-end infinite; }
+
 .scroll-hint { opacity: 1; }
 
 @media (max-height: 600px) and (orientation: landscape) {
@@ -63,6 +87,18 @@ canvas {
 
   .hero-role {
     margin-top: 0.5rem;
+    /* Height is at a premium here, so let the role line size itself. */
+    min-height: 0;
+  }
+
+  .hero-cta {
+    margin-top: 1rem;
+    flex-direction: row;
+    gap: 0.75rem;
+  }
+
+  .hero-cta > * {
+    width: auto;
   }
 
   .scroll-hint {
@@ -94,12 +130,34 @@ canvas {
   animation-name: bounce;
 }
 
+/* Tailwind only emits its own `pulse` keyframes when the `animate-pulse`
+   utility is used, so the muted audio bars need an explicit definition. */
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.25; }
+}
+
 @keyframes bounce {
   0%, 100% { transform: scaleY(1); }
   50% { transform: scaleY(2); }
 }
 
 *:focus-visible {
-  outline: 2px solid #60a5fa;
+  outline: 2px solid var(--color-accent-soft);
   outline-offset: 3px;
+}
+
+/* Chrome paints its own pale background on autofilled fields, which would put
+   white text on near-white. Repaint it to match the dark form. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:focus {
+  -webkit-text-fill-color: #ffffff;
+  -webkit-box-shadow: 0 0 0 1000px var(--color-surface) inset;
+  box-shadow: 0 0 0 1000px var(--color-surface) inset;
+  caret-color: #ffffff;
+  /* The inset shadow is applied via a transition Chrome cannot override. */
+  transition: background-color 9999s ease-out 0s;
 }
