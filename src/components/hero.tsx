@@ -192,7 +192,7 @@ export default function Hero() {
             <button
               type="button"
               onClick={() => scrollToSection('projects')}
-              className="w-full rounded-full bg-white px-6 py-3 text-center text-sm font-semibold text-black transition-colors hover:bg-accent-soft sm:w-auto sm:text-base"
+              className="w-full rounded-full border border-white/25 bg-black/40 px-6 py-3 text-center text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:border-accent hover:text-accent-soft sm:w-auto sm:border-transparent sm:bg-white sm:text-base sm:text-black sm:hover:border-transparent sm:hover:bg-accent-soft sm:hover:text-black"
             >
               View my work
             </button>
