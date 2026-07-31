@@ -72,7 +72,8 @@ The video pauses when the tab is hidden, before entry, or when reduced motion is
 - `src/data/projects/*.json` supplies the homepage carousel, `/projects`, and statically generated project detail routes.
 - `src/data/skills/*.json` supplies the skill marquee, `/skills`, and statically generated skill detail routes.
 - `src/data/skill-web.json` defines the center identity, primary domains, subcategories, branch colors, and radial ordering for the interactive `/skills` universe.
-- `src/lib/content` discovers, validates, sorts, and relates project and skill content on the server.
+- `src/data/experience/*.json` supplies the homepage Experience timeline, the statically generated `/experience/[slug]` routes, and the résumé's Internships section.
+- `src/lib/content` discovers, validates, sorts, and relates project, skill, and experience content on the server.
 
 ### Interactive skill universe
 
@@ -92,9 +93,23 @@ existing `/skills/[slug]` pages. A list dialog exposes the same hierarchy
 without spatial navigation. The pure layout module applies deterministic
 rectangle-based collision resolution across leaves from every parent branch
 and asserts that no skill node overlaps another rendered node.
-- Homepage experience data currently lives in `ExperienceTimeline.tsx`.
+### Experience
 
-The `/resume` route renders accessible HTML. `DownloadResumeButton` dynamically imports `@react-pdf/renderer`, keeping PDF generation code out of the initial homepage bundle.
+Each role in `src/data/experience` carries both the summary the homepage
+timeline shows and a `workItems` array describing what was built during the
+role. `ExperienceTimeline` receives roles as a server-supplied prop and links
+every card to `/experience/[slug]`, where `ExperienceDetail` renders the work
+items as a nested vertical timeline.
+
+Work items may reference skill slugs and a project slug. `src/lib/content/relationships.ts`
+validates those references at build time and resolves them, so a role links out
+to the same `/skills/[slug]` and `/projects/[slug]` pages the rest of the site
+uses. An unknown slug fails the build rather than rendering a dead link.
+
+`showInTimeline` and `showInResume` are independent flags: a role can appear on
+the homepage timeline without appearing in the résumé.
+
+The `/resume` route renders accessible HTML and reads its Internships section from the same experience data, so role wording lives in one place. Because `@react-pdf/renderer` runs on the client, the résumé page passes a serializable `ResumeInternship[]` projection down to `DownloadResumeButton` and `ResumePdfDocument` rather than importing the server-only loader. `DownloadResumeButton` dynamically imports `@react-pdf/renderer`, keeping PDF generation code out of the initial homepage bundle.
 
 ## Contact flow
 

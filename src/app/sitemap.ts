@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { getAllExperiences } from "@/lib/content/experience";
 import { getAllProjects } from "@/lib/content/projects";
 import { getAllSkills } from "@/lib/content/skills";
 
@@ -39,6 +40,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
         })),
         ...getAllSkills().map((skill) => ({
             url: `${SITE_URL}/skills/${skill.slug}`,
+            lastModified,
+            changeFrequency: "monthly" as const,
+            priority: 0.7,
+        })),
+        ...getAllExperiences().map((experience) => ({
+            url: `${SITE_URL}/experience/${experience.slug}`,
             lastModified,
             changeFrequency: "monthly" as const,
             priority: 0.7,

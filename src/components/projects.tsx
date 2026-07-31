@@ -3,9 +3,9 @@
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
-import Image from "next/image";
 import Link from "next/link";
 import type { ProjectContent } from "@/lib/content/types";
+import ProjectThumbnail from "@/components/content/ProjectThumbnail";
 import { useActiveSection, useScrollActions } from "@/context/SmoothScrollContext";
 
 // Resting values for the focus animation below. Panel geometry (count, step)
@@ -175,14 +175,10 @@ export default function ProjectsSection({ projects }: { projects: ProjectContent
               className="relative mb-[clamp(0.5rem,2dvh,1rem)] block h-[clamp(7.5rem,30dvh,18.75rem)] w-full max-w-3xl rounded-xl"
               aria-label={`Read the ${project.title} case study`}
             >
-              <Image
-                src={project.image}
-                alt={`Screenshot of ${project.title} project`}
-                fill
+              <ProjectThumbnail
+                project={project}
                 className="rounded-xl object-cover shadow-lg"
-                quality={90}
                 sizes="(max-width: 640px) 74vw, (max-width: 1400px) 56vw, 768px"
-                loading={project.id === 1 ? "eager" : "lazy"}
               />
             </Link>
             <p className="mb-[clamp(0.75rem,2.5dvh,1.5rem)] max-w-xl text-sm leading-relaxed sm:text-base lg:text-lg">{project.summary}</p>

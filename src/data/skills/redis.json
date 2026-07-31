@@ -1,0 +1,10 @@
+{
+  "slug": "redis", "name": "Redis", "shortDescription": "An in-memory data store used for caching and fast key-value access.",
+  "status": "published", "category": "data-cloud", "webCategory": "databases", "iconText": "Redis", "showInSkillsSection": true, "skillsSectionOrder": 36,
+  "whatItIs": ["Redis keeps data in memory as keys and structured values, which makes reads and writes fast enough to sit in front of a slower primary store."],
+  "howILearned": ["I worked with Redis as part of a production Node and Express backend during my internship at Aude.ai."],
+  "howIUseIt": ["I use it where a request needs data faster than a round trip to the primary database is worth."],
+  "concepts": ["Key-value storage", "Caching", "Expiry and TTL", "In-memory data structures"],
+  "lessonsLearned": ["A cache is only as useful as its invalidation strategy is clear."],
+  "seo": { "title": "Redis Skill and Experience", "description": "How I have worked with Redis in a production Node and Express backend." }
+}

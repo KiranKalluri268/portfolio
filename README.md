@@ -12,7 +12,7 @@ A responsive, animated software engineering portfolio built with Next.js, React,
 - GSAP `ScrollTrigger` animations without wheel-event hijacking
 - Scroll-animated About section backed by editable JSON
 - Pinned horizontal Projects carousel driven by natural Lenis scrolling
-- Responsive alternating Experience timeline with mobile-specific focus behavior
+- Responsive alternating Experience timeline with mobile-specific focus behavior, where each role opens a detail page with a nested timeline of the work shipped during it
 - Direction-aware, scroll-responsive skill marquees
 - Interactive, data-driven skill universe with radial branches, pan, zoom, pinch, and accessible list navigation
 - Interactive canvas star field with shooting-star lifecycle
@@ -91,7 +91,7 @@ npm run build
 
 Vitest and React Testing Library cover the parts of the codebase most likely to break silently:
 
-- `src/lib/content/*` — JSON content validation, sorting, filtering, and the project/skill relationship graph
+- `src/lib/content/*` — JSON content validation, sorting, filtering, and the project/skill/experience relationship graph
 - `src/components/skills/skill-web-layout.ts` — the deterministic radial skill-graph layout and its collision-free guarantee
 - `src/app/api/contact/route.ts` — request validation, Resend delivery, and IP-based rate limiting
 - `src/components/Contact.tsx` — client-side form validation and submit/success/error states
@@ -108,6 +108,7 @@ Tests run in a Node environment by default; component tests that need a DOM opt 
 | `/projects/[slug]` | JSON-driven project case study |
 | `/skills` | Interactive skill universe organized by domain and subcategory |
 | `/skills/[slug]` | JSON-driven skill background and related projects |
+| `/experience/[slug]` | JSON-driven role detail with a timeline of work shipped during it |
 | `/api/contact` | Server-side contact form endpoint |
 | `/opengraph-image` | Generated 1200×630 social preview |
 | `/robots.txt` | Search crawler rules |
@@ -121,7 +122,7 @@ src/
 ├── background/          Star canvas and transparent black-hole media
 ├── components/          Portfolio sections and navigation controls
 ├── context/             Audio lifecycle and Lenis/scroll coordination
-├── data/                Editable About, résumé, project, and skill content
+├── data/                Editable About, résumé, project, skill, and experience content
 ├── lib/content/         Server-side content discovery, validation, and relationships
 └── types/               Shared TypeScript interfaces
 public/

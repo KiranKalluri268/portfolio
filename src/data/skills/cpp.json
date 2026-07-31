@@ -1,0 +1,10 @@
+{
+  "slug": "cpp", "name": "C++", "shortDescription": "A systems language used here for a desktop application driving camera hardware and cloud video pipelines.",
+  "status": "published", "category": "ai-programming", "webCategory": "programming-languages", "iconText": "C++", "showInSkillsSection": true, "skillsSectionOrder": 37,
+  "whatItIs": ["C++ is a compiled systems language that gives direct control over memory and performance, which is why it tends to sit close to hardware."],
+  "howILearned": ["I learned C++ by working directly in an existing production desktop application at AarogyalinQ, which drove an intraoral camera and ran a detection model on its feed."],
+  "howIUseIt": ["I used it to add cloud capability to that application: uploading captured video to AWS S3 and publishing a live stream through AWS IVS from inside the C++ application itself."],
+  "concepts": ["Compiled builds", "Working in an existing codebase", "Media capture", "Integrating cloud SDKs"],
+  "lessonsLearned": ["Reading an unfamiliar native codebase carefully first is faster than trying to change it early.", "Adding network and cloud calls to a native application makes error handling and failure states much more important."],
+  "seo": { "title": "C++ Skill and Experience", "description": "How I worked in a production C++ desktop application to add AWS S3 video storage and AWS IVS live streaming." }
+}

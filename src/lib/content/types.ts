@@ -36,8 +36,10 @@ export interface ProjectContent {
   featured: boolean;
   showInProjectsSection: boolean;
   projectsSectionOrder: number;
-  image: string;
-  imageAlt: string;
+  /** Optional: internal and client work often has no shareable screenshot, in
+   *  which case the UI falls back to a generated monogram panel. */
+  image?: string;
+  imageAlt?: string;
   role: string;
   year?: number;
   repositoryUrl?: string;
@@ -55,6 +57,82 @@ export interface ProjectContent {
   lessonsLearned: string[];
   gallery: ProjectGalleryItem[];
   seo: ContentSeo;
+}
+
+export interface ExperiencePeriod {
+  startLabel: string;
+  startDate: string;
+  endLabel: string;
+  endDate?: string;
+}
+
+/** A single thing built or shipped during a role: a feature, an integration,
+ *  a piece of infrastructure. Rendered as one entry in the nested work
+ *  timeline on the experience detail page. */
+export interface ExperienceWorkItem {
+  title: string;
+  description: string;
+  kind?: "feature" | "integration" | "research" | "infrastructure" | "improvement";
+  periodLabel?: string;
+  impact?: string;
+  /** Skill slugs, resolved to real skill pages through the content graph. */
+  skills: string[];
+  /** Optional slug of a project case study this work item belongs to. */
+  projectSlug?: string;
+}
+
+/** A recommendation written by someone who managed the role. Quoted verbatim;
+ *  `quote` holds one entry per paragraph. */
+export interface ExperienceRecommendation {
+  quote: string[];
+  author: string;
+  authorTitle: string;
+  /** e.g. "Managed Saikiran directly" */
+  relationship?: string;
+  dateLabel?: string;
+  /** Machine-readable form of dateLabel, e.g. "2026-06-11". */
+  date?: string;
+  /** Where the recommendation can be read in its original context. */
+  sourceUrl?: string;
+  sourceLabel?: string;
+}
+
+export interface ExperienceContent {
+  slug: string;
+  role: string;
+  company: string;
+  companyUrl?: string;
+  status: ContentStatus;
+  showInTimeline: boolean;
+  /** Controls whether the role appears in the résumé and its PDF, which is an
+   *  editorial choice independent of the homepage timeline. */
+  showInResume: boolean;
+  timelineOrder: number;
+  employmentType?: string;
+  period: ExperiencePeriod;
+  /** Compact "Jan 2026 – Present" form used by the résumé and its PDF. */
+  resumePeriod: string;
+  location?: string;
+  workMode?: "On-site" | "Hybrid" | "Remote";
+  summary: string;
+  /** Bullets shown on the homepage timeline card and in the résumé. */
+  highlights: string[];
+  overview: string[];
+  workItems: ExperienceWorkItem[];
+  skills: string[];
+  outcomes: ProjectOutcome[];
+  lessonsLearned: string[];
+  recommendations: ExperienceRecommendation[];
+  seo: ContentSeo;
+}
+
+/** Serializable projection of a role for the résumé page and its PDF renderer,
+ *  which are client components and cannot import the server-only loader. */
+export interface ResumeInternship {
+  role: string;
+  company: string;
+  period: string;
+  highlights: string[];
 }
 
 export interface SkillCategoryContent {

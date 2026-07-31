@@ -1,5 +1,5 @@
-import Image from "next/image";
 import ProjectLink from "./ProjectLink";
+import ProjectThumbnail from "./ProjectThumbnail";
 import type { ProjectContent } from "@/lib/content/types";
 
 export default function ProjectCard({ project }: { project: ProjectContent }) {
@@ -7,10 +7,8 @@ export default function ProjectCard({ project }: { project: ProjectContent }) {
     <article className="group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] transition-colors hover:border-blue-400/30">
       <ProjectLink project={project} className="block">
         <div className="relative aspect-[16/9] overflow-hidden bg-white/[0.025]">
-          <Image
-            src={project.image}
-            alt={project.imageAlt}
-            fill
+          <ProjectThumbnail
+            project={project}
             sizes="(max-width: 768px) calc(100vw - 3rem), 30vw"
             className="object-cover transition-transform duration-500 group-hover:scale-[1.025]"
           />

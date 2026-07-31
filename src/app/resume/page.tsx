@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import resume from "@/data/resume.json";
 import BackNavigationButton from "@/components/BackNavigationButton";
+import { getResumeInternships } from "@/lib/content/experience";
 import DownloadResumeButton from "./DownloadResumeButton";
 import styles from "./resume.module.css";
 
@@ -28,6 +29,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 }
 
 export default function ResumePage() {
+  const internships = getResumeInternships();
   return (
     <main className={styles.page}>
       <div className={styles.actions}>
@@ -39,7 +41,7 @@ export default function ResumePage() {
             This is not an embedded PDF. The resume is built from structured JSON and rendered as accessible HTML
           </p>
         </div>
-        <DownloadResumeButton />
+        <DownloadResumeButton internships={internships} />
       </div>
       <article className={styles.paper} aria-label={`${resume.basics.name} resume`}>
         <header>
@@ -94,7 +96,7 @@ export default function ResumePage() {
         </Section>
 
         <Section title="Internships">
-          {resume.internships.map((internship) => (
+          {internships.map((internship) => (
             <div key={`${internship.company}-${internship.role}`}>
               <h3 className={styles.entryTitle}>
                 {internship.role} – {internship.company}{" "}

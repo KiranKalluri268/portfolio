@@ -1,0 +1,107 @@
+{
+  "slug": "aude-ai",
+  "role": "Software Engineer Intern",
+  "company": "Aude.ai",
+  "status": "published",
+  "showInTimeline": true,
+  "showInResume": true,
+  "timelineOrder": 1,
+  "employmentType": "Internship",
+  "period": {
+    "startLabel": "January 2026",
+    "startDate": "2026-01",
+    "endLabel": "Present"
+  },
+  "resumePeriod": "Jan 2026 – Present",
+  "location": "Remote",
+  "workMode": "Remote",
+  "summary": "Joined as a software engineer intern on the product team, working across a Next.js frontend and a Node and Express backend. After the first month I was given the chance to design and build an internal diagnostics application, which became the main focus of the role.",
+  "highlights": [
+    "Worked across the product — a Next.js frontend with a Node and Express backend using Redis — starting with UI bug fixes before taking on larger work.",
+    "Was given ownership of an internal diagnostics application after the first month, and built it as a Next.js monolith that verifies per-client data integrity for the main product.",
+    "Designed the dashboard for troubleshooting, with failures visible at a glance, deep-linkable investigations, and a user's-eye UI view paired with its API response.",
+    "Containerised it with Docker and deployed it on AWS so it reuses the main product's existing single sign-on, with access restricted to authorized members of the engineering team.",
+    "Proposed and shipped skeleton loading states, now in production."
+  ],
+  "overview": [
+    "I joined Aude.ai as a software engineer intern on the product team. The product is a Next.js frontend backed by a Node and Express service using Redis, and the first month was spent working in it directly — exploring the codebase, then finding and fixing bugs, mostly on the UI.",
+    "On the strength of that first month I was given the opportunity to design and build an internal diagnostics application for the engineering team. That became the main body of the internship, alongside continuing product work and UX discussions."
+  ],
+  "workItems": [
+    {
+      "title": "Product work and UI bug fixes",
+      "description": "Started in the existing Aude product — a Next.js frontend with a Node and Express backend using Redis — exploring the codebase and fixing bugs across it, mostly on the UI. This first month built up the familiarity with the product's data flows that the diagnostics work later depended on.",
+      "kind": "improvement",
+      "skills": [
+        "next-js",
+        "react",
+        "node-js",
+        "express",
+        "redis"
+      ]
+    },
+    {
+      "title": "Internal diagnostics dashboard",
+      "description": "After the first month I was given the chance to design and build an internal diagnostics application, which I built as a Next.js monolith. It talks directly to the database, checks whether the main app is generating correct data for every client, and shows the state of all of them in one dashboard. The interface is built for the engineers who debug it: what is not working is visible at a glance, an investigation can be deep-linked and shared as a URL, and a user's-eye view shows the UI as the user sees it next to the API response behind it.",
+      "kind": "feature",
+      "projectSlug": "aude-diagnostics",
+      "skills": [
+        "next-js",
+        "react"
+      ]
+    },
+    {
+      "title": "Deployment behind the existing single sign-on",
+      "description": "Containerised the diagnostics app with Docker and deployed it on AWS, serving it from the same origin as the main application so it reuses the existing single sign-on instead of introducing a second authentication system. Access is further restricted to authorized members of the engineering team.",
+      "kind": "infrastructure",
+      "projectSlug": "aude-diagnostics",
+      "skills": [
+        "docker",
+        "aws",
+        "next-js"
+      ]
+    },
+    {
+      "title": "Skeleton loading states",
+      "description": "Took part in UX improvement discussions and proposed skeleton loading for the app, which had no loading view. The proposal was approved, I implemented it, and it is now in production.",
+      "kind": "improvement",
+      "skills": [
+        "next-js",
+        "react"
+      ]
+    }
+  ],
+  "skills": [
+    "next-js",
+    "react",
+    "node-js",
+    "express",
+    "redis",
+    "docker",
+    "aws"
+  ],
+  "outcomes": [],
+  "recommendations": [
+    {
+      "quote": [
+        "Saikiran has been a phenomenal asset to our engineering team at Aude.ai. As a Software Engineer Intern, he stepped up to take end-to-end ownership of core workflows, designing a full-stack diagnostic web application and successfully deploying it on AWS. Beyond his backend and data pipeline work, Saikiran possesses a strong product mindset. He actively contributed to UX discussions, personally engineering performance enhancements like skeleton loading that made it directly into production. He even went above and beyond to learn DaVinci Resolve to build our high-quality product teaser video. He has a rare combination of technical autonomy, rapid learning velocity, and a growth mindset. I highly recommend Saikiran to any high-velocity team looking for a sharp, versatile full-stack developer"
+      ],
+      "author": "Keith Jia",
+      "authorTitle": "CEO and Founder, Aude.ai",
+      "relationship": "Managed Saikiran directly",
+      "dateLabel": "June 11, 2026",
+      "date": "2026-06-11",
+      "sourceUrl": "https://www.linkedin.com/in/saikiran-kalluri/details/recommendations/",
+      "sourceLabel": "View on LinkedIn"
+    }
+  ],
+  "lessonsLearned": [
+    "How to design an internal tool around a debugging workflow rather than around the data model.",
+    "That an authentication constraint can often be resolved through deployment topology rather than by adding a second identity system.",
+    "That a well-argued UX proposal can go from discussion to production as an intern."
+  ],
+  "seo": {
+    "title": "Software Engineer Intern at Aude.ai",
+    "description": "Building an internal data-integrity diagnostics dashboard, deploying it behind existing single sign-on on AWS, and shipping UX improvements."
+  }
+}

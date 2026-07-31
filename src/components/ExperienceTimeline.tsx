@@ -1,73 +1,17 @@
 "use client";
 
 import { useLayoutEffect, useRef } from "react";
+import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
-import type { Experience } from "@/types";
+import type { ExperienceContent } from "@/lib/content/types";
 import { useAudio } from "@/context/AudioContextProvider";
 
-type TimelineExperience = Omit<Experience, "description" | "date"> & {
-  description: string[];
-  period: {
-    startLabel: string;
-    startDate: string;
-    endLabel: string;
-    endDate?: string;
-  };
-  location?: string;
-  workMode?: "On-site" | "Hybrid" | "Remote";
-};
-
-const experiences: TimelineExperience[] = [
-  {
-    title: "Software Engineer Intern",
-    company: "Aude.ai",
-    period: {
-      startLabel: "January 2026",
-      startDate: "2026-01",
-      endLabel: "Present",
-    },
-    location: "Remote",
-    description: [
-      "Designed and developed a diagnostic web application for monitoring real-time data integrity and consistent end-user delivery.",
-      "Engineered an end-to-end feedback mechanism that aggregates user input and visualizes it in the diagnostic dashboard.",
-      "Integrated GitHub, Jira, and Slack data sources to automate performance and system-health tracking.",
-    ],
-  },
-  {
-    title: "Forward Deployed Engineer Intern (FDE)",
-    company: "AarogyalinQ Private Limited",
-    period: {
-      startLabel: "August 2025",
-      startDate: "2025-08",
-      endLabel: "January 2026",
-      endDate: "2026-01",
-    },
-    location: "Remote",
-    description: [
-      "Collaborated with clients to implement new features and optimize existing workflows.",
-      "Integrated voice input and commands using the Bhashini and ElevenLabs APIs.",
-      "Added AWS S3 video storage and AWS IVS live streaming to a C++ application.",
-    ],
-  },
-  {
-    title: "AWS Cloud Virtual Internship",
-    company: "Eduskills Foundation",
-    period: {
-      startLabel: "April 2024",
-      startDate: "2024-04",
-      endLabel: "June 2024",
-      endDate: "2024-06",
-    },
-    location: "Remote",
-    description: [
-      "Completed a three-month virtual internship focused on AWS Cloud technologies.",
-      "Participated through a collaboration between Eduskills and AWS Academy.",
-    ],
-  },
-];
-
-export default function ExperienceTimeline() {
+export default function ExperienceTimeline({
+  experiences,
+}: {
+  experiences: ExperienceContent[];
+}) {
   const { hasEntered } = useAudio();
   const sectionRef = useRef<HTMLElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -271,7 +215,7 @@ export default function ExperienceTimeline() {
 
           {experiences.map((experience, index) => (
             <ExperienceRow
-              key={`${experience.company}-${experience.title}`}
+              key={experience.slug}
               experience={experience}
               index={index}
               dotRef={(dot) => {
@@ -286,7 +230,7 @@ export default function ExperienceTimeline() {
 }
 
 interface ExperienceRowProps {
-  experience: TimelineExperience;
+  experience: ExperienceContent;
   index: number;
   dotRef: (dot: HTMLSpanElement | null) => void;
 }
@@ -303,14 +247,17 @@ function ExperienceRow({ experience, index, dotRef }: ExperienceRowProps) {
   return (
     <article
       className={`experience-row relative grid grid-cols-[32px_minmax(0,1fr)] gap-x-3 gap-y-4 ${desktopColumns} md:items-stretch md:gap-x-5 md:gap-y-0 ${rowShift}`}
-      aria-label={`${experience.title} at ${experience.company}`}
+      aria-label={`${experience.role} at ${experience.company}`}
     >
       <div
         className={`experience-card-scale relative z-10 will-change-[transform,opacity] col-start-2 row-start-1 origin-center ${detailColumn} md:row-start-1 ${isReversed ? "md:origin-left" : "md:origin-right"}`}
       >
-        <div className="h-full rounded-2xl border border-white/10 bg-black/55 p-5 shadow-xl backdrop-blur-sm transition-[background-color,border-color,box-shadow] duration-300 hover:border-accent-soft/25 hover:bg-white/5 hover:shadow-accent/10 sm:p-6">
+        <Link
+          href={`/experience/${experience.slug}`}
+          className="group block h-full rounded-2xl border border-white/10 bg-black/55 p-5 shadow-xl backdrop-blur-sm transition-[background-color,border-color,box-shadow] duration-300 hover:border-accent-soft/25 hover:bg-white/5 hover:shadow-accent/10 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:p-6"
+        >
           <h3 className="mb-3 text-xl font-bold tracking-wide sm:text-2xl">
-            {experience.title}
+            {experience.role}
           </h3>
           <p className="mb-4 font-medium text-accent-soft">{experience.company}</p>
           <dl className="space-y-3 text-sm text-gray-300">
@@ -339,7 +286,16 @@ function ExperienceRow({ experience, index, dotRef }: ExperienceRowProps) {
               </div>
             )}
           </dl>
-        </div>
+          <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-accent-soft transition-colors group-hover:text-white">
+            View role details
+            <span
+              className="transition-transform duration-300 group-hover:translate-x-1"
+              aria-hidden="true"
+            >
+              →
+            </span>
+          </span>
+        </Link>
       </div>
 
       <span
@@ -357,7 +313,7 @@ function ExperienceRow({ experience, index, dotRef }: ExperienceRowProps) {
             Highlights
           </h4>
           <ul className="space-y-3 text-sm leading-relaxed text-gray-300 sm:text-base">
-            {experience.description.map((item) => (
+            {experience.highlights.map((item) => (
               <li key={item} className="flex gap-3">
                 <span className="mt-[0.65em] h-1.5 w-1.5 shrink-0 rounded-full bg-accent-soft" aria-hidden="true" />
                 <span>{item}</span>

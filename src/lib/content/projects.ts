@@ -12,8 +12,13 @@ import type { ProjectContent } from "./types";
 function validateProject(value: unknown, source: string): ProjectContent {
   assertRecord(value, source);
 
-  for (const field of ["slug", "title", "summary", "status", "image", "imageAlt", "role"]) {
+  for (const field of ["slug", "title", "summary", "status", "role"]) {
     assertString(value[field], field, source);
+  }
+  // A screenshot is optional, but an image must always carry alt text.
+  if (value.image !== undefined) {
+    assertString(value.image, "image", source);
+    assertString(value.imageAlt, "imageAlt", source);
   }
   for (const field of [
     "skills",
