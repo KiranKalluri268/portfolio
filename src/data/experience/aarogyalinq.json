@@ -19,7 +19,7 @@
   "summary": "Worked across four healthcare products as a forward deployed engineer — from voice-enabled prescriptions, to cloud video and live streaming written into a C++ desktop application, to a desktop automation platform and a remote caregiving app.",
   "highlights": [
     "Delivered features across four products, working directly with clients to implement them and optimize existing workflows.",
-    "Built voice input and commands with the ElevenLabs and Bhashini APIs, and deployed the platform to AWS with GitHub Actions CI/CD and CloudWatch alerting.",
+    "Built voice input and commands with the ElevenLabs and Bhashini APIs, and deployed the platform on AWS ECS with GitHub Actions CI/CD and CloudWatch alerting.",
     "Worked inside a C++ desktop application to add AWS S3 video storage and AWS IVS live streaming, and built its companion Next.js web application from scratch.",
     "Built a mobile-driven desktop automation system and a caregiving platform with WebRTC consultations, Razorpay payments, and an admin dashboard."
   ],
@@ -30,7 +30,7 @@
   "workItems": [
     {
       "title": "Digichikitsak — voice-enabled prescriptions and AWS deployment",
-      "description": "A MERN web application implementing electronic prescriptions: creating new ones, converting existing records, and storing them securely. I implemented voice input and commands using the ElevenLabs and Bhashini APIs, then deployed the project to AWS — setting up the infrastructure through to CloudWatch alerts — with CI/CD through GitHub Actions.",
+      "description": "A MERN web application implementing electronic prescriptions: creating new ones, converting existing records, and storing them securely. I implemented voice input and commands using the ElevenLabs and Bhashini APIs, then deployed the project to AWS ECS — setting up the infrastructure through to CloudWatch alerts — with CI/CD through GitHub Actions.",
       "kind": "feature",
       "projectSlug": "digichikitsak",
       "skills": [

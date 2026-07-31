@@ -2,7 +2,7 @@
   "id": 7,
   "slug": "digichikitsak",
   "title": "Digichikitsak – Digital Prescription Platform",
-  "summary": "A MERN platform for electronic prescriptions that creates new ones, converts existing records, and stores them securely, with multilingual voice input and full AWS deployment.",
+  "summary": "A MERN platform for electronic prescriptions that creates new ones, converts existing records, and stores them securely, with multilingual voice input and deployment on AWS ECS.",
   "status": "published",
   "featured": false,
   "showInProjectsSection": false,
@@ -33,7 +33,7 @@
     },
     {
       "title": "Automated deployment",
-      "description": "GitHub Actions builds and deploys to AWS, with CloudWatch alerts reporting on the running system."
+      "description": "GitHub Actions builds and deploys to AWS ECS, with CloudWatch alerts reporting on the running system."
     }
   ],
   "buildingProcess": [
@@ -43,11 +43,11 @@
     },
     {
       "title": "Infrastructure setup",
-      "description": "Set up the AWS infrastructure for the project from scratch, through to configuring CloudWatch alerts."
+      "description": "Set up the AWS infrastructure for the project from scratch, running the application on ECS, through to configuring CloudWatch alerts."
     },
     {
       "title": "CI/CD",
-      "description": "Built a GitHub Actions pipeline so deployments to AWS run automatically."
+      "description": "Built a GitHub Actions pipeline so deployments to AWS ECS run automatically."
     }
   ],
   "challenges": [],
@@ -55,13 +55,13 @@
     "Electronic prescription creation and digital conversion",
     "Secure prescription storage",
     "Voice input and voice commands via ElevenLabs and Bhashini",
-    "AWS infrastructure with CloudWatch alerting",
+    "AWS ECS infrastructure with CloudWatch alerting",
     "Automated deployment through GitHub Actions"
   ],
   "highlights": [
     "Integrated voice input and voice commands using the ElevenLabs and Bhashini APIs.",
-    "Set up the project's AWS infrastructure end to end, including CloudWatch alerts.",
-    "Built a GitHub Actions CI/CD pipeline for automated deployment."
+    "Set up the project's AWS infrastructure end to end, running it on ECS with CloudWatch alerts.",
+    "Built a GitHub Actions CI/CD pipeline for automated deployment to AWS ECS."
   ],
   "outcomes": [],
   "lessonsLearned": [
@@ -71,6 +71,6 @@
   "gallery": [],
   "seo": {
     "title": "Digichikitsak Project Case Study",
-    "description": "A MERN electronic prescription platform with ElevenLabs and Bhashini voice input, deployed to AWS with GitHub Actions CI/CD and CloudWatch alerting."
+    "description": "A MERN electronic prescription platform with ElevenLabs and Bhashini voice input, deployed on AWS ECS with GitHub Actions CI/CD and CloudWatch alerting."
   }
 }
