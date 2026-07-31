@@ -1,0 +1,55 @@
+{
+  "slug": "aude-ai",
+  "role": "Software Engineer Intern",
+  "company": "Aude.ai",
+  "status": "published",
+  "showInTimeline": true,
+  "showInResume": true,
+  "timelineOrder": 1,
+  "employmentType": "Internship",
+  "period": {
+    "startLabel": "January 2026",
+    "startDate": "2026-01",
+    "endLabel": "Present"
+  },
+  "resumePeriod": "Jan 2026 – Present",
+  "location": "Remote",
+  "workMode": "Remote",
+  "summary": "Building a diagnostic web application that monitors real-time data integrity and surfaces system health across the tools the team already uses.",
+  "highlights": [
+    "Designed and developed a diagnostic web application for monitoring real-time data integrity and consistent end-user delivery.",
+    "Engineered an end-to-end feedback mechanism that aggregates user input and visualizes it in the diagnostic dashboard.",
+    "Integrated GitHub, Jira, and Slack data sources to automate performance and system-health tracking."
+  ],
+  "overview": [
+    "Aude.ai needed visibility into whether data reaching end users stayed accurate and complete as it moved through the system.",
+    "The work centred on a diagnostic dashboard that brings monitoring, user feedback, and cross-platform health metrics into one place."
+  ],
+  "workItems": [
+    {
+      "title": "Diagnostic web application",
+      "description": "Designed and developed a diagnostic web application for monitoring real-time data integrity and consistent end-user delivery.",
+      "kind": "feature",
+      "skills": []
+    },
+    {
+      "title": "End-to-end feedback mechanism",
+      "description": "Engineered a feedback mechanism that aggregates user input and visualizes it within the diagnostic dashboard, shortening the debugging and product upgrade cycle for the development team.",
+      "kind": "feature",
+      "skills": []
+    },
+    {
+      "title": "Cross-platform data source integrations",
+      "description": "Integrated GitHub, Jira, and Slack data sources to automate the tracking of performance and system-health metrics.",
+      "kind": "integration",
+      "skills": []
+    }
+  ],
+  "skills": [],
+  "outcomes": [],
+  "lessonsLearned": [],
+  "seo": {
+    "title": "Software Engineer Intern at Aude.ai",
+    "description": "Building a diagnostic web application for real-time data integrity monitoring, user feedback aggregation, and automated system-health tracking."
+  }
+}

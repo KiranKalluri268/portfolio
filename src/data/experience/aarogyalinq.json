@@ -1,0 +1,56 @@
+{
+  "slug": "aarogyalinq",
+  "role": "Forward Deployed Engineer Intern (FDE)",
+  "company": "AarogyalinQ Private Limited",
+  "status": "published",
+  "showInTimeline": true,
+  "showInResume": true,
+  "timelineOrder": 2,
+  "employmentType": "Internship",
+  "period": {
+    "startLabel": "August 2025",
+    "startDate": "2025-08",
+    "endLabel": "January 2026",
+    "endDate": "2026-01"
+  },
+  "resumePeriod": "Aug 2025 – Jan 2026",
+  "location": "Remote",
+  "workMode": "Remote",
+  "summary": "Worked directly with clients to ship features across a web application and a C++ application, adding multilingual voice input and cloud video capability.",
+  "highlights": [
+    "Collaborated with clients to implement new features and optimize existing workflows.",
+    "Integrated voice input and commands using the Bhashini and ElevenLabs APIs.",
+    "Added AWS S3 video storage and AWS IVS live streaming to a C++ application."
+  ],
+  "overview": [
+    "As a forward deployed engineer, the work sat close to the client: gathering requirements directly, then implementing against them across the company's products.",
+    "The role spanned two codebases — a web application that gained voice interaction, and a C++ application that gained cloud video storage and live streaming."
+  ],
+  "workItems": [
+    {
+      "title": "Client feature delivery and workflow optimization",
+      "description": "Collaborated directly with clients to implement new features and optimize existing workflows.",
+      "kind": "feature",
+      "skills": []
+    },
+    {
+      "title": "Voice input and commands",
+      "description": "Integrated voice input and commands into the company's web application using the Bhashini API and the ElevenLabs API.",
+      "kind": "integration",
+      "skills": []
+    },
+    {
+      "title": "Cloud video storage and live streaming",
+      "description": "Added cloud functionality to a C++ application by enabling video storage in AWS S3 and live streaming through AWS IVS, improving accessibility and performance.",
+      "kind": "infrastructure",
+      "skills": ["aws"]
+    }
+  ],
+  "skills": ["aws"],
+  "outcomes": [],
+  "lessonsLearned": [],
+  "seo": {
+    "title": "Forward Deployed Engineer Intern at AarogyalinQ",
+    "description": "Client-facing feature delivery, Bhashini and ElevenLabs voice integration, and AWS S3 and IVS cloud video for a C++ application."
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "slug": "eduskills-aws",
+  "role": "AWS Cloud Virtual Internship",
+  "company": "Eduskills Foundation",
+  "status": "published",
+  "showInTimeline": true,
+  "showInResume": false,
+  "timelineOrder": 3,
+  "employmentType": "Virtual internship",
+  "period": {
+    "startLabel": "April 2024",
+    "startDate": "2024-04",
+    "endLabel": "June 2024",
+    "endDate": "2024-06"
+  },
+  "resumePeriod": "Apr 2024 – Jun 2024",
+  "location": "Remote",
+  "workMode": "Remote",
+  "summary": "A three-month virtual internship focused on AWS Cloud technologies, delivered through a collaboration between Eduskills and AWS Academy.",
+  "highlights": [
+    "Completed a three-month virtual internship focused on AWS Cloud technologies.",
+    "Participated through a collaboration between Eduskills and AWS Academy."
+  ],
+  "overview": [
+    "A structured introduction to AWS Cloud technologies run as a virtual internship in collaboration with AWS Academy."
+  ],
+  "workItems": [
+    {
+      "title": "AWS Cloud curriculum",
+      "description": "Completed a three-month virtual internship focused on AWS Cloud technologies, delivered through a collaboration between Eduskills and AWS Academy.",
+      "kind": "research",
+      "skills": ["aws"]
+    }
+  ],
+  "skills": ["aws"],
+  "outcomes": [],
+  "lessonsLearned": [],
+  "seo": {
+    "title": "AWS Cloud Virtual Internship at Eduskills Foundation",
+    "description": "A three-month AWS Cloud virtual internship delivered in collaboration with AWS Academy."
+  }
+}

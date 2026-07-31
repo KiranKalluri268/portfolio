@@ -13,10 +13,12 @@ import NavigationControls from '@/components/NavigationControls';
 import SceneWrapper from '@/components/SceneWrapper';
 import { getHomepageProjects } from '@/lib/content/projects';
 import { getSkillsByCategory } from '@/lib/content/skills';
+import { getTimelineExperiences } from '@/lib/content/experience';
 
 export default function Home() {
   const projects = getHomepageProjects();
   const skillGroups = getSkillsByCategory();
+  const experiences = getTimelineExperiences();
 
   return (
     <>
@@ -62,7 +64,7 @@ export default function Home() {
           </SceneWrapper>
           <SceneWrapper index={3}>
             <ErrorBoundary>
-              <ExperienceTimeline />
+              <ExperienceTimeline experiences={experiences} />
             </ErrorBoundary>
           </SceneWrapper>
           <SceneWrapper index={4}>

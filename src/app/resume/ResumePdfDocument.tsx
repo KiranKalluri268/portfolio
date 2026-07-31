@@ -9,6 +9,7 @@ import {
   View,
 } from "@react-pdf/renderer";
 import resume from "@/data/resume.json";
+import type { ResumeInternship } from "@/lib/content/types";
 
 const styles = StyleSheet.create({
   page: {
@@ -83,7 +84,11 @@ function BulletList({ items }: { items: string[] }) {
   );
 }
 
-export default function ResumePdfDocument() {
+export default function ResumePdfDocument({
+  internships,
+}: {
+  internships: ResumeInternship[];
+}) {
   const phoneUrl = `tel:${resume.basics.phone.replace(/[^+\d]/g, "")}`;
 
   return (
@@ -139,7 +144,7 @@ export default function ResumePdfDocument() {
           </PdfSection>
 
           <PdfSection title="Internships">
-            {resume.internships.map((internship) => (
+            {internships.map((internship) => (
               <View style={styles.entry} key={`${internship.company}-${internship.role}`}>
                 <Text style={styles.entryTitle}>
                   {internship.role} – {internship.company}{" "}

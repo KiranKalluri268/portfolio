@@ -66,28 +66,6 @@
       ]
     }
   ],
-  "internships": [
-    {
-      "role": "Software Engineer Intern",
-      "company": "Aude.ai",
-      "period": "Jan 2026 – Present",
-      "highlights": [
-        "Designed and developed a diagnostic web application to monitor real-time data integrity and ensure consistent delivery for end-users.",
-        "Engineered an end-to-end feedback mechanism that aggregates user input and visualizes it within the diagnostic dashboard, streamlining the debugging and product upgrade cycle for the development team.",
-        "Integrated cross-platform data sources (such as GitHub, Jira, or Slack) to automate the tracking of performance and system health metrics."
-      ]
-    },
-    {
-      "role": "Forward Deployed Engineer Intern (FDE)",
-      "company": "AarogyalinQ Private Limited",
-      "period": "Aug 2025 – Jan 2026",
-      "highlights": [
-        "Collaborated with clients to implement new features and optimize existing workflows.",
-        "Integrated voice input and commands using Bhashini API and ElevenLabs API in the company’s web application.",
-        "Added cloud functionality to a C++ application by enabling video storage in AWS S3 and live streaming through AWS IVS, improving accessibility and performance."
-      ]
-    }
-  ],
   "education": {
     "degree": "Bachelor of Technology – Computer Science & Engineering",
     "institution": "Vaagdevi College of Engineering",
