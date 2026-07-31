@@ -2,15 +2,22 @@
   "id": 9,
   "slug": "axion",
   "title": "Axion – Mobile-Driven Desktop Automation",
-  "summary": "A three-part automation system that lets a user drive and automate their desktop from their phone: a mobile-first Next.js web app, a cloud relay, and a Python desktop agent, with live step-by-step visibility and mid-run steering.",
+  "summary": "A three-part automation system that lets a user drive and automate their desktop from their phone: a mobile-first Next.js web app, a MERN cloud relay, and a Python desktop agent, with live step-by-step visibility and mid-run steering.",
   "status": "published",
   "featured": false,
   "showInProjectsSection": false,
   "projectsSectionOrder": 9,
   "role": "Full-stack development",
-  "skills": ["next-js", "react", "python"],
+  "skills": [
+    "next-js",
+    "react",
+    "node-js",
+    "express",
+    "mongodb",
+    "python"
+  ],
   "overview": [
-    "Axion lets someone control and automate their desktop from their phone. It is built from three pieces: a mobile-first Next.js web application, a cloud relay, and a Python desktop application.",
+    "Axion lets someone control and automate their desktop from their phone. It is built from three pieces: a mobile-first Next.js web application, a MERN cloud relay, and a Python desktop application.",
     "The user types a prompt or speaks into the web app; that becomes a task which travels through the relay to the desktop agent, which carries it out."
   ],
   "problem": "Desktop automation normally has to be set up and watched at the desktop itself, which is exactly where the user is not when they want it to run.",
@@ -22,7 +29,7 @@
     },
     {
       "title": "Cloud relay",
-      "description": "The task is pushed to a cloud relay that sits between the phone and the desktop."
+      "description": "The task is pushed to a MERN cloud relay that sits between the phone and the desktop."
     },
     {
       "title": "Desktop execution",
@@ -40,7 +47,7 @@
     },
     {
       "title": "Cloud relay",
-      "description": "Built the relay that carries tasks from the web application to the desktop agent."
+      "description": "Built the cloud relay on a MERN stack to carry tasks from the web application to the desktop agent."
     },
     {
       "title": "Python desktop agent",
@@ -56,13 +63,13 @@
   ],
   "features": [
     "Prompt and voice task entry from a mobile-first web app",
-    "Cloud relay between phone and desktop",
+    "MERN cloud relay between phone and desktop",
     "Python desktop agent that executes tasks",
     "Step-by-step visibility of a running task",
     "Mid-run steering"
   ],
   "highlights": [
-    "Built a three-part system — mobile-first Next.js web app, cloud relay, and Python desktop agent — for driving desktop automation from a phone.",
+    "Built a three-part system — mobile-first Next.js web app, MERN cloud relay, and Python desktop agent — for driving desktop automation from a phone.",
     "Turned prompt or voice input into tasks that are relayed to the desktop and executed there.",
     "Streamed every step of a run back to the phone and allowed the user to steer the task midway."
   ],
@@ -74,6 +81,6 @@
   "gallery": [],
   "seo": {
     "title": "Axion Project Case Study",
-    "description": "Mobile-driven desktop automation built from a Next.js web app, a cloud relay, and a Python desktop agent with live step visibility and mid-run steering."
+    "description": "Mobile-driven desktop automation built from a Next.js web app, a MERN cloud relay, and a Python desktop agent with live step visibility and mid-run steering."
   }
 }

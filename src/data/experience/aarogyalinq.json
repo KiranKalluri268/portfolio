@@ -56,12 +56,15 @@
     },
     {
       "title": "Axion — mobile-driven desktop automation",
-      "description": "A desktop automation tool in three parts: a cloud relay, a mobile-first Next.js web application, and a Python desktop application. A user types a prompt or speaks into the web app, which creates a task and pushes it to the relay; the desktop app picks it up and executes it. Every step of the run is visible from the phone, and the user can steer the task midway.",
+      "description": "A desktop automation tool in three parts: a MERN cloud relay, a mobile-first Next.js web application, and a Python desktop application. A user types a prompt or speaks into the web app, which creates a task and pushes it to the relay; the desktop app picks it up and executes it. Every step of the run is visible from the phone, and the user can steer the task midway.",
       "kind": "feature",
       "projectSlug": "axion",
       "skills": [
         "next-js",
         "react",
+        "node-js",
+        "express",
+        "mongodb",
         "python"
       ]
     },
