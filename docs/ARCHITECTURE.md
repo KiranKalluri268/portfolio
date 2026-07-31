@@ -44,7 +44,7 @@ The scene indicator is portaled to `document.body`, keeping mobile controls abov
 - Project cards
 - “See all projects” panel
 
-A separate snap controller chooses the nearest panel after scrolling settles. Touch gestures affect the Projects section only on touch-capable devices. Navigation to another section still uses the shared Lenis API.
+Natural vertical scrolling drives the pinned timeline continuously; there is no separate snap controller. Arrow buttons, arrow/WASD keys, and section-to-section movement all use the shared Lenis API.
 
 ## Background layers
 
@@ -69,7 +69,29 @@ The video pauses when the tab is hidden, before entry, or when reduced motion is
 
 - `src/data/about.json` controls About copy and emphasis.
 - `src/data/resume.json` is the single source for both résumé HTML and PDF output.
-- `src/data/projects.json` supplies both the homepage carousel and `/projects` case studies.
+- `src/data/projects/*.json` supplies the homepage carousel, `/projects`, and statically generated project detail routes.
+- `src/data/skills/*.json` supplies the skill marquee, `/skills`, and statically generated skill detail routes.
+- `src/data/skill-web.json` defines the center identity, primary domains, subcategories, branch colors, and radial ordering for the interactive `/skills` universe.
+- `src/lib/content` discovers, validates, sorts, and relates project and skill content on the server.
+
+### Interactive skill universe
+
+The `/skills` server route loads and validates the hierarchy, then passes a
+serializable graph to the client-side `SkillsWeb` component. The component
+creates a deterministic radial layout with four levels:
+
+1. `SAIKIRAN`
+2. Primary domains
+3. Subcategories
+4. Linked skill pages
+
+The viewport owns only local interaction state. Wheel and pinch gestures zoom
+around the interaction point; pointer dragging pans the plane. Domain and
+subcategory buttons focus their branches, while skill nodes navigate to the
+existing `/skills/[slug]` pages. A list dialog exposes the same hierarchy
+without spatial navigation. The pure layout module applies deterministic
+rectangle-based collision resolution across leaves from every parent branch
+and asserts that no skill node overlaps another rendered node.
 - Homepage experience data currently lives in `ExperienceTimeline.tsx`.
 
 The `/resume` route renders accessible HTML. `DownloadResumeButton` dynamically imports `@react-pdf/renderer`, keeping PDF generation code out of the initial homepage bundle.

@@ -1,0 +1,10 @@
+{
+  "slug": "keras", "name": "Keras", "shortDescription": "A high-level neural-network API for building and training machine-learning models.",
+  "status": "published", "category": "ai-programming", "webCategory": "ml-frameworks", "iconText": "K", "showInSkillsSection": false, "skillsSectionOrder": 30,
+  "whatItIs": ["Keras provides composable APIs for defining, training, and evaluating neural networks."],
+  "howILearned": ["I learned Keras while building the IPL Score Predictor."],
+  "howIUseIt": ["I use it to define model architectures and run training experiments."],
+  "concepts": ["Layers", "Loss functions", "Optimizers", "Model evaluation"],
+  "lessonsLearned": ["A simple model with well-prepared inputs can be more useful than unnecessary complexity."],
+  "seo": { "title": "Keras Skill and Project Experience", "description": "How I used Keras for score prediction." }
+}

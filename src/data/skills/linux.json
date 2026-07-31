@@ -1,0 +1,10 @@
+{
+  "slug": "linux", "name": "Linux", "shortDescription": "An open-source operating-system ecosystem widely used for development and servers.",
+  "status": "published", "category": "tools", "webCategory": "developer-tools", "iconText": "Linux", "showInSkillsSection": true, "skillsSectionOrder": 24,
+  "whatItIs": ["Linux provides the environment behind much of modern server and developer infrastructure."],
+  "howILearned": ["I learned Linux through development environments, command-line work, and deployment tasks."],
+  "howIUseIt": ["I use shell tools, permissions, processes, and package workflows during development."],
+  "concepts": ["Shell", "Processes", "Permissions", "Filesystems"],
+  "lessonsLearned": ["Understanding the runtime environment makes deployment problems easier to diagnose."],
+  "seo": { "title": "Linux Skill and Experience", "description": "How I use Linux in development workflows." }
+}

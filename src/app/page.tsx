@@ -1,5 +1,3 @@
-'use client';
-
 import NavBar from '@/components/NavBar1';
 import Hero from '@/components/hero';
 import AboutSection from '@/components/AboutSection';
@@ -13,8 +11,13 @@ import SkipLink from '@/components/SkipLink';
 import SceneIndicator from '@/components/SceneIndicator';
 import NavigationControls from '@/components/NavigationControls';
 import SceneWrapper from '@/components/SceneWrapper';
+import { getHomepageProjects } from '@/lib/content/projects';
+import { getSkillsByCategory } from '@/lib/content/skills';
 
 export default function Home() {
+  const projects = getHomepageProjects();
+  const skillGroups = getSkillsByCategory();
+
   return (
     <>
       <ErrorBoundary>
@@ -54,7 +57,7 @@ export default function Home() {
           </SceneWrapper>
           <SceneWrapper index={2}>
             <ErrorBoundary>
-              <ProjectsSection />
+              <ProjectsSection projects={projects} />
             </ErrorBoundary>
           </SceneWrapper>
           <SceneWrapper index={3}>
@@ -64,7 +67,7 @@ export default function Home() {
           </SceneWrapper>
           <SceneWrapper index={4}>
             <ErrorBoundary>
-              <SkillsCarousel />
+              <SkillsCarousel groups={skillGroups} />
             </ErrorBoundary>
           </SceneWrapper>
           <SceneWrapper index={5}>

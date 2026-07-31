@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import BackNavigationButton from "@/components/BackNavigationButton";
-import projectData from "@/data/projects.json";
+import ProjectLink from "@/components/content/ProjectLink";
+import SkillLink from "@/components/content/SkillLink";
+import { getAllProjects } from "@/lib/content/projects";
+import { getSkillsForProject } from "@/lib/content/relationships";
+import type { ProjectContent, SkillContent } from "@/lib/content/types";
 
 export const metadata: Metadata = {
   title: "Projects",
@@ -19,74 +23,82 @@ export const metadata: Metadata = {
   },
 };
 
-type ProjectCase = (typeof projectData.projects)[number];
-
-function ProjectLinks({ project }: { project: ProjectCase }) {
+function ProjectLinks({ project }: { project: ProjectContent }) {
   const links = [
-    project.links.github
-      ? { label: "View source", shortLabel: "Source", href: project.links.github }
+    project.repositoryUrl
+      ? { label: "View source", shortLabel: "Source", href: project.repositoryUrl }
       : null,
-    project.links.live
-      ? { label: "Open live project", shortLabel: "Live project", href: project.links.live }
+    project.liveUrl
+      ? { label: "Open live project", shortLabel: "Live project", href: project.liveUrl }
       : null,
   ].filter((link): link is { label: string; shortLabel: string; href: string } => link !== null);
 
-  if (links.length === 0) {
-    return <p className="text-sm text-gray-500">Public links are not available for this project.</p>;
-  }
-
   return (
-    <nav className="flex flex-nowrap gap-2 sm:flex-wrap sm:gap-3" aria-label={`Links for ${project.title}`}>
-      {links.map((link, index) => (
-        <a
-          key={link.href}
-          href={link.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={index === 0
-            ? "flex-1 whitespace-nowrap rounded-full border border-white/20 bg-white px-3 py-2 text-center text-xs font-semibold text-black transition-colors hover:bg-blue-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft sm:flex-none sm:px-5 sm:py-2.5 sm:text-sm"
-            : "flex-1 whitespace-nowrap rounded-full border border-white/20 bg-black/45 px-3 py-2 text-center text-xs font-semibold text-white transition-colors hover:border-accent-soft/60 hover:text-accent-soft focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft sm:flex-none sm:px-5 sm:py-2.5 sm:text-sm"}
+    <div>
+      <nav className="flex flex-nowrap gap-2 sm:flex-wrap sm:gap-3" aria-label={`Links for ${project.title}`}>
+        <ProjectLink
+          project={project}
+          className="flex-1 whitespace-nowrap rounded-full border border-white/20 bg-white px-3 py-2 text-center text-xs font-semibold text-black transition-colors hover:bg-blue-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft sm:flex-none sm:px-5 sm:py-2.5 sm:text-sm"
         >
-          <span className="sm:hidden">{link.shortLabel}</span>
-          <span className="hidden sm:inline">{link.label}</span>{" "}
-          <span aria-hidden="true">↗</span>
-        </a>
-      ))}
-    </nav>
+          Read case study <span aria-hidden="true">→</span>
+        </ProjectLink>
+        {links.map((link) => (
+          <a
+            key={link.href}
+            href={link.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 whitespace-nowrap rounded-full border border-white/20 bg-black/45 px-3 py-2 text-center text-xs font-semibold text-white transition-colors hover:border-accent-soft/60 hover:text-accent-soft focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft sm:flex-none sm:px-5 sm:py-2.5 sm:text-sm"
+          >
+            <span className="sm:hidden">{link.shortLabel}</span>
+            <span className="hidden sm:inline">{link.label}</span>{" "}
+            <span aria-hidden="true">↗</span>
+          </a>
+        ))}
+      </nav>
+      {links.length === 0 && (
+        <p className="mt-3 text-sm text-gray-500">Public repository and demo links are not available for this project.</p>
+      )}
+    </div>
   );
 }
 
-function TechnologyList({ technologies }: { technologies: string[] }) {
+function TechnologyList({ skills }: { skills: SkillContent[] }) {
   return (
     <ul className="flex flex-wrap gap-2" aria-label="Technologies used">
-      {technologies.map((technology) => (
-        <li
-          key={technology}
-          className="rounded-full border border-accent-soft/20 bg-accent/8 px-3 py-1 text-xs text-blue-200 sm:text-sm"
-        >
-          {technology}
+      {skills.map((skill) => (
+        <li key={skill.slug}>
+          <SkillLink skill={skill} className="text-xs sm:text-sm" />
         </li>
       ))}
     </ul>
   );
 }
 
-function FeaturedProject({ project, index }: { project: ProjectCase; index: number }) {
+function FeaturedProject({
+  project,
+  skills,
+  index,
+}: {
+  project: ProjectContent;
+  skills: SkillContent[];
+  index: number;
+}) {
   return (
     <article className="overflow-hidden rounded-3xl border border-white/10 bg-black/60 shadow-2xl backdrop-blur-md">
       <div className="grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
-        <div className={`relative min-h-64 overflow-hidden sm:min-h-80 lg:min-h-[34rem] ${index % 2 === 1 ? "lg:order-2" : ""}`}>
-          <Image
-            src={project.image}
-            alt={project.imageAlt}
-            fill
-            priority={index === 0}
-            quality={90}
-            sizes="(max-width: 1024px) calc(100vw - 2rem), 52vw"
-            className="object-cover transition-transform duration-700 hover:scale-[1.025]"
-          />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent lg:bg-gradient-to-r" />
-        </div>
+        <ProjectLink project={project} className={`relative block min-h-64 overflow-hidden sm:min-h-80 lg:min-h-[34rem] ${index % 2 === 1 ? "lg:order-2" : ""}`}>
+            <Image
+              src={project.image}
+              alt={project.imageAlt}
+              fill
+              priority={index === 0}
+              quality={90}
+              sizes="(max-width: 1024px) calc(100vw - 2rem), 52vw"
+              className="object-cover transition-transform duration-700 hover:scale-[1.025]"
+            />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent lg:bg-gradient-to-r" />
+        </ProjectLink>
 
         <div className="flex flex-col justify-center gap-6 p-6 sm:p-9 lg:p-12">
           <div>
@@ -94,12 +106,12 @@ function FeaturedProject({ project, index }: { project: ProjectCase; index: numb
               Featured case study · {project.role}
             </p>
             <h2 className="text-2xl font-bold leading-tight sm:text-3xl lg:text-4xl">
-              {project.title}
+              <ProjectLink project={project} className="hover:text-accent-soft">{project.title}</ProjectLink>
             </h2>
           </div>
 
           <p className="leading-relaxed text-gray-300">{project.summary}</p>
-          <TechnologyList technologies={project.technologies} />
+          <TechnologyList skills={skills} />
 
           <ul className="space-y-3 text-sm leading-relaxed text-gray-300 sm:text-base">
             {project.highlights.map((highlight) => (
@@ -128,10 +140,10 @@ function FeaturedProject({ project, index }: { project: ProjectCase; index: numb
   );
 }
 
-function AdditionalProject({ project }: { project: ProjectCase }) {
+function AdditionalProject({ project, skills }: { project: ProjectContent; skills: SkillContent[] }) {
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-black/60 backdrop-blur-md transition-colors duration-300 hover:border-accent-soft/25">
-      <div className="relative aspect-[16/9] overflow-hidden bg-white/[0.025]">
+      <ProjectLink project={project} className="relative block aspect-[16/9] overflow-hidden bg-white/[0.025]">
         <Image
           src={project.image}
           alt={project.imageAlt}
@@ -140,14 +152,16 @@ function AdditionalProject({ project }: { project: ProjectCase }) {
           sizes="(max-width: 768px) calc(100vw - 2rem), 33vw"
           className={project.id === 4 ? "object-contain" : "object-cover"}
         />
-      </div>
+      </ProjectLink>
       <div className="flex flex-1 flex-col gap-5 p-6 sm:p-7">
         <div>
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-accent-soft">{project.role}</p>
-          <h3 className="text-xl font-bold sm:text-2xl">{project.title}</h3>
+          <h3 className="text-xl font-bold sm:text-2xl">
+            <ProjectLink project={project} className="hover:text-accent-soft">{project.title}</ProjectLink>
+          </h3>
         </div>
         <p className="text-sm leading-relaxed text-gray-300 sm:text-base">{project.summary}</p>
-        <TechnologyList technologies={project.technologies} />
+        <TechnologyList skills={skills} />
         <ul className="space-y-2 text-sm leading-relaxed text-gray-400">
           {project.highlights.map((highlight) => (
             <li key={highlight} className="flex gap-3">
@@ -165,8 +179,9 @@ function AdditionalProject({ project }: { project: ProjectCase }) {
 }
 
 export default function ProjectsPage() {
-  const featured = projectData.projects.filter((project) => project.featured);
-  const additional = projectData.projects.filter((project) => !project.featured);
+  const projects = getAllProjects();
+  const featured = projects.filter((project) => project.featured);
+  const additional = projects.filter((project) => !project.featured);
 
   return (
     <main className="relative z-10 min-h-[100svh] overflow-hidden px-4 py-8 text-white sm:px-6 sm:py-12 lg:px-10">
@@ -181,14 +196,19 @@ export default function ProjectsPage() {
             Projects &amp; case studies
           </h1>
           <p className="mt-6 max-w-3xl text-base leading-relaxed text-gray-300 sm:text-lg">
-            {projectData.intro}
+            A selection of products and experiments spanning full-stack systems, applied AI, cloud infrastructure, and mobile development.
           </p>
         </header>
 
         <section className="space-y-8 sm:space-y-12" aria-labelledby="featured-projects-heading">
           <h2 id="featured-projects-heading" className="sr-only">Featured projects</h2>
           {featured.map((project, index) => (
-            <FeaturedProject key={project.id} project={project} index={index} />
+            <FeaturedProject
+              key={project.id}
+              project={project}
+              skills={getSkillsForProject(project)}
+              index={index}
+            />
           ))}
         </section>
 
@@ -199,7 +219,11 @@ export default function ProjectsPage() {
           </div>
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {additional.map((project) => (
-              <AdditionalProject key={project.id} project={project} />
+              <AdditionalProject
+                key={project.id}
+                project={project}
+                skills={getSkillsForProject(project)}
+              />
             ))}
           </div>
         </section>

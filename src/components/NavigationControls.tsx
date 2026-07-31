@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Tooltip from "./Tooltip";
 import { SECTION_IDS, useActiveSection, useScrollActions } from "@/context/SmoothScrollContext";
 
@@ -10,80 +10,69 @@ export default function NavigationControls() {
     const activeIndex = SECTION_IDS.indexOf(activeSection);
     const [hoveredButton, setHoveredButton] = useState<string | null>(null);
 
-    // Track physical key presses
     const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
 
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            // Prevent default scrolling for arrow keys if needed, but here we just visualize
-            let key = e.key;
-
-            // Map WASD to Arrow keys
-            if (key === "w" || key === "W") key = "ArrowUp";
-            if (key === "s" || key === "S") key = "ArrowDown";
-            if (key === "a" || key === "A") key = "ArrowLeft";
-            if (key === "d" || key === "D") key = "ArrowRight";
-
-            if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)) {
-                setPressedKeys((prev) => new Set(prev).add(key));
-            }
-        };
-
-        const handleKeyUp = (e: KeyboardEvent) => {
-            let key = e.key;
-
-            // Map WASD to Arrow keys
-            if (key === "w" || key === "W") key = "ArrowUp";
-            if (key === "s" || key === "S") key = "ArrowDown";
-            if (key === "a" || key === "A") key = "ArrowLeft";
-            if (key === "d" || key === "D") key = "ArrowRight";
-
-            if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)) {
-                setPressedKeys((prev) => {
-                    const next = new Set(prev);
-                    next.delete(key);
-                    return next;
-                });
-            }
-        };
-
-        window.addEventListener("keydown", handleKeyDown, { capture: true });
-        window.addEventListener("keyup", handleKeyUp, { capture: true });
-        return () => {
-            window.removeEventListener("keydown", handleKeyDown, { capture: true });
-            window.removeEventListener("keyup", handleKeyUp, { capture: true });
-        };
-    }, []);
-
-    // Define allowed keys per scene
-    const isUpEnabled = activeIndex > 0;
-    const isDownEnabled = activeIndex < SECTION_IDS.length - 1;
-
-    // Left/Right only fully enabled in Projects (Scene 1)
-    // In other scenes, we disable them to avoid confusion, or map them to Up/Down?
-    // Requirements: "Ex: on Hero only arrow-down works, In projects all four arrows work, in other section up&down works"
-    const isLeftEnabled = activeSection === "projects";
-    const isRightEnabled = activeSection === "projects";
-
-    const handlePress = (key: string) => {
+    const handlePress = useCallback((key: string) => {
         const forward = key === "ArrowDown" || key === "ArrowRight";
-        if (activeSection === "projects") {
-            window.scrollBy({ top: (forward ? 1 : -1) * window.innerHeight, behavior: "smooth" });
-        } else if (key === "ArrowDown") {
-            scrollNext();
-        } else if (key === "ArrowUp") {
-            scrollPrev();
-        }
+        if (forward) scrollNext();
+        else scrollPrev();
 
         setPressedKeys((previous) => new Set(previous).add(key));
-        setTimeout(() => {
+        window.setTimeout(() => {
             setPressedKeys((previous) => {
                 const next = new Set(previous);
                 next.delete(key);
                 return next;
             });
         }, 150);
-    };
+    }, [scrollNext, scrollPrev]);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            let key = e.key;
+
+            if (key === "w" || key === "W") key = "ArrowUp";
+            if (key === "s" || key === "S") key = "ArrowDown";
+            if (key === "a" || key === "A") key = "ArrowLeft";
+            if (key === "d" || key === "D") key = "ArrowRight";
+
+            const target = e.target;
+            const isEditing = target instanceof HTMLElement && (
+                target.isContentEditable ||
+                target.tagName === "INPUT" ||
+                target.tagName === "TEXTAREA" ||
+                target.tagName === "SELECT"
+            );
+            const isHorizontal = key === "ArrowLeft" || key === "ArrowRight";
+            const isEnabled = isHorizontal
+                ? activeSection === "projects"
+                : key === "ArrowUp"
+                    ? activeIndex > 0
+                    : activeIndex < SECTION_IDS.length - 1;
+            if (
+                isEditing ||
+                e.repeat ||
+                e.altKey ||
+                e.ctrlKey ||
+                e.metaKey ||
+                !isEnabled ||
+                !["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)
+            ) return;
+
+            e.preventDefault();
+            handlePress(key);
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [activeIndex, activeSection, handlePress]);
+
+    // Define allowed keys per scene
+    const isUpEnabled = activeIndex > 0;
+    const isDownEnabled = activeIndex < SECTION_IDS.length - 1;
+
+    const isLeftEnabled = activeSection === "projects";
+    const isRightEnabled = activeSection === "projects";
 
     return (
         <>

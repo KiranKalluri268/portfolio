@@ -1,0 +1,10 @@
+{
+  "slug": "aws", "name": "AWS", "shortDescription": "A cloud platform offering managed infrastructure, storage, databases, and application services.",
+  "status": "published", "category": "data-cloud", "webCategory": "cloud-platforms", "iconText": "AWS", "showInSkillsSection": true, "skillsSectionOrder": 21,
+  "whatItIs": ["AWS provides cloud services for hosting, data, networking, security, and application infrastructure."],
+  "howILearned": ["I learned AWS services through deploying and integrating application infrastructure."],
+  "howIUseIt": ["I use managed AWS services when a project benefits from scalable cloud infrastructure."],
+  "concepts": ["Managed services", "Identity and access", "Regions", "Deployment"],
+  "lessonsLearned": ["Cloud architecture should match product scale and operational needs."],
+  "seo": { "title": "AWS Skill and Project Experience", "description": "How I use AWS services in projects." }
+}

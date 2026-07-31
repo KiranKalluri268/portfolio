@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { useAudio } from "@/context/AudioContextProvider";
 
 const STAR_COLORS = ["255,255,255", "255,233,196", "212,251,255"];
@@ -80,9 +81,11 @@ function drawStar(context: CanvasRenderingContext2D, star: Star) {
 export default function StarsBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { hasEntered } = useAudio();
+  const pathname = usePathname();
+  const backgroundEnabled = hasEntered || pathname !== "/";
 
   useEffect(() => {
-    if (!hasEntered) return;
+    if (!backgroundEnabled) return;
     const canvas = canvasRef.current;
     const context = canvas?.getContext("2d", { alpha: true });
     if (!canvas || !context) return;
@@ -322,12 +325,12 @@ export default function StarsBackground() {
       document.removeEventListener("visibilitychange", resetAnimation);
       reducedMotion.removeEventListener("change", resetAnimation);
     };
-  }, [hasEntered]);
+  }, [backgroundEnabled]);
 
   return (
     <canvas
       ref={canvasRef}
-      className="pointer-events-none fixed inset-0 -z-20 h-full w-full"
+      className="pointer-events-none fixed inset-0 z-0 h-full w-full"
       aria-hidden="true"
     />
   );

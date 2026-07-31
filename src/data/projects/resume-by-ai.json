@@ -1,0 +1,69 @@
+{
+  "id": 4,
+  "slug": "resume-by-ai",
+  "title": "ResumeByAI",
+  "summary": "A Next.js application that uses GPT-4 Turbo to generate ATS-oriented résumés and integrates Razorpay for paid access.",
+  "status": "published",
+  "featured": false,
+  "showInProjectsSection": true,
+  "projectsSectionOrder": 4,
+  "image": "/images/KS Logo.webp",
+  "imageAlt": "ResumeByAI project identity",
+  "role": "Full-stack development",
+  "skills": ["next-js", "gpt-4", "razorpay"],
+  "overview": [
+    "ResumeByAI guides users through creating résumé content and uses GPT-4 Turbo to produce ATS-oriented output.",
+    "The application combines an AI generation workflow with Razorpay-based paid access."
+  ],
+  "problem": "Writing clear, role-relevant résumé content is difficult, and users often do not know how to structure information for applicant-tracking systems.",
+  "solution": "Collect guided user input, generate structured résumé content with GPT-4 Turbo, and provide access through an integrated payment workflow.",
+  "howItWorks": [
+    {
+      "title": "Guided input",
+      "description": "Users provide the experience and background needed to create résumé content."
+    },
+    {
+      "title": "AI generation",
+      "description": "GPT-4 Turbo transforms the input into ATS-oriented résumé material."
+    },
+    {
+      "title": "Paid access",
+      "description": "Razorpay handles the application's payment flow."
+    }
+  ],
+  "buildingProcess": [
+    {
+      "title": "Product flow",
+      "description": "Designed a guided sequence from user input to generated résumé output."
+    },
+    {
+      "title": "AI integration",
+      "description": "Connected structured prompts and application data to GPT-4 Turbo."
+    },
+    {
+      "title": "Payment integration",
+      "description": "Added Razorpay to support paid access."
+    }
+  ],
+  "challenges": [],
+  "features": [
+    "Guided résumé creation",
+    "GPT-powered content generation",
+    "ATS-oriented output",
+    "Razorpay payment workflow"
+  ],
+  "highlights": [
+    "Combines guided résumé generation with a payment workflow.",
+    "Focuses generated output on applicant-tracking-system readability."
+  ],
+  "outcomes": [],
+  "lessonsLearned": [
+    "How to structure an AI-assisted product workflow.",
+    "How payment state interacts with access to generated content."
+  ],
+  "gallery": [],
+  "seo": {
+    "title": "ResumeByAI Project Case Study",
+    "description": "How I built a Next.js résumé generator using GPT-4 Turbo and Razorpay."
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "slug": "mobile-development", "name": "Mobile Development", "shortDescription": "Designing and building software experiences for mobile devices.",
+  "status": "published", "category": "mobile", "webCategory": "mobile-apps", "iconText": "App", "showInSkillsSection": false, "skillsSectionOrder": 35,
+  "whatItIs": ["Mobile development combines constrained layouts, touch interaction, navigation, and platform-aware behavior."],
+  "howILearned": ["I developed mobile application experience while building MindPlan."],
+  "howIUseIt": ["I apply mobile-first workflows, reusable screens, and touch-oriented interaction design."],
+  "concepts": ["Navigation", "Touch interaction", "Device layouts", "Application state"],
+  "lessonsLearned": ["Mobile workflows need focused screens and clear navigation paths."],
+  "seo": { "title": "Mobile Development Skill and Experience", "description": "How I learned mobile development through MindPlan." }
+}

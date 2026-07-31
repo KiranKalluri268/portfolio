@@ -1,0 +1,10 @@
+{
+  "slug": "tableau", "name": "Tableau", "shortDescription": "A data-visualization platform for building interactive dashboards and reports.",
+  "status": "published", "category": "tools", "webCategory": "data-visualization", "iconText": "Tab", "showInSkillsSection": true, "skillsSectionOrder": 27,
+  "whatItIs": ["Tableau transforms datasets into interactive visual analysis and dashboards."],
+  "howILearned": ["I learned Tableau through dashboard and data-visualization practice."],
+  "howIUseIt": ["I use it to explore trends and communicate data through visual summaries."],
+  "concepts": ["Dashboards", "Calculated fields", "Filters", "Data storytelling"],
+  "lessonsLearned": ["A visualization should answer a specific question rather than display every available metric."],
+  "seo": { "title": "Tableau Skill and Experience", "description": "How I use Tableau for data visualization." }
+}

@@ -1,0 +1,10 @@
+{
+  "slug": "dart", "name": "Dart", "shortDescription": "The typed programming language used to build Flutter applications.",
+  "status": "published", "category": "mobile", "webCategory": "mobile-apps", "iconText": "Dart", "showInSkillsSection": false, "skillsSectionOrder": 34,
+  "whatItIs": ["Dart is a typed language optimized for client application development and Flutter."],
+  "howILearned": ["I learned Dart while implementing MindPlan in Flutter."],
+  "howIUseIt": ["I use Dart for mobile application logic, data models, and widget behavior."],
+  "concepts": ["Types", "Async programming", "Classes", "Null safety"],
+  "lessonsLearned": ["Strong data models make UI state easier to reason about."],
+  "seo": { "title": "Dart Skill and Project Experience", "description": "How I used Dart to build MindPlan." }
+}

@@ -1,0 +1,82 @@
+{
+  "id": 2,
+  "slug": "certisafe",
+  "title": "CertiSafe – Certificate Management System",
+  "summary": "A deployed certificate-management platform for an institute, designed to organize certificate records and securely manage associated media.",
+  "status": "published",
+  "featured": true,
+  "showInProjectsSection": true,
+  "projectsSectionOrder": 2,
+  "image": "/images/project1.png",
+  "imageAlt": "CertiSafe certificate management dashboard",
+  "role": "Team lead and full-stack development",
+  "skills": ["react", "node-js", "express", "aws", "dynamodb", "cloudinary"],
+  "overview": [
+    "CertiSafe is an institutional certificate-management platform built to organize certificate records and their associated media.",
+    "I led a four-member team through implementation and deployment of the working application."
+  ],
+  "problem": "Certificate information and media need a consistent, accessible system instead of fragmented manual records.",
+  "solution": "A React and Node.js application stores structured certificate data in DynamoDB and manages certificate media through Cloudinary.",
+  "howItWorks": [
+    {
+      "title": "Record management",
+      "description": "Users create and manage structured certificate records through the web interface."
+    },
+    {
+      "title": "Data storage",
+      "description": "The backend persists application data in DynamoDB."
+    },
+    {
+      "title": "Media handling",
+      "description": "Certificate images are uploaded and delivered through Cloudinary."
+    }
+  ],
+  "buildingProcess": [
+    {
+      "title": "Team planning",
+      "description": "Split the platform into clear implementation areas and coordinated work across a four-member team."
+    },
+    {
+      "title": "Full-stack implementation",
+      "description": "Connected the React interface to Node.js and Express services backed by DynamoDB and Cloudinary."
+    },
+    {
+      "title": "Deployment",
+      "description": "Prepared and deployed the application for institutional use."
+    }
+  ],
+  "challenges": [
+    {
+      "challenge": "Coordinating application data with separately hosted certificate media.",
+      "solution": "Stored structured records in DynamoDB while using Cloudinary for media-specific storage and delivery.",
+      "lesson": "Different data types benefit from services designed for their access and delivery patterns."
+    }
+  ],
+  "features": [
+    "Certificate record management",
+    "Cloud-hosted certificate media",
+    "Institutional user workflow",
+    "Deployed full-stack application"
+  ],
+  "highlights": [
+    "Led a four-member team through implementation and deployment.",
+    "Used DynamoDB for application data and Cloudinary for certificate media handling.",
+    "Delivered a working institutional platform rather than a standalone prototype."
+  ],
+  "outcomes": [
+    { "value": "95+", "label": "users onboarded" },
+    { "value": "4", "label": "team members led" }
+  ],
+  "lessonsLearned": [
+    "How to coordinate a small development team.",
+    "How to separate structured data storage from media delivery.",
+    "How deployment requirements shape full-stack implementation decisions."
+  ],
+  "gallery": [],
+  "repositoryUrl": "https://github.com/KiranKalluri268/CMS_PRO",
+  "liveUrl": "https://cms-pro-kiran-kalluris-projects.vercel.app/",
+  "seo": {
+    "title": "CertiSafe Project Case Study",
+    "description": "How I led and built a deployed certificate-management platform."
+  }
+}

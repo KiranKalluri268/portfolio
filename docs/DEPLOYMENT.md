@@ -57,6 +57,8 @@ The workflow intentionally verifies builds only. A future CI improvement should 
 - Confirm audio and video pause when the tab is backgrounded.
 - Scroll through every project panel with mouse, trackpad, and touch.
 - Confirm mobile navigation dots remain above content.
+- Open `/skills` and verify mouse-wheel zoom, drag panning, touch pinch/pan, branch focus, Fit controls, and the accessible List view.
+- Open several skill nodes and confirm they navigate to the matching `/skills/[slug]` pages.
 - Download the résumé and test its links.
 - Submit the contact form and reply to the delivered email.
 - Inspect the social preview using LinkedIn Post Inspector or another crawler debugger.

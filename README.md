@@ -11,9 +11,10 @@ A responsive, animated software engineering portfolio built with Next.js, React,
 - Lenis smooth scrolling integrated with the GSAP ticker
 - GSAP `ScrollTrigger` animations without wheel-event hijacking
 - Scroll-animated About section backed by editable JSON
-- Pinned horizontal Projects carousel with snapping and touch gestures
+- Pinned horizontal Projects carousel driven by natural Lenis scrolling
 - Responsive alternating Experience timeline with mobile-specific focus behavior
 - Direction-aware, scroll-responsive skill marquees
+- Interactive, data-driven skill universe with radial branches, pan, zoom, pinch, and accessible list navigation
 - Interactive canvas star field with shooting-star lifecycle
 - Cross-browser transparent black-hole video using WebM and QuickTime sources
 - Accessible HTML résumé generated from JSON, with client-side PDF download
@@ -89,6 +90,9 @@ npm run build
 | `/` | Main portfolio narrative |
 | `/resume` | Accessible JSON-driven résumé and PDF download |
 | `/projects` | Responsive project overview and case studies |
+| `/projects/[slug]` | JSON-driven project case study |
+| `/skills` | Interactive skill universe organized by domain and subcategory |
+| `/skills/[slug]` | JSON-driven skill background and related projects |
 | `/api/contact` | Server-side contact form endpoint |
 | `/opengraph-image` | Generated 1200×630 social preview |
 | `/robots.txt` | Search crawler rules |
@@ -102,7 +106,8 @@ src/
 ├── background/          Star canvas and transparent black-hole media
 ├── components/          Portfolio sections and navigation controls
 ├── context/             Audio lifecycle and Lenis/scroll coordination
-├── data/                Editable About and résumé content
+├── data/                Editable About, résumé, project, and skill content
+├── lib/content/         Server-side content discovery, validation, and relationships
 └── types/               Shared TypeScript interfaces
 public/
 ├── audio/               Portfolio soundtrack

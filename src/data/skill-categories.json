@@ -1,0 +1,8 @@
+[
+  { "slug": "web-frameworks", "label": "Web & Frameworks", "order": 1, "marqueeDirection": "left" },
+  { "slug": "ai-programming", "label": "AI & Programming", "order": 2, "marqueeDirection": "right" },
+  { "slug": "data-cloud", "label": "Data & Cloud", "order": 3, "marqueeDirection": "left" },
+  { "slug": "tools", "label": "Tools", "order": 4, "marqueeDirection": "right" },
+  { "slug": "mobile", "label": "Mobile", "order": 5, "marqueeDirection": "left" },
+  { "slug": "services", "label": "Platforms & Services", "order": 6, "marqueeDirection": "right" }
+]

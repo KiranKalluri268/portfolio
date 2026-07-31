@@ -1,0 +1,10 @@
+{
+  "slug": "next-js", "name": "Next.js", "shortDescription": "A React framework for server-rendered, statically generated, and full-stack web applications.",
+  "status": "published", "category": "web-frameworks", "webCategory": "frontend", "iconText": "N", "showInSkillsSection": true, "skillsSectionOrder": 2,
+  "whatItIs": ["Next.js combines React with routing, server rendering, data loading, and production build tooling."],
+  "howILearned": ["I learned Next.js by building complete applications and this portfolio."],
+  "howIUseIt": ["I use it for route-based applications, server and client component composition, metadata, and APIs."],
+  "concepts": ["App Router", "Server Components", "Static generation", "Route handlers"],
+  "lessonsLearned": ["Clear server and client boundaries make applications easier to maintain."],
+  "seo": { "title": "Next.js Skill and Project Experience", "description": "How I learned and apply Next.js." }
+}
