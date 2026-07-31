@@ -11,6 +11,7 @@
   "skills": [
     "next-js",
     "react",
+    "docker",
     "aws"
   ],
   "overview": [
@@ -48,7 +49,7 @@
     },
     {
       "title": "Deploying behind the existing authentication",
-      "description": "Deployed to AWS and served the app from the same origin as the main application so it could reuse the existing single sign-on instead of introducing a second authentication system."
+      "description": "Containerised the app with Docker, deployed it to AWS, and served it from the same origin as the main application so it could reuse the existing single sign-on instead of introducing a second authentication system."
     }
   ],
   "challenges": [
@@ -68,7 +69,8 @@
     "Troubleshooting-first dashboard showing failures at a glance",
     "Deep linking so a specific investigation can be shared as a URL",
     "User's-eye UI view paired with the API response behind it",
-    "Access limited to authorized team members on top of the existing single sign-on"
+    "Access limited to authorized team members on top of the existing single sign-on",
+    "Containerised with Docker for deployment"
   ],
   "highlights": [
     "Built an internal diagnostics dashboard as a Next.js monolith that verifies per-client data integrity straight from the database.",
