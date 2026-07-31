@@ -25,15 +25,16 @@
   ],
   "overview": [
     "As a forward deployed engineer the work sat close to the client: gathering requirements directly, then implementing against them across the company's products.",
-    "It spanned four products and a wide range of the stack — a MERN prescription platform, a C++ desktop application for dental imaging with a Next.js front end, a desktop automation tool, and a Next.js caregiving platform."
+    "It spanned four products and a wide range of the stack — a Next.js and MERN prescription platform, a C++ desktop application for dental imaging with a Next.js front end, a desktop automation tool, and a Next.js caregiving platform."
   ],
   "workItems": [
     {
       "title": "Digichikitsak — voice-enabled prescriptions and AWS deployment",
-      "description": "A MERN web application implementing electronic prescriptions: creating new ones, converting existing records, and storing them securely. I implemented voice input and commands using the ElevenLabs and Bhashini APIs, then deployed the project to AWS — setting up the infrastructure through to CloudWatch alerts — with CI/CD through GitHub Actions.",
+      "description": "A platform implementing electronic prescriptions — creating new ones, converting existing records, and storing them securely — with a Next.js web application over a MERN stack. I implemented voice input and commands using the ElevenLabs and Bhashini APIs, then deployed the project to AWS — setting up the infrastructure through to CloudWatch alerts — with CI/CD through GitHub Actions.",
       "kind": "feature",
       "projectSlug": "digichikitsak",
       "skills": [
+        "next-js",
         "react",
         "node-js",
         "express",

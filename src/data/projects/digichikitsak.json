@@ -2,15 +2,23 @@
   "id": 7,
   "slug": "digichikitsak",
   "title": "Digichikitsak – Digital Prescription Platform",
-  "summary": "A MERN platform for electronic prescriptions that creates new ones, converts existing records, and stores them securely, with multilingual voice input and full AWS deployment.",
+  "summary": "A platform for electronic prescriptions — creating new ones, converting existing records, and storing them securely — with a Next.js web application over a MERN stack, multilingual voice input, and full AWS deployment.",
   "status": "published",
   "featured": false,
   "showInProjectsSection": false,
   "projectsSectionOrder": 7,
   "role": "Feature development and cloud deployment",
-  "skills": ["react", "node-js", "express", "mongodb", "aws", "git"],
+  "skills": [
+    "next-js",
+    "react",
+    "node-js",
+    "express",
+    "mongodb",
+    "aws",
+    "git"
+  ],
   "overview": [
-    "Digichikitsak is a MERN web application built around electronic prescriptions: creating new ones, converting existing records into digital form, and storing them securely.",
+    "Digichikitsak is built around electronic prescriptions: creating new ones, converting existing records into digital form, and storing them securely. The web application is a Next.js app sitting over a MERN stack.",
     "My work covered two areas — making the application usable by voice, and taking it to production on AWS."
   ],
   "problem": "Prescription workflows are typing-heavy and time-consuming for clinicians, and the application needed a reliable path to production.",
