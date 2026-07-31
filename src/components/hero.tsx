@@ -184,7 +184,7 @@ export default function Hero() {
           </h2>
 
           <div
-            className={`hero-cta mt-8 flex flex-col gap-3 transition-[opacity,transform] duration-700 ease-out sm:flex-row sm:items-center sm:gap-4 ${visibleH1State === 'done'
+            className={`hero-cta mt-8 flex flex-col items-start gap-3 transition-[opacity,transform] duration-700 ease-out sm:flex-row sm:items-center sm:gap-4 ${visibleH1State === 'done'
               ? 'translate-y-0 opacity-100'
               : 'pointer-events-none translate-y-3 opacity-0'
               }`}
@@ -192,14 +192,14 @@ export default function Hero() {
             <button
               type="button"
               onClick={() => scrollToSection('projects')}
-              className="w-full rounded-full border border-white/25 bg-black/40 px-6 py-3 text-center text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:border-accent hover:text-accent-soft sm:w-auto sm:border-transparent sm:bg-white sm:text-base sm:text-black sm:hover:border-transparent sm:hover:bg-accent-soft sm:hover:text-black"
+              className="rounded-full border border-white/25 bg-black/40 px-6 py-3 text-center text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:border-accent hover:text-accent-soft sm:border-transparent sm:bg-white sm:text-base sm:text-black sm:hover:border-transparent sm:hover:bg-accent-soft sm:hover:text-black"
             >
               View my work
             </button>
             <button
               type="button"
               onClick={() => scrollToSection('contact')}
-              className="w-full rounded-full border border-white/25 bg-black/40 px-6 py-3 text-center text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:border-accent hover:text-accent-soft sm:w-auto sm:text-base"
+              className="rounded-full border border-white/25 bg-black/40 px-6 py-3 text-center text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:border-accent hover:text-accent-soft sm:text-base"
             >
               Get in touch
             </button>
