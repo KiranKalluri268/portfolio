@@ -45,7 +45,7 @@
     },
     {
       "title": "Elphie — cloud video and live streaming for dental imaging",
-      "description": "Elphie pairs a C++ desktop application, which drives an intraoral camera and runs a caries-detection model, with a web application. I worked inside the C++ application itself to upload the captured video to AWS S3 and publish a live stream through AWS IVS, so a patient's family or dental students can watch an examination as it happens. I also built the web application from scratch as a Next.js monolith to show recordings and carry the live stream, with AWS Cognito authentication and appointment booking — a doctor selects a patient, streams live from the C++ app, and the recording is stored against that patient automatically before the diagnosis is written up.",
+      "description": "Elphie pairs a C++ desktop application, which drives an intraoral camera and runs a caries-detection model, with a web application. I worked inside the C++ application itself to upload the captured video to AWS S3 and publish a live stream through AWS IVS, so a patient's family or dental students can watch an examination as it happens. I also built the web application from scratch as a Next.js monolith to show recordings and carry the live stream, with AWS Cognito authentication and appointment booking — a doctor selects a patient, streams live from the C++ app, and the recording is stored against that patient automatically before the diagnosis is written up. I deployed the web application on AWS Amplify.",
       "kind": "infrastructure",
       "projectSlug": "elphie",
       "skills": [
