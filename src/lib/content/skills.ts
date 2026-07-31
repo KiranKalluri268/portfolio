@@ -35,6 +35,20 @@ function validateSkill(value: unknown, source: string): SkillContent {
   if (typeof value.showInSkillsSection !== "boolean" || typeof value.skillsSectionOrder !== "number") {
     throw new Error(`${source}: skill visibility and order fields are required`);
   }
+  if (typeof value.showInResume !== "boolean") {
+    throw new Error(`${source}: "showInResume" must be a boolean`);
+  }
+  // A skill on the résumé needs a group to sit under, since the résumé's
+  // grouping is editorial rather than the skill graph's categories.
+  if (value.showInResume) {
+    assertString(value.resumeGroup, "resumeGroup", source);
+  }
+  for (const field of ["resumeLabel", "resumeGroup"] as const) {
+    if (value[field] !== undefined) assertString(value[field], field, source);
+  }
+  if (value.resumeOrder !== undefined && typeof value.resumeOrder !== "number") {
+    throw new Error(`${source}: "resumeOrder" must be a number`);
+  }
   for (const field of DETAIL_ARRAY_FIELDS) {
     if (value[field] !== undefined) assertStringArray(value[field], field, source);
   }

@@ -1,10 +1,36 @@
 {
-  "slug": "mongodb", "name": "MongoDB", "shortDescription": "A document database for flexible JSON-like application data.",
-  "status": "published", "category": "data-cloud", "webCategory": "databases", "iconText": "Mongo", "showInSkillsSection": true, "skillsSectionOrder": 16,
-  "whatItIs": ["MongoDB stores data as document-oriented collections."],
-  "howILearned": ["I learned MongoDB while building MERN-style full-stack applications."],
-  "howIUseIt": ["I use it for application records whose structure fits a document model."],
-  "concepts": ["Documents", "Collections", "Indexes", "Aggregation"],
-  "lessonsLearned": ["Flexible schemas still need deliberate validation and indexing."],
-  "seo": { "title": "MongoDB Skill and Project Experience", "description": "How I use MongoDB in full-stack projects." }
+  "slug": "mongodb",
+  "name": "MongoDB",
+  "shortDescription": "A document database for flexible JSON-like application data.",
+  "status": "published",
+  "category": "data-cloud",
+  "webCategory": "databases",
+  "iconText": "Mongo",
+  "showInSkillsSection": true,
+  "skillsSectionOrder": 16,
+  "showInResume": true,
+  "resumeGroup": "Databases",
+  "resumeOrder": 1,
+  "whatItIs": [
+    "MongoDB stores data as document-oriented collections."
+  ],
+  "howILearned": [
+    "I learned MongoDB while building MERN-style full-stack applications."
+  ],
+  "howIUseIt": [
+    "I use it for application records whose structure fits a document model."
+  ],
+  "concepts": [
+    "Documents",
+    "Collections",
+    "Indexes",
+    "Aggregation"
+  ],
+  "lessonsLearned": [
+    "Flexible schemas still need deliberate validation and indexing."
+  ],
+  "seo": {
+    "title": "MongoDB Skill and Project Experience",
+    "description": "How I use MongoDB in full-stack projects."
+  }
 }

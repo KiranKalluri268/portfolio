@@ -7,6 +7,7 @@
   "featured": false,
   "showInProjectsSection": false,
   "projectsSectionOrder": 7,
+  "showInResume": false,
   "role": "Feature development and cloud deployment",
   "skills": [
     "react",

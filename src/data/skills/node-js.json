@@ -1,10 +1,36 @@
 {
-  "slug": "node-js", "name": "Node.js", "shortDescription": "A JavaScript runtime for servers, tooling, and backend applications.",
-  "status": "published", "category": "web-frameworks", "webCategory": "backend", "iconText": "Node", "showInSkillsSection": true, "skillsSectionOrder": 5,
-  "whatItIs": ["Node.js runs JavaScript outside the browser and provides APIs for backend and tooling work."],
-  "howILearned": ["I learned Node.js while building APIs and full-stack applications."],
-  "howIUseIt": ["I use it for server logic, API integrations, data access, and development tooling."],
-  "concepts": ["Event loop", "Modules", "HTTP services", "Asynchronous I/O"],
-  "lessonsLearned": ["Backend boundaries should make validation and failure behavior explicit."],
-  "seo": { "title": "Node.js Skill and Project Experience", "description": "How I use Node.js in full-stack projects." }
+  "slug": "node-js",
+  "name": "Node.js",
+  "shortDescription": "A JavaScript runtime for servers, tooling, and backend applications.",
+  "status": "published",
+  "category": "web-frameworks",
+  "webCategory": "backend",
+  "iconText": "Node",
+  "showInSkillsSection": true,
+  "skillsSectionOrder": 5,
+  "showInResume": true,
+  "resumeGroup": "Web/Frameworks",
+  "resumeOrder": 3,
+  "whatItIs": [
+    "Node.js runs JavaScript outside the browser and provides APIs for backend and tooling work."
+  ],
+  "howILearned": [
+    "I learned Node.js while building APIs and full-stack applications."
+  ],
+  "howIUseIt": [
+    "I use it for server logic, API integrations, data access, and development tooling."
+  ],
+  "concepts": [
+    "Event loop",
+    "Modules",
+    "HTTP services",
+    "Asynchronous I/O"
+  ],
+  "lessonsLearned": [
+    "Backend boundaries should make validation and failure behavior explicit."
+  ],
+  "seo": {
+    "title": "Node.js Skill and Project Experience",
+    "description": "How I use Node.js in full-stack projects."
+  }
 }

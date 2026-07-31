@@ -1,10 +1,34 @@
 {
-  "slug": "gpt-4", "name": "GPT-4", "shortDescription": "A large language model used for generating and transforming natural-language content.",
-  "status": "published", "category": "services", "webCategory": "ai-systems", "iconText": "GPT", "showInSkillsSection": false, "skillsSectionOrder": 31,
-  "whatItIs": ["GPT-4 is a language model that can follow instructions and generate structured natural-language output."],
-  "howILearned": ["I learned GPT integration while building ResumeByAI."],
-  "howIUseIt": ["I use structured prompts and user context to generate ATS-oriented résumé content."],
-  "concepts": ["Prompt design", "Structured input", "Output validation", "Product safeguards"],
-  "lessonsLearned": ["AI output needs clear constraints and a product workflow that helps users verify it."],
-  "seo": { "title": "GPT-4 Integration Experience", "description": "How I integrated GPT-4 into ResumeByAI." }
+  "slug": "gpt-4",
+  "name": "GPT-4",
+  "shortDescription": "A large language model used for generating and transforming natural-language content.",
+  "status": "published",
+  "category": "services",
+  "webCategory": "ai-systems",
+  "iconText": "GPT",
+  "showInSkillsSection": false,
+  "skillsSectionOrder": 31,
+  "showInResume": false,
+  "whatItIs": [
+    "GPT-4 is a language model that can follow instructions and generate structured natural-language output."
+  ],
+  "howILearned": [
+    "I learned GPT integration while building ResumeByAI."
+  ],
+  "howIUseIt": [
+    "I use structured prompts and user context to generate ATS-oriented résumé content."
+  ],
+  "concepts": [
+    "Prompt design",
+    "Structured input",
+    "Output validation",
+    "Product safeguards"
+  ],
+  "lessonsLearned": [
+    "AI output needs clear constraints and a product workflow that helps users verify it."
+  ],
+  "seo": {
+    "title": "GPT-4 Integration Experience",
+    "description": "How I integrated GPT-4 into ResumeByAI."
+  }
 }

@@ -7,10 +7,15 @@
   "featured": false,
   "showInProjectsSection": true,
   "projectsSectionOrder": 4,
+  "showInResume": false,
   "image": "/images/KS Logo.webp",
   "imageAlt": "ResumeByAI project identity",
   "role": "Full-stack development",
-  "skills": ["next-js", "gpt-4", "razorpay"],
+  "skills": [
+    "next-js",
+    "gpt-4",
+    "razorpay"
+  ],
   "overview": [
     "ResumeByAI guides users through creating résumé content and uses GPT-4 Turbo to produce ATS-oriented output.",
     "The application combines an AI generation workflow with Razorpay-based paid access."

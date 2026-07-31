@@ -1,10 +1,36 @@
 {
-  "slug": "javascript", "name": "JavaScript", "shortDescription": "The programming language that powers interactive behavior across the modern web.",
-  "status": "published", "category": "web-frameworks", "webCategory": "frontend", "iconText": "JS", "showInSkillsSection": true, "skillsSectionOrder": 3,
-  "whatItIs": ["JavaScript is the runtime language used for browser interactions and server-side Node.js applications."],
-  "howILearned": ["I learned JavaScript through web application development and continued practice with modern language features."],
-  "howIUseIt": ["I use JavaScript for application logic, asynchronous workflows, APIs, and browser interactions."],
-  "concepts": ["ES modules", "Promises", "DOM APIs", "Closures"],
-  "lessonsLearned": ["Predictable data flow matters more than clever syntax."],
-  "seo": { "title": "JavaScript Skill and Experience", "description": "How I learned and use JavaScript." }
+  "slug": "javascript",
+  "name": "JavaScript",
+  "shortDescription": "The programming language that powers interactive behavior across the modern web.",
+  "status": "published",
+  "category": "web-frameworks",
+  "webCategory": "frontend",
+  "iconText": "JS",
+  "showInSkillsSection": true,
+  "skillsSectionOrder": 3,
+  "showInResume": true,
+  "resumeGroup": "Languages",
+  "resumeOrder": 2,
+  "whatItIs": [
+    "JavaScript is the runtime language used for browser interactions and server-side Node.js applications."
+  ],
+  "howILearned": [
+    "I learned JavaScript through web application development and continued practice with modern language features."
+  ],
+  "howIUseIt": [
+    "I use JavaScript for application logic, asynchronous workflows, APIs, and browser interactions."
+  ],
+  "concepts": [
+    "ES modules",
+    "Promises",
+    "DOM APIs",
+    "Closures"
+  ],
+  "lessonsLearned": [
+    "Predictable data flow matters more than clever syntax."
+  ],
+  "seo": {
+    "title": "JavaScript Skill and Experience",
+    "description": "How I learned and use JavaScript."
+  }
 }

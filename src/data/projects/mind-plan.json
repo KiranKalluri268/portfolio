@@ -7,10 +7,15 @@
   "featured": false,
   "showInProjectsSection": true,
   "projectsSectionOrder": 5,
+  "showInResume": false,
   "image": "/images/project4.webp",
   "imageAlt": "MindPlan mobile productivity interface",
   "role": "Mobile application development",
-  "skills": ["flutter", "dart", "mobile-development"],
+  "skills": [
+    "flutter",
+    "dart",
+    "mobile-development"
+  ],
   "overview": [
     "MindPlan is a mobile productivity application that connects long-term goals with daily planning.",
     "It uses the Eisenhower Matrix to help users make prioritization decisions explicit."

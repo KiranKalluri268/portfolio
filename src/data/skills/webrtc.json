@@ -1,10 +1,34 @@
 {
-  "slug": "webrtc", "name": "WebRTC", "shortDescription": "Browser technologies for real-time peer-to-peer audio, video, and data.",
-  "status": "published", "category": "web-frameworks", "webCategory": "realtime-systems", "iconText": "RTC", "showInSkillsSection": false, "skillsSectionOrder": 29,
-  "whatItIs": ["WebRTC enables real-time media and data communication between browsers."],
-  "howILearned": ["I learned WebRTC while building the ThirdEyeAI meeting experience."],
-  "howIUseIt": ["I use it to establish real-time participant media sessions in the browser."],
-  "concepts": ["Peer connections", "Media streams", "Signaling", "ICE"],
-  "lessonsLearned": ["Real-time systems need careful connection-state and failure handling."],
-  "seo": { "title": "WebRTC Skill and Project Experience", "description": "How I used WebRTC in ThirdEyeAI." }
+  "slug": "webrtc",
+  "name": "WebRTC",
+  "shortDescription": "Browser technologies for real-time peer-to-peer audio, video, and data.",
+  "status": "published",
+  "category": "web-frameworks",
+  "webCategory": "realtime-systems",
+  "iconText": "RTC",
+  "showInSkillsSection": false,
+  "skillsSectionOrder": 29,
+  "showInResume": false,
+  "whatItIs": [
+    "WebRTC enables real-time media and data communication between browsers."
+  ],
+  "howILearned": [
+    "I learned WebRTC while building the ThirdEyeAI meeting experience."
+  ],
+  "howIUseIt": [
+    "I use it to establish real-time participant media sessions in the browser."
+  ],
+  "concepts": [
+    "Peer connections",
+    "Media streams",
+    "Signaling",
+    "ICE"
+  ],
+  "lessonsLearned": [
+    "Real-time systems need careful connection-state and failure handling."
+  ],
+  "seo": {
+    "title": "WebRTC Skill and Project Experience",
+    "description": "How I used WebRTC in ThirdEyeAI."
+  }
 }

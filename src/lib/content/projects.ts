@@ -36,8 +36,19 @@ function validateProject(value: unknown, source: string): ProjectContent {
   if (typeof value.id !== "number" || typeof value.projectsSectionOrder !== "number") {
     throw new Error(`${source}: "id" and "projectsSectionOrder" must be numbers`);
   }
-  if (typeof value.featured !== "boolean" || typeof value.showInProjectsSection !== "boolean") {
+  if (
+    typeof value.featured !== "boolean" ||
+    typeof value.showInProjectsSection !== "boolean" ||
+    typeof value.showInResume !== "boolean"
+  ) {
     throw new Error(`${source}: visibility fields must be booleans`);
+  }
+  // A project on the résumé needs its résumé wording, since the case study's
+  // is written for a different length.
+  if (value.showInResume) {
+    assertRecord(value.resume, `${source}.resume`);
+    assertString(value.resume.technologies, "technologies", `${source}.resume`);
+    assertStringArray(value.resume.highlights, "highlights", `${source}.resume`);
   }
   if (!Array.isArray(value.howItWorks) || !Array.isArray(value.buildingProcess)) {
     throw new Error(`${source}: process fields must be arrays`);

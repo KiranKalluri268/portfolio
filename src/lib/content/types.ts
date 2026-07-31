@@ -27,6 +27,14 @@ export interface ProjectGalleryItem {
   caption?: string;
 }
 
+/** Résumé-specific presentation for a project. The résumé is a one-page brief,
+ *  so it often needs tighter wording than the case study carries. */
+export interface ProjectResumeEntry {
+  technologies: string;
+  highlights: string[];
+  order?: number;
+}
+
 export interface ProjectContent {
   id: number;
   slug: string;
@@ -36,6 +44,9 @@ export interface ProjectContent {
   featured: boolean;
   showInProjectsSection: boolean;
   projectsSectionOrder: number;
+  /** Opt in to the one-page résumé. The CV always includes everything. */
+  showInResume: boolean;
+  resume?: ProjectResumeEntry;
   /** Optional: internal and client work often has no shareable screenshot, in
    *  which case the UI falls back to a generated monogram panel. */
   image?: string;
@@ -236,6 +247,14 @@ export interface SkillContent {
   iconText?: string;
   showInSkillsSection: boolean;
   skillsSectionOrder: number;
+  /** Opt in to the one-page résumé. The CV always includes everything. */
+  showInResume: boolean;
+  /** Résumé grouping and wording, which is editorial and does not have to match
+   *  the skill graph's categories — e.g. "Languages", or the fuller
+   *  "AWS (EC2, S3, Lambda, …)" label the résumé uses. */
+  resumeGroup?: string;
+  resumeLabel?: string;
+  resumeOrder?: number;
   whatItIs: string[];
   howILearned: string[];
   howIUseIt: string[];

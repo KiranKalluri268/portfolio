@@ -1,10 +1,36 @@
 {
-  "slug": "cloudinary", "name": "Cloudinary", "shortDescription": "A managed platform for uploading, transforming, and delivering image and video assets.",
-  "status": "published", "category": "tools", "webCategory": "cloud-services", "iconText": "Cloud", "showInSkillsSection": true, "skillsSectionOrder": 28,
-  "whatItIs": ["Cloudinary manages media storage, transformation, optimization, and delivery."],
-  "howILearned": ["I learned Cloudinary while implementing certificate media handling for CertiSafe."],
-  "howIUseIt": ["I use it to keep media workflows separate from structured application data."],
-  "concepts": ["Uploads", "Transformations", "CDN delivery", "Asset management"],
-  "lessonsLearned": ["Media deserves a delivery pipeline designed for its own performance characteristics."],
-  "seo": { "title": "Cloudinary Skill and Project Experience", "description": "How I used Cloudinary for project media." }
+  "slug": "cloudinary",
+  "name": "Cloudinary",
+  "shortDescription": "A managed platform for uploading, transforming, and delivering image and video assets.",
+  "status": "published",
+  "category": "tools",
+  "webCategory": "cloud-services",
+  "iconText": "Cloud",
+  "showInSkillsSection": true,
+  "skillsSectionOrder": 28,
+  "showInResume": true,
+  "resumeGroup": "Other Tools",
+  "resumeOrder": 5,
+  "whatItIs": [
+    "Cloudinary manages media storage, transformation, optimization, and delivery."
+  ],
+  "howILearned": [
+    "I learned Cloudinary while implementing certificate media handling for CertiSafe."
+  ],
+  "howIUseIt": [
+    "I use it to keep media workflows separate from structured application data."
+  ],
+  "concepts": [
+    "Uploads",
+    "Transformations",
+    "CDN delivery",
+    "Asset management"
+  ],
+  "lessonsLearned": [
+    "Media deserves a delivery pipeline designed for its own performance characteristics."
+  ],
+  "seo": {
+    "title": "Cloudinary Skill and Project Experience",
+    "description": "How I used Cloudinary for project media."
+  }
 }
