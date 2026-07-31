@@ -15,46 +15,47 @@
   "resumePeriod": "Jan 2026 – Present",
   "location": "Remote",
   "workMode": "Remote",
-  "summary": "Building internal tooling for Aude: a diagnostics dashboard that verifies the main product is producing correct data for every client, deployed behind the existing single sign-on.",
+  "summary": "Joined as a software engineer intern on the product team, working across a Next.js frontend and a Node and Express backend. After the first month I was given the chance to design and build an internal diagnostics application, which became the main focus of the role.",
   "highlights": [
-    "Built an internal diagnostics web application that reads directly from the database and verifies per-client data integrity for the main product.",
+    "Worked across the product — a Next.js frontend with a Node and Express backend using Redis — starting with UI bug fixes before taking on larger work.",
+    "Was given ownership of an internal diagnostics application after the first month, and built it as a Next.js monolith that verifies per-client data integrity for the main product.",
     "Designed the dashboard for troubleshooting, with failures visible at a glance, deep-linkable investigations, and a user's-eye UI view paired with its API response.",
     "Deployed it on AWS so it reuses the main product's existing single sign-on, with access restricted to authorized members of the engineering team.",
     "Proposed and shipped skeleton loading states, now in production."
   ],
   "overview": [
-    "The internship started with the existing Aude web application — exploring it, then finding and fixing bugs, mostly on the UI.",
-    "That grew into building and deploying a separate internal diagnostics tool for the engineering team, and contributing to the product's UX discussions."
+    "I joined Aude.ai as a software engineer intern on the product team. The product is a Next.js frontend backed by a Node and Express service using Redis, and the first month was spent working in it directly — exploring the codebase, then finding and fixing bugs, mostly on the UI.",
+    "On the strength of that first month I was given the opportunity to design and build an internal diagnostics application for the engineering team. That became the main body of the internship, alongside continuing product work and UX discussions."
   ],
   "workItems": [
     {
-      "title": "Product onboarding and UI bug fixes",
-      "description": "Explored the existing Aude web application and fixed bugs across it, mostly on the UI. This built up the familiarity with the product's data flows that the diagnostics work depended on later.",
+      "title": "Product work and UI bug fixes",
+      "description": "Started in the existing Aude product — a Next.js frontend with a Node and Express backend using Redis — exploring the codebase and fixing bugs across it, mostly on the UI. This first month built up the familiarity with the product's data flows that the diagnostics work later depended on.",
       "kind": "improvement",
-      "skills": []
+      "skills": ["next-js", "react", "node-js", "express", "redis"]
     },
     {
       "title": "Internal diagnostics dashboard",
-      "description": "Built a separate web application that talks directly to the database, checks whether the main app is generating correct data for every client, and shows the state of all of them in one dashboard. The interface is built for the engineers who debug it: what is not working is visible at a glance, an investigation can be deep-linked and shared as a URL, and a user's-eye view shows the UI as the user sees it next to the API response behind it.",
+      "description": "After the first month I was given the chance to design and build an internal diagnostics application, which I built as a Next.js monolith. It talks directly to the database, checks whether the main app is generating correct data for every client, and shows the state of all of them in one dashboard. The interface is built for the engineers who debug it: what is not working is visible at a glance, an investigation can be deep-linked and shared as a URL, and a user's-eye view shows the UI as the user sees it next to the API response behind it.",
       "kind": "feature",
       "projectSlug": "aude-diagnostics",
-      "skills": []
+      "skills": ["next-js", "react"]
     },
     {
       "title": "Deployment behind the existing single sign-on",
       "description": "Deployed the diagnostics app on AWS and served it from the same origin as the main application, so it reuses the existing single sign-on instead of introducing a second authentication system. Access is further restricted to authorized members of the engineering team.",
       "kind": "infrastructure",
       "projectSlug": "aude-diagnostics",
-      "skills": ["aws"]
+      "skills": ["aws", "next-js"]
     },
     {
       "title": "Skeleton loading states",
       "description": "Took part in UX improvement discussions and proposed skeleton loading for the app, which had no loading view. The proposal was approved, I implemented it, and it is now in production.",
       "kind": "improvement",
-      "skills": []
+      "skills": ["next-js", "react"]
     }
   ],
-  "skills": ["aws"],
+  "skills": ["next-js", "react", "node-js", "express", "redis", "aws"],
   "outcomes": [],
   "recommendations": [
     {

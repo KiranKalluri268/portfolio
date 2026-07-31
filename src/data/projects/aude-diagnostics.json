@@ -2,18 +2,20 @@
   "id": 6,
   "slug": "aude-diagnostics",
   "title": "Aude Diagnostics – Internal Data-Integrity Dashboard",
-  "summary": "An internal diagnostics web app that reads straight from the database, verifies the main product is producing correct data for every client, and puts the health of all of them on one screen built for troubleshooting.",
+  "summary": "An internal diagnostics web app, built as a Next.js monolith, that reads straight from the database, verifies the main product is producing correct data for every client, and puts the health of all of them on one screen built for troubleshooting.",
   "status": "published",
   "featured": false,
   "showInProjectsSection": false,
   "projectsSectionOrder": 6,
   "role": "Design, development, and deployment",
   "skills": [
+    "next-js",
+    "react",
     "aws"
   ],
   "overview": [
     "Aude's main application generates data for many clients, and the team had no single place to confirm that data was correct for all of them at once.",
-    "I built a separate internal web application that talks directly to the database, checks the main app's output per client, and surfaces the results in one dashboard aimed squarely at the engineers who debug it."
+    "I built a separate internal web application — a Next.js monolith — that talks directly to the database, checks the main app's output per client, and surfaces the results in one dashboard aimed squarely at the engineers who debug it."
   ],
   "problem": "There was no fast way to tell whether the main application was generating correct data across every client, so verifying an issue meant checking clients one at a time.",
   "solution": "A dedicated diagnostics dashboard that reads from the database directly, evaluates per-client data integrity, and presents the whole picture in a layout designed for troubleshooting rather than for general reporting.",
@@ -38,11 +40,11 @@
   "buildingProcess": [
     {
       "title": "Learning the existing product",
-      "description": "Started by exploring the existing Aude web application and fixing bugs in it, mostly on the UI, which built up the understanding of the data flows the diagnostics tool would later have to verify."
+      "description": "Spent the first month working in the existing Aude product, a Next.js frontend with a Node and Express backend using Redis, fixing bugs across it and mostly on the UI. That built up the understanding of the data flows the diagnostics tool would later have to verify, and led to being given the diagnostics project."
     },
     {
       "title": "Building the diagnostics app",
-      "description": "Built the dashboard as a separate application talking directly to the database, and shaped the interface around how engineers actually debug: broad status first, then drill-down, then a shareable link."
+      "description": "Built the dashboard as a separate Next.js monolith talking directly to the database, and shaped the interface around how engineers actually debug: broad status first, then drill-down, then a shareable link."
     },
     {
       "title": "Deploying behind the existing authentication",
@@ -69,7 +71,7 @@
     "Access limited to authorized team members on top of the existing single sign-on"
   ],
   "highlights": [
-    "Built an internal diagnostics dashboard that verifies per-client data integrity straight from the database.",
+    "Built an internal diagnostics dashboard as a Next.js monolith that verifies per-client data integrity straight from the database.",
     "Designed the interface for engineers: failures visible at a glance, deep-linkable investigations, and a user's-eye view paired with its API response.",
     "Deployed on AWS so it reuses the main product's existing single sign-on, with access restricted to authorized members of the engineering team."
   ],
