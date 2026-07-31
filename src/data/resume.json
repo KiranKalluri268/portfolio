@@ -20,51 +20,13 @@
     ]
   },
   "objective": "Innovative and detail-oriented full-stack developer and Computer Science undergraduate with hands-on experience building scalable web applications, AI/ML integrations, and cloud-based systems. Strong foundation in data structures and algorithms, with a passion for problem-solving and developing impactful, user-centered solutions.",
-  "skills": [
-    {
-      "category": "Languages",
-      "items": ["Python", "JavaScript", "Java"]
-    },
-    {
-      "category": "AI/ML",
-      "items": ["TensorFlow.js", "RAG (Retrieval-Augmented Generation)", "Deep Learning (CNN, ResNet)", "LangChain"]
-    },
-    {
-      "category": "Web/Frameworks",
-      "items": ["React", "Next.js", "Node.js", "Express", "Tailwind CSS"]
-    },
-    {
-      "category": "Databases",
-      "items": ["MongoDB", "MySQL", "PostgreSQL", "Supabase", "DynamoDB"]
-    },
-    {
-      "category": "Cloud & DevOps",
-      "items": ["AWS (EC2, S3, Lambda, IAM, IVS, DynamoDB, Amplify)", "Git", "Docker"]
-    },
-    {
-      "category": "Other Tools",
-      "items": ["Linux", "Figma", "Canva", "Tableau", "Cloudinary"]
-    }
-  ],
-  "projects": [
-    {
-      "name": "ThirdEyeAI – Real-time Engagement Detection & Meeting Platform",
-      "technologies": "MERN, TensorFlow.js, WebRTC, Python",
-      "highlights": [
-        "Engineered a hybrid ensemble bagging model (1D CNN and 1D ResNet) trained on the DAiSEE dataset to achieve 94.25% accuracy in detecting student engagement.",
-        "Implemented client-side inference using TensorFlow.js, enabling infinite horizontal scaling and ensuring user privacy by processing video streams locally within the browser.",
-        "Developed a fully functional WebRTC-based meeting engine for online classes, featuring real-time data visualization of engagement metrics for instructors.",
-        "Integrated a RAG (Retrieval-Augmented Generation) system to allow instructors to query session data using natural language, providing instant insights into student participation and distractions."
-      ]
-    },
-    {
-      "name": "CertiSafe – Certificate Management System",
-      "technologies": "MERN, AWS, DynamoDB",
-      "highlights": [
-        "Led a 4-member team to build and deploy a certificate management platform for my institute.",
-        "Integrated AWS DynamoDB and Cloudinary for secure data and media handling; onboarded 95+ users."
-      ]
-    }
+  "skillGroupOrder": [
+    "Languages",
+    "AI/ML",
+    "Web/Frameworks",
+    "Databases",
+    "Cloud & DevOps",
+    "Other Tools"
   ],
   "education": {
     "degree": "Bachelor of Technology – Computer Science & Engineering",
@@ -77,6 +39,15 @@
     "Cisco: Python, Cybersecurity & Packet Tracer – 2024",
     "Oracle Fusion Cloud Process Essentials (SCM, ERP, CX, HCM) – 2025"
   ],
-  "languages": ["English", "Telugu", "Hindi"],
-  "strengths": ["Problem-solving", "leadership", "curiosity", "fast learning"]
+  "languages": [
+    "English",
+    "Telugu",
+    "Hindi"
+  ],
+  "strengths": [
+    "Problem-solving",
+    "leadership",
+    "curiosity",
+    "fast learning"
+  ]
 }

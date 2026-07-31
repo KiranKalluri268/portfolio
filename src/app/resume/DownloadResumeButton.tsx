@@ -2,11 +2,16 @@
 
 import { useState } from "react";
 import type { ResumeInternship } from "@/lib/content/types";
+import type { ResumeProject, ResumeSkillGroup } from "@/lib/content/resume";
 
 export default function DownloadResumeButton({
   internships,
+  projects,
+  skillGroups,
 }: {
   internships: ResumeInternship[];
+  projects: ResumeProject[];
+  skillGroups: ResumeSkillGroup[];
 }) {
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -18,7 +23,7 @@ export default function DownloadResumeButton({
         import("@react-pdf/renderer"),
         import("./ResumePdfDocument"),
       ]);
-      const blob = await pdf(<ResumePdfDocument internships={internships} />).toBlob();
+      const blob = await pdf(<ResumePdfDocument internships={internships} projects={projects} skillGroups={skillGroups} />).toBlob();
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;

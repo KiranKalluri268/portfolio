@@ -10,6 +10,7 @@ import {
 } from "@react-pdf/renderer";
 import resume from "@/data/resume.json";
 import type { ResumeInternship } from "@/lib/content/types";
+import type { ResumeProject, ResumeSkillGroup } from "@/lib/content/resume";
 
 const styles = StyleSheet.create({
   page: {
@@ -86,8 +87,12 @@ function BulletList({ items }: { items: string[] }) {
 
 export default function ResumePdfDocument({
   internships,
+  projects,
+  skillGroups,
 }: {
   internships: ResumeInternship[];
+  projects: ResumeProject[];
+  skillGroups: ResumeSkillGroup[];
 }) {
   const phoneUrl = `tel:${resume.basics.phone.replace(/[^+\d]/g, "")}`;
 
@@ -124,7 +129,7 @@ export default function ResumePdfDocument({
           </PdfSection>
 
           <PdfSection title="Core Skills">
-            {resume.skills.map((skill) => (
+            {skillGroups.map((skill) => (
               <View style={styles.skillLine} key={skill.category}>
                 <Text style={styles.bold}>{skill.category}: </Text>
                 <Text>{skill.items.join(", ")}</Text>
@@ -133,8 +138,8 @@ export default function ResumePdfDocument({
           </PdfSection>
 
           <PdfSection title="Projects">
-            {resume.projects.map((project) => (
-              <View style={styles.entry} key={project.name}>
+            {projects.map((project) => (
+              <View style={styles.entry} key={project.slug}>
                 <Text style={styles.entryTitle}>
                   {project.name} <Text style={styles.italic}>({project.technologies})</Text>
                 </Text>

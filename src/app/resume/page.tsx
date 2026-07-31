@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import resume from "@/data/resume.json";
 import BackNavigationButton from "@/components/BackNavigationButton";
-import { getResumeInternships } from "@/lib/content/experience";
+import { getResumeData } from "@/lib/content/resume";
 import DownloadResumeButton from "./DownloadResumeButton";
 import styles from "./resume.module.css";
 
@@ -30,7 +30,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 }
 
 export default function ResumePage() {
-  const internships = getResumeInternships();
+  const { internships, projects, skillGroups } = getResumeData();
   return (
     <main className={styles.page}>
       <div className={styles.actions}>
@@ -43,7 +43,7 @@ export default function ResumePage() {
             For the long form with every role and project, see the <Link href="/cv">CV</Link>.
           </p>
         </div>
-        <DownloadResumeButton internships={internships} />
+        <DownloadResumeButton internships={internships} projects={projects} skillGroups={skillGroups} />
       </div>
       <article className={styles.paper} aria-label={`${resume.basics.name} resume`}>
         <header>
@@ -75,7 +75,7 @@ export default function ResumePage() {
         </Section>
 
         <Section title="Core Skills">
-          {resume.skills.map((skill) => (
+          {skillGroups.map((skill) => (
             <p className={styles.skill} key={skill.category}>
               <span className={styles.skillLabel}>{skill.category}:</span>{" "}
               {skill.items.join(", ")}
@@ -84,8 +84,8 @@ export default function ResumePage() {
         </Section>
 
         <Section title="Projects">
-          {resume.projects.map((project) => (
-            <div key={project.name}>
+          {projects.map((project) => (
+            <div key={project.slug}>
               <h3 className={styles.entryTitle}>
                 {project.name}{" "}
                 <span className={styles.technologies}>({project.technologies})</span>
