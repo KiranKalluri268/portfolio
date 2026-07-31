@@ -73,8 +73,6 @@ export default function SceneIndicator() {
 
   if (!portalReady || !hasEntered) return null;
 
-  const activeScene = scenes.find((scene) => scene.id === activeSection);
-
   return createPortal(
     <>
       <nav
@@ -82,69 +80,57 @@ export default function SceneIndicator() {
         aria-label="Scene navigation indicator"
         role="navigation"
       >
-        <div className="relative flex flex-col items-center">
-          <div className="relative flex flex-row items-center justify-between">
+        <div className="relative flex flex-row items-center justify-between">
+          {/* Dots */}
+          {scenes.map((scene) => {
+            const isActive = activeSection === scene.id;
+            const isHovered = hoveredIndex === scene.index;
 
-            {/* Dots */}
-            {scenes.map((scene) => {
-              const isActive = activeSection === scene.id;
-              const isHovered = hoveredIndex === scene.index;
+            // Active state changes size as well as colour, so it survives
+            // glare, dim displays, and colour-vision deficiency.
+            const dotSize = isActive ? 8 : 4;
 
-              // Active state changes size as well as colour, so it survives
-              // glare, dim displays, and colour-vision deficiency.
-              const dotSize = isActive ? 8 : 4;
-
-              return (
-                <div key={scene.index} className="relative flex flex-col items-center">
-                  <button
-                    className="relative z-10 flex min-h-9 min-w-9 cursor-pointer items-center justify-center border-none bg-transparent p-3 outline-none sm:min-h-12 sm:min-w-12 sm:p-6"
-                    aria-label={`Go to ${scene.name} section${isActive ? " (current)" : ""}`}
-                    aria-current={isActive ? "page" : undefined}
-                    onClick={() => handleDotClick(scene.id)}
-                    onMouseEnter={() => setHoveredIndex(scene.index)}
-                    onMouseLeave={() => setHoveredIndex(null)}
-                    type="button"
+            return (
+              <div key={scene.index} className="relative flex flex-col items-center">
+                <button
+                  className="relative z-10 flex min-h-9 min-w-9 cursor-pointer items-center justify-center border-none bg-transparent p-3 outline-none sm:min-h-12 sm:min-w-12 sm:p-6"
+                  aria-label={`Go to ${scene.name} section${isActive ? " (current)" : ""}`}
+                  aria-current={isActive ? "page" : undefined}
+                  onClick={() => handleDotClick(scene.id)}
+                  onMouseEnter={() => setHoveredIndex(scene.index)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                  type="button"
+                >
+                  {/* Dot */}
+                  <div
+                    className="relative rounded-full transition-[width,height,background-color,box-shadow] duration-300 ease-out"
+                    style={{
+                      width: dotSize,
+                      height: dotSize,
+                      backgroundColor: isActive ? "var(--color-accent-warm)" : "white",
+                      boxShadow: isActive
+                        ? "0 0 16px 4px color-mix(in oklab, var(--color-accent-warm-deep) 90%, transparent)"
+                        : isHovered
+                          ? "0 0 10px 2px rgba(255, 255, 255, 0.8)"
+                          : "0 0 6px rgba(255, 255, 255, 0.35)",
+                    }}
                   >
-                    {/* Dot */}
-                    <div
-                      className="relative rounded-full transition-[width,height,background-color,box-shadow] duration-300 ease-out"
-                      style={{
-                        width: dotSize,
-                        height: dotSize,
-                        backgroundColor: isActive ? "var(--color-accent-warm)" : "white",
-                        boxShadow: isActive
-                          ? "0 0 16px 4px color-mix(in oklab, var(--color-accent-warm-deep) 90%, transparent)"
-                          : isHovered
-                            ? "0 0 10px 2px rgba(255, 255, 255, 0.8)"
-                            : "0 0 6px rgba(255, 255, 255, 0.35)",
-                      }}
-                    >
-                    </div>
-                  </button>
+                  </div>
+                </button>
 
-                  {/* Touch devices have no cursor to follow, so the label anchors
-                      above its own dot. */}
-                  {isCoarsePointer && isHovered && (
-                    <span
-                      className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1 -translate-x-1/2 whitespace-nowrap rounded-md border border-white/10 bg-black/70 px-2 py-1 text-xs font-semibold tracking-wide text-white backdrop-blur-md"
-                      aria-hidden="true"
-                    >
-                      {scene.name}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* The current section, always visible. Previously this existed only
-              as a hover tooltip, so touch users could not read it at all. */}
-          <span
-            className="pointer-events-none -mt-1 pb-2 text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-white/65 sm:mt-0 sm:pb-0 sm:text-xs"
-            aria-hidden="true"
-          >
-            {activeScene?.name}
-          </span>
+                {/* Touch devices have no cursor to follow, so the label anchors
+                    above its own dot. */}
+                {isCoarsePointer && isHovered && (
+                  <span
+                    className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1 -translate-x-1/2 whitespace-nowrap rounded-md border border-white/10 bg-black/70 px-2 py-1 text-xs font-semibold tracking-wide text-white backdrop-blur-md"
+                    aria-hidden="true"
+                  >
+                    {scene.name}
+                  </span>
+                )}
+              </div>
+            );
+          })}
         </div>
       </nav>
 
