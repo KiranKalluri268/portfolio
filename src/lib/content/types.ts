@@ -170,12 +170,8 @@ export interface CvRole {
   location?: string;
   workMode?: string;
   summary: string;
-  overview: string[];
   workItems: CvWorkItem[];
-  highlights: string[];
   technologies: string[];
-  lessonsLearned: string[];
-  recommendations: ExperienceRecommendation[];
 }
 
 export interface CvProject {
@@ -183,10 +179,6 @@ export interface CvProject {
   title: string;
   role: string;
   summary: string;
-  overview: string[];
-  problem?: string;
-  solution?: string;
-  features: string[];
   highlights: string[];
   outcomes: ProjectOutcome[];
   technologies: string[];

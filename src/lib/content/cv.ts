@@ -42,7 +42,6 @@ function toCvRole(
     location: experience.location,
     workMode: experience.workMode,
     summary: experience.summary,
-    overview: experience.overview,
     workItems: experience.workItems.map((item) => ({
       title: item.title,
       description: item.description,
@@ -53,10 +52,7 @@ function toCvRole(
         ? projectsBySlug.get(item.projectSlug)?.title
         : undefined,
     })),
-    highlights: experience.highlights,
     technologies: toNames(experience.skills, skillsBySlug),
-    lessonsLearned: experience.lessonsLearned,
-    recommendations: experience.recommendations,
   };
 }
 
@@ -69,10 +65,6 @@ function toCvProject(
     title: project.title,
     role: project.role,
     summary: project.summary,
-    overview: project.overview,
-    problem: project.problem,
-    solution: project.solution,
-    features: project.features,
     highlights: project.highlights,
     outcomes: project.outcomes,
     technologies: toNames(project.skills, skillsBySlug),

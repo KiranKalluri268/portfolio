@@ -153,7 +153,6 @@ function RoleEntry({ role }: { role: CvRole }) {
   const subtitle = [role.company, role.employmentType, role.location]
     .filter(Boolean)
     .join("  |  ");
-  const paragraphs = role.overview.length > 0 ? role.overview : [role.summary];
 
   return (
     <View style={styles.entry}>
@@ -163,11 +162,7 @@ function RoleEntry({ role }: { role: CvRole }) {
       </View>
       <Text style={styles.entrySubtitle}>{subtitle}</Text>
 
-      {paragraphs.map((paragraph) => (
-        <Text style={styles.paragraph} key={paragraph}>
-          {paragraph}
-        </Text>
-      ))}
+      <Text style={styles.paragraph}>{role.summary}</Text>
 
       {role.workItems.length > 0 && (
         <>
@@ -187,29 +182,6 @@ function RoleEntry({ role }: { role: CvRole }) {
         </>
       )}
 
-      {role.highlights.length > 0 && (
-        <>
-          <Text style={styles.subheading}>HIGHLIGHTS</Text>
-          <BulletList items={role.highlights} />
-        </>
-      )}
-
-      <MetaLine label="Technologies" value={role.technologies.join(" · ")} />
-
-      {role.recommendations.map((recommendation) => (
-        <View style={styles.quote} key={recommendation.author}>
-          {recommendation.quote.map((paragraph) => (
-            <Text style={styles.quoteText} key={paragraph}>
-              {paragraph}
-            </Text>
-          ))}
-          <Text style={styles.quoteAttribution}>
-            <Text style={styles.bold}>{recommendation.author}</Text>
-            {recommendation.authorTitle ? ` — ${recommendation.authorTitle}` : ""}
-            {recommendation.relationship ? ` · ${recommendation.relationship}` : ""}
-          </Text>
-        </View>
-      ))}
     </View>
   );
 }
@@ -230,19 +202,6 @@ function ProjectEntry({ project }: { project: CvProject }) {
       </View>
 
       <Text style={styles.paragraph}>{project.summary}</Text>
-      {project.problem && (
-        <Text style={styles.paragraph}>
-          <Text style={styles.bold}>Problem: </Text>
-          {project.problem}
-        </Text>
-      )}
-      {project.solution && (
-        <Text style={styles.paragraph}>
-          <Text style={styles.bold}>Approach: </Text>
-          {project.solution}
-        </Text>
-      )}
-
       <BulletList items={project.highlights} />
 
       {project.outcomes.length > 0 && (

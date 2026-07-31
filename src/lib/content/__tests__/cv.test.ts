@@ -32,15 +32,14 @@ describe("getCvData", () => {
     }
   });
 
-  it("carries recommendations through to the CV", () => {
+  it("leaves recommendations off the CV", () => {
+    // Recommendations belong on the homepage and the experience pages; the CV
+    // is a record of work, and quoting managers made it noticeably longer.
     const cv = getCvData();
-    const expected = getAllExperiences().reduce(
-      (total, experience) => total + experience.recommendations.length,
-      0,
-    );
-    const actual = cv.roles.reduce((total, role) => total + role.recommendations.length, 0);
-    expect(actual).toBe(expected);
-    expect(actual).toBeGreaterThan(0);
+    expect(JSON.stringify(cv)).not.toContain("phenomenal asset");
+    for (const role of cv.roles) {
+      expect(role).not.toHaveProperty("recommendations");
+    }
   });
 
   it("resolves a work item's project reference to that project's title", () => {

@@ -62,20 +62,7 @@ function RoleEntry({ role }: { role: CvRole }) {
         )}
       </p>
 
-      {/* The overview is the long-form version of the summary, so showing both
-          repeats the same opening twice. The CV prefers the fuller text. */}
-      {role.overview.length > 0 ? (
-        role.overview.map((paragraph, index) => (
-          <p
-            className={index === 0 ? `${styles.paragraph} ${styles.summary}` : styles.paragraph}
-            key={paragraph}
-          >
-            {paragraph}
-          </p>
-        ))
-      ) : (
-        <p className={`${styles.paragraph} ${styles.summary}`}>{role.summary}</p>
-      )}
+      <p className={`${styles.paragraph} ${styles.summary}`}>{role.summary}</p>
 
       {role.workItems.length > 0 && (
         <>
@@ -103,31 +90,6 @@ function RoleEntry({ role }: { role: CvRole }) {
         </>
       )}
 
-      {role.highlights.length > 0 && (
-        <>
-          <h4 className={styles.subheading}>Highlights</h4>
-          <ul className={styles.list}>
-            {role.highlights.map((highlight) => (
-              <li key={highlight}>{highlight}</li>
-            ))}
-          </ul>
-        </>
-      )}
-
-      <TechLine label="Technologies" items={role.technologies} />
-
-      {role.recommendations.map((recommendation) => (
-        <blockquote className={styles.quote} key={recommendation.author}>
-          {recommendation.quote.map((paragraph) => (
-            <p key={paragraph}>{paragraph}</p>
-          ))}
-          <p className={styles.quoteAttribution}>
-            <span className={styles.quoteAuthor}>{recommendation.author}</span>
-            {recommendation.authorTitle && <> — {recommendation.authorTitle}</>}
-            {recommendation.relationship && <> · {recommendation.relationship}</>}
-          </p>
-        </blockquote>
-      ))}
     </article>
   );
 }
@@ -141,17 +103,6 @@ function ProjectEntry({ project }: { project: CvProject }) {
       </div>
 
       <p className={`${styles.paragraph} ${styles.summary}`}>{project.summary}</p>
-
-      {project.problem && (
-        <p className={styles.paragraph}>
-          <strong>Problem:</strong> {project.problem}
-        </p>
-      )}
-      {project.solution && (
-        <p className={styles.paragraph}>
-          <strong>Approach:</strong> {project.solution}
-        </p>
-      )}
 
       {project.highlights.length > 0 && (
         <ul className={styles.list}>
