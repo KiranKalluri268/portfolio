@@ -7,6 +7,15 @@ import Link from "next/link";
 import type { ProjectContent } from "@/lib/content/types";
 import ProjectThumbnail from "@/components/content/ProjectThumbnail";
 import { useActiveSection, useScrollActions } from "@/context/SmoothScrollContext";
+import {
+  VelocityTracker,
+  dragTarget,
+  momentumTarget,
+  resolveAxis,
+  scrollPerPixel,
+  settleSeconds,
+  type SwipeAxis,
+} from "./projects-swipe";
 
 // Resting values for the focus animation below. Panel geometry (count, step)
 // depends on the `projects` prop, so those live inside the component instead.
@@ -139,13 +148,138 @@ export default function ProjectsSection({ projects }: { projects: ProjectContent
     return () => context.revert();
   }, [lastPanelIndex, panelStep]);
 
+  // Horizontal swiping on touch devices. The section declares
+  // `touch-action: pan-y pinch-zoom`, so the browser keeps vertical panning and
+  // pinch-zoom while horizontal movement is left to us — there is nothing to
+  // pan horizontally natively, since the track is transformed rather than
+  // scrolled.
+  useLayoutEffect(() => {
+    const section = sectionRef.current;
+    const track = trackRef.current;
+    if (!section || !track) return;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const velocity = new VelocityTracker();
+
+    let axis: SwipeAxis | null = null;
+    let startX = 0;
+    let startY = 0;
+    let startScroll = 0;
+    let ratio = 0;
+    let range: { min: number; max: number } | null = null;
+
+    const readRange = () => {
+      const trigger = ScrollTrigger.getById("projects-horizontal-pin");
+      if (!trigger) return null;
+      // Measured per gesture: `end` is recalculated on resize, and 100dvh
+      // changes as mobile browser chrome hides.
+      const horizontalTravel = track.scrollWidth - section.clientWidth;
+      if (horizontalTravel <= 0) return null;
+      return {
+        min: trigger.start,
+        max: trigger.end,
+        ratio: scrollPerPixel(trigger.end - trigger.start, horizontalTravel),
+      };
+    };
+
+    const scrollTo = (target: number, seconds: number) => {
+      if (lenis) lenis.scrollTo(target, seconds > 0 ? { duration: seconds } : { immediate: true });
+      else window.scrollTo({ top: target, behavior: seconds > 0 ? "smooth" : "auto" });
+    };
+
+    const reset = () => {
+      axis = null;
+      range = null;
+      velocity.reset();
+    };
+
+    const onTouchStart = (event: TouchEvent) => {
+      // Leave multi-touch alone so pinch-zoom is never interrupted.
+      if (event.touches.length !== 1) return reset();
+
+      const measured = readRange();
+      // Only engage while the pin actually owns the viewport. Otherwise a
+      // horizontal swipe elsewhere would yank the page into the pinned range.
+      if (!measured || window.scrollY < measured.min || window.scrollY > measured.max) {
+        return reset();
+      }
+
+      const touch = event.touches[0];
+      axis = null;
+      range = { min: measured.min, max: measured.max };
+      ratio = measured.ratio;
+      startX = touch.clientX;
+      startY = touch.clientY;
+      startScroll = window.scrollY;
+      velocity.reset();
+      velocity.add(touch.clientX, event.timeStamp);
+    };
+
+    const onTouchMove = (event: TouchEvent) => {
+      if (!range || event.touches.length !== 1) return;
+      const touch = event.touches[0];
+      const deltaX = touch.clientX - startX;
+      const deltaY = touch.clientY - startY;
+
+      if (axis === null) {
+        axis = resolveAxis(deltaX, deltaY);
+        // Still ambiguous, or the page has claimed it: either way, hands off.
+        if (axis === null) return;
+        if (axis === "vertical") {
+          range = null;
+          return;
+        }
+      }
+
+      // Committed to horizontal, so stop the browser doing anything else with
+      // the gesture and track the finger exactly.
+      event.preventDefault();
+      velocity.add(touch.clientX, event.timeStamp);
+      scrollTo(dragTarget({ startScroll, deltaX, ratio, ...range }), 0);
+    };
+
+    const onTouchEnd = () => {
+      if (!range || axis !== "horizontal") return reset();
+
+      const from = window.scrollY;
+      const target = momentumTarget({
+        scroll: from,
+        velocityX: velocity.velocity(),
+        ratio,
+        ...range,
+      });
+      const distance = Math.abs(target - from);
+      // Reduced motion still swipes, it just arrives rather than glides.
+      if (distance > 0) {
+        scrollTo(target, reduceMotion ? 0 : settleSeconds(distance, window.innerHeight));
+      }
+      reset();
+    };
+
+    // touchmove must be non-passive to allow preventDefault; the others do not
+    // need it and stay passive so they never delay scrolling.
+    section.addEventListener("touchstart", onTouchStart, { passive: true });
+    section.addEventListener("touchmove", onTouchMove, { passive: false });
+    section.addEventListener("touchend", onTouchEnd, { passive: true });
+    section.addEventListener("touchcancel", reset, { passive: true });
+
+    return () => {
+      section.removeEventListener("touchstart", onTouchStart);
+      section.removeEventListener("touchmove", onTouchMove);
+      section.removeEventListener("touchend", onTouchEnd);
+      section.removeEventListener("touchcancel", reset);
+    };
+  }, [lenis]);
+
   return (
     <section
       ref={sectionRef}
       id="projects"
       className="relative h-[100dvh] min-h-[100svh] overflow-hidden text-white"
       aria-label="Projects section"
-      style={{ zIndex: 10 }}
+      // pan-y keeps vertical scrolling native; pinch-zoom is listed explicitly
+      // so declaring this does not cost the ability to zoom the page.
+      style={{ zIndex: 10, touchAction: "pan-y pinch-zoom" }}
     >
       <h2
         ref={titleRef}
