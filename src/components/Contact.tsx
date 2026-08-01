@@ -159,7 +159,8 @@ export default function ContactSection({
       )}
 
       <div
-        className="relative flex w-full max-w-md flex-col items-center sm:max-w-lg"
+        data-scroll-target="contact"
+        className="relative flex w-full max-w-md scroll-mt-24 flex-col items-center sm:max-w-lg"
       >
         <div>
           <h2 className="text-3xl font-bold sm:mb-4 mb-2">Contact Me</h2>
