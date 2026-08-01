@@ -193,6 +193,20 @@ export default function ProjectsSection({ projects }: { projects: ProjectContent
       velocity.reset();
     };
 
+    // Lenis listens for touch on the window, so its handler runs after ours.
+    // With `syncTouch` off it treats every touch as native scrolling and stops
+    // whatever it is animating — including the momentum scroll we start on
+    // release, which died on the frame it began. Marking the events we have
+    // already claimed makes Lenis skip them; it still owns every gesture we
+    // do not take, so vertical scrolling is untouched.
+    //
+    // Only a gesture with some vertical drift ever hit this, because Lenis
+    // ignores a perfectly straight horizontal swipe as an unknown gesture. No
+    // real finger swipes straight, so in practice it was every fast flick.
+    const cedeToCarousel = (event: TouchEvent) => {
+      (event as TouchEvent & { lenisStopPropagation?: boolean }).lenisStopPropagation = true;
+    };
+
     const onTouchStart = (event: TouchEvent) => {
       // Leave multi-touch alone so pinch-zoom is never interrupted.
       if (event.touches.length !== 1) return reset();
@@ -234,12 +248,14 @@ export default function ProjectsSection({ projects }: { projects: ProjectContent
       // Committed to horizontal, so stop the browser doing anything else with
       // the gesture and track the finger exactly.
       event.preventDefault();
+      cedeToCarousel(event);
       velocity.add(touch.clientX, event.timeStamp);
       scrollTo(dragTarget({ startScroll, deltaX, ratio, ...range }), 0);
     };
 
-    const onTouchEnd = () => {
+    const onTouchEnd = (event: TouchEvent) => {
       if (!range || axis !== "horizontal") return reset();
+      cedeToCarousel(event);
 
       const from = window.scrollY;
       const target = momentumTarget({
