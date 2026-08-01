@@ -84,7 +84,10 @@ export default function SkillDetail({
               {projects.map((project) => <ProjectCard key={project.slug} project={project} />)}
             </div>
           ) : (
-            <p className="mt-5 text-gray-400">Project connections can be added through the project JSON files.</p>
+            <p className="mt-5 text-gray-400">
+              I haven&apos;t published a project using {skill.name} yet — it&apos;s something I
+              use in work that isn&apos;t shareable, or that I&apos;m still building.
+            </p>
           )}
         </section>
 
