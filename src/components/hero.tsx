@@ -173,7 +173,7 @@ export default function Hero() {
               // contrast to spend. The role line is coloured and has far less,
               // so a tinted, tighter glow keeps the letterforms crisp at phone
               // size instead of blooming into them.
-              textShadow: "0 0 0.4rem rgba(255, 122, 24, 0.4)",
+              textShadow: "0 0 0.45rem rgba(224, 69, 10, 0.55)",
             }}
           >
             {/* The visible line retypes character by character. Announcing that
@@ -182,8 +182,8 @@ export default function Hero() {
             <span className="sr-only">
               {words.map((word) => word.replace(/\.+$/, "")).join(", ")}
             </span>
-            <span className="text-accent-warm" aria-hidden="true">{visibleSecondLine}</span>
-            {!reduceMotion && showSecondCursor && <span className="animate-blink text-accent-warm" aria-hidden="true">|</span>}
+            <span className="text-accent-warm-deep" aria-hidden="true">{visibleSecondLine}</span>
+            {!reduceMotion && showSecondCursor && <span className="animate-blink text-accent-warm-deep" aria-hidden="true">|</span>}
           </h2>
 
           <div
