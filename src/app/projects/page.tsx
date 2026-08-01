@@ -38,7 +38,7 @@ function ProjectLinks({ project }: { project: ProjectContent }) {
       <nav className="flex flex-nowrap gap-2 sm:flex-wrap sm:gap-3" aria-label={`Links for ${project.title}`}>
         <ProjectLink
           project={project}
-          className="flex-1 whitespace-nowrap rounded-full border border-white/20 bg-white px-3 py-2 text-center text-xs font-semibold text-black transition-colors hover:bg-blue-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft sm:flex-none sm:px-5 sm:py-2.5 sm:text-sm"
+          className="flex-1 whitespace-nowrap rounded-full border border-white/20 bg-white px-3 py-2 text-center text-xs font-semibold text-black transition-colors hover:bg-accent-tint focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft sm:flex-none sm:px-5 sm:py-2.5 sm:text-sm"
         >
           Read case study <span aria-hidden="true">→</span>
         </ProjectLink>
@@ -231,7 +231,7 @@ export default function ProjectsPage() {
             View my experience and technical background, or get in touch to discuss a project, role, or collaboration.
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
-            <Link href="/resume" className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-blue-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft">
+            <Link href="/resume" className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-accent-tint focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft">
               View résumé
             </Link>
             <Link href="/#contact" className="rounded-full border border-white/20 bg-black/45 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:border-accent-soft/60 hover:text-accent-soft focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft">

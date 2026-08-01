@@ -287,8 +287,8 @@ export default function SkillsWeb({
         touchAction: "none",
         backgroundColor: "rgba(2, 3, 10, 0.34)",
         backgroundImage: [
-          "radial-gradient(circle at center, rgba(37,99,235,0.12), transparent 34%)",
-          "radial-gradient(circle at 24% 28%, rgba(168,85,247,0.1), transparent 20%)",
+          "radial-gradient(circle at center, rgba(224,69,10,0.14), transparent 34%)",
+          "radial-gradient(circle at 24% 28%, rgba(255,122,24,0.1), transparent 20%)",
         ].join(","),
       }}
       onPointerDown={handlePointerDown}
@@ -313,7 +313,7 @@ export default function SkillsWeb({
           style={{
             backgroundImage: [
               "radial-gradient(circle, rgba(255,255,255,.75) 0 1px, transparent 1.5px)",
-              "radial-gradient(circle, rgba(96,165,250,.55) 0 1px, transparent 1.5px)",
+              "radial-gradient(circle, rgba(255,122,24,.5) 0 1px, transparent 1.5px)",
             ].join(","),
             backgroundPosition: "0 0, 42px 58px",
             backgroundSize: "86px 86px, 113px 113px",
@@ -428,7 +428,7 @@ export default function SkillsWeb({
             >
               <span
                 className={node.kind === "center"
-                  ? "text-[0.65rem] font-semibold uppercase tracking-[0.32em] text-blue-300"
+                  ? "text-[0.65rem] font-semibold uppercase tracking-[0.32em] text-accent-tint"
                   : "text-[0.6rem] font-semibold uppercase tracking-[0.2em]"}
                 style={node.kind === "center" ? undefined : { color: node.accent }}
               >
@@ -490,13 +490,13 @@ export default function SkillsWeb({
           <div className="mx-auto max-w-5xl">
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-[#02030a]/95 py-4 backdrop-blur-xl">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-400">Alternative view</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-accent-soft">Alternative view</p>
                 <h2 id="skill-directory-title" className="mt-1 text-2xl font-bold">Skill directory</h2>
               </div>
               <button
                 type="button"
                 onClick={() => setDirectoryOpen(false)}
-                className="rounded-full border border-white/15 px-4 py-2 text-sm hover:border-blue-400/50"
+                className="rounded-full border border-white/15 px-4 py-2 text-sm hover:border-accent-soft/50"
                 aria-label="Close skill directory"
               >
                 Close
@@ -521,7 +521,7 @@ export default function SkillsWeb({
                               <Link
                                 key={skill.slug}
                                 href={`/skills/${skill.slug}`}
-                                className="rounded-full border border-white/10 bg-black/50 px-3 py-1.5 text-xs text-gray-300 transition-colors hover:border-blue-400/40 hover:text-white"
+                                className="rounded-full border border-white/10 bg-black/50 px-3 py-1.5 text-xs text-gray-300 transition-colors hover:border-accent-soft/40 hover:text-white"
                               >
                                 {skill.name}
                               </Link>

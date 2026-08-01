@@ -36,7 +36,7 @@ export default function SkipLink({ href, children }: SkipLinkProps) {
     <a
       href={href}
       onClick={handleClick}
-      className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded"
+      className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-accent-soft focus:text-black focus:rounded"
     >
       {children}
     </a>

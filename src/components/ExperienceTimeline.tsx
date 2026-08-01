@@ -190,7 +190,7 @@ export default function ExperienceTimeline({
                 {/* `style` rather than the presentation attribute, because
                     var() does not resolve in SVG presentation attributes. */}
                 <stop offset="0%" style={{ stopColor: "var(--color-accent)" }} />
-                <stop offset="55%" style={{ stopColor: "var(--color-accent-violet)" }} />
+                <stop offset="55%" style={{ stopColor: "var(--color-accent-soft)" }} />
                 <stop offset="100%" style={{ stopColor: "var(--color-accent)" }} stopOpacity="0.25" />
               </linearGradient>
             </defs>
@@ -300,7 +300,7 @@ function ExperienceRow({ experience, index, dotRef }: ExperienceRowProps) {
 
       <span
         ref={dotRef}
-        className="relative z-10 col-start-1 row-start-2 -translate-y-full self-start justify-self-center rounded-full border border-white/70 bg-accent shadow-[0_0_14px_rgba(59,130,246,0.9)] md:col-start-2 md:row-start-1 md:translate-y-0 md:place-self-center"
+        className="relative z-10 col-start-1 row-start-2 -translate-y-full self-start justify-self-center rounded-full border border-white/70 bg-accent shadow-[0_0_14px_rgba(224,69,10,0.9)] md:col-start-2 md:row-start-1 md:translate-y-0 md:place-self-center"
         style={{ width: 16, height: 16 }}
         aria-hidden="true"
       />

@@ -41,7 +41,7 @@ export default function ProjectThumbnail({
 
   return (
     <div
-      className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[radial-gradient(circle_at_30%_25%,rgba(59,130,246,0.22),transparent_60%),radial-gradient(circle_at_75%_80%,rgba(139,92,246,0.18),transparent_55%)]"
+      className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[radial-gradient(circle_at_30%_25%,rgba(224,69,10,0.24),transparent_60%),radial-gradient(circle_at_75%_80%,rgba(255,122,24,0.16),transparent_55%)]"
       aria-hidden="true"
     >
       <span className="text-4xl font-bold tracking-[0.2em] text-white/85 sm:text-5xl">

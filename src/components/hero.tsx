@@ -135,7 +135,7 @@ export default function Hero() {
             className="font-bold font-[family-name:var(--font-tektur)] whitespace-pre-line leading-none md:font-[family-name:var(--font-foldit)]"
             style={{
               textShadow:
-                "0.1rem 0 0.3rem rgba(255, 255, 255, 0.8), 0 0 0.6rem rgba(18, 33, 163, 0.5)",
+                "0.1rem 0 0.3rem rgba(255, 255, 255, 0.8), 0 0 0.6rem rgba(224, 69, 10, 0.5)",
             }}
           >
             {visibleDisplayText.split('\n').map((part, index) => (
@@ -182,8 +182,8 @@ export default function Hero() {
             <span className="sr-only">
               {words.map((word) => word.replace(/\.+$/, "")).join(", ")}
             </span>
-            <span className="text-accent-warm-deep" aria-hidden="true">{visibleSecondLine}</span>
-            {!reduceMotion && showSecondCursor && <span className="animate-blink text-accent-warm-deep" aria-hidden="true">|</span>}
+            <span className="text-accent" aria-hidden="true">{visibleSecondLine}</span>
+            {!reduceMotion && showSecondCursor && <span className="animate-blink text-accent" aria-hidden="true">|</span>}
           </h2>
 
           <div

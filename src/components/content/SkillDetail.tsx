@@ -34,12 +34,12 @@ export default function SkillDetail({
   return (
     <main className="relative z-10 min-h-[100svh] px-4 py-8 text-white sm:px-6 sm:py-12">
       <div className="mx-auto max-w-6xl">
-        <BackNavigationButton className="mb-10 rounded-full border border-white/15 bg-black/55 px-4 py-2 text-sm text-gray-200 backdrop-blur-md transition-colors hover:border-blue-400/40 hover:text-white">
+        <BackNavigationButton className="mb-10 rounded-full border border-white/15 bg-black/55 px-4 py-2 text-sm text-gray-200 backdrop-blur-md transition-colors hover:border-accent-soft/40 hover:text-white">
           <span aria-hidden="true">←</span> Back
         </BackNavigationButton>
 
         <header className="grid gap-8 rounded-3xl border border-white/10 bg-black/60 p-7 backdrop-blur-md sm:p-10 md:grid-cols-[auto_1fr] md:items-center">
-          <div className="flex h-24 w-24 items-center justify-center rounded-2xl border border-blue-400/20 bg-blue-500/10 text-3xl font-bold text-blue-100">
+          <div className="flex h-24 w-24 items-center justify-center rounded-2xl border border-accent-soft/20 bg-accent/10 text-3xl font-bold text-accent-tint">
             {skill.icon ? (
               <Image src={skill.icon} alt={skill.iconAlt ?? ""} width={72} height={72} className="h-16 w-16 object-contain" />
             ) : (
@@ -47,7 +47,7 @@ export default function SkillDetail({
             )}
           </div>
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-blue-400">
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-accent-soft">
               {category.label}{skill.proficiency ? ` · ${skill.proficiency}` : ""}
             </p>
             <h1 className="mt-3 text-4xl font-bold tracking-tight sm:text-6xl">{skill.name}</h1>
@@ -77,7 +77,7 @@ export default function SkillDetail({
         </div>
 
         <section className="py-12 sm:py-16">
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-blue-400">Applied experience</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-accent-soft">Applied experience</p>
           <h2 className="mt-3 text-3xl font-bold">Projects using {skill.name}</h2>
           {projects.length > 0 ? (
             <div className="mt-7 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
@@ -92,7 +92,7 @@ export default function SkillDetail({
         </section>
 
         <div className="pb-12 text-center">
-          <Link href="/skills" className="text-sm font-semibold text-blue-300 underline underline-offset-8">
+          <Link href="/skills" className="text-sm font-semibold text-accent-tint underline underline-offset-8">
             Explore all skills
           </Link>
         </div>

@@ -157,7 +157,7 @@ export default async function OpenGraphImage() {
               fontSize: 28,
               fontWeight: 700,
               letterSpacing: -1,
-              boxShadow: "0 0 20px rgba(59,130,246,0.15)",
+              boxShadow: "0 0 20px rgba(224,69,10,0.25)",
             }}
           >
             KS
@@ -167,13 +167,13 @@ export default async function OpenGraphImage() {
             <div style={{ display: "flex", fontSize: 68, fontWeight: 700, lineHeight: 1.05, letterSpacing: -2 }}>
               Saikiran Kalluri
             </div>
-            <div style={{ display: "flex", marginTop: 22, fontSize: 30, color: "#93c5fd", letterSpacing: 0.3 }}>
+            <div style={{ display: "flex", marginTop: 22, fontSize: 30, color: "#ffb27a", letterSpacing: 0.3 }}>
               Software Engineer · Full-stack · AI · Cloud
             </div>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", fontSize: 22, color: "#a3a3a3" }}>
-            <div style={{ width: 30, height: 2, marginRight: 14, background: "#3b82f6" }} />
+            <div style={{ width: 30, height: 2, marginRight: 14, background: "#e0450a" }} />
             saikirankalluri.vercel.app
           </div>
         </div>

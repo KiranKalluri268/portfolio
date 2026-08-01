@@ -107,9 +107,9 @@ export default function SceneIndicator() {
                     style={{
                       width: dotSize,
                       height: dotSize,
-                      backgroundColor: isActive ? "var(--color-accent-warm)" : "white",
+                      backgroundColor: isActive ? "var(--color-accent-soft)" : "white",
                       boxShadow: isActive
-                        ? "0 0 16px 4px color-mix(in oklab, var(--color-accent-warm-deep) 90%, transparent)"
+                        ? "0 0 16px 4px color-mix(in oklab, var(--color-accent) 90%, transparent)"
                         : isHovered
                           ? "0 0 10px 2px rgba(255, 255, 255, 0.8)"
                           : "0 0 6px rgba(255, 255, 255, 0.35)",

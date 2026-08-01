@@ -43,7 +43,7 @@ export default function AboutSection() {
     const rootStyles = getComputedStyle(document.documentElement);
     const readToken = (name: string, fallback: string) =>
       rootStyles.getPropertyValue(name).trim() || fallback;
-    const accentColor = readToken("--color-accent-soft", "#60a5fa");
+    const accentColor = readToken("--color-accent-soft", "#ff7a18");
     const unreadColor = readToken("--color-muted", "#64748b");
 
     // The resume link fades in with scroll progress, but a keyboard user reaches
@@ -204,7 +204,7 @@ export default function AboutSection() {
           <Link
             ref={resumeLinkRef}
             href="/resume"
-            className="pointer-events-none mt-7 inline-flex items-center rounded-full border border-accent-soft/50 bg-accent/10 px-4 py-2 text-sm font-semibold tracking-wide text-white opacity-[0.08] shadow-[0_0_22px_rgba(96,165,250,0.12)] transition-[background-color,border-color,box-shadow] hover:border-accent-soft hover:bg-accent/20 hover:shadow-[0_0_28px_rgba(96,165,250,0.25)] sm:mt-9 sm:text-base"
+            className="pointer-events-none mt-7 inline-flex items-center rounded-full border border-accent-soft/50 bg-accent/10 px-4 py-2 text-sm font-semibold tracking-wide text-white opacity-[0.08] shadow-[0_0_22px_rgba(255,122,24,0.12)] transition-[background-color,border-color,box-shadow] hover:border-accent-soft hover:bg-accent/20 hover:shadow-[0_0_28px_rgba(255,122,24,0.25)] sm:mt-9 sm:text-base"
           >
             View my resume →
           </Link>
