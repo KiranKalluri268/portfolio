@@ -152,6 +152,26 @@ export function getTimelineExperiences(): ExperienceContent[] {
   return getAllExperiences().filter((experience) => experience.showInTimeline);
 }
 
+/** A recommendation paired with the role it was written for, flattened for the
+ *  client components that display it. */
+export interface RecommendationEntry extends ExperienceRecommendation {
+  company: string;
+  roleTitle: string;
+  experienceSlug: string;
+}
+
+/** Every recommendation across all roles, most recent role first. */
+export function getAllRecommendations(): RecommendationEntry[] {
+  return getAllExperiences().flatMap((experience) =>
+    experience.recommendations.map((recommendation) => ({
+      ...recommendation,
+      company: experience.company,
+      roleTitle: experience.role,
+      experienceSlug: experience.slug,
+    })),
+  );
+}
+
 export function getResumeInternships(): ResumeInternship[] {
   return getAllExperiences()
     .filter((experience) => experience.showInResume)
