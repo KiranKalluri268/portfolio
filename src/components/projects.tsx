@@ -306,7 +306,7 @@ export default function ProjectsSection({ projects }: { projects: ProjectContent
             </h3>
             <Link
               href={`/projects/${project.slug}`}
-              className="relative mb-[clamp(0.5rem,2dvh,1rem)] block h-[clamp(7.5rem,30dvh,18.75rem)] w-full max-w-3xl rounded-xl"
+              className="relative mb-[clamp(0.5rem,2dvh,1rem)] block h-[clamp(6rem,22dvh,14rem)] w-full max-w-3xl rounded-xl"
               aria-label={`Read the ${project.title} case study`}
             >
               <ProjectThumbnail
