@@ -1,18 +1,24 @@
 import Link from "next/link";
 import type { RecommendationEntry } from "@/lib/content/experience";
 
-/** A quote from someone who managed one of the roles. Used on the homepage
- *  contact section; the experience detail pages render their own fuller
- *  version with the source link. */
+/** A quote from someone who managed one of the roles, shown on the homepage.
+ *  The excerpt links out to the recommendation where it was written, so a
+ *  visitor can see it attributed to a real profile rather than taking the
+ *  portfolio's word for it. */
 export default function RecommendationCard({
   recommendation,
 }: {
   recommendation: RecommendationEntry;
 }) {
-  const roleHref = `/experience/${recommendation.experienceSlug}`;
+  // Fall back to the role page if a recommendation has no public source.
+  const sourceHref = recommendation.sourceUrl;
+  const fallbackHref = `/experience/${recommendation.experienceSlug}`;
   // Either there are paragraphs the card is not showing, or the one it does
   // show is long enough that line-clamp-6 will cut it.
   const hasMore = recommendation.quote.length > 1 || recommendation.quote[0].length > 320;
+
+  const linkClasses =
+    "mt-3 inline-flex items-center gap-1 rounded text-xs font-semibold text-accent-soft transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft";
 
   return (
     <figure className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-black/55 p-6 text-left shadow-xl backdrop-blur-sm transition-[background-color,border-color] duration-300 hover:border-accent-soft/25 hover:bg-white/5 sm:p-7">
@@ -24,19 +30,21 @@ export default function RecommendationCard({
       </span>
 
       {/* Full recommendations run long enough to bury the contact form beneath
-          them, so the card shows an excerpt and sends readers to the role page
-          for the rest. */}
+          them, so the card shows an excerpt and links to the original. */}
       <blockquote className="relative mb-6 text-sm leading-relaxed text-gray-300">
         <p className="line-clamp-6">{recommendation.quote[0]}</p>
-        {hasMore && (
-          <Link
-            href={roleHref}
-            className="mt-3 inline-flex items-center gap-1 rounded text-xs font-semibold text-accent-soft transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft"
-          >
-            View more
-            <span aria-hidden="true">→</span>
-          </Link>
-        )}
+        {hasMore &&
+          (sourceHref ? (
+            <a href={sourceHref} target="_blank" rel="noopener noreferrer" className={linkClasses}>
+              {recommendation.sourceLabel ?? "View on LinkedIn"}
+              <span aria-hidden="true">↗</span>
+            </a>
+          ) : (
+            <Link href={fallbackHref} className={linkClasses}>
+              View more
+              <span aria-hidden="true">→</span>
+            </Link>
+          ))}
       </blockquote>
 
       {/* mt-auto so attributions line up along the bottom of the row even when
@@ -59,13 +67,10 @@ export default function RecommendationCard({
             </>
           )}
         </span>
-        <Link
-          href={roleHref}
-          className="mt-3 inline-flex items-center gap-1 rounded text-xs font-semibold text-blue-300 transition-colors hover:text-blue-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-400"
-        >
+        {/* Context for which role the quote is about, not a second link. */}
+        <span className="mt-2 block text-xs text-gray-400">
           {recommendation.roleTitle} at {recommendation.company}
-          <span aria-hidden="true">→</span>
-        </Link>
+        </span>
       </figcaption>
     </figure>
   );
