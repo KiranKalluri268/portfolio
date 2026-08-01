@@ -6,14 +6,47 @@ import { getAllProjects } from "../projects";
 import { getAllSkills } from "../skills";
 
 describe("getCvData", () => {
-  it("includes every published role and project, so the CV is the full record", () => {
+  it("includes every published role", () => {
     const cv = getCvData();
     expect(cv.roles.map((role) => role.slug)).toEqual(
       getAllExperiences().map((experience) => experience.slug),
     );
-    expect(cv.projects.map((project) => project.slug)).toEqual(
-      getAllProjects().map((project) => project.slug),
+  });
+
+  it("lists only independent projects, since employment work is already under its role", () => {
+    const cv = getCvData();
+    const employmentProjects = new Set(
+      getAllExperiences().flatMap((experience) =>
+        experience.workItems.flatMap((item) => (item.projectSlug ? [item.projectSlug] : [])),
+      ),
     );
+    expect(employmentProjects.size).toBeGreaterThan(0);
+
+    const listed = cv.projects.map((project) => project.slug);
+    for (const slug of listed) {
+      expect(employmentProjects.has(slug)).toBe(false);
+    }
+    expect(listed).toEqual(
+      getAllProjects()
+        .filter((project) => !employmentProjects.has(project.slug))
+        .map((project) => project.slug),
+    );
+  });
+
+  it("still names employment projects through their work item, so nothing is lost", () => {
+    const cv = getCvData();
+    const named = cv.roles.flatMap((role) =>
+      role.workItems.flatMap((item) => (item.projectTitle ? [item.projectTitle] : [])),
+    );
+    const byTitle = new Map(getAllProjects().map((p) => [p.slug, p.title]));
+    const employmentProjects = new Set(
+      getAllExperiences().flatMap((experience) =>
+        experience.workItems.flatMap((item) => (item.projectSlug ? [item.projectSlug] : [])),
+      ),
+    );
+    for (const slug of employmentProjects) {
+      expect(named).toContain(byTitle.get(slug));
+    }
   });
 
   it("resolves skill slugs to display names rather than leaking slugs", () => {

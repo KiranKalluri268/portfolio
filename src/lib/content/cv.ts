@@ -90,14 +90,26 @@ export function getCvData(): CvData {
   const skillsBySlug = new Map(skills.map((skill) => [skill.slug, skill]));
   const projects = getAllProjects();
   const projectsBySlug = new Map(projects.map((project) => [project.slug, project]));
+  const experiences = getAllExperiences();
+
+  // Work built during a role is already described under that role, so listing
+  // it again under Projects repeats it almost word for word. The Projects
+  // section is therefore the independent work only.
+  const employmentProjects = new Set(
+    experiences.flatMap((experience) =>
+      experience.workItems.flatMap((item) => (item.projectSlug ? [item.projectSlug] : [])),
+    ),
+  );
 
   return {
     basics: resume.basics,
     profile: resume.objective,
-    roles: getAllExperiences().map((experience) =>
+    roles: experiences.map((experience) =>
       toCvRole(experience, skillsBySlug, projectsBySlug),
     ),
-    projects: projects.map((project) => toCvProject(project, skillsBySlug)),
+    projects: projects
+      .filter((project) => !employmentProjects.has(project.slug))
+      .map((project) => toCvProject(project, skillsBySlug)),
     skillGroups: buildSkillGroups(skills),
     education: resume.education,
     certifications: resume.certifications,
