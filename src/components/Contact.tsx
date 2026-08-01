@@ -4,6 +4,8 @@ import { useState } from "react";
 import type { ContactForm, FormErrors, SocialLink } from "@/types";
 
 import Tooltip from "./Tooltip";
+import RecommendationCard from "./content/RecommendationCard";
+import type { RecommendationEntry } from "@/lib/content/experience";
 
 const socialLinks: SocialLink[] = [
   {
@@ -72,7 +74,11 @@ const fieldClasses = (hasError: boolean) =>
     hasError ? "border-red-500" : "border-white/20 hover:border-white/35",
   ].join(" ");
 
-export default function ContactSection() {
+export default function ContactSection({
+  recommendations = [],
+}: {
+  recommendations?: RecommendationEntry[];
+}) {
   const [form, setForm] = useState<ContactForm>({ name: "", email: "", message: "" });
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitted, setSubmitted] = useState(false);
@@ -127,8 +133,34 @@ export default function ContactSection() {
       className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-4 py-24 text-center text-white sm:px-6 sm:py-28 lg:px-8"
       style={{ zIndex: 10 }}
     >
+      {recommendations.length > 0 && (
+        <section
+          className="relative mb-16 w-full max-w-5xl sm:mb-20"
+          aria-labelledby="recommendations-heading"
+        >
+          <h2
+            id="recommendations-heading"
+            className="mb-2 text-center text-sm font-semibold uppercase tracking-[0.22em] text-accent-soft"
+          >
+            Recommendations
+          </h2>
+          <p className="mx-auto mb-8 max-w-xl text-center text-sm text-gray-400">
+            From the people who managed me.
+          </p>
+          <div className="grid gap-5 md:grid-cols-2">
+            {recommendations.map((recommendation) => (
+              <RecommendationCard
+                key={`${recommendation.experienceSlug}-${recommendation.author}`}
+                recommendation={recommendation}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
       <div
-        className="relative flex w-full max-w-md flex-col items-center sm:max-w-lg"
+        data-scroll-target="contact"
+        className="relative flex w-full max-w-md scroll-mt-24 flex-col items-center sm:max-w-lg"
       >
         <div>
           <h2 className="text-3xl font-bold sm:mb-4 mb-2">Contact Me</h2>

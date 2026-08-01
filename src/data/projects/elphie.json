@@ -7,6 +7,7 @@
   "featured": false,
   "showInProjectsSection": false,
   "projectsSectionOrder": 8,
+  "showInResume": false,
   "role": "C++ cloud video integration and web application development",
   "skills": [
     "cpp",

@@ -7,10 +7,15 @@
   "featured": false,
   "showInProjectsSection": true,
   "projectsSectionOrder": 3,
+  "showInResume": false,
   "image": "/images/project2.png",
   "imageAlt": "IPL score predictor interface",
   "role": "Machine learning development",
-  "skills": ["python", "keras", "deep-learning"],
+  "skills": [
+    "python",
+    "keras",
+    "deep-learning"
+  ],
   "overview": [
     "The IPL Score Predictor estimates an innings' final score from its current match state.",
     "It turns changing match variables into an approachable prediction workflow backed by a Keras neural network."

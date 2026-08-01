@@ -57,7 +57,10 @@ function ProjectLinks({ project }: { project: ProjectContent }) {
         ))}
       </nav>
       {links.length === 0 && (
-        <p className="mt-3 text-sm text-gray-500">Public repository and demo links are not available for this project.</p>
+        <p className="mt-3 text-sm text-gray-500">
+          I built this at work, so I can&apos;t share the code or a live demo — happy to talk
+          through it though.
+        </p>
       )}
     </div>
   );

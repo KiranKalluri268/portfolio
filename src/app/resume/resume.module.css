@@ -23,6 +23,11 @@
   line-height: 1.4;
 }
 
+.resumeNote a {
+  color: #93c5fd;
+  text-underline-offset: 2px;
+}
+
 .actionCopy {
   display: flex;
   min-width: 0;

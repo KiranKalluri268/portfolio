@@ -1,10 +1,36 @@
 {
-  "slug": "tensorflow-js", "name": "TensorFlow.js", "shortDescription": "A JavaScript machine-learning library for training and inference in browsers and Node.js.",
-  "status": "published", "category": "ai-programming", "webCategory": "ml-frameworks", "iconText": "TF", "showInSkillsSection": true, "skillsSectionOrder": 12,
-  "whatItIs": ["TensorFlow.js brings machine-learning models and tensor operations to JavaScript runtimes."],
-  "howILearned": ["I learned TensorFlow.js while moving engagement inference into the browser for ThirdEyeAI."],
-  "howIUseIt": ["I use it for privacy-first client-side model inference."],
-  "concepts": ["Tensors", "Model conversion", "Browser inference", "Performance"],
-  "lessonsLearned": ["Client-side inference changes privacy, latency, and infrastructure tradeoffs."],
-  "seo": { "title": "TensorFlow.js Skill and Project Experience", "description": "How I used TensorFlow.js for browser-based inference." }
+  "slug": "tensorflow-js",
+  "name": "TensorFlow.js",
+  "shortDescription": "A JavaScript machine-learning library for training and inference in browsers and Node.js.",
+  "status": "published",
+  "category": "ai-programming",
+  "webCategory": "ml-frameworks",
+  "iconText": "TF",
+  "showInSkillsSection": true,
+  "skillsSectionOrder": 12,
+  "showInResume": true,
+  "resumeGroup": "AI/ML",
+  "resumeOrder": 1,
+  "whatItIs": [
+    "TensorFlow.js brings machine-learning models and tensor operations to JavaScript runtimes."
+  ],
+  "howILearned": [
+    "I learned TensorFlow.js while moving engagement inference into the browser for ThirdEyeAI."
+  ],
+  "howIUseIt": [
+    "I use it for privacy-first client-side model inference."
+  ],
+  "concepts": [
+    "Tensors",
+    "Model conversion",
+    "Browser inference",
+    "Performance"
+  ],
+  "lessonsLearned": [
+    "Client-side inference changes privacy, latency, and infrastructure tradeoffs."
+  ],
+  "seo": {
+    "title": "TensorFlow.js Skill and Project Experience",
+    "description": "How I used TensorFlow.js for browser-based inference."
+  }
 }

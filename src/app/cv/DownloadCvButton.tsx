@@ -1,33 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import type { ResumeInternship } from "@/lib/content/types";
-import type { ResumeProject, ResumeSkillGroup } from "@/lib/content/resume";
+import type { CvData } from "@/lib/content/types";
 
-export default function DownloadResumeButton({
-  internships,
-  projects,
-  skillGroups,
-}: {
-  internships: ResumeInternship[];
-  projects: ResumeProject[];
-  skillGroups: ResumeSkillGroup[];
-}) {
+export default function DownloadCvButton({ cv }: { cv: CvData }) {
   const [isGenerating, setIsGenerating] = useState(false);
 
   const downloadPdf = async () => {
     if (isGenerating) return;
     setIsGenerating(true);
     try {
-      const [{ pdf }, { default: ResumePdfDocument }] = await Promise.all([
+      // Kept out of the initial bundle: the PDF renderer is large and only
+      // needed once someone actually asks for the download.
+      const [{ pdf }, { default: CvPdfDocument }] = await Promise.all([
         import("@react-pdf/renderer"),
-        import("./ResumePdfDocument"),
+        import("./CvPdfDocument"),
       ]);
-      const blob = await pdf(<ResumePdfDocument internships={internships} projects={projects} skillGroups={skillGroups} />).toBlob();
+      const blob = await pdf(<CvPdfDocument cv={cv} />).toBlob();
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = "Saikiran-Kalluri-Resume.pdf";
+      anchor.download = "Saikiran-Kalluri-CV.pdf";
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
@@ -43,7 +36,7 @@ export default function DownloadResumeButton({
       onClick={downloadPdf}
       disabled={isGenerating}
       className="shrink-0 whitespace-nowrap rounded-md bg-white px-3 py-2 text-xs font-semibold text-black shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:cursor-wait disabled:opacity-70 disabled:hover:scale-100 sm:px-5 sm:py-2.5 sm:text-sm"
-      aria-label="Download resume as a PDF"
+      aria-label="Download CV as a PDF"
     >
       {isGenerating ? "Preparing PDF…" : "Download as PDF"}
     </button>

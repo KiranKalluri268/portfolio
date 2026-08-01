@@ -27,6 +27,14 @@ export interface ProjectGalleryItem {
   caption?: string;
 }
 
+/** Résumé-specific presentation for a project. The résumé is a one-page brief,
+ *  so it often needs tighter wording than the case study carries. */
+export interface ProjectResumeEntry {
+  technologies: string;
+  highlights: string[];
+  order?: number;
+}
+
 export interface ProjectContent {
   id: number;
   slug: string;
@@ -36,6 +44,9 @@ export interface ProjectContent {
   featured: boolean;
   showInProjectsSection: boolean;
   projectsSectionOrder: number;
+  /** Opt in to the one-page résumé. The CV always includes everything. */
+  showInResume: boolean;
+  resume?: ProjectResumeEntry;
   /** Optional: internal and client work often has no shareable screenshot, in
    *  which case the UI falls back to a generated monogram panel. */
   image?: string;
@@ -135,6 +146,74 @@ export interface ResumeInternship {
   highlights: string[];
 }
 
+/* ── CV ────────────────────────────────────────────────────────────────────
+ * The /cv route is the long form of /resume: every role, project, and skill
+ * in the portfolio, flattened into one serializable structure so the HTML
+ * page and the client-side PDF renderer read from exactly the same data.
+ */
+
+export interface CvWorkItem {
+  title: string;
+  description: string;
+  kind?: string;
+  impact?: string;
+  technologies: string[];
+  projectTitle?: string;
+}
+
+export interface CvRole {
+  slug: string;
+  role: string;
+  company: string;
+  employmentType?: string;
+  period: string;
+  location?: string;
+  workMode?: string;
+  summary: string;
+  workItems: CvWorkItem[];
+  technologies: string[];
+}
+
+export interface CvProject {
+  slug: string;
+  title: string;
+  role: string;
+  summary: string;
+  highlights: string[];
+  outcomes: ProjectOutcome[];
+  technologies: string[];
+  repositoryUrl?: string;
+  liveUrl?: string;
+}
+
+export interface CvSkillGroup {
+  label: string;
+  skills: Array<{ name: string; shortDescription: string }>;
+}
+
+export interface CvData {
+  basics: {
+    name: string;
+    location: string;
+    phone: string;
+    email: string;
+    links: Array<{ label: string; url: string }>;
+  };
+  profile: string;
+  roles: CvRole[];
+  projects: CvProject[];
+  skillGroups: CvSkillGroup[];
+  education: {
+    degree: string;
+    institution: string;
+    period: string;
+    cgpa: string;
+  };
+  certifications: string[];
+  languages: string[];
+  strengths: string[];
+}
+
 export interface SkillCategoryContent {
   slug: string;
   label: string;
@@ -160,6 +239,14 @@ export interface SkillContent {
   iconText?: string;
   showInSkillsSection: boolean;
   skillsSectionOrder: number;
+  /** Opt in to the one-page résumé. The CV always includes everything. */
+  showInResume: boolean;
+  /** Résumé grouping and wording, which is editorial and does not have to match
+   *  the skill graph's categories — e.g. "Languages", or the fuller
+   *  "AWS (EC2, S3, Lambda, …)" label the résumé uses. */
+  resumeGroup?: string;
+  resumeLabel?: string;
+  resumeOrder?: number;
   whatItIs: string[];
   howILearned: string[];
   howIUseIt: string[];

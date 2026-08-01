@@ -1,10 +1,36 @@
 {
-  "slug": "langchain", "name": "LangChain", "shortDescription": "Tools for composing language-model applications, retrieval, and data-aware workflows.",
-  "status": "published", "category": "ai-programming", "webCategory": "ai-systems", "iconText": "LC", "showInSkillsSection": true, "skillsSectionOrder": 13,
-  "whatItIs": ["LangChain provides abstractions for model calls, retrieval, tools, and multi-step language workflows."],
-  "howILearned": ["I learned its core patterns while exploring retrieval-augmented application workflows."],
-  "howIUseIt": ["I use it to organize retrieval and language-model interactions around application data."],
-  "concepts": ["Chains", "Retrievers", "Prompt composition", "Structured output"],
-  "lessonsLearned": ["The application data flow should remain understandable even when model orchestration grows."],
-  "seo": { "title": "LangChain Skill and Experience", "description": "How I use LangChain for language-model workflows." }
+  "slug": "langchain",
+  "name": "LangChain",
+  "shortDescription": "Tools for composing language-model applications, retrieval, and data-aware workflows.",
+  "status": "published",
+  "category": "ai-programming",
+  "webCategory": "ai-systems",
+  "iconText": "LC",
+  "showInSkillsSection": true,
+  "skillsSectionOrder": 13,
+  "showInResume": true,
+  "resumeGroup": "AI/ML",
+  "resumeOrder": 4,
+  "whatItIs": [
+    "LangChain provides abstractions for model calls, retrieval, tools, and multi-step language workflows."
+  ],
+  "howILearned": [
+    "I learned its core patterns while exploring retrieval-augmented application workflows."
+  ],
+  "howIUseIt": [
+    "I use it to organize retrieval and language-model interactions around application data."
+  ],
+  "concepts": [
+    "Chains",
+    "Retrievers",
+    "Prompt composition",
+    "Structured output"
+  ],
+  "lessonsLearned": [
+    "The application data flow should remain understandable even when model orchestration grows."
+  ],
+  "seo": {
+    "title": "LangChain Skill and Experience",
+    "description": "How I use LangChain for language-model workflows."
+  }
 }

@@ -7,6 +7,7 @@
   "featured": false,
   "showInProjectsSection": false,
   "projectsSectionOrder": 10,
+  "showInResume": false,
   "role": "Full-stack development and cloud deployment",
   "skills": [
     "next-js",

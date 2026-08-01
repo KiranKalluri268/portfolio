@@ -7,10 +7,30 @@
   "featured": true,
   "showInProjectsSection": true,
   "projectsSectionOrder": 1,
+  "showInResume": true,
+  "resume": {
+    "technologies": "MERN, TensorFlow.js, WebRTC, Python",
+    "highlights": [
+      "Engineered a hybrid ensemble bagging model (1D CNN and 1D ResNet) trained on the DAiSEE dataset to achieve 94.25% accuracy in detecting student engagement.",
+      "Implemented client-side inference using TensorFlow.js, enabling infinite horizontal scaling and ensuring user privacy by processing video streams locally within the browser.",
+      "Developed a fully functional WebRTC-based meeting engine for online classes, featuring real-time data visualization of engagement metrics for instructors.",
+      "Integrated a RAG (Retrieval-Augmented Generation) system to allow instructors to query session data using natural language, providing instant insights into student participation and distractions."
+    ],
+    "order": 1
+  },
   "image": "/images/project3.webp",
   "imageAlt": "ThirdEyeAI meeting and engagement analytics interface",
   "role": "Full-stack and machine learning development",
-  "skills": ["react", "node-js", "express", "mongodb", "tensorflow-js", "webrtc", "python", "rag"],
+  "skills": [
+    "react",
+    "node-js",
+    "express",
+    "mongodb",
+    "tensorflow-js",
+    "webrtc",
+    "python",
+    "rag"
+  ],
   "overview": [
     "ThirdEyeAI explores how online learning platforms can provide useful engagement signals without sending participant video to a central inference server.",
     "The application combines a meeting experience, browser-based engagement analysis, instructor-facing analytics, and natural-language exploration of session data."
@@ -64,8 +84,14 @@
     "Integrated retrieval-augmented generation for querying participation and distraction data."
   ],
   "outcomes": [
-    { "value": "94.25%", "label": "engagement-detection accuracy" },
-    { "value": "Client-side", "label": "privacy-first inference" }
+    {
+      "value": "94.25%",
+      "label": "engagement-detection accuracy"
+    },
+    {
+      "value": "Client-side",
+      "label": "privacy-first inference"
+    }
   ],
   "lessonsLearned": [
     "How client-side inference changes privacy and scaling tradeoffs.",

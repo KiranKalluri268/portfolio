@@ -97,7 +97,13 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const scrollToSection = useCallback((section: SectionId) => {
-    const element = document.getElementById(section);
+    // A section can nominate a different landing point than its own top — the
+    // contact section opens with recommendations, but the dot should take you
+    // to the form. Active-section detection still uses the whole section, so
+    // the dot stays lit while the lead-in is on screen.
+    const element =
+      document.querySelector<HTMLElement>(`[data-scroll-target="${section}"]`) ??
+      document.getElementById(section);
     if (!element) return;
     if (lenisRef.current) lenisRef.current.scrollTo(element, { duration: 1.15 });
     else element.scrollIntoView({ behavior: "smooth", block: "start" });

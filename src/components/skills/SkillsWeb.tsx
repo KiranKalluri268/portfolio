@@ -327,7 +327,18 @@ export default function SkillsWeb({
           aria-hidden="true"
         >
           <defs>
-            <filter id="skill-web-glow" x="-50%" y="-50%" width="200%" height="200%">
+            {/* Sized in user space, not as a percentage of each path's bounding
+                box: a branch that runs perfectly vertical has a box of zero
+                width, so a percentage region collapses and the glowing edge
+                renders into nothing. */}
+            <filter
+              id="skill-web-glow"
+              filterUnits="userSpaceOnUse"
+              x="0"
+              y="0"
+              width={WORLD_WIDTH}
+              height={WORLD_HEIGHT}
+            >
               <feGaussianBlur stdDeviation="4" result="blur" />
               <feMerge>
                 <feMergeNode in="blur" />
