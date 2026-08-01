@@ -32,6 +32,23 @@ describe("resolveAxis", () => {
     expect(resolveAxis(30, 30)).toBe("vertical");
     expect(resolveAxis(-30, 30)).toBe("vertical");
   });
+
+  it("ignores float noise in a diagonal rather than treating it as intent", () => {
+    // Real values observed from a browser dispatching a 45° drag: touch
+    // coordinates are 32-bit floats, so the two distances differ by about a
+    // millionth of a pixel. Comparing them directly claimed the gesture.
+    expect(resolveAxis(-11.666671752929688, -11.666656494140625)).toBe("vertical");
+  });
+
+  it("still claims a swipe that is horizontal but not perfectly straight", () => {
+    // Nobody swipes in a straight line; ~30° off horizontal must still work.
+    expect(resolveAxis(-86.6, -50)).toBe("horizontal");
+    expect(resolveAxis(86.6, 50)).toBe("horizontal");
+  });
+
+  it("leaves a mostly-vertical swipe to the page", () => {
+    expect(resolveAxis(50, -86.6)).toBe("vertical");
+  });
 });
 
 describe("scrollPerPixel", () => {

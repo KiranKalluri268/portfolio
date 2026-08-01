@@ -20,6 +20,16 @@ export const MIN_MOMENTUM_VELOCITY = 0.15; // px per ms
 export const MIN_SETTLE_SECONDS = 0.25;
 export const MAX_SETTLE_SECONDS = 0.9;
 
+/** How much more horizontal than vertical a gesture must be before the carousel
+ *  claims it — about a 39° cone either side of horizontal.
+ *
+ *  Comparing the two distances directly is not enough: touch coordinates arrive
+ *  as 32-bit floats, so a perfect diagonal can report |dx| greater than |dy| by
+ *  a millionth of a pixel and get claimed. Requiring real dominance also suits
+ *  the gesture itself, since nobody swipes in a perfectly straight line and the
+ *  page scroll should win anything close to a tie. */
+export const AXIS_DOMINANCE = 1.25;
+
 export type SwipeAxis = "horizontal" | "vertical";
 
 export function clamp(value: number, min: number, max: number) {
@@ -28,8 +38,8 @@ export function clamp(value: number, min: number, max: number) {
 
 /** Which way a gesture is going, or null while it is still ambiguous.
  *
- * A tie counts as vertical: scrolling the page is the primary gesture, so an
- * uncertain swipe should never steal it. */
+ * Anything short of clearly horizontal counts as vertical: scrolling the page
+ * is the primary gesture, so an uncertain swipe should never steal it. */
 export function resolveAxis(
   deltaX: number,
   deltaY: number,
@@ -38,7 +48,7 @@ export function resolveAxis(
   const distanceX = Math.abs(deltaX);
   const distanceY = Math.abs(deltaY);
   if (Math.max(distanceX, distanceY) < threshold) return null;
-  return distanceX > distanceY ? "horizontal" : "vertical";
+  return distanceX > distanceY * AXIS_DOMINANCE ? "horizontal" : "vertical";
 }
 
 /** Vertical scroll distance that moves the track one pixel horizontally. */
