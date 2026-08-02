@@ -69,23 +69,35 @@ export function hintText(id: HintId, mode: InputMode) {
 export interface CarouselFacts {
   atEnd: boolean;
   hasAdvanced: boolean;
+  /** Where the carousel stood when the visitor arrived in the section.
+   *  Movement is judged against this rather than against zero. */
+  startProgress: number;
 }
 
-/** Reduces carousel progress to those two facts.
+/** Reduces carousel progress to those facts.
  *
- * `hasAdvanced` is sticky across calls: swiping forward and then back still
- * means the visitor has worked out that the carousel moves sideways. */
+ * `hasAdvanced` means "this visitor moved the carousel", not "the carousel is
+ * not at the start" — the two come apart when a browser restores a scroll
+ * position mid-track, where measuring from zero would credit someone with a
+ * swipe they never made and silently withhold the hint they needed.
+ *
+ * Pass `previous` as null to start a fresh baseline, which the caller does
+ * each time the visitor arrives in the section. It is sticky otherwise:
+ * swiping forward and back still means they know it moves sideways. */
 export function carouselFacts(
   progress: number,
   projectCount: number,
-  previouslyAdvanced: boolean,
+  previous: CarouselFacts | null,
 ): CarouselFacts {
   // Panel 0 is the lead-in spacer and the last panel is "See all projects", so
   // the track has projectCount + 1 steps.
-  const advancedProgress = (1 / (projectCount + 1)) * ADVANCED_PANELS;
+  const movedEnough = (1 / (projectCount + 1)) * ADVANCED_PANELS;
+  const startProgress = previous?.startProgress ?? progress;
   return {
     atEnd: progress >= CAROUSEL_END_PROGRESS,
-    hasAdvanced: previouslyAdvanced || progress > advancedProgress,
+    hasAdvanced:
+      (previous?.hasAdvanced ?? false) || Math.abs(progress - startProgress) > movedEnough,
+    startProgress,
   };
 }
 

@@ -8,8 +8,12 @@ import {
 } from "../hints/hint-copy";
 
 const PROJECT_COUNT = 6;
-const facts = (progress: number, previouslyAdvanced = false) =>
-  carouselFacts(progress, PROJECT_COUNT, previouslyAdvanced);
+const ONE_PANEL = 1 / (PROJECT_COUNT + 1);
+/** First reading of a visit, which sets the baseline. */
+const facts = (progress: number) => carouselFacts(progress, PROJECT_COUNT, null);
+/** A later reading in the same visit. */
+const then = (progress: number, previous: ReturnType<typeof facts>) =>
+  carouselFacts(progress, PROJECT_COUNT, previous);
 
 describe("carouselFacts", () => {
   it("does not count the very start as having moved", () => {
@@ -17,15 +21,30 @@ describe("carouselFacts", () => {
   });
 
   it("counts a deliberate move sideways, but not a nudge", () => {
-    // One panel is 1/(count+1) of the track; the threshold sits past the first.
-    const onePanel = 1 / (PROJECT_COUNT + 1);
-    expect(facts(onePanel * 0.5).hasAdvanced).toBe(false);
-    expect(facts(onePanel * 2).hasAdvanced).toBe(true);
+    const start = facts(0);
+    expect(then(ONE_PANEL * 0.5, start).hasAdvanced).toBe(false);
+    expect(then(ONE_PANEL * 2, start).hasAdvanced).toBe(true);
   });
 
   it("keeps hasAdvanced once earned, even after swiping back", () => {
     // Someone who swiped forward and returned still knows how it works.
-    expect(facts(0, true).hasAdvanced).toBe(true);
+    const moved = then(ONE_PANEL * 2, facts(0));
+    expect(then(0, moved).hasAdvanced).toBe(true);
+  });
+
+  it("treats arriving mid-track as a starting point, not a swipe", () => {
+    // A restored scroll position or a shared link drops the visitor into the
+    // middle of the carousel. They have moved nothing, so they still need the
+    // hint — measuring from zero would silently withhold it.
+    const landed = facts(0.5);
+    expect(landed.hasAdvanced).toBe(false);
+    expect(then(0.5, landed).hasAdvanced).toBe(false);
+  });
+
+  it("still notices a swipe made from a mid-track start, in either direction", () => {
+    const landed = facts(0.5);
+    expect(then(0.5 + ONE_PANEL * 2, landed).hasAdvanced).toBe(true);
+    expect(then(0.5 - ONE_PANEL * 2, facts(0.5)).hasAdvanced).toBe(true);
   });
 
   it("recognises the end of the track", () => {
@@ -46,17 +65,22 @@ describe("resolveHomepageHint", () => {
   });
 
   it("teaches the sideways swipe only until it has been used", () => {
-    expect(resolveHomepageHint({ section: "projects", carousel: facts(0) })).toBe("projects");
-    expect(resolveHomepageHint({ section: "projects", carousel: facts(0.4) })).toBeNull();
+    const start = facts(0);
+    expect(resolveHomepageHint({ section: "projects", carousel: start })).toBe("projects");
+    expect(resolveHomepageHint({ section: "projects", carousel: then(0.4, start) })).toBeNull();
+  });
+
+  it("still teaches the swipe to someone dropped into the middle of the track", () => {
+    expect(resolveHomepageHint({ section: "projects", carousel: facts(0.5) })).toBe("projects");
   });
 
   it("points down again at the end of the carousel, however they got there", () => {
     // The end is the one place the carousel needs a hint even for someone who
     // has been swiping happily: horizontal travel is spent and nothing says so.
     expect(resolveHomepageHint({ section: "projects", carousel: facts(1) })).toBe("projects-end");
-    expect(resolveHomepageHint({ section: "projects", carousel: facts(1, true) })).toBe(
-      "projects-end",
-    );
+    expect(
+      resolveHomepageHint({ section: "projects", carousel: then(1, facts(0)) }),
+    ).toBe("projects-end");
   });
 
   it("waits for the carousel to be measured before guessing", () => {

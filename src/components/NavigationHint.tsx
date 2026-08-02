@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import HintPill from "./hints/HintPill";
 import { useIdleHint, useInputMode } from "./hints/useIdleHint";
@@ -28,16 +28,34 @@ export default function NavigationHint({ projectCount }: { projectCount: number 
   const { hasEntered } = useAudio();
   const [carousel, setCarousel] = useState<CarouselFacts | null>(null);
 
+  // Arriving in the section starts a fresh baseline for "have they moved it?".
+  // Without this, landing mid-carousel — a restored scroll position, a shared
+  // link — reads as a swipe the visitor never made, and the hint they actually
+  // needed never appears.
+  const needsBaseline = useRef(true);
+  useEffect(() => {
+    if (section === "projects") needsBaseline.current = true;
+  }, [section]);
+
   useEffect(() => {
     const read = () => {
       const trigger = ScrollTrigger.getById("projects-horizontal-pin");
       if (!trigger) return;
       const progress = Math.min(1, Math.max(0, trigger.progress));
+      // Read and clear before the updater, which has to stay pure.
+      const fromScratch = needsBaseline.current;
+      needsBaseline.current = false;
       setCarousel((previous) => {
-        const next = carouselFacts(progress, projectCount, previous?.hasAdvanced ?? false);
+        const next = carouselFacts(progress, projectCount, fromScratch ? null : previous);
         // Same object unless a fact actually flipped, so scrolling the pinned
-        // section does not re-render the pill on every frame.
-        if (previous && previous.atEnd === next.atEnd && previous.hasAdvanced === next.hasAdvanced) {
+        // section does not re-render the pill on every frame. A fresh baseline
+        // always has to be kept, even when neither fact changed with it.
+        if (
+          !fromScratch &&
+          previous &&
+          previous.atEnd === next.atEnd &&
+          previous.hasAdvanced === next.hasAdvanced
+        ) {
           return previous;
         }
         return next;
