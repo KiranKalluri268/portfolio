@@ -59,7 +59,12 @@ function SkillGroup({
           <div className="flex h-10 items-center justify-center select-none text-xl font-bold sm:text-2xl">
             <SkillMark skill={skill} />
           </div>
-          <span className="mt-1 whitespace-nowrap text-xs select-none">{skill.name}</span>
+          {/* Two lines, then an ellipsis. A fixed height rather than a natural
+              one so every icon in the row sits at the same level whether its
+              label wraps or not — the full name is on the link's title. */}
+          <span className="mt-1 line-clamp-2 h-8 text-center text-xs leading-4 select-none">
+            {skill.name}
+          </span>
         </Link>
       ))}
     </div>
