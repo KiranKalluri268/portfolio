@@ -102,7 +102,10 @@ canvas {
     width: auto;
   }
 
-  .scroll-hint {
+  .scroll-hint,
+  /* A short landscape viewport has no room to spare below the content, and
+     the hint would land on top of whatever it is pointing at. */
+  .hint-pill {
     display: none;
   }
 }

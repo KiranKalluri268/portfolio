@@ -19,6 +19,9 @@ import {
   type GraphEdge,
   type GraphNode,
 } from "./skill-web-layout";
+import HintPill from "../hints/HintPill";
+import { useIdleHint, useInputMode } from "../hints/useIdleHint";
+import { hintText } from "../hints/hint-copy";
 
 const MIN_SCALE = 0.28;
 const MAX_SCALE = 1.65;
@@ -73,6 +76,8 @@ export default function SkillsWeb({
   const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [directoryOpen, setDirectoryOpen] = useState(false);
+  const inputMode = useInputMode();
+  const webHint = useIdleHint(hasInteracted ? null : "skill-web");
   const nodeById = useMemo(
     () => new Map(graph.nodes.map((node) => [node.id, node])),
     [graph.nodes],
@@ -458,12 +463,14 @@ export default function SkillsWeb({
         <button type="button" onClick={() => setDirectoryOpen(true)} className="h-10 rounded-full px-3 text-xs font-semibold uppercase tracking-wider hover:bg-white/10" aria-label="Open accessible skill directory">List</button>
       </div>
 
-      <div
-        className={`pointer-events-none absolute bottom-5 left-1/2 z-40 -translate-x-1/2 rounded-full border border-white/10 bg-black/65 px-4 py-2 text-center text-xs text-gray-300 backdrop-blur-md transition-opacity duration-500 sm:bottom-7 ${hasInteracted ? "opacity-0" : "opacity-100"}`}
-        aria-hidden="true"
-      >
-        Drag to explore · Scroll or pinch to zoom · Select a branch to focus
-      </div>
+      {/* Same hint system as the homepage: it waits until someone has stalled
+          rather than greeting everyone, and retires once they start dragging.
+          Absolute rather than fixed so it sits inside the canvas. */}
+      <HintPill
+        text={hintText("skill-web", inputMode)}
+        visible={webHint.visible}
+        className="absolute bottom-5 left-1/2 sm:bottom-7"
+      />
 
       {activeNode && activeNode.kind !== "center" && (
         <aside

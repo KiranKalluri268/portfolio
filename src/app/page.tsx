@@ -10,6 +10,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import SkipLink from '@/components/SkipLink';
 import SceneIndicator from '@/components/SceneIndicator';
 import NavigationControls from '@/components/NavigationControls';
+import NavigationHint from '@/components/NavigationHint';
 import SceneWrapper from '@/components/SceneWrapper';
 import { getHomepageProjects } from '@/lib/content/projects';
 import { getSkillsByCategory } from '@/lib/content/skills';
@@ -45,6 +46,10 @@ export default function Home() {
 
         <ErrorBoundary>
           <NavigationControls />
+        </ErrorBoundary>
+
+        <ErrorBoundary>
+          <NavigationHint projectCount={projects.length} />
         </ErrorBoundary>
 
         <main id="main-content" aria-label="Main content">
