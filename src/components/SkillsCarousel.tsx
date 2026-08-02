@@ -6,10 +6,25 @@ import Link from "next/link";
 import type { SkillCategoryContent, SkillContent } from "@/lib/content/types";
 import { useScrollActions } from "@/context/SmoothScrollContext";
 import gsap from "gsap";
+import { SKILL_ICONS } from "./skills/skill-icons";
 
 export interface SkillCategoryGroup {
   category: SkillCategoryContent;
   skills: SkillContent[];
+}
+
+/** A skill's brand mark, falling back through an image supplied by the content
+ *  file to the initials for the handful of skills that are practices rather
+ *  than products and so have no logo. */
+function SkillMark({ skill }: { skill: SkillContent }) {
+  const Icon = SKILL_ICONS[skill.slug];
+  if (Icon) return <Icon className="h-8 w-8" />;
+  if (skill.icon) {
+    return (
+      <Image src={skill.icon} alt="" width={40} height={40} className="h-10 w-10 object-contain" />
+    );
+  }
+  return <>{skill.iconText ?? skill.name.slice(0, 2)}</>;
 }
 
 interface SkillRowProps {
@@ -42,11 +57,7 @@ function SkillGroup({
           tabIndex={duplicate ? -1 : 0}
         >
           <div className="flex h-10 items-center justify-center select-none text-xl font-bold sm:text-2xl">
-            {skill.icon ? (
-              <Image src={skill.icon} alt="" width={40} height={40} className="h-10 w-10 object-contain" />
-            ) : (
-              skill.iconText ?? skill.name.slice(0, 2)
-            )}
+            <SkillMark skill={skill} />
           </div>
           <span className="mt-1 whitespace-nowrap text-xs select-none">{skill.name}</span>
         </Link>
