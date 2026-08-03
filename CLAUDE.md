@@ -3,6 +3,67 @@
 How to work on this repo. `docs/` covers what the code is; this covers how to
 change it.
 
+## Check what else a change touches
+
+A change is not done when the thing asked for works. It is done when you know
+what else moved, and whether that was wanted.
+
+Before calling anything finished, ask what else reads the code, the token, the
+class, the file you just edited — then go and look at it. Grep for the other
+callers. Open the other route. Compare desktop and mobile, not just the one you
+were asked about. If a change is mechanical, check what else the pattern
+matched: a find-and-replace edits everything it matches, not everything you
+meant.
+
+Then say what moved. If a change reaches something outside the request, name it
+in the reply and in the commit message, whether it turned out well or badly.
+Nothing should be discovered by the person who asked, in a screenshot, after
+the fact.
+
+Real examples from this repo, all of them found late:
+
+- A `sed` meant for the résumé sheet's width also matched the toolbar above it,
+  widening it to 794px. It overflowed the phone screen, pushed the download
+  button out of view, and made the page drag sideways.
+- Restoring the marquee's brand icons left the skill's own page still showing
+  initials, because both rendered the mark separately.
+- Making one tooltip position itself from the pointer put a layout read on
+  every mouse move across the whole page, on three mounted tooltips at once.
+- Fixing the stuck label on the scene dots left the same bug in the audio
+  toggle, the social icons, and the arrow pad.
+
+Verifying the change you made is not the same as verifying the change you
+caused. Prove the second one too — and prove it on the thing that actually
+governs the behaviour. A sideways-scroll check measured the document's scroll
+width and passed, while the overflow sat inside `.page`, which is its own
+scroll container.
+
+## Ask instead of deciding
+
+When a choice would change what a visitor sees, what ships, or what the request
+covered, it is not yours to make. Ask.
+
+Ask when:
+
+- there is more than one reasonable reading of the request;
+- the fix could be narrow or broad, and the broad one touches things nobody
+  asked about;
+- something else is found broken along the way — report it, do not quietly fix
+  it, and do not quietly leave it either;
+- a trade-off has to be struck between two things that are both wanted;
+- the tidy version of the change and the asked-for version are not the same
+  change.
+
+Carrying out the work asked for does not need a question at every step. Picking
+a variable name, choosing which file a helper lives in, deciding how to measure
+something — get on with it. The line is whether the outcome changes for the
+person who asked. If it does, ask first; a question costs a minute, and an
+assumption costs a review cycle and their trust in the rest of the diff.
+
+When you do ask, ask with the options laid out and a recommendation, not an
+open-ended "what would you like?". State the trade-off you see and which way
+you would go.
+
 ## Branches and commits
 
 - **Never put `claude` in a branch name.** Use a conventional prefix that says
