@@ -41,15 +41,17 @@ export default function Tooltip({ text, isVisible }: TooltipProps) {
     tooltip.style.transform = `translate3d(${x}px, ${y}px, 0)`;
   }, [isCoarsePointer]);
 
-  // Track the pointer at all times, not only while a label is up. A tap
-  // produces no pointermove at all, so the only position the label can use is
-  // the one carried by the pointerdown that asked for it. Without this it never
-  // moved from where it first rendered — the top-left corner of the screen,
-  // nowhere near the control that was tapped.
+  // Where the pointer is, remembered at all times rather than only while a
+  // label is up. A tap produces no pointermove at all, so the only position the
+  // label can use is the one carried by the pointerdown that asked for it —
+  // without this it never moved from where it first rendered, the top-left
+  // corner of the screen, nowhere near the control that was tapped.
+  //
+  // Deliberately just two numbers: this runs on every mouse move across the
+  // page, so it must not touch the DOM.
   useEffect(() => {
     const remember = (event: PointerEvent) => {
       pointRef.current = { x: event.clientX, y: event.clientY };
-      place();
     };
     window.addEventListener("pointermove", remember, { passive: true });
     window.addEventListener("pointerdown", remember, { passive: true });
@@ -57,7 +59,17 @@ export default function Tooltip({ text, isVisible }: TooltipProps) {
       window.removeEventListener("pointermove", remember);
       window.removeEventListener("pointerdown", remember);
     };
-  }, [place]);
+  }, []);
+
+  // Following the cursor costs a layout read per move, so it is only worth
+  // doing while a label is actually on screen. Registered after the listener
+  // above, which therefore has the position up to date by the time this runs.
+  useEffect(() => {
+    if (!isVisible) return;
+    const follow = () => place();
+    window.addEventListener("pointermove", follow, { passive: true });
+    return () => window.removeEventListener("pointermove", follow);
+  }, [isVisible, place]);
 
   // Placed before the paint that reveals it, so it is never seen in the corner
   // on its way to the right spot.
