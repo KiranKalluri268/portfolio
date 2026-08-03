@@ -4,6 +4,7 @@ import Link from "next/link";
 import resume from "@/data/resume.json";
 import BackNavigationButton from "@/components/BackNavigationButton";
 import { getResumeData } from "@/lib/content/resume";
+import PaperViewport from "@/components/PaperViewport";
 import DownloadResumeButton from "./DownloadResumeButton";
 import styles from "./resume.module.css";
 
@@ -45,7 +46,8 @@ export default function ResumePage() {
         </div>
         <DownloadResumeButton internships={internships} projects={projects} skillGroups={skillGroups} />
       </div>
-      <article className={styles.paper} aria-label={`${resume.basics.name} resume`}>
+      <PaperViewport className={styles.paperFrame}>
+        <article className={styles.paper} aria-label={`${resume.basics.name} resume`}>
         <header>
           <h1 className={styles.name}>{resume.basics.name}</h1>
           <p className={styles.contactLine}>
@@ -135,7 +137,8 @@ export default function ResumePage() {
             <span className={styles.footerLabel}>Strengths:</span> {resume.strengths.join(", ")}
           </p>
         </div>
-      </article>
+        </article>
+      </PaperViewport>
     </main>
   );
 }

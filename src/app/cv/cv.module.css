@@ -11,7 +11,7 @@
 .actions {
   box-sizing: border-box;
   display: flex;
-  width: min(210mm, 100%);
+  width: 210mm;
   margin: 0 auto 1rem;
   align-items: center;
   justify-content: space-between;
@@ -57,10 +57,15 @@
   color: #ff7a18;
 }
 
+.paperFrame {
+  width: 100%;
+  max-width: 210mm;
+  margin: 0 auto;
+}
+
 .paper {
   box-sizing: border-box;
-  width: min(210mm, 100%);
-  margin: 0 auto;
+  width: 210mm;
   padding: 12mm 13mm;
   background: #fff;
   color: #111;
@@ -283,6 +288,9 @@
 }
 
 @media (max-width: 640px) {
+  /* Only the toolbar adapts to a phone. The sheet below it keeps its A4
+     geometry and is scaled to fit by PaperViewport, so it stays the shape of
+     the document it represents rather than reflowing into a web page. */
   .page {
     padding: 0;
   }
@@ -313,54 +321,20 @@
   .backLink {
     font-size: 0.72rem;
   }
-
-  .paper {
-    min-width: 100%;
-    padding: 1.25rem max(1rem, env(safe-area-inset-right)) 1.5rem max(1rem, env(safe-area-inset-left));
-    box-shadow: none;
-    font-size: 14px;
-    line-height: 1.5;
-  }
-
-  .name {
-    font-size: 22px;
-  }
-
-  .headline {
-    font-size: 15px;
-  }
-
-  .sectionTitle {
-    font-size: 15px;
-  }
-
-  .entryTitle,
-  .workItemTitle {
-    font-size: 15px;
-  }
-
-  .entryMeta {
-    font-size: 12.5px;
-    white-space: normal;
-  }
-
-  .entrySubtitle,
-  .subheading,
-  .techLine,
-  .quoteAttribution {
-    font-size: 13px;
-  }
-
-  .contactLine,
-  .links,
-  .paragraph,
-  .education,
-  .footerLine {
-    overflow-wrap: anywhere;
-  }
 }
 
 @media print {
+  /* PaperViewport's fit is inline, so it needs overriding by force here or a
+     phone would print the shrunk sheet rather than a full A4 page. */
+  .paperFrame {
+    max-width: none;
+    height: auto !important;
+  }
+
+  .paper {
+    transform: none !important;
+  }
+
   @page {
     size: A4;
     margin: 14mm 13mm;

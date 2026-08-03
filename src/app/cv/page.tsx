@@ -4,6 +4,7 @@ import Link from "next/link";
 import BackNavigationButton from "@/components/BackNavigationButton";
 import { getCvData } from "@/lib/content/cv";
 import type { CvProject, CvRole } from "@/lib/content/types";
+import PaperViewport from "@/components/PaperViewport";
 import DownloadCvButton from "./DownloadCvButton";
 import styles from "./cv.module.css";
 
@@ -161,7 +162,8 @@ export default function CvPage() {
         <DownloadCvButton cv={cv} />
       </div>
 
-      <article className={styles.paper} aria-label={`${cv.basics.name} curriculum vitae`}>
+      <PaperViewport className={styles.paperFrame}>
+        <article className={styles.paper} aria-label={`${cv.basics.name} curriculum vitae`}>
         <header>
           <h1 className={styles.name}>{cv.basics.name}</h1>
           <p className={styles.headline}>Curriculum Vitae</p>
@@ -242,7 +244,8 @@ export default function CvPage() {
             <span className={styles.footerLabel}>Strengths:</span> {cv.strengths.join(", ")}
           </p>
         </div>
-      </article>
+        </article>
+      </PaperViewport>
     </main>
   );
 }

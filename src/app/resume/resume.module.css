@@ -8,7 +8,7 @@
 .actions {
   box-sizing: border-box;
   display: flex;
-  width: min(210mm, 100%);
+  width: 210mm;
   margin: 0 auto 1rem;
   align-items: center;
   justify-content: space-between;
@@ -54,12 +54,18 @@
   color: #ff7a18;
 }
 
+.paperFrame {
+  width: 100%;
+  max-width: 210mm;
+  margin: 0 auto;
+}
+
 .paper {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  width: min(210mm, 100%);
+  width: 210mm;
   min-height: 297mm;
   margin: 0 auto;
   padding: 9mm 10mm;
@@ -153,6 +159,9 @@
 }
 
 @media (max-width: 640px) {
+  /* Only the toolbar adapts to a phone. The sheet below it keeps its A4
+     geometry and is scaled to fit by PaperViewport, so it stays the shape of
+     the document it represents rather than reflowing into a web page. */
   .page {
     padding: 0;
   }
@@ -183,67 +192,20 @@
   .backLink {
     font-size: 0.72rem;
   }
-
-  .paper {
-    min-width: 100%;
-    min-height: auto;
-    justify-content: flex-start;
-    padding: 1.25rem max(1rem, env(safe-area-inset-right)) 1.5rem max(1rem, env(safe-area-inset-left));
-    box-shadow: none;
-    font-size: 14px;
-    line-height: 1.48;
-  }
-
-  .name {
-    margin-bottom: 0.2rem;
-    font-size: 18px;
-  }
-
-  .sectionTitle,
-  .entryTitle {
-    font-size: 14px;
-  }
-
-  .section {
-    margin-top: 0.7rem;
-  }
-
-  .sectionTitle {
-    margin-bottom: 0.3rem;
-    padding-top: 0.45rem;
-  }
-
-  .entryTitle {
-    margin-top: 0.4rem;
-    line-height: 1.35;
-  }
-
-  .list {
-    margin: 0.25rem 0 0.65rem;
-    padding-left: 1.15rem;
-  }
-
-  .list li {
-    margin-bottom: 0.25rem;
-    padding-left: 0.15rem;
-  }
-
-  .contactLine,
-  .links,
-  .paragraph,
-  .skill,
-  .education,
-  .footerLine {
-    overflow-wrap: anywhere;
-  }
-
-  .footer {
-    margin-top: 0.7rem;
-    padding-top: 0.45rem;
-  }
 }
 
 @media print {
+  /* PaperViewport's fit is inline, so it needs overriding by force here or a
+     phone would print the shrunk sheet rather than a full A4 page. */
+  .paperFrame {
+    max-width: none;
+    height: auto !important;
+  }
+
+  .paper {
+    transform: none !important;
+  }
+
   @page {
     size: A4;
     margin: 0;
