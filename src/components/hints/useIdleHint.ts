@@ -1,39 +1,50 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { HintId, InputMode } from "./hint-copy";
 
 /** How long a visitor may sit in one place before the pill offers a way on.
  *  Long enough that anyone who knows what they are doing never sees it. */
 export const IDLE_HINT_MS = 3500;
 
-/** Reveals a hint once the visitor has stalled on it, and never again.
+/** Reveals a hint once the visitor has stalled on the scene it belongs to.
  *
  * The timer measures time spent on one hint rather than time since the last
  * event, because "idle" here means "has not done the thing this scene is
  * waiting for" — a visitor can be busy reading and still be stuck.
  *
- * Returns the hint that is currently on screen (which lingers through the fade
- * after the scene has moved on) alongside whether it should be visible.
+ * Every arrival at a scene is its own offer: leave, come back, pause again and
+ * the hint is there again. Hints used to retire for the whole visit, which
+ * read as the pill being broken — pause anywhere on a second pass through the
+ * page and nothing ever appeared.
+ *
+ * Returns the hint to display, which lingers after the scene has moved on so
+ * the pill fades out with its own text rather than blanking mid-transition.
  */
 export function useIdleHint(hintId: HintId | null, delayMs: number = IDLE_HINT_MS) {
-  const [revealed, setRevealed] = useState<HintId | null>(null);
-  const retired = useRef<Set<HintId>>(new Set());
+  const [offered, setOffered] = useState<HintId | null>(null);
+  const [displayed, setDisplayed] = useState<HintId | null>(null);
+  const [previousHintId, setPreviousHintId] = useState<HintId | null>(hintId);
+
+  // Reset during render rather than in an effect — the offer belongs to the
+  // scene that earned it, so arriving anywhere new has to withdraw it before
+  // anything paints. Without this, returning to the last scene that showed a
+  // hint would flash it back instantly with no wait at all.
+  if (previousHintId !== hintId) {
+    setPreviousHintId(hintId);
+    setOffered(null);
+  }
 
   useEffect(() => {
-    if (!hintId || retired.current.has(hintId)) return;
-    const timer = window.setTimeout(() => setRevealed(hintId), delayMs);
+    if (!hintId) return;
+    const timer = window.setTimeout(() => {
+      setOffered(hintId);
+      setDisplayed(hintId);
+    }, delayMs);
     return () => window.clearTimeout(timer);
   }, [hintId, delayMs]);
 
-  // Once a hint has been shown and the visitor has moved past it, it has done
-  // its job. Showing it a second time would be nagging someone who by then has
-  // demonstrated they know the way around.
-  useEffect(() => {
-    if (revealed && revealed !== hintId) retired.current.add(revealed);
-  }, [revealed, hintId]);
-
-  return { hint: revealed, visible: revealed !== null && revealed === hintId };
+  return { hint: displayed, visible: offered !== null && offered === hintId };
 }
 
 /** Whether the visitor is using touch or a pointer, so a hint can name the

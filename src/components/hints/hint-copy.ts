@@ -19,6 +19,7 @@ export type HintId =
   | "projects-end"
   | "experience"
   | "skills"
+  | "contact"
   | "skill-web";
 
 /** Progress at which the carousel has reached the "See all projects" panel and
@@ -51,6 +52,12 @@ const HINTS: Record<HintId, Record<InputMode, string>> = {
   skills: {
     touch: "Tap any skill to see how I use it",
     pointer: "Click any skill to see how I use it",
+  },
+  // The last scene, and the one with something to ask for. The wording does
+  // not change by input because filling in a form is the same either way.
+  contact: {
+    touch: "Send me a message here, or find me on LinkedIn and GitHub below",
+    pointer: "Send me a message here, or find me on LinkedIn and GitHub below",
   },
   "skill-web": {
     touch: "Drag to explore · Pinch to zoom · Tap a branch to focus",
@@ -104,8 +111,8 @@ export function carouselFacts(
 /** The hint the homepage owes the visitor right now, or null when the scene
  *  explains itself.
  *
- * About and Contact are deliberately absent: one is prose and the other is a
- * form, and neither needs telling how to work. */
+ * About is the one scene that stays silent: it is prose, and there is nothing
+ * to do there but read it. */
 export function resolveHomepageHint({
   section,
   carousel,
@@ -129,6 +136,8 @@ export function resolveHomepageHint({
       return "experience";
     case "skills":
       return "skills";
+    case "contact":
+      return "contact";
     default:
       return null;
   }
