@@ -234,7 +234,8 @@
 
   .paper {
     width: 210mm;
-    min-height: 297mm;
+    /* Exactly 297mm tall spills onto a second, blank page. */
+    min-height: auto;
     margin: 0;
     box-shadow: none;
     print-color-adjust: exact;

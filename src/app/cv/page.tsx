@@ -5,6 +5,7 @@ import BackNavigationButton from "@/components/BackNavigationButton";
 import { getCvData } from "@/lib/content/cv";
 import type { CvProject, CvRole } from "@/lib/content/types";
 import PaperViewport from "@/components/PaperViewport";
+import CvPages, { type CvBlock } from "./CvPages";
 import DownloadCvButton from "./DownloadCvButton";
 import styles from "./cv.module.css";
 
@@ -21,13 +22,20 @@ export const metadata: Metadata = {
   },
 };
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>{title}</h2>
-      {children}
-    </section>
-  );
+/** A section as flat blocks: its heading, then each of its entries. The
+ *  paginator needs to break between them, which it cannot do while they are
+ *  wrapped in one element. An unnamed <section> is not exposed as a landmark
+ *  anyway, so the heading outline still carries the structure. */
+function sectionBlocks(title: string, entries: { id: string; node: ReactNode }[]): CvBlock[] {
+  if (entries.length === 0) return [];
+  return [
+    {
+      id: `heading-${title}`,
+      keepWithNext: true,
+      node: <h2 className={styles.sectionTitle}>{title}</h2>,
+    },
+    ...entries,
+  ];
 }
 
 function TechLine({ label, items }: { label: string; items: string[] }) {
@@ -146,24 +154,12 @@ export default function CvPage() {
   const cv = getCvData();
   const phoneUrl = `tel:${cv.basics.phone.replace(/[^+\d]/g, "")}`;
 
-  return (
-    <main className={styles.page}>
-      <div className={styles.actions}>
-        <div className={styles.actionCopy}>
-          <BackNavigationButton className={styles.backLink}>
-            ← Back to portfolio
-          </BackNavigationButton>
-          <p className={styles.cvNote}>
-            This is the long form of the résumé — every role, the work shipped in each, and
-            full project detail. For the one-page version, see the{" "}
-            <Link href="/resume">résumé</Link>.
-          </p>
-        </div>
-        <DownloadCvButton cv={cv} />
-      </div>
-
-      <PaperViewport className={styles.paperFrame}>
-        <article className={styles.paper} aria-label={`${cv.basics.name} curriculum vitae`}>
+  // Flat, so the paginator can break between any two of them.
+  const blocks: CvBlock[] = [
+    {
+      id: "header",
+      keepWithNext: true,
+      node: (
         <header>
           <h1 className={styles.name}>{cv.basics.name}</h1>
           <p className={styles.headline}>Curriculum Vitae</p>
@@ -193,33 +189,38 @@ export default function CvPage() {
             ))}
           </p>
         </header>
-
-        <Section title="Profile">
-          <p className={styles.paragraph}>{cv.profile}</p>
-        </Section>
-
-        <Section title="Experience">
-          {cv.roles.map((role) => (
-            <RoleEntry key={role.slug} role={role} />
-          ))}
-        </Section>
-
-        <Section title="Projects">
-          {cv.projects.map((project) => (
-            <ProjectEntry key={project.slug} project={project} />
-          ))}
-        </Section>
-
-        <Section title="Technical Skills">
-          {cv.skillGroups.map((group) => (
-            <p className={styles.skillGroup} key={group.label}>
-              <span className={styles.skillLabel}>{group.label}:</span>{" "}
-              {group.skills.map((skill) => skill.name).join(", ")}
-            </p>
-          ))}
-        </Section>
-
-        <Section title="Education">
+      ),
+    },
+    ...sectionBlocks("Profile", [
+      { id: "profile", node: <p className={styles.paragraph}>{cv.profile}</p> },
+    ]),
+    ...sectionBlocks(
+      "Experience",
+      cv.roles.map((role) => ({ id: `role-${role.slug}`, node: <RoleEntry role={role} /> })),
+    ),
+    ...sectionBlocks(
+      "Projects",
+      cv.projects.map((project) => ({
+        id: `project-${project.slug}`,
+        node: <ProjectEntry project={project} />,
+      })),
+    ),
+    ...sectionBlocks(
+      "Technical Skills",
+      cv.skillGroups.map((group) => ({
+        id: `skills-${group.label}`,
+        node: (
+          <p className={styles.skillGroup}>
+            <span className={styles.skillLabel}>{group.label}:</span>{" "}
+            {group.skills.map((skill) => skill.name).join(", ")}
+          </p>
+        ),
+      })),
+    ),
+    ...sectionBlocks("Education", [
+      {
+        id: "education",
+        node: (
           <p className={styles.education}>
             <strong>{cv.education.degree}</strong>
             <br />
@@ -227,16 +228,24 @@ export default function CvPage() {
             {cv.education.period} <span className={styles.separator}>|</span> CGPA:{" "}
             {cv.education.cgpa}
           </p>
-        </Section>
-
-        <Section title="Certifications">
+        ),
+      },
+    ]),
+    ...sectionBlocks("Certifications", [
+      {
+        id: "certifications",
+        node: (
           <ul className={styles.list}>
             {cv.certifications.map((certification) => (
               <li key={certification}>{certification}</li>
             ))}
           </ul>
-        </Section>
-
+        ),
+      },
+    ]),
+    {
+      id: "footer",
+      node: (
         <div className={styles.footer}>
           <p className={styles.footerLine}>
             <span className={styles.footerLabel}>Languages:</span> {cv.languages.join(", ")}{" "}
@@ -244,7 +253,28 @@ export default function CvPage() {
             <span className={styles.footerLabel}>Strengths:</span> {cv.strengths.join(", ")}
           </p>
         </div>
-        </article>
+      ),
+    },
+  ];
+
+  return (
+    <main className={styles.page}>
+      <div className={styles.actions}>
+        <div className={styles.actionCopy}>
+          <BackNavigationButton className={styles.backLink}>
+            ← Back to portfolio
+          </BackNavigationButton>
+          <p className={styles.cvNote}>
+            This is the long form of the résumé — every role, the work shipped in each, and
+            full project detail. For the one-page version, see the{" "}
+            <Link href="/resume">résumé</Link>.
+          </p>
+        </div>
+        <DownloadCvButton cv={cv} />
+      </div>
+
+      <PaperViewport className={styles.paperFrame}>
+        <CvPages label={`${cv.basics.name} curriculum vitae`} blocks={blocks} />
       </PaperViewport>
     </main>
   );
