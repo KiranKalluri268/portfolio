@@ -1,30 +1,15 @@
 "use client";
 
 import { type Ref, useLayoutEffect, useRef } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import type { SkillCategoryContent, SkillContent } from "@/lib/content/types";
 import { useScrollActions } from "@/context/SmoothScrollContext";
 import gsap from "gsap";
-import { SKILL_ICONS } from "./skills/skill-icons";
+import { SkillMark } from "./skills/skill-icons";
 
 export interface SkillCategoryGroup {
   category: SkillCategoryContent;
   skills: SkillContent[];
-}
-
-/** A skill's brand mark, falling back through an image supplied by the content
- *  file to the initials for the handful of skills that are practices rather
- *  than products and so have no logo. */
-function SkillMark({ skill }: { skill: SkillContent }) {
-  const Icon = SKILL_ICONS[skill.slug];
-  if (Icon) return <Icon className="h-8 w-8" />;
-  if (skill.icon) {
-    return (
-      <Image src={skill.icon} alt="" width={40} height={40} className="h-10 w-10 object-contain" />
-    );
-  }
-  return <>{skill.iconText ?? skill.name.slice(0, 2)}</>;
 }
 
 interface SkillRowProps {

@@ -80,7 +80,7 @@ function WorkTimeline({
               aria-hidden="true"
             />
 
-            <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-5 transition-[background-color,border-color] duration-300 hover:border-accent-soft/25 hover:bg-white/[0.06] sm:p-6">
+            <div className="rounded-2xl border border-white/10 bg-black/55 backdrop-blur-sm p-5 transition-[background-color,border-color] duration-300 hover:border-accent-soft/25 hover:bg-white/5 sm:p-6">
               <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2">
                 <span className="text-sm font-bold text-accent-soft">
                   {String(index + 1).padStart(2, "0")}
@@ -134,7 +134,7 @@ function WorkTimeline({
 /** A recommendation from someone who managed the role, quoted verbatim. */
 function Recommendation({ recommendation }: { recommendation: ExperienceRecommendation }) {
   return (
-    <figure className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] p-6 sm:p-8">
+    <figure className="relative overflow-hidden rounded-2xl border border-white/10 bg-black/55 backdrop-blur-sm p-6 sm:p-8">
       <span
         className="pointer-events-none absolute -top-6 left-4 select-none font-serif text-8xl leading-none text-accent/15"
         aria-hidden="true"
@@ -317,7 +317,7 @@ export default function ExperienceDetail({
                 {experience.outcomes.map((outcome) => (
                   <div
                     key={outcome.label}
-                    className="rounded-2xl border border-white/10 bg-white/[0.035] p-5"
+                    className="rounded-2xl border border-white/10 bg-black/55 backdrop-blur-sm p-5"
                   >
                     <dt className="text-2xl font-bold">{outcome.value}</dt>
                     <dd className="mt-2 text-sm text-gray-400">{outcome.label}</dd>

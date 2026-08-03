@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import { SkillMark } from "@/components/skills/skill-icons";
 import BackNavigationButton from "@/components/BackNavigationButton";
 import ProjectCard from "./ProjectCard";
 import type { ProjectContent, SkillCategoryContent, SkillContent } from "@/lib/content/types";
@@ -40,11 +40,7 @@ export default function SkillDetail({
 
         <header className="grid gap-8 rounded-3xl border border-white/10 bg-black/60 p-7 backdrop-blur-md sm:p-10 md:grid-cols-[auto_1fr] md:items-center">
           <div className="flex h-24 w-24 items-center justify-center rounded-2xl border border-accent-soft/20 bg-accent/10 text-3xl font-bold text-accent-tint">
-            {skill.icon ? (
-              <Image src={skill.icon} alt={skill.iconAlt ?? ""} width={72} height={72} className="h-16 w-16 object-contain" />
-            ) : (
-              skill.iconText ?? skill.name.slice(0, 2)
-            )}
+            <SkillMark skill={skill} className="h-16 w-16" imageSize={72} />
           </div>
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-accent-soft">

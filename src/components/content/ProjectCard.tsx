@@ -4,7 +4,7 @@ import type { ProjectContent } from "@/lib/content/types";
 
 export default function ProjectCard({ project }: { project: ProjectContent }) {
   return (
-    <article className="group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] transition-colors hover:border-accent-soft/30">
+    <article className="group overflow-hidden rounded-2xl border border-white/10 bg-black/55 backdrop-blur-sm transition-colors hover:border-accent-soft/30">
       <ProjectLink project={project} className="block">
         <div className="relative aspect-[16/9] overflow-hidden bg-white/[0.025]">
           <ProjectThumbnail

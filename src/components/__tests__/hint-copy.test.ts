@@ -59,12 +59,9 @@ describe("resolveHomepageHint", () => {
     expect(resolveHomepageHint({ section: "hero", carousel: null })).toBe("hero");
   });
 
-  it("says nothing on About, which is prose with nothing to do but read", () => {
+  it("says nothing where the scene explains itself", () => {
     expect(resolveHomepageHint({ section: "about", carousel: null })).toBeNull();
-  });
-
-  it("points at the form and the profiles on Contact", () => {
-    expect(resolveHomepageHint({ section: "contact", carousel: null })).toBe("contact");
+    expect(resolveHomepageHint({ section: "contact", carousel: null })).toBeNull();
   });
 
   it("teaches the sideways swipe only until it has been used", () => {

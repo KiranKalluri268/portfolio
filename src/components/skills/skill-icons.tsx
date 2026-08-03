@@ -1,4 +1,6 @@
+import Image from "next/image";
 import type { ComponentType } from "react";
+import type { SkillContent } from "@/lib/content/types";
 import { FaJava } from "react-icons/fa";
 import {
   SiAmazondynamodb,
@@ -84,3 +86,31 @@ export const SKILL_ICONS: Record<string, ComponentType<{ className?: string }>> 
   typescript: SiTypescript,
   webrtc: SiWebrtc,
 };
+
+/** A skill's brand mark wherever one is shown — the marquee and the skill's
+ *  own page — so the two can never drift apart again. Falls back through an
+ *  image named by the content file to the initials it supplies. */
+export function SkillMark({
+  skill,
+  className = "h-8 w-8",
+  imageSize = 40,
+}: {
+  skill: SkillContent;
+  className?: string;
+  imageSize?: number;
+}) {
+  const Icon = SKILL_ICONS[skill.slug];
+  if (Icon) return <Icon className={className} />;
+  if (skill.icon) {
+    return (
+      <Image
+        src={skill.icon}
+        alt={skill.iconAlt ?? ""}
+        width={imageSize}
+        height={imageSize}
+        className={`${className} object-contain`}
+      />
+    );
+  }
+  return <>{skill.iconText ?? skill.name.slice(0, 2)}</>;
+}

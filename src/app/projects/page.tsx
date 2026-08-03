@@ -125,7 +125,7 @@ function FeaturedProject({
           {project.outcomes.length > 0 && (
             <dl className="grid grid-cols-2 gap-3">
               {project.outcomes.map((outcome) => (
-                <div key={outcome.label} className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+                <div key={outcome.label} className="rounded-2xl border border-white/10 bg-black/55 backdrop-blur-sm p-4">
                   <dt className="text-lg font-bold text-white sm:text-xl">{outcome.value}</dt>
                   <dd className="mt-1 text-xs leading-relaxed text-gray-400 sm:text-sm">{outcome.label}</dd>
                 </div>

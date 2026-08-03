@@ -24,6 +24,10 @@ const scenes: SceneInfo[] = [
 
 const TOOLTIP_GAP = 20;
 
+/** How long a tapped dot's label stays up. Long enough to read the section it
+ *  is taking you to, and gone before the scroll it triggered has settled. */
+const TOUCH_LABEL_MS = 1600;
+
 export default function SceneIndicator() {
   const { hasEntered } = useAudio();
   const activeSection = useActiveSection();
@@ -61,6 +65,16 @@ export default function SceneIndicator() {
     window.addEventListener("pointermove", updateMouse, { passive: true });
     return () => window.removeEventListener("pointermove", updateMouse);
   }, [hoveredIndex, isCoarsePointer]);
+
+  // A tap fires the browser's synthesised mouseenter, but no mouseleave ever
+  // follows it — there is no cursor to move away — so the label sat there until
+  // some other element happened to take the hover. On touch it gets its own
+  // life instead, and dismisses itself.
+  useEffect(() => {
+    if (!isCoarsePointer || hoveredIndex === null) return;
+    const timer = window.setTimeout(() => setHoveredIndex(null), TOUCH_LABEL_MS);
+    return () => window.clearTimeout(timer);
+  }, [isCoarsePointer, hoveredIndex]);
 
   const handleDotClick = (section: SectionId) => {
     if (section === activeSection) {

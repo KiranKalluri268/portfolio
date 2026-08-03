@@ -100,13 +100,13 @@ export default function ProjectDetail({
             <Section title="Problem and approach">
               <div className="grid gap-6 md:grid-cols-2">
                 {project.problem && (
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-6">
+                  <div className="rounded-2xl border border-white/10 bg-black/55 backdrop-blur-sm p-6">
                     <h3 className="font-semibold text-accent-tint">Problem</h3>
                     <p className="mt-3 leading-relaxed text-gray-300">{project.problem}</p>
                   </div>
                 )}
                 {project.solution && (
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-6">
+                  <div className="rounded-2xl border border-white/10 bg-black/55 backdrop-blur-sm p-6">
                     <h3 className="font-semibold text-accent-tint">Solution</h3>
                     <p className="mt-3 leading-relaxed text-gray-300">{project.solution}</p>
                   </div>
@@ -119,7 +119,7 @@ export default function ProjectDetail({
             <Section title="How it works">
               <div className="grid gap-4 md:grid-cols-3">
                 {project.howItWorks.map((item, index) => (
-                  <div key={item.title} className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
+                  <div key={item.title} className="rounded-2xl border border-white/10 bg-black/55 backdrop-blur-sm p-5">
                     <span className="text-sm font-bold text-accent-soft">{String(index + 1).padStart(2, "0")}</span>
                     <h3 className="mt-3 text-lg font-semibold">{item.title}</h3>
                     <p className="mt-2 text-sm leading-relaxed text-gray-400">{item.description}</p>
@@ -149,7 +149,7 @@ export default function ProjectDetail({
             <Section title="Challenges and decisions">
               <div className="space-y-5">
                 {project.challenges.map((item) => (
-                  <div key={item.challenge} className="rounded-2xl border border-white/10 bg-white/[0.035] p-6">
+                  <div key={item.challenge} className="rounded-2xl border border-white/10 bg-black/55 backdrop-blur-sm p-6">
                     <h3 className="font-semibold">{item.challenge}</h3>
                     <p className="mt-3 leading-relaxed text-gray-300"><strong className="text-accent-tint">Approach:</strong> {item.solution}</p>
                     {item.lesson && <p className="mt-2 leading-relaxed text-gray-400"><strong>Lesson:</strong> {item.lesson}</p>}
@@ -175,7 +175,7 @@ export default function ProjectDetail({
             <Section title="Outcomes">
               <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {project.outcomes.map((outcome) => (
-                  <div key={outcome.label} className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
+                  <div key={outcome.label} className="rounded-2xl border border-white/10 bg-black/55 backdrop-blur-sm p-5">
                     <dt className="text-2xl font-bold">{outcome.value}</dt>
                     <dd className="mt-2 text-sm text-gray-400">{outcome.label}</dd>
                   </div>

@@ -512,7 +512,7 @@ export default function SkillsWeb({
 
             <div className="grid gap-5 py-7 md:grid-cols-2">
               {data.domains.map((domain) => (
-                <section key={domain.slug} className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+                <section key={domain.slug} className="rounded-3xl border border-white/10 bg-black/55 backdrop-blur-sm p-5">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: domain.accent }}>
                     Domain
                   </p>
