@@ -10,6 +10,10 @@ interface TooltipProps {
 
 const GAP = 20;
 
+/** Clearance from a tap. Wider than the cursor's, because a fingertip covers
+ *  far more of the screen than a pointer does. */
+const TOUCH_GAP = 30;
+
 export default function Tooltip({ text, isVisible }: TooltipProps) {
   const tooltipRef = useRef<HTMLDivElement>(null);
   const pointRef = useRef<{ x: number; y: number } | null>(null);
@@ -32,8 +36,16 @@ export default function Tooltip({ text, isVisible }: TooltipProps) {
       : point.x + GAP + offsetWidth > window.innerWidth
         ? Math.max(0, point.x - GAP - offsetWidth)
         : point.x + GAP;
+
+    // Controls near the top edge have no room above them. Clamping there put
+    // the label straight back on top of the control it names, hiding the very
+    // thing being described — the audio toggle's bars vanished behind it — so
+    // drop below the finger instead, which is the only clear space left.
+    const above = point.y - TOUCH_GAP - offsetHeight;
     const y = isCoarsePointer
-      ? Math.max(GAP, point.y - GAP - offsetHeight)
+      ? above >= GAP
+        ? above
+        : point.y + TOUCH_GAP
       : point.y + GAP + offsetHeight > window.innerHeight
         ? Math.max(0, point.y - GAP - offsetHeight)
         : point.y + GAP;
