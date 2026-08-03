@@ -11,7 +11,7 @@
 .actions {
   box-sizing: border-box;
   display: flex;
-  width: 210mm;
+  width: min(210mm, 100%);
   margin: 0 auto 1rem;
   align-items: center;
   justify-content: space-between;
@@ -61,6 +61,9 @@
   width: 100%;
   max-width: 210mm;
   margin: 0 auto;
+  /* On the sheet itself this would be clipped away by the frame, which has to
+     hide the unscaled box the transform leaves behind. */
+  box-shadow: 0 18px 55px rgb(0 0 0 / 45%);
 }
 
 .paper {
@@ -69,7 +72,6 @@
   padding: 12mm 13mm;
   background: #fff;
   color: #111;
-  box-shadow: 0 18px 55px rgb(0 0 0 / 45%);
   font-family: Arial, Helvetica, sans-serif;
   font-size: 10.5pt;
   line-height: 1.4;
@@ -295,6 +297,11 @@
     padding: 0;
   }
 
+  .paperFrame {
+    width: auto;
+    margin: 0.85rem max(0.85rem, env(safe-area-inset-right)) 1.75rem max(0.85rem, env(safe-area-inset-left));
+  }
+
   .actions {
     position: sticky;
     top: 0;
@@ -329,6 +336,9 @@
   .paperFrame {
     max-width: none;
     height: auto !important;
+    margin: 0;
+    overflow: visible !important;
+    box-shadow: none;
   }
 
   .paper {

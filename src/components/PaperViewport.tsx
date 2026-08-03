@@ -50,9 +50,11 @@ export default function PaperViewport({
 
       const scale = Math.min(1, available / naturalWidth);
       paper.style.transform = scale < 1 ? `scale(${scale})` : "";
-      // A transform does not affect layout, so without this the page keeps the
-      // full-size sheet's height and leaves a long empty gap beneath it.
+      // A transform does not affect layout, so without these the sheet still
+      // occupies its full unscaled box: the page keeps a long empty gap beneath
+      // it, and drags sideways into empty space beside it.
       frame.style.height = scale < 1 ? `${naturalHeight * scale}px` : "";
+      frame.style.overflow = scale < 1 ? "hidden" : "";
     };
 
     fit();
