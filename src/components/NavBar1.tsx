@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useHoverLabel } from "@/hooks/useHoverLabel";
 import Link from 'next/link';
 import AudioToggle from './AudioToggle';
 import Tooltip from './Tooltip';
 
 export default function NavBar() {
-  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const [hoveredItem, setHoveredItem] = useHoverLabel<string>();
 
   return (
     <header

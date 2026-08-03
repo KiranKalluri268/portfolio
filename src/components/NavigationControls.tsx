@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useHoverLabel } from "@/hooks/useHoverLabel";
 import Tooltip from "./Tooltip";
 import { SECTION_IDS, useActiveSection, useScrollActions } from "@/context/SmoothScrollContext";
 
@@ -8,7 +9,7 @@ export default function NavigationControls() {
     const activeSection = useActiveSection();
     const { scrollNext, scrollPrev } = useScrollActions();
     const activeIndex = SECTION_IDS.indexOf(activeSection);
-    const [hoveredButton, setHoveredButton] = useState<string | null>(null);
+    const [hoveredButton, setHoveredButton] = useHoverLabel<string>();
 
     const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
 
