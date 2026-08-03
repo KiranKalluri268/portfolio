@@ -36,7 +36,7 @@
 }
 
 .cvNote a {
-  color: #93c5fd;
+  color: #ffb27a;
   text-underline-offset: 2px;
 }
 
@@ -54,7 +54,7 @@
 }
 
 .backLink:hover {
-  color: #60a5fa;
+  color: #ff7a18;
 }
 
 .paper {
@@ -101,7 +101,7 @@
 }
 
 .links a {
-  color: #005bbb;
+  color: #b8380a;
   text-decoration: underline;
   text-underline-offset: 1px;
 }

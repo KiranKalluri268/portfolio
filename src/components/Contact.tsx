@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useHoverLabel } from "@/hooks/useHoverLabel";
 import type { ContactForm, FormErrors, SocialLink } from "@/types";
 
 import Tooltip from "./Tooltip";
@@ -84,7 +85,7 @@ export default function ContactSection({
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
-  const [hoveredLink, setHoveredLink] = useState<string | null>(null);
+  const [hoveredLink, setHoveredLink] = useHoverLabel<string>();
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};

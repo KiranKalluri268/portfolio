@@ -8,7 +8,7 @@
       "slug": "software-development",
       "label": "Software Development",
       "description": "Products, interfaces, services, data, and mobile applications.",
-      "accent": "#60a5fa",
+      "accent": "#ff7a18",
       "angle": -90,
       "categories": [
         { "slug": "frontend", "label": "Frontend", "description": "Interfaces and browser experiences." },

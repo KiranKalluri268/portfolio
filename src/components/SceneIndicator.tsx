@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { useActiveSection, useScrollActions, type SectionId } from "@/context/SmoothScrollContext";
 import { useAudio } from "@/context/AudioContextProvider";
 import { useCoarsePointer } from "@/hooks/useMediaQuery";
+import { useHoverLabel } from "@/hooks/useHoverLabel";
 import type { SceneIndex } from "@/types";
 
 interface SceneInfo {
@@ -28,7 +29,7 @@ export default function SceneIndicator() {
   const { hasEntered } = useAudio();
   const activeSection = useActiveSection();
   const { scrollToSection, toggleProjectsEndpoint } = useScrollActions();
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [hoveredIndex, setHoveredIndex] = useHoverLabel<number>();
   const [portalReady, setPortalReady] = useState(false);
   const isCoarsePointer = useCoarsePointer();
 
@@ -107,9 +108,9 @@ export default function SceneIndicator() {
                     style={{
                       width: dotSize,
                       height: dotSize,
-                      backgroundColor: isActive ? "var(--color-accent-warm)" : "white",
+                      backgroundColor: isActive ? "var(--color-accent-soft)" : "white",
                       boxShadow: isActive
-                        ? "0 0 16px 4px color-mix(in oklab, var(--color-accent-warm-deep) 90%, transparent)"
+                        ? "0 0 16px 4px color-mix(in oklab, var(--color-accent) 90%, transparent)"
                         : isHovered
                           ? "0 0 10px 2px rgba(255, 255, 255, 0.8)"
                           : "0 0 6px rgba(255, 255, 255, 0.35)",

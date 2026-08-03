@@ -1,11 +1,11 @@
 "use client";
 
 import { type Ref, useLayoutEffect, useRef } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import type { SkillCategoryContent, SkillContent } from "@/lib/content/types";
 import { useScrollActions } from "@/context/SmoothScrollContext";
 import gsap from "gsap";
+import { SkillMark } from "./skills/skill-icons";
 
 export interface SkillCategoryGroup {
   category: SkillCategoryContent;
@@ -42,13 +42,14 @@ function SkillGroup({
           tabIndex={duplicate ? -1 : 0}
         >
           <div className="flex h-10 items-center justify-center select-none text-xl font-bold sm:text-2xl">
-            {skill.icon ? (
-              <Image src={skill.icon} alt="" width={40} height={40} className="h-10 w-10 object-contain" />
-            ) : (
-              skill.iconText ?? skill.name.slice(0, 2)
-            )}
+            <SkillMark skill={skill} />
           </div>
-          <span className="mt-1 whitespace-nowrap text-xs select-none">{skill.name}</span>
+          {/* Two lines, then an ellipsis. A fixed height rather than a natural
+              one so every icon in the row sits at the same level whether its
+              label wraps or not — the full name is on the link's title. */}
+          <span className="mt-1 line-clamp-2 h-8 text-center text-xs leading-4 select-none">
+            {skill.name}
+          </span>
         </Link>
       ))}
     </div>

@@ -135,7 +135,7 @@ export default function Hero() {
             className="font-bold font-[family-name:var(--font-tektur)] whitespace-pre-line leading-none md:font-[family-name:var(--font-foldit)]"
             style={{
               textShadow:
-                "0.1rem 0 0.3rem rgba(255, 255, 255, 0.8), 0 0 0.6rem rgba(18, 33, 163, 0.5)",
+                "0.1rem 0 0.3rem rgba(255, 255, 255, 0.8), 0 0 0.6rem rgba(224, 69, 10, 0.5)",
             }}
           >
             {visibleDisplayText.split('\n').map((part, index) => (
@@ -182,8 +182,8 @@ export default function Hero() {
             <span className="sr-only">
               {words.map((word) => word.replace(/\.+$/, "")).join(", ")}
             </span>
-            <span className="text-accent-warm-deep" aria-hidden="true">{visibleSecondLine}</span>
-            {!reduceMotion && showSecondCursor && <span className="animate-blink text-accent-warm-deep" aria-hidden="true">|</span>}
+            <span className="text-accent" aria-hidden="true">{visibleSecondLine}</span>
+            {!reduceMotion && showSecondCursor && <span className="animate-blink text-accent" aria-hidden="true">|</span>}
           </h2>
 
           <div
@@ -210,15 +210,15 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Scroll Indicator */}
+      {/* The scroll cue used to live here as its own two-line label. It is now
+          one of the scenes NavigationHint speaks for, so that every "what do I
+          do here?" answer on the page looks and behaves the same. */}
       <button
         type="button"
-        className="scroll-hint absolute bottom-[env(safe-area-inset-bottom)] left-1/2 z-20 flex -translate-x-1/2 cursor-pointer flex-col items-center gap-0 rounded bg-transparent text-white/50 sm:bottom-1 sm:p-1"
+        className="scroll-hint absolute bottom-[env(safe-area-inset-bottom)] left-1/2 z-20 flex -translate-x-1/2 cursor-pointer items-center justify-center rounded bg-transparent p-2 text-white/50 transition-colors hover:text-white sm:bottom-1"
         onClick={scrollNext}
         aria-label="Scroll down"
       >
-        <span className="text-xs font-light tracking-widest sm:text-sm">Scroll Down or</span>
-        <span className="text-xs font-light tracking-widest sm:text-sm">Press Arrow Down</span>
         <svg
           className="h-4 w-4 sm:h-6 sm:w-6"
           fill="none"

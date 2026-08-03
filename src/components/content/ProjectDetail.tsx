@@ -10,7 +10,7 @@ function TextList({ items }: { items: string[] }) {
     <ul className="space-y-3 text-gray-300">
       {items.map((item) => (
         <li key={item} className="flex gap-3 leading-relaxed">
-          <span className="mt-[0.7em] h-1.5 w-1.5 shrink-0 rounded-full bg-blue-400" aria-hidden="true" />
+          <span className="mt-[0.7em] h-1.5 w-1.5 shrink-0 rounded-full bg-accent-soft" aria-hidden="true" />
           <span>{item}</span>
         </li>
       ))}
@@ -43,12 +43,12 @@ export default function ProjectDetail({
   return (
     <main className="relative z-10 min-h-[100svh] px-4 py-8 text-white sm:px-6 sm:py-12">
       <article className="mx-auto max-w-6xl">
-        <BackNavigationButton className="mb-10 rounded-full border border-white/15 bg-black/55 px-4 py-2 text-sm text-gray-200 backdrop-blur-md transition-colors hover:border-blue-400/40 hover:text-white">
+        <BackNavigationButton className="mb-10 rounded-full border border-white/15 bg-black/55 px-4 py-2 text-sm text-gray-200 backdrop-blur-md transition-colors hover:border-accent-soft/40 hover:text-white">
           <span aria-hidden="true">←</span> Back
         </BackNavigationButton>
 
         <header className="mb-10 max-w-4xl sm:mb-14">
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-blue-400">
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-accent-soft">
             Project case study · {project.role}
           </p>
           <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight sm:text-6xl">
@@ -63,7 +63,7 @@ export default function ProjectDetail({
                 href={project.liveUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black hover:bg-blue-100"
+                className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black hover:bg-accent-tint"
               >
                 Open live project <span aria-hidden="true">↗</span>
               </a>
@@ -73,7 +73,7 @@ export default function ProjectDetail({
                 href={project.repositoryUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-full border border-white/20 bg-black/45 px-5 py-2.5 text-sm font-semibold hover:border-blue-400/60 hover:text-blue-300"
+                className="rounded-full border border-white/20 bg-black/45 px-5 py-2.5 text-sm font-semibold hover:border-accent-soft/60 hover:text-accent-tint"
               >
                 View source <span aria-hidden="true">↗</span>
               </a>
@@ -100,14 +100,14 @@ export default function ProjectDetail({
             <Section title="Problem and approach">
               <div className="grid gap-6 md:grid-cols-2">
                 {project.problem && (
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-6">
-                    <h3 className="font-semibold text-blue-300">Problem</h3>
+                  <div className="rounded-2xl border border-white/10 bg-black/55 backdrop-blur-sm p-6">
+                    <h3 className="font-semibold text-accent-tint">Problem</h3>
                     <p className="mt-3 leading-relaxed text-gray-300">{project.problem}</p>
                   </div>
                 )}
                 {project.solution && (
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-6">
-                    <h3 className="font-semibold text-blue-300">Solution</h3>
+                  <div className="rounded-2xl border border-white/10 bg-black/55 backdrop-blur-sm p-6">
+                    <h3 className="font-semibold text-accent-tint">Solution</h3>
                     <p className="mt-3 leading-relaxed text-gray-300">{project.solution}</p>
                   </div>
                 )}
@@ -119,8 +119,8 @@ export default function ProjectDetail({
             <Section title="How it works">
               <div className="grid gap-4 md:grid-cols-3">
                 {project.howItWorks.map((item, index) => (
-                  <div key={item.title} className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
-                    <span className="text-sm font-bold text-blue-400">{String(index + 1).padStart(2, "0")}</span>
+                  <div key={item.title} className="rounded-2xl border border-white/10 bg-black/55 backdrop-blur-sm p-5">
+                    <span className="text-sm font-bold text-accent-soft">{String(index + 1).padStart(2, "0")}</span>
                     <h3 className="mt-3 text-lg font-semibold">{item.title}</h3>
                     <p className="mt-2 text-sm leading-relaxed text-gray-400">{item.description}</p>
                   </div>
@@ -134,7 +134,7 @@ export default function ProjectDetail({
               <ol className="space-y-6">
                 {project.buildingProcess.map((item, index) => (
                   <li key={item.title} className="grid gap-2 sm:grid-cols-[3rem_1fr]">
-                    <span className="font-bold text-blue-400">{index + 1}.</span>
+                    <span className="font-bold text-accent-soft">{index + 1}.</span>
                     <div>
                       <h3 className="text-lg font-semibold">{item.title}</h3>
                       <p className="mt-2 leading-relaxed text-gray-300">{item.description}</p>
@@ -149,9 +149,9 @@ export default function ProjectDetail({
             <Section title="Challenges and decisions">
               <div className="space-y-5">
                 {project.challenges.map((item) => (
-                  <div key={item.challenge} className="rounded-2xl border border-white/10 bg-white/[0.035] p-6">
+                  <div key={item.challenge} className="rounded-2xl border border-white/10 bg-black/55 backdrop-blur-sm p-6">
                     <h3 className="font-semibold">{item.challenge}</h3>
-                    <p className="mt-3 leading-relaxed text-gray-300"><strong className="text-blue-300">Approach:</strong> {item.solution}</p>
+                    <p className="mt-3 leading-relaxed text-gray-300"><strong className="text-accent-tint">Approach:</strong> {item.solution}</p>
                     {item.lesson && <p className="mt-2 leading-relaxed text-gray-400"><strong>Lesson:</strong> {item.lesson}</p>}
                   </div>
                 ))}
@@ -175,7 +175,7 @@ export default function ProjectDetail({
             <Section title="Outcomes">
               <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {project.outcomes.map((outcome) => (
-                  <div key={outcome.label} className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
+                  <div key={outcome.label} className="rounded-2xl border border-white/10 bg-black/55 backdrop-blur-sm p-5">
                     <dt className="text-2xl font-bold">{outcome.value}</dt>
                     <dd className="mt-2 text-sm text-gray-400">{outcome.label}</dd>
                   </div>
@@ -186,7 +186,7 @@ export default function ProjectDetail({
         </div>
 
         <div className="py-12 text-center">
-          <Link href="/projects" className="text-sm font-semibold text-blue-300 underline underline-offset-8">
+          <Link href="/projects" className="text-sm font-semibold text-accent-tint underline underline-offset-8">
             Explore all projects
           </Link>
         </div>

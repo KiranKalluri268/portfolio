@@ -3,14 +3,15 @@
 /* `static` so every token lands in the stylesheet even when no utility
    references it — GSAP and inline styles read several of these at runtime. */
 @theme static {
-  /* Cool accent — links, focus rings, UI chrome. */
-  --color-accent: #3b82f6;
-  --color-accent-soft: #60a5fa;
-  --color-accent-violet: #8b5cf6;
-
-  /* Warm accent — echoes the blackhole accretion disc in the background. */
-  --color-accent-warm: #ff7a18;
-  --color-accent-warm-deep: #e0450a;
+  /* One accent family, taken from the accretion disc burning behind the hero,
+     so every accented thing on the site reads as the same colour.
+       accent      — fills, dots, lines: the deep red-orange of the disc edge
+       accent-soft — links, labels, focus rings: the brighter orange inside it
+       accent-tint — accented body copy, where full saturation would tire the
+                     eye at paragraph length */
+  --color-accent: #e0450a;
+  --color-accent-soft: #ff7a18;
+  --color-accent-tint: #ffb27a;
 
   /* Copy that is present but not yet read. */
   --color-muted: #64748b;
@@ -101,7 +102,10 @@ canvas {
     width: auto;
   }
 
-  .scroll-hint {
+  .scroll-hint,
+  /* A short landscape viewport has no room to spare below the content, and
+     the hint would land on top of whatever it is pointing at. */
+  .hint-pill {
     display: none;
   }
 }

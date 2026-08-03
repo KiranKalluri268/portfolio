@@ -16,7 +16,7 @@ export default function SkillLink({
   return (
     <Link
       href={`/skills/${skill.slug}`}
-      className={`inline-flex items-center gap-2 rounded-full border border-blue-400/25 bg-blue-500/10 px-3 py-1.5 text-sm text-blue-100 transition-colors hover:border-blue-300/60 hover:bg-blue-400/15 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-400 ${className}`}
+      className={`inline-flex items-center gap-2 rounded-full border border-accent-soft/25 bg-accent/10 px-3 py-1.5 text-sm text-accent-tint transition-colors hover:border-accent-soft/60 hover:bg-accent-soft/15 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft ${className}`}
     >
       {skill.icon ? (
         <Image src={skill.icon} alt="" width={20} height={20} className="h-5 w-5 object-contain" />

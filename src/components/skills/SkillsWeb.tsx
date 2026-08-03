@@ -19,6 +19,9 @@ import {
   type GraphEdge,
   type GraphNode,
 } from "./skill-web-layout";
+import HintPill from "../hints/HintPill";
+import { useIdleHint, useInputMode } from "../hints/useIdleHint";
+import { hintText } from "../hints/hint-copy";
 
 const MIN_SCALE = 0.28;
 const MAX_SCALE = 1.65;
@@ -73,6 +76,8 @@ export default function SkillsWeb({
   const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [directoryOpen, setDirectoryOpen] = useState(false);
+  const inputMode = useInputMode();
+  const webHint = useIdleHint(hasInteracted ? null : "skill-web");
   const nodeById = useMemo(
     () => new Map(graph.nodes.map((node) => [node.id, node])),
     [graph.nodes],
@@ -287,8 +292,8 @@ export default function SkillsWeb({
         touchAction: "none",
         backgroundColor: "rgba(2, 3, 10, 0.34)",
         backgroundImage: [
-          "radial-gradient(circle at center, rgba(37,99,235,0.12), transparent 34%)",
-          "radial-gradient(circle at 24% 28%, rgba(168,85,247,0.1), transparent 20%)",
+          "radial-gradient(circle at center, rgba(224,69,10,0.14), transparent 34%)",
+          "radial-gradient(circle at 24% 28%, rgba(255,122,24,0.1), transparent 20%)",
         ].join(","),
       }}
       onPointerDown={handlePointerDown}
@@ -313,7 +318,7 @@ export default function SkillsWeb({
           style={{
             backgroundImage: [
               "radial-gradient(circle, rgba(255,255,255,.75) 0 1px, transparent 1.5px)",
-              "radial-gradient(circle, rgba(96,165,250,.55) 0 1px, transparent 1.5px)",
+              "radial-gradient(circle, rgba(255,122,24,.5) 0 1px, transparent 1.5px)",
             ].join(","),
             backgroundPosition: "0 0, 42px 58px",
             backgroundSize: "86px 86px, 113px 113px",
@@ -428,7 +433,7 @@ export default function SkillsWeb({
             >
               <span
                 className={node.kind === "center"
-                  ? "text-[0.65rem] font-semibold uppercase tracking-[0.32em] text-blue-300"
+                  ? "text-[0.65rem] font-semibold uppercase tracking-[0.32em] text-accent-tint"
                   : "text-[0.6rem] font-semibold uppercase tracking-[0.2em]"}
                 style={node.kind === "center" ? undefined : { color: node.accent }}
               >
@@ -458,12 +463,14 @@ export default function SkillsWeb({
         <button type="button" onClick={() => setDirectoryOpen(true)} className="h-10 rounded-full px-3 text-xs font-semibold uppercase tracking-wider hover:bg-white/10" aria-label="Open accessible skill directory">List</button>
       </div>
 
-      <div
-        className={`pointer-events-none absolute bottom-5 left-1/2 z-40 -translate-x-1/2 rounded-full border border-white/10 bg-black/65 px-4 py-2 text-center text-xs text-gray-300 backdrop-blur-md transition-opacity duration-500 sm:bottom-7 ${hasInteracted ? "opacity-0" : "opacity-100"}`}
-        aria-hidden="true"
-      >
-        Drag to explore · Scroll or pinch to zoom · Select a branch to focus
-      </div>
+      {/* Same hint system as the homepage: it waits until someone has stalled
+          rather than greeting everyone, and retires once they start dragging.
+          Absolute rather than fixed so it sits inside the canvas. */}
+      <HintPill
+        text={hintText("skill-web", inputMode)}
+        visible={webHint.visible}
+        className="absolute bottom-5 left-1/2 sm:bottom-7"
+      />
 
       {activeNode && activeNode.kind !== "center" && (
         <aside
@@ -490,13 +497,13 @@ export default function SkillsWeb({
           <div className="mx-auto max-w-5xl">
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-[#02030a]/95 py-4 backdrop-blur-xl">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-400">Alternative view</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-accent-soft">Alternative view</p>
                 <h2 id="skill-directory-title" className="mt-1 text-2xl font-bold">Skill directory</h2>
               </div>
               <button
                 type="button"
                 onClick={() => setDirectoryOpen(false)}
-                className="rounded-full border border-white/15 px-4 py-2 text-sm hover:border-blue-400/50"
+                className="rounded-full border border-white/15 px-4 py-2 text-sm hover:border-accent-soft/50"
                 aria-label="Close skill directory"
               >
                 Close
@@ -505,7 +512,7 @@ export default function SkillsWeb({
 
             <div className="grid gap-5 py-7 md:grid-cols-2">
               {data.domains.map((domain) => (
-                <section key={domain.slug} className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+                <section key={domain.slug} className="rounded-3xl border border-white/10 bg-black/55 backdrop-blur-sm p-5">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: domain.accent }}>
                     Domain
                   </p>
@@ -521,7 +528,7 @@ export default function SkillsWeb({
                               <Link
                                 key={skill.slug}
                                 href={`/skills/${skill.slug}`}
-                                className="rounded-full border border-white/10 bg-black/50 px-3 py-1.5 text-xs text-gray-300 transition-colors hover:border-blue-400/40 hover:text-white"
+                                className="rounded-full border border-white/10 bg-black/50 px-3 py-1.5 text-xs text-gray-300 transition-colors hover:border-accent-soft/40 hover:text-white"
                               >
                                 {skill.name}
                               </Link>

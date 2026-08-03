@@ -38,7 +38,7 @@ function TextList({ items }: { items: string[] }) {
     <ul className="space-y-3 text-gray-300">
       {items.map((item) => (
         <li key={item} className="flex gap-3 leading-relaxed">
-          <span className="mt-[0.7em] h-1.5 w-1.5 shrink-0 rounded-full bg-blue-400" aria-hidden="true" />
+          <span className="mt-[0.7em] h-1.5 w-1.5 shrink-0 rounded-full bg-accent-soft" aria-hidden="true" />
           <span>{item}</span>
         </li>
       ))}
@@ -62,7 +62,7 @@ function WorkTimeline({
     <ol className="relative space-y-5">
       {/* Connecting line, inset to pass through the centre of each node. */}
       <span
-        className="pointer-events-none absolute left-[7px] top-2 bottom-2 w-px bg-gradient-to-b from-accent/70 via-accent-violet/50 to-transparent sm:left-[9px]"
+        className="pointer-events-none absolute left-[7px] top-2 bottom-2 w-px bg-gradient-to-b from-accent/70 via-accent-soft/50 to-transparent sm:left-[9px]"
         aria-hidden="true"
       />
 
@@ -76,11 +76,11 @@ function WorkTimeline({
         return (
           <li key={item.title} className="relative pl-8 sm:pl-10">
             <span
-              className="absolute left-0 top-[1.35rem] h-[15px] w-[15px] -translate-y-1/2 rounded-full border border-white/70 bg-accent shadow-[0_0_14px_rgba(59,130,246,0.9)] sm:h-[19px] sm:w-[19px]"
+              className="absolute left-0 top-[1.35rem] h-[15px] w-[15px] -translate-y-1/2 rounded-full border border-white/70 bg-accent shadow-[0_0_14px_rgba(224,69,10,0.9)] sm:h-[19px] sm:w-[19px]"
               aria-hidden="true"
             />
 
-            <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-5 transition-[background-color,border-color] duration-300 hover:border-accent-soft/25 hover:bg-white/[0.06] sm:p-6">
+            <div className="rounded-2xl border border-white/10 bg-black/55 backdrop-blur-sm p-5 transition-[background-color,border-color] duration-300 hover:border-accent-soft/25 hover:bg-white/5 sm:p-6">
               <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2">
                 <span className="text-sm font-bold text-accent-soft">
                   {String(index + 1).padStart(2, "0")}
@@ -102,7 +102,7 @@ function WorkTimeline({
 
               {item.impact && (
                 <p className="mt-3 leading-relaxed text-gray-400">
-                  <strong className="text-blue-300">Impact:</strong> {item.impact}
+                  <strong className="text-accent-tint">Impact:</strong> {item.impact}
                 </p>
               )}
 
@@ -117,7 +117,7 @@ function WorkTimeline({
               {project && (
                 <Link
                   href={`/projects/${project.slug}`}
-                  className="mt-4 inline-flex items-center gap-1.5 rounded text-sm font-semibold text-blue-300 underline underline-offset-4 transition-colors hover:text-blue-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-400"
+                  className="mt-4 inline-flex items-center gap-1.5 rounded text-sm font-semibold text-accent-tint underline underline-offset-4 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft"
                 >
                   Read the {shortProjectName(project.title)} case study
                   <span aria-hidden="true">→</span>
@@ -134,7 +134,7 @@ function WorkTimeline({
 /** A recommendation from someone who managed the role, quoted verbatim. */
 function Recommendation({ recommendation }: { recommendation: ExperienceRecommendation }) {
   return (
-    <figure className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] p-6 sm:p-8">
+    <figure className="relative overflow-hidden rounded-2xl border border-white/10 bg-black/55 backdrop-blur-sm p-6 sm:p-8">
       <span
         className="pointer-events-none absolute -top-6 left-4 select-none font-serif text-8xl leading-none text-accent/15"
         aria-hidden="true"
@@ -169,7 +169,7 @@ function Recommendation({ recommendation }: { recommendation: ExperienceRecommen
             href={recommendation.sourceUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-3 inline-flex items-center gap-1.5 rounded text-sm font-semibold text-blue-300 underline underline-offset-4 transition-colors hover:text-blue-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-400"
+            className="mt-3 inline-flex items-center gap-1.5 rounded text-sm font-semibold text-accent-tint underline underline-offset-4 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft"
           >
             {recommendation.sourceLabel}
             <span aria-hidden="true">↗</span>
@@ -195,12 +195,12 @@ export default function ExperienceDetail({
   return (
     <main className="relative z-10 min-h-[100svh] px-4 py-8 text-white sm:px-6 sm:py-12">
       <article className="mx-auto max-w-5xl">
-        <BackNavigationButton className="mb-10 rounded-full border border-white/15 bg-black/55 px-4 py-2 text-sm text-gray-200 backdrop-blur-md transition-colors hover:border-blue-400/40 hover:text-white">
+        <BackNavigationButton className="mb-10 rounded-full border border-white/15 bg-black/55 px-4 py-2 text-sm text-gray-200 backdrop-blur-md transition-colors hover:border-accent-soft/40 hover:text-white">
           <span aria-hidden="true">←</span> Back
         </BackNavigationButton>
 
         <header className="mb-10 max-w-4xl sm:mb-14">
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-blue-400">
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-accent-soft">
             Experience{experience.employmentType ? ` · ${experience.employmentType}` : ""}
           </p>
           <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight sm:text-6xl">
@@ -212,7 +212,7 @@ export default function ExperienceDetail({
                 href={experience.companyUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded underline underline-offset-4 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-400"
+                className="rounded underline underline-offset-4 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft"
               >
                 {experience.company} <span aria-hidden="true">↗</span>
               </a>
@@ -317,7 +317,7 @@ export default function ExperienceDetail({
                 {experience.outcomes.map((outcome) => (
                   <div
                     key={outcome.label}
-                    className="rounded-2xl border border-white/10 bg-white/[0.035] p-5"
+                    className="rounded-2xl border border-white/10 bg-black/55 backdrop-blur-sm p-5"
                   >
                     <dt className="text-2xl font-bold">{outcome.value}</dt>
                     <dd className="mt-2 text-sm text-gray-400">{outcome.label}</dd>
@@ -331,7 +331,7 @@ export default function ExperienceDetail({
         <div className="py-12 text-center">
           <Link
             href="/#experience"
-            className="text-sm font-semibold text-blue-300 underline underline-offset-8"
+            className="text-sm font-semibold text-accent-tint underline underline-offset-8"
           >
             Back to the experience timeline
           </Link>
