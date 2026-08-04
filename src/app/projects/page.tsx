@@ -7,7 +7,8 @@ import ProjectLink from "@/components/content/ProjectLink";
 import ProjectThumbnail from "@/components/content/ProjectThumbnail";
 import SkillLink from "@/components/content/SkillLink";
 import { getAllProjects } from "@/lib/content/projects";
-import { getSkillsForProject } from "@/lib/content/relationships";
+import { getProjectOrigin, getSkillsForProject } from "@/lib/content/relationships";
+import type { ProjectOrigin } from "@/lib/content/relationships";
 import type { ProjectContent, SkillContent } from "@/lib/content/types";
 
 export const metadata: Metadata = {
@@ -181,10 +182,13 @@ export default function ProjectsPage() {
   const projects = getAllProjects();
   const featured = projects.filter((project) => project.featured);
   const additional = projects.filter((project) => !project.featured);
+  const origins = Object.fromEntries(
+    projects.map((project) => [project.slug, getProjectOrigin(project)]),
+  ) as Record<string, ProjectOrigin>;
 
   return (
     <ProjectsView
-      grid={<ProjectsGrid projects={projects} />}
+      grid={<ProjectsGrid projects={projects} origins={origins} />}
       list={
     <main className="relative z-10 min-h-[100svh] overflow-hidden px-4 py-8 text-white sm:px-6 sm:py-12 lg:px-10">
       <div className="mx-auto w-full max-w-7xl">

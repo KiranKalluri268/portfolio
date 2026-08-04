@@ -35,18 +35,41 @@
      as well would fight the drag and lag behind the finger. */
 }
 
+/* Where a project came from, read as a glow around the card. Set on the link
+   and on the legend swatches from the same declarations, so the key cannot
+   drift from the thing it explains. */
+.cardLink[data-origin="work"],
+.legendSwatch[data-origin="work"] {
+  --origin-colour: #63d8a4;
+}
+
+.cardLink[data-origin="selected"],
+.legendSwatch[data-origin="selected"] {
+  --origin-colour: var(--color-accent-soft, #ff7a18);
+}
+
+.cardLink[data-origin="personal"],
+.legendSwatch[data-origin="personal"] {
+  --origin-colour: #ffffff;
+}
+
 .cardLink {
   display: flex;
   height: 100%;
   width: 100%;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid rgb(255 255 255 / 12%);
+  border: 1px solid color-mix(in srgb, var(--origin-colour) 35%, transparent);
   border-radius: 1.25rem;
   background: rgb(0 0 0 / 55%);
   backdrop-filter: blur(8px);
   text-decoration: none;
   color: inherit;
+  /* Two shadows: a tight one that reads as an edge at any size, and a wide
+     soft one that survives the far rings where the card is a few pixels. */
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--origin-colour) 22%, transparent),
+    0 0 2.5rem color-mix(in srgb, var(--origin-colour) 30%, transparent);
 }
 
 .media {
@@ -96,6 +119,59 @@
 /* Far enough out that the words are a smear: show the picture alone. */
 .card[data-faded="true"] .meta {
   opacity: 0;
+}
+
+.legend {
+  position: fixed;
+  bottom: 1rem;
+  left: 1rem;
+  z-index: 900;
+  /* Reference only: it must never eat a drag that starts over it. */
+  pointer-events: none;
+  border-radius: 1rem;
+  border: 1px solid rgb(255 255 255 / 10%);
+  background: rgb(0 0 0 / 65%);
+  padding: 0.6rem 0.8rem;
+  backdrop-filter: blur(12px);
+}
+
+.legendTitle {
+  margin-bottom: 0.4rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 55%);
+}
+
+.legendList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.75rem;
+  color: rgb(255 255 255 / 80%);
+}
+
+.legendSwatch {
+  height: 0.6rem;
+  width: 0.6rem;
+  flex: 0 0 auto;
+  border-radius: 9999px;
+  background: var(--origin-colour);
+  box-shadow: 0 0 0.5rem color-mix(in srgb, var(--origin-colour) 60%, transparent);
+}
+
+@media (min-width: 640px) {
+  .legend {
+    bottom: 1.5rem;
+    left: 1.5rem;
+  }
 }
 
 .liveRegion {

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import ProjectThumbnail from "@/components/content/ProjectThumbnail";
 import { SKILL_ICONS } from "@/components/skills/skill-icons";
 import { useReducedMotion } from "@/hooks/useMediaQuery";
+import type { ProjectOrigin } from "@/lib/content/relationships";
 import type { ProjectContent } from "@/lib/content/types";
 import {
   CULL_DISTANCE,
@@ -45,7 +46,22 @@ const TRAVEL_PER_SECOND = 0.0002;
  *  the name and skills would be illegible and only add noise. */
 const LABEL_MIN_SCALE = ringFalloff(1.6);
 
-export default function ProjectsGrid({ projects }: { projects: ProjectContent[] }) {
+/** What each outline colour means, in the order the legend reads. */
+const ORIGINS: { origin: ProjectOrigin; label: string }[] = [
+  { origin: "work", label: "Built in a role" },
+  { origin: "selected", label: "Selected work" },
+  { origin: "personal", label: "Built for myself" },
+];
+
+export default function ProjectsGrid({
+  projects,
+  origins,
+}: {
+  projects: ProjectContent[];
+  /** Keyed by slug: where each project came from, worked out on the server
+   *  where the experience content lives. */
+  origins: Record<string, ProjectOrigin>;
+}) {
   const stageRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef(new Map<string, HTMLElement>());
   const focus = useRef<Vec>({ x: 0, y: 0 });
@@ -285,7 +301,27 @@ export default function ProjectsGrid({ projects }: { projects: ProjectContent[] 
 
   const focusedProject = projects[projectIndexFor(focusedCell, projects.length)];
 
+  // Only key what is actually on the grid. Every project today is either work
+  // or selected, and a key entry for a colour nobody can find is a puzzle
+  // rather than an explanation; add a project that is neither and its entry
+  // appears on its own.
+  const present = new Set(projects.map((project) => origins[project.slug] ?? "personal"));
+  const shownOrigins = ORIGINS.filter((entry) => present.has(entry.origin));
+
   return (
+    <>
+      <div className={styles.legend}>
+        <p className={styles.legendTitle}>Where each project came from</p>
+        <ul className={styles.legendList}>
+          {shownOrigins.map((entry) => (
+            <li key={entry.origin} className={styles.legendItem}>
+              <span className={styles.legendSwatch} data-origin={entry.origin} aria-hidden="true" />
+              {entry.label}
+            </li>
+          ))}
+        </ul>
+      </div>
+
     <div
       ref={stageRef}
       className={styles.stage}
@@ -325,6 +361,7 @@ export default function ProjectsGrid({ projects }: { projects: ProjectContent[] 
             <Link
               href={`/projects/${project.slug}`}
               className={styles.cardLink}
+              data-origin={origins[project.slug] ?? "personal"}
               tabIndex={isFocused ? 0 : -1}
             >
               <span className={styles.media}>
@@ -357,5 +394,6 @@ export default function ProjectsGrid({ projects }: { projects: ProjectContent[] 
         {focusedProject ? `${focusedProject.title} in focus` : ""}
       </p>
     </div>
+    </>
   );
 }
