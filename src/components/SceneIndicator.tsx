@@ -39,6 +39,12 @@ const PILL_TRAVEL_MS = 250;
 /** How long after a drag a click is treated as that drag's own leftover. */
 const CLICK_AFTER_DRAG_MS = 400;
 
+/** How long the pill waits on a dot the visitor picked before going back to
+ *  following the page. Long enough for the scroll to arrive; short enough that
+ *  a pick the page never reaches — because the visitor scrolled off somewhere
+ *  else meanwhile — does not strand it there for the rest of the visit. */
+const SELECTION_HOLD_MS = 2500;
+
 /** The pill's clearance from the bar, measured against the bar's outer edge.
  *  Idle it sits this far inside on every side; moving it stands this far
  *  outside on every side. Driving the track's padding and the pill's moving
@@ -77,11 +83,10 @@ export default function SceneIndicator() {
     moveHeight: 0,
     trackPadding: 0,
   });
-  /** Where the visitor has put the pill. Deliberately not derived from the
-   *  active section: the pill is a handle that stays where it was left, and the
-   *  orange dot alone reports where the page actually is. Starts at the first
-   *  scene because the bar only appears once the visitor has entered, which
-   *  happens at the top of the page. */
+  /** Which dot the pill sits on. It follows the page: scroll to a section and
+   *  the pill comes with you. Two things take it off that — a drag, where it
+   *  follows the finger instead, and a pick, where it waits on the dot chosen
+   *  rather than chasing every section the page passes on the way there. */
   const [pillIndex, setPillIndex] = useState(0);
   const [drag, setDrag] = useState<DragState | null>(null);
   /** Set while a drag is in flight so the click it ends with can be swallowed —
@@ -200,9 +205,39 @@ export default function SceneIndicator() {
     };
   }, [portalReady, hasEntered]);
 
-  const handleDotClick = (index: number, section: SectionId) => {
-    // Selecting a dot outright puts the handle back on it.
+  /** A dot the visitor picked, held until the page gets there. */
+  const awaiting = useRef<number | null>(null);
+  const awaitingTimer = useRef(0);
+  const activeIndex = Math.max(0, scenes.findIndex((scene) => scene.id === activeSection));
+
+  /** Parks the pill on a picked dot and keeps it there while the page travels.
+   *  The timer is the safety net: if the visitor scrolls somewhere else before
+   *  the pick lands, the pill would otherwise be stranded on it. */
+  const holdPillAt = (index: number) => {
+    awaiting.current = index;
+    window.clearTimeout(awaitingTimer.current);
+    awaitingTimer.current = window.setTimeout(() => {
+      awaiting.current = null;
+    }, SELECTION_HOLD_MS);
     setPillIndex(index);
+  };
+
+  useEffect(() => () => window.clearTimeout(awaitingTimer.current), []);
+
+  // The pill follows the page. Held back only while a pick is still on its way:
+  // scrolling from the hero to contact passes through four sections, and the
+  // pill jumping through each of them is not what the visitor asked for.
+  useEffect(() => {
+    if (drag) return;
+    if (awaiting.current !== null && awaiting.current !== activeIndex) return;
+    awaiting.current = null;
+    setPillIndex(activeIndex);
+  }, [activeIndex, drag]);
+
+  const handleDotClick = (index: number, section: SectionId) => {
+    // Selecting a dot outright puts the handle on it, and keeps it there until
+    // the page arrives.
+    holdPillAt(index);
     if (section === activeSection) {
       if (section === "projects") toggleProjectsEndpoint();
       return;
@@ -272,12 +307,12 @@ export default function SceneIndicator() {
     rowRef.current?.releasePointerCapture?.(event.pointerId);
 
     if (drag) {
-      dragEndedAt.current = performance.now();
-      // Snap to the scene it was left over, and stay there: from here the
-      // active dot moves on with the page while the pill holds its place.
+      dragEndedAt.current = event.timeStamp;
+      // Snap to the scene it was left over and wait there while the page comes
+      // to meet it; once it arrives the pill goes back to following along.
       const target = scenes[drag.index];
       releasedRef.current = true;
-      setPillIndex(drag.index);
+      holdPillAt(drag.index);
       setDrag(null);
       if (target.id !== activeSection) scrollToSection(target.id);
       else if (target.id === "projects") toggleProjectsEndpoint();
@@ -301,7 +336,8 @@ export default function SceneIndicator() {
         // A click that ended a drag would scroll a second time, to whichever
         // dot the finger happened to finish over.
         onClickCapture={(event) => {
-          if (performance.now() - dragEndedAt.current > CLICK_AFTER_DRAG_MS) return;
+          // Both timestamps come from events, so they share a clock.
+          if (event.timeStamp - dragEndedAt.current > CLICK_AFTER_DRAG_MS) return;
           dragEndedAt.current = 0;
           event.preventDefault();
           event.stopPropagation();

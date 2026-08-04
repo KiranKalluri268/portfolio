@@ -1,0 +1,236 @@
+.stage {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  min-height: 100svh;
+  overflow: hidden;
+  cursor: grab;
+  /* The grid owns every direction, so the page must not scroll underneath it. */
+  touch-action: none;
+  outline: none;
+}
+
+.stage:active {
+  cursor: grabbing;
+}
+
+.stage:focus-visible {
+  outline: 2px solid var(--color-accent-soft);
+  outline-offset: -4px;
+}
+
+.card {
+  position: absolute;
+  /* Placed from the middle: the focus point is the centre of the viewport. */
+  top: 50%;
+  left: 50%;
+  /* Set from FOCUS_SCALE so the element matches what the transform maths
+     assumes; hardcoding it here once meant changing one and not the other. */
+  width: calc(var(--focus-scale) * 100%);
+  aspect-ratio: 4 / 5;
+  max-height: calc(var(--focus-scale) * 100%);
+  transform-origin: center center;
+  /* No transition: position and scale are written every frame, and easing them
+     as well would fight the drag and lag behind the finger. */
+  /* No will-change either. The translate3d in the transform already promotes
+     the card, and asking for a layer a second time on 125 cards cost 20% of
+     the frame on a throttled tablet for nothing. */
+}
+
+/* Where a project came from, read as a glow around the card. Set on the link
+   and on the legend swatches from the same declarations, so the key cannot
+   drift from the thing it explains. */
+.cardLink[data-origin="work"],
+.legendSwatch[data-origin="work"] {
+  --origin-colour: #63d8a4;
+}
+
+.cardLink[data-origin="selected"],
+.legendSwatch[data-origin="selected"] {
+  --origin-colour: var(--color-accent-soft, #ff7a18);
+}
+
+.cardLink[data-origin="personal"],
+.legendSwatch[data-origin="personal"] {
+  --origin-colour: #ffffff;
+}
+
+.cardLink {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--origin-colour) 35%, transparent);
+  border-radius: 1.25rem;
+  background: rgb(0 0 0 / 55%);
+  text-decoration: none;
+  color: inherit;
+  /* Two shadows: a tight one that reads as an edge at any size, and a wide
+     soft one that survives the far rings where the card is a few pixels. */
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--origin-colour) 22%, transparent),
+    0 0 2.5rem color-mix(in srgb, var(--origin-colour) 30%, transparent);
+}
+
+.media {
+  position: relative;
+  display: block;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.image {
+  object-fit: cover;
+}
+
+.meta {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 0.9rem 0.9rem;
+  /* The lens shrinks whole cards, so type shrinks with them. Sized against the
+     card rather than the page so it stays in proportion at every ring. */
+  transition: opacity 200ms ease-out;
+}
+
+.title {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: clamp(0.75rem, 2.2cqw, 1.05rem);
+  font-weight: 700;
+  line-height: 1.25;
+  color: #fff;
+}
+
+.skills {
+  display: flex;
+  gap: 0.5rem;
+  color: rgb(255 255 255 / 70%);
+}
+
+.skillIcon {
+  height: 1.1rem;
+  width: 1.1rem;
+}
+
+/* Blurring what is behind a card is a per-pixel GPU pass, and it was running
+   on every mounted card at once — the single most expensive thing on the page,
+   half the frame on a throttled tablet. It is only legible on the cards big
+   enough to have much behind them, so the middle of the lens keeps it and the
+   rest go without. */
+.card[data-near="true"] .cardLink {
+  backdrop-filter: blur(8px);
+}
+
+/* Far enough out that the words are a smear: show the picture alone. */
+.card[data-faded="true"] .meta {
+  opacity: 0;
+}
+
+.back {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 900;
+  cursor: pointer;
+  border-radius: 9999px;
+  border: 1px solid rgb(255 255 255 / 15%);
+  background: rgb(0 0 0 / 70%);
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  color: rgb(229 231 235);
+  backdrop-filter: blur(12px);
+  transition: color 200ms ease, border-color 200ms ease;
+}
+
+.back:hover {
+  border-color: color-mix(in srgb, var(--color-accent-soft) 40%, transparent);
+  color: #fff;
+}
+
+.heading {
+  position: fixed;
+  top: 4rem;
+  left: 1rem;
+  z-index: 900;
+  pointer-events: none;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: #fff;
+  /* The grid runs under it, so the type needs its own separation from whatever
+     card happens to be behind it. */
+  text-shadow: 0 2px 18px rgb(0 0 0 / 85%);
+}
+
+.legend {
+  position: fixed;
+  bottom: 1rem;
+  left: 1rem;
+  z-index: 900;
+  /* Reference only: it must never eat a drag that starts over it. */
+  pointer-events: none;
+  border-radius: 1rem;
+  border: 1px solid rgb(255 255 255 / 10%);
+  background: rgb(0 0 0 / 65%);
+  padding: 0.6rem 0.8rem;
+  backdrop-filter: blur(12px);
+}
+
+.legendList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.75rem;
+  color: rgb(255 255 255 / 80%);
+}
+
+.legendSwatch {
+  height: 0.6rem;
+  width: 0.6rem;
+  flex: 0 0 auto;
+  border-radius: 9999px;
+  background: var(--origin-colour);
+  box-shadow: 0 0 0.5rem color-mix(in srgb, var(--origin-colour) 60%, transparent);
+}
+
+@media (min-width: 640px) {
+  .back {
+    top: 1.5rem;
+    left: 1.5rem;
+  }
+
+  .heading {
+    top: 5rem;
+    left: 1.5rem;
+    font-size: 2.75rem;
+  }
+
+  .legend {
+    bottom: 1.5rem;
+    left: 1.5rem;
+  }
+}
+
+.liveRegion {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

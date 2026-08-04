@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import BackNavigationButton from "@/components/BackNavigationButton";
+import ProjectsGrid from "@/components/projects/ProjectsGrid";
+import ProjectsView from "@/components/projects/ProjectsView";
 import ProjectLink from "@/components/content/ProjectLink";
 import ProjectThumbnail from "@/components/content/ProjectThumbnail";
 import SkillLink from "@/components/content/SkillLink";
 import { getAllProjects } from "@/lib/content/projects";
-import { getSkillsForProject } from "@/lib/content/relationships";
+import { getProjectOrigin, getSkillsForProject } from "@/lib/content/relationships";
+import type { ProjectOrigin } from "@/lib/content/relationships";
 import type { ProjectContent, SkillContent } from "@/lib/content/types";
 
 export const metadata: Metadata = {
@@ -179,14 +182,22 @@ export default function ProjectsPage() {
   const projects = getAllProjects();
   const featured = projects.filter((project) => project.featured);
   const additional = projects.filter((project) => !project.featured);
+  const origins = Object.fromEntries(
+    projects.map((project) => [project.slug, getProjectOrigin(project)]),
+  ) as Record<string, ProjectOrigin>;
 
   return (
-    <main className="relative z-10 min-h-[100svh] overflow-hidden px-4 py-8 text-white sm:px-6 sm:py-12 lg:px-10">
-      <div className="mx-auto w-full max-w-7xl">
-        <BackNavigationButton className="mb-14 cursor-pointer rounded-full border border-white/15 bg-black/55 px-4 py-2 text-sm text-gray-200 backdrop-blur-md transition-colors hover:border-accent-soft/40 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft sm:mb-20">
-          <span aria-hidden="true">←</span> Back to portfolio
-        </BackNavigationButton>
+    <ProjectsView
+      grid={<ProjectsGrid projects={projects} origins={origins} />}
+      list={
+    <main className="relative z-10 min-h-[100svh] overflow-hidden px-4 pt-24 pb-8 text-white sm:px-6 sm:pt-28 sm:pb-12 lg:px-10">
+      {/* Fixed in the same corner as the grid's, so switching views does not
+          move the way out from under the visitor. */}
+      <BackNavigationButton className="fixed top-4 left-4 z-[900] cursor-pointer rounded-full border border-white/15 bg-black/70 px-4 py-2 text-sm text-gray-200 backdrop-blur-md transition-colors hover:border-accent-soft/40 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft sm:top-6 sm:left-6">
+        <span aria-hidden="true">←</span> Back to portfolio
+      </BackNavigationButton>
 
+      <div className="mx-auto w-full max-w-7xl">
         <header className="mb-14 max-w-4xl sm:mb-20">
           <p className="mb-4 text-sm font-semibold uppercase tracking-[0.28em] text-accent-soft">Selected work</p>
           <h1 className="text-4xl font-bold leading-none tracking-tight sm:text-6xl lg:text-7xl">
@@ -241,5 +252,7 @@ export default function ProjectsPage() {
         </section>
       </div>
     </main>
+      }
+    />
   );
 }
