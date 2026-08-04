@@ -30,8 +30,11 @@ const TOOLTIP_GAP = 20;
 const DRAG_THRESHOLD = 5;
 
 /** How long the pill takes to travel to a dot, and so how long it stays at its
- *  larger size after a tap. Matches the transform transition below. */
-const PILL_TRAVEL_MS = 500;
+ *  larger size after a tap. Matches the transform transition below.
+ *
+ *  Only the handle: the page's own scroll is Lenis's, and the active dot
+ *  changes colour on its own transition, so neither follows this. */
+const PILL_TRAVEL_MS = 250;
 
 /** How long after a drag a click is treated as that drag's own leftover. */
 const CLICK_AFTER_DRAG_MS = 400;
