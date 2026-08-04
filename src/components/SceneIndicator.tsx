@@ -33,9 +33,15 @@ const DRAG_THRESHOLD = 5;
  *  larger size after a tap. Matches the transform transition below. */
 const PILL_TRAVEL_MS = 500;
 
-/** Space between the pill and the bar when idle, on every side. Driving the
- *  track's padding from it too is what keeps that gap equal at the ends. */
-const PILL_INSET = 4;
+/** How long after a drag a click is treated as that drag's own leftover. */
+const CLICK_AFTER_DRAG_MS = 400;
+
+/** The pill's clearance from the bar, measured against the bar's outer edge.
+ *  Idle it sits this far inside on every side; moving it stands this far
+ *  outside on every side. Driving the track's padding and the pill's moving
+ *  width from the same number is what keeps both gaps even at the ends, where
+ *  the geometry is otherwise set by the run from the end dot to the edge. */
+const PILL_GAP = 5;
 
 interface DragState {
   /** Where the pill currently sits, in px from the left of the dot row. */
@@ -54,6 +60,7 @@ export default function SceneIndicator() {
   const reduceMotion = useReducedMotion();
 
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLElement>(null);
   const rowRef = useRef<HTMLDivElement>(null);
   const dotRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -77,6 +84,12 @@ export default function SceneIndicator() {
   /** Set while a drag is in flight so the click it ends with can be swallowed —
    *  letting it through would scroll twice, to two different places. */
   const draggedRef = useRef(false);
+  /** When that drag finished. The flag above cannot be the whole story: it is
+   *  cleared on the next pointerdown, and a click can arrive without one — a
+   *  keyboard Enter on a focused dot, or a tap that fires no synthesised click.
+   *  Either would be swallowed for the rest of the visit. Only clicks landing
+   *  in the moment right after a drag are refused. */
+  const dragEndedAt = useRef(0);
   /** True while the pill is travelling to a dot after a tap. Growing is tied to
    *  the pill moving, not to the gesture that moved it, so selecting a dot
    *  animates exactly as dragging to it does. */
@@ -106,24 +119,28 @@ export default function SceneIndicator() {
         return rect.left - rowLeft + rect.width / 2;
       });
       setCenters(centersNow);
-      // Sized from the bar rather than the dot: it is a handle sitting in the
-      // bar, so it reads against the bar's height. Half a pill stays narrower
-      // than the gap to the next dot at both breakpoints, so it never crowds
-      // its neighbours.
-      const barHeight = row.getBoundingClientRect().height;
-      const idleHeight = Math.max(18, barHeight - PILL_INSET * 2);
+      // Measured against the bar's outer edge, which is what the eye compares
+      // the pill to — the row inside it excludes the border.
+      const nav = navRef.current;
+      if (!nav) return;
+      const navHeight = nav.getBoundingClientRect().height;
+      const border = parseFloat(getComputedStyle(nav).borderLeftWidth) || 0;
+      const firstCenter = centersNow[0] ?? 0;
+
+      const idleHeight = Math.max(18, navHeight - PILL_GAP * 2);
       const idleWidth = Math.round(idleHeight * 1.6);
+      // Padding that puts the pill exactly PILL_GAP inside the bar's end when
+      // it rests on the first or last dot.
+      const trackPadding = Math.max(0, PILL_GAP + idleWidth / 2 - firstCenter - border);
       setPill({
         idleWidth,
         idleHeight,
-        // Bigger in both directions while it travels, and taller than the bar,
-        // so the handle lifts out of the track as it moves.
-        moveWidth: idleWidth + 12,
-        moveHeight: barHeight + 8,
-        // Enough that the pill clears the bar's end by the same gap it keeps
-        // above and below; without it the handle hangs off the first and last
-        // dots, where half a pill is wider than the run to the edge.
-        trackPadding: Math.max(0, idleWidth / 2 - (centersNow[0] ?? 0) + PILL_INSET),
+        // Standing PILL_GAP outside the bar on every side. Solving the same
+        // geometry the other way gives the width: the extra needed at the ends
+        // is the idle gap plus the outer one, twice over.
+        moveWidth: idleWidth + PILL_GAP * 4,
+        moveHeight: navHeight + PILL_GAP * 2,
+        trackPadding,
       });
     };
 
@@ -252,6 +269,7 @@ export default function SceneIndicator() {
     rowRef.current?.releasePointerCapture?.(event.pointerId);
 
     if (drag) {
+      dragEndedAt.current = performance.now();
       // Snap to the scene it was left over, and stay there: from here the
       // active dot moves on with the page while the pill holds its place.
       const target = scenes[drag.index];
@@ -272,6 +290,7 @@ export default function SceneIndicator() {
   return createPortal(
     <>
       <nav
+        ref={navRef}
         className="pointer-events-auto fixed bottom-[calc(3rem+env(safe-area-inset-bottom))] left-1/2 z-[1000] isolate -translate-x-1/2 rounded-full border border-white/10 bg-black/65 shadow-[0_6px_20px_rgba(0,0,0,0.4)] backdrop-blur-md sm:bottom-auto sm:top-8"
         style={{ paddingLeft: pill.trackPadding, paddingRight: pill.trackPadding }}
         aria-label="Scene navigation indicator"
@@ -279,8 +298,8 @@ export default function SceneIndicator() {
         // A click that ended a drag would scroll a second time, to whichever
         // dot the finger happened to finish over.
         onClickCapture={(event) => {
-          if (!draggedRef.current) return;
-          draggedRef.current = false;
+          if (performance.now() - dragEndedAt.current > CLICK_AFTER_DRAG_MS) return;
+          dragEndedAt.current = 0;
           event.preventDefault();
           event.stopPropagation();
         }}
