@@ -29,6 +29,14 @@ const TOOLTIP_GAP = 20;
  *  tap. Below it nothing moves and the button's own click still fires. */
 const DRAG_THRESHOLD = 5;
 
+/** How long the pill takes to travel to a dot, and so how long it stays at its
+ *  larger size after a tap. Matches the transform transition below. */
+const PILL_TRAVEL_MS = 500;
+
+/** Space between the pill and the bar when idle, on every side. Driving the
+ *  track's padding from it too is what keeps that gap equal at the ends. */
+const PILL_INSET = 4;
+
 interface DragState {
   /** Where the pill currently sits, in px from the left of the dot row. */
   x: number;
@@ -52,7 +60,13 @@ export default function SceneIndicator() {
   /** Centre of each dot, in px from the left of the row. Measured rather than
    *  computed, because the dots are padded differently at each breakpoint. */
   const [centers, setCenters] = useState<number[]>([]);
-  const [pill, setPill] = useState({ width: 0, idleHeight: 0, slideHeight: 0 });
+  const [pill, setPill] = useState({
+    idleWidth: 0,
+    idleHeight: 0,
+    moveWidth: 0,
+    moveHeight: 0,
+    trackPadding: 0,
+  });
   /** Where the visitor has put the pill. Deliberately not derived from the
    *  active section: the pill is a handle that stays where it was left, and the
    *  orange dot alone reports where the page actually is. Starts at the first
@@ -63,6 +77,14 @@ export default function SceneIndicator() {
   /** Set while a drag is in flight so the click it ends with can be swallowed —
    *  letting it through would scroll twice, to two different places. */
   const draggedRef = useRef(false);
+  /** True while the pill is travelling to a dot after a tap. Growing is tied to
+   *  the pill moving, not to the gesture that moved it, so selecting a dot
+   *  animates exactly as dragging to it does. */
+  const [travelling, setTravelling] = useState(false);
+  const settledIndex = useRef(0);
+  /** A release is already showing the larger size, and the snap that follows is
+   *  a few pixels; it should shrink then, not restart the travel animation. */
+  const releasedRef = useRef(false);
 
   useEffect(() => {
     // Render after hydration so the fixed controls can safely portal to body.
@@ -79,23 +101,29 @@ export default function SceneIndicator() {
       const rowLeft = row.getBoundingClientRect().left;
       const buttons = dotRefs.current.filter(Boolean) as HTMLButtonElement[];
       if (buttons.length === 0) return;
-      setCenters(
-        buttons.map((button) => {
-          const rect = button.getBoundingClientRect();
-          return rect.left - rowLeft + rect.width / 2;
-        }),
-      );
+      const centersNow = buttons.map((button) => {
+        const rect = button.getBoundingClientRect();
+        return rect.left - rowLeft + rect.width / 2;
+      });
+      setCenters(centersNow);
       // Sized from the bar rather than the dot: it is a handle sitting in the
-      // bar, so it reads against the bar's height. Twice as wide as tall, which
-      // still leaves clear space either side — half the pill is narrower than
-      // the gap to the next dot at both breakpoints.
+      // bar, so it reads against the bar's height. Half a pill stays narrower
+      // than the gap to the next dot at both breakpoints, so it never crowds
+      // its neighbours.
       const barHeight = row.getBoundingClientRect().height;
-      const idleHeight = Math.max(18, barHeight - 12);
+      const idleHeight = Math.max(18, barHeight - PILL_INSET * 2);
+      const idleWidth = Math.round(idleHeight * 1.6);
       setPill({
-        width: idleHeight * 2,
+        idleWidth,
         idleHeight,
-        // Taller than the bar while dragging, so it lifts out of the track.
-        slideHeight: barHeight + 8,
+        // Bigger in both directions while it travels, and taller than the bar,
+        // so the handle lifts out of the track as it moves.
+        moveWidth: idleWidth + 12,
+        moveHeight: barHeight + 8,
+        // Enough that the pill clears the bar's end by the same gap it keeps
+        // above and below; without it the handle hangs off the first and last
+        // dots, where half a pill is wider than the run to the edge.
+        trackPadding: Math.max(0, idleWidth / 2 - (centersNow[0] ?? 0) + PILL_INSET),
       });
     };
 
@@ -162,6 +190,18 @@ export default function SceneIndicator() {
     scrollToSection(section);
   };
 
+  useEffect(() => {
+    if (settledIndex.current === pillIndex) return;
+    settledIndex.current = pillIndex;
+    if (releasedRef.current) {
+      releasedRef.current = false;
+      return;
+    }
+    setTravelling(true);
+    const timer = window.setTimeout(() => setTravelling(false), PILL_TRAVEL_MS);
+    return () => window.clearTimeout(timer);
+  }, [pillIndex]);
+
   const nearestIndex = (x: number) => {
     let best = 0;
     let bestDistance = Infinity;
@@ -215,6 +255,7 @@ export default function SceneIndicator() {
       // Snap to the scene it was left over, and stay there: from here the
       // active dot moves on with the page while the pill holds its place.
       const target = scenes[drag.index];
+      releasedRef.current = true;
       setPillIndex(drag.index);
       setDrag(null);
       if (target.id !== activeSection) scrollToSection(target.id);
@@ -225,14 +266,14 @@ export default function SceneIndicator() {
   if (!portalReady || !hasEntered) return null;
 
   const pillCenter = drag ? drag.x : (centers[pillIndex] ?? 0);
+  const moving = drag !== null || travelling;
   const labelIndex = drag ? drag.index : null;
 
   return createPortal(
     <>
       <nav
-        // Padded by half the pill's overhang past the first dot, so the handle
-        // stays inside the track at both ends instead of escaping it.
-        className="pointer-events-auto fixed bottom-[calc(3rem+env(safe-area-inset-bottom))] left-1/2 z-[1000] isolate -translate-x-1/2 rounded-full border border-white/10 bg-black/65 px-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.4)] backdrop-blur-md sm:bottom-auto sm:top-8 sm:px-3.5"
+        className="pointer-events-auto fixed bottom-[calc(3rem+env(safe-area-inset-bottom))] left-1/2 z-[1000] isolate -translate-x-1/2 rounded-full border border-white/10 bg-black/65 shadow-[0_6px_20px_rgba(0,0,0,0.4)] backdrop-blur-md sm:bottom-auto sm:top-8"
+        style={{ paddingLeft: pill.trackPadding, paddingRight: pill.trackPadding }}
         aria-label="Scene navigation indicator"
         role="navigation"
         // A click that ended a drag would scroll a second time, to whichever
@@ -260,17 +301,19 @@ export default function SceneIndicator() {
           {centers.length > 0 && (
             <span
               aria-hidden="true"
-              className={`pointer-events-none absolute top-1/2 left-0 rounded-full border border-accent-soft/50 bg-accent/25 shadow-[0_0_18px_rgba(224,69,10,0.45)] ${
-                reduceMotion
-                  ? ""
-                  : drag
-                    ? "transition-[height] duration-200 ease-out"
-                    : "transition-[transform,height] duration-500 ease-out"
-              }`}
+              className="pointer-events-none absolute top-1/2 left-0 rounded-full border border-accent-soft/50 bg-accent/25 shadow-[0_0_18px_rgba(224,69,10,0.45)]"
               style={{
-                width: pill.width,
-                height: drag ? pill.slideHeight : pill.idleHeight,
-                transform: `translate3d(${pillCenter - pill.width / 2}px, -50%, 0)`,
+                width: moving ? pill.moveWidth : pill.idleWidth,
+                height: moving ? pill.moveHeight : pill.idleHeight,
+                transform: `translate3d(${pillCenter - (moving ? pill.moveWidth : pill.idleWidth) / 2}px, -50%, 0)`,
+                // Size settles faster than the pill travels, so it is already
+                // at its larger size for most of the journey. A drag follows
+                // the finger, so its position must not be eased at all.
+                transition: reduceMotion
+                  ? "none"
+                  : drag
+                    ? "width 200ms ease-out, height 200ms ease-out"
+                    : `transform ${PILL_TRAVEL_MS}ms ease-out, width 200ms ease-out, height 200ms ease-out`,
               }}
             />
           )}
