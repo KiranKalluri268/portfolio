@@ -329,7 +329,6 @@ export default function ProjectsGrid({
       </BackNavigationButton>
 
       <div className={styles.legend}>
-        <p className={styles.legendTitle}>Where each project came from</p>
         <ul className={styles.legendList}>
           {shownOrigins.map((entry) => (
             <li key={entry.origin} className={styles.legendItem}>
