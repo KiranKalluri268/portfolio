@@ -9,13 +9,13 @@ import type { ProjectContent } from "@/lib/content/types";
 import {
   CULL_DISTANCE,
   FOCUS_SCALE,
-  RING_RATIO,
   type Cell,
   type Vec,
   cellFocus,
   nearestCell,
   place,
   projectIndexFor,
+  ringFalloff,
   visibleCells,
 } from "./grid-math";
 import styles from "./projects-grid.module.css";
@@ -43,7 +43,7 @@ const TRAVEL_PER_SECOND = 0.0002;
 
 /** Cards smaller than this fraction of the focus card show only their image;
  *  the name and skills would be illegible and only add noise. */
-const LABEL_MIN_SCALE = RING_RATIO ** 1.6;
+const LABEL_MIN_SCALE = ringFalloff(1.6);
 
 export default function ProjectsGrid({ projects }: { projects: ProjectContent[] }) {
   const stageRef = useRef<HTMLDivElement>(null);

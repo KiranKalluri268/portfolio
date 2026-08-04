@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   CULL_DISTANCE,
+  FIRST_RING_RATIO,
   FOCUS_SCALE,
+  LATER_RING_RATIO,
   PITCH,
-  RING_RATIO,
   cellFocus,
   horizon,
   latticePoint,
@@ -38,10 +39,15 @@ describe("scale and opacity", () => {
     expect(opacityAt(0)).toBe(1);
   });
 
-  it("falls by the ring ratio each step out", () => {
-    expect(scaleAt(1)).toBeCloseTo(FOCUS_SCALE * RING_RATIO);
-    expect(scaleAt(2)).toBeCloseTo(FOCUS_SCALE * RING_RATIO ** 2);
-    expect(opacityAt(1)).toBeCloseTo(RING_RATIO);
+  it("drops steeply onto the first ring, then gently", () => {
+    // The focused card is meant to stand alone, so the step onto ring one is
+    // the big one; past that each ring is a fixed fraction of the last, which
+    // keeps the outer ones legible instead of collapsing to specks.
+    expect(scaleAt(1)).toBeCloseTo(FOCUS_SCALE * FIRST_RING_RATIO);
+    expect(scaleAt(2)).toBeCloseTo(scaleAt(1) * LATER_RING_RATIO);
+    expect(scaleAt(3)).toBeCloseTo(scaleAt(2) * LATER_RING_RATIO);
+    expect(opacityAt(1)).toBeCloseTo(FIRST_RING_RATIO);
+    expect(opacityAt(2)).toBeCloseTo(FIRST_RING_RATIO * LATER_RING_RATIO);
   });
 
   it("is continuous between rings, which is what makes a drag smooth", () => {
@@ -78,8 +84,11 @@ describe("warp", () => {
     const first = warp(1, PITCH) - warp(0, PITCH);
     const second = warp(2, PITCH) - warp(1, PITCH);
     const third = warp(3, PITCH) - warp(2, PITCH);
-    expect(second / first).toBeCloseTo(RING_RATIO, 5);
-    expect(third / second).toBeCloseTo(RING_RATIO, 5);
+    const fourth = warp(4, PITCH) - warp(3, PITCH);
+    expect(second).toBeLessThan(first);
+    // Past the first ring the fall-off is a single ratio, so the spacing is too.
+    expect(third / second).toBeCloseTo(LATER_RING_RATIO, 5);
+    expect(fourth / third).toBeCloseTo(LATER_RING_RATIO, 5);
   });
 
   it("converges, so the endless grid fits in a finite disc", () => {

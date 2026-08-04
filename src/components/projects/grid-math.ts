@@ -22,18 +22,32 @@
 /** The focused card, as a fraction of the viewport's width and height.
  *
  * Not just a size: it sets how much of the grid is on screen. The horizon the
- * rings pile up against sits at PITCH x FOCUS_SCALE / ln(1/RING_RATIO) viewport
- * widths, so a smaller focus card brings more rings into view. The card's own
+ * rings pile up against is this times the pitch times the summed fall-off (see
+ * `horizon`), so a smaller focus card brings more rings into view. The card's own
  * dimensions in CSS are driven from this too, through a custom property, so the
  * two cannot fall out of step. */
 export const FOCUS_SCALE = 0.4;
 
-/** How much smaller and fainter each ring is than the one inside it.
+/** The first step out is the steep one: the ring around the focused card is
+ *  40% of it, which is what makes the middle card read as singled out. */
+export const FIRST_RING_RATIO = 0.4;
+
+/** Every step after that is gentler — each ring 60% of the one inside it — so
+ *  the outer rings stay legible for longer instead of collapsing to specks the
+ *  moment they leave the centre. */
+export const LATER_RING_RATIO = 0.6;
+
+/** How large a card at `distance` is against the focused one.
  *
- * Steeper than it looks: at 0.4 the third ring is already down to 6% of the
- * focused card. It also pulls the horizon in, since the spacing falls away at
- * the same rate — which is what brings the whole grid inside the viewport. */
-export const RING_RATIO = 0.4;
+ * Two ratios, not one: the first ring drops by FIRST_RING_RATIO and everything
+ * beyond it by LATER_RING_RATIO. Still continuous — the exponent is the real
+ * distance, not a ring index — so a card crossing between rings grows smoothly
+ * rather than stepping. */
+export function ringFalloff(distance: number) {
+  const near = Math.min(Math.max(distance, 0), 1);
+  const far = Math.max(distance - 1, 0);
+  return FIRST_RING_RATIO ** near * LATER_RING_RATIO ** far;
+}
 
 /** Centre-to-centre spacing at the focus, in card widths. Above 1 so cards in
  *  the middle have air around them rather than touching. */
@@ -50,7 +64,7 @@ const MIN_VISIBLE_FRACTION = 0.045;
  *  mount hundreds of cells. */
 export const CULL_DISTANCE = Math.min(
   4.2,
-  Math.log(MIN_VISIBLE_FRACTION) / Math.log(RING_RATIO),
+  1 + Math.log(MIN_VISIBLE_FRACTION / FIRST_RING_RATIO) / Math.log(LATER_RING_RATIO),
 );
 
 /** Odd rows are shifted half a cell, so the grid reads as a field rather than
@@ -82,11 +96,11 @@ export function ringDistance(offset: Vec) {
 }
 
 export function scaleAt(distance: number) {
-  return FOCUS_SCALE * RING_RATIO ** distance;
+  return FOCUS_SCALE * ringFalloff(distance);
 }
 
 export function opacityAt(distance: number) {
-  return RING_RATIO ** distance;
+  return ringFalloff(distance);
 }
 
 /** Screen distance to a card `steps` cells away along one axis.
@@ -95,14 +109,26 @@ export function opacityAt(distance: number) {
  * the cards there, so the gap between neighbours stays proportional to them and
  * the grid neither overlaps nor gaps as it compresses. It converges — the limit
  * is the horizon the far rings pile up against. */
+const NEAR_DECAY = -Math.log(FIRST_RING_RATIO);
+const FAR_DECAY = -Math.log(LATER_RING_RATIO);
+/** The area under the first ring's steeper fall-off, done once. */
+const NEAR_SPAN = (1 - FIRST_RING_RATIO) / NEAR_DECAY;
+
+/** The integral of `ringFalloff` from 0 to `t` — how far out a card `t` cells
+ *  from the focus lands, in units of the focused card's width. Piecewise,
+ *  because the fall-off is. */
+function warpSpan(t: number) {
+  if (t <= 1) return (1 - FIRST_RING_RATIO ** t) / NEAR_DECAY;
+  return NEAR_SPAN + (FIRST_RING_RATIO * (1 - LATER_RING_RATIO ** (t - 1))) / FAR_DECAY;
+}
+
 export function warp(steps: number, pitch: number) {
-  const decay = -Math.log(RING_RATIO);
-  return (pitch * FOCUS_SCALE * (1 - RING_RATIO ** Math.abs(steps))) / decay * Math.sign(steps);
+  return pitch * FOCUS_SCALE * warpSpan(Math.abs(steps)) * Math.sign(steps);
 }
 
 /** The horizon: the screen distance no card ever passes, in viewport units. */
 export function horizon(pitch: number) {
-  return (pitch * FOCUS_SCALE) / -Math.log(RING_RATIO);
+  return pitch * FOCUS_SCALE * (NEAR_SPAN + FIRST_RING_RATIO / FAR_DECAY);
 }
 
 export interface Placement {
