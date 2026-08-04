@@ -38,7 +38,9 @@ export default function ProjectsView({ grid, list }: { grid: ReactNode; list: Re
         <div
           role="group"
           aria-label="Projects view"
-          className="pointer-events-auto flex items-center gap-1 rounded-full border border-white/10 bg-black/70 p-1 shadow-[0_6px_20px_rgba(0,0,0,0.4)] backdrop-blur-md"
+          // The same white glow the cards carry, so the toggle reads as part of
+          // the grid rather than something floating over it.
+          className="pointer-events-auto flex items-center gap-1 rounded-full border border-white/20 bg-black/70 p-1 shadow-[0_0_0_1px_rgba(255,255,255,0.22),0_0_2.5rem_rgba(255,255,255,0.3)] backdrop-blur-md"
         >
           {(["grid", "list"] as const).map((option) => (
             <button
