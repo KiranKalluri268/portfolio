@@ -52,7 +52,13 @@ export default function SceneIndicator() {
   /** Centre of each dot, in px from the left of the row. Measured rather than
    *  computed, because the dots are padded differently at each breakpoint. */
   const [centers, setCenters] = useState<number[]>([]);
-  const [pillSize, setPillSize] = useState({ width: 0, height: 0 });
+  const [pill, setPill] = useState({ width: 0, idleHeight: 0, slideHeight: 0 });
+  /** Where the visitor has put the pill. Deliberately not derived from the
+   *  active section: the pill is a handle that stays where it was left, and the
+   *  orange dot alone reports where the page actually is. Starts at the first
+   *  scene because the bar only appears once the visitor has entered, which
+   *  happens at the top of the page. */
+  const [pillIndex, setPillIndex] = useState(0);
   const [drag, setDrag] = useState<DragState | null>(null);
   /** Set while a drag is in flight so the click it ends with can be swallowed —
    *  letting it through would scroll twice, to two different places. */
@@ -79,12 +85,17 @@ export default function SceneIndicator() {
           return rect.left - rowLeft + rect.width / 2;
         }),
       );
-      const first = buttons[0].getBoundingClientRect();
-      // Sized from the dots' own hit area, so it stays proportionate at both
-      // breakpoints without a second set of numbers to keep in step.
-      setPillSize({
-        width: Math.max(24, first.width - 6),
-        height: Math.max(24, first.height - 6),
+      // Sized from the bar rather than the dot: it is a handle sitting in the
+      // bar, so it reads against the bar's height. Twice as wide as tall, which
+      // still leaves clear space either side — half the pill is narrower than
+      // the gap to the next dot at both breakpoints.
+      const barHeight = row.getBoundingClientRect().height;
+      const idleHeight = Math.max(18, barHeight - 12);
+      setPill({
+        width: idleHeight * 2,
+        idleHeight,
+        // Taller than the bar while dragging, so it lifts out of the track.
+        slideHeight: barHeight + 8,
       });
     };
 
@@ -141,7 +152,9 @@ export default function SceneIndicator() {
     };
   }, [portalReady, hasEntered]);
 
-  const handleDotClick = (section: SectionId) => {
+  const handleDotClick = (index: number, section: SectionId) => {
+    // Selecting a dot outright puts the handle back on it.
+    setPillIndex(index);
     if (section === activeSection) {
       if (section === "projects") toggleProjectsEndpoint();
       return;
@@ -199,8 +212,10 @@ export default function SceneIndicator() {
     rowRef.current?.releasePointerCapture?.(event.pointerId);
 
     if (drag) {
-      // Snap to the scene it was left over, and go there.
+      // Snap to the scene it was left over, and stay there: from here the
+      // active dot moves on with the page while the pill holds its place.
       const target = scenes[drag.index];
+      setPillIndex(drag.index);
       setDrag(null);
       if (target.id !== activeSection) scrollToSection(target.id);
       else if (target.id === "projects") toggleProjectsEndpoint();
@@ -209,14 +224,15 @@ export default function SceneIndicator() {
 
   if (!portalReady || !hasEntered) return null;
 
-  const activeIndex = scenes.findIndex((scene) => scene.id === activeSection);
-  const pillCenter = drag ? drag.x : (centers[Math.max(0, activeIndex)] ?? 0);
+  const pillCenter = drag ? drag.x : (centers[pillIndex] ?? 0);
   const labelIndex = drag ? drag.index : null;
 
   return createPortal(
     <>
       <nav
-        className="pointer-events-auto fixed bottom-[calc(3rem+env(safe-area-inset-bottom))] left-1/2 z-[1000] isolate -translate-x-1/2 rounded-full border border-white/10 bg-black/65 shadow-[0_6px_20px_rgba(0,0,0,0.4)] backdrop-blur-md sm:bottom-auto sm:top-8"
+        // Padded by half the pill's overhang past the first dot, so the handle
+        // stays inside the track at both ends instead of escaping it.
+        className="pointer-events-auto fixed bottom-[calc(3rem+env(safe-area-inset-bottom))] left-1/2 z-[1000] isolate -translate-x-1/2 rounded-full border border-white/10 bg-black/65 px-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.4)] backdrop-blur-md sm:bottom-auto sm:top-8 sm:px-3.5"
         aria-label="Scene navigation indicator"
         role="navigation"
         // A click that ended a drag would scroll a second time, to whichever
@@ -245,12 +261,16 @@ export default function SceneIndicator() {
             <span
               aria-hidden="true"
               className={`pointer-events-none absolute top-1/2 left-0 rounded-full border border-accent-soft/50 bg-accent/25 shadow-[0_0_18px_rgba(224,69,10,0.45)] ${
-                drag || reduceMotion ? "" : "transition-transform duration-500 ease-out"
+                reduceMotion
+                  ? ""
+                  : drag
+                    ? "transition-[height] duration-200 ease-out"
+                    : "transition-[transform,height] duration-500 ease-out"
               }`}
               style={{
-                width: pillSize.width,
-                height: pillSize.height,
-                transform: `translate3d(${pillCenter - pillSize.width / 2}px, -50%, 0)`,
+                width: pill.width,
+                height: drag ? pill.slideHeight : pill.idleHeight,
+                transform: `translate3d(${pillCenter - pill.width / 2}px, -50%, 0)`,
               }}
             />
           )}
@@ -268,19 +288,23 @@ export default function SceneIndicator() {
                   className="relative z-10 flex min-h-9 min-w-9 cursor-pointer items-center justify-center border-none bg-transparent p-3 outline-none sm:min-h-12 sm:min-w-12 sm:p-6"
                   aria-label={`Go to ${scene.name} section${isActive ? " (current)" : ""}`}
                   aria-current={isActive ? "page" : undefined}
-                  onClick={() => handleDotClick(scene.id)}
+                  onClick={() => handleDotClick(scene.index, scene.id)}
                   onMouseEnter={() => setHoveredIndex(scene.index)}
                   onMouseLeave={() => setHoveredIndex(null)}
                   type="button"
                 >
-                  {/* Uniform: the pill says which scene is current, so a dot
-                      that also grew and glowed would be saying it twice. */}
+                  {/* One size for every dot — the colour carries which scene is
+                      current, so it stays legible while the pill is elsewhere,
+                      including mid-drag. Size is left to the pill. */}
                   <div
-                    className="relative h-1 w-1 rounded-full bg-white transition-[box-shadow] duration-300 ease-out"
+                    className="relative h-1 w-1 rounded-full transition-[background-color,box-shadow] duration-300 ease-out"
                     style={{
-                      boxShadow: isHovered
-                        ? "0 0 10px 2px rgba(255, 255, 255, 0.8)"
-                        : "0 0 6px rgba(255, 255, 255, 0.35)",
+                      backgroundColor: isActive ? "var(--color-accent-soft)" : "white",
+                      boxShadow: isActive
+                        ? "0 0 12px 3px color-mix(in oklab, var(--color-accent) 85%, transparent)"
+                        : isHovered
+                          ? "0 0 10px 2px rgba(255, 255, 255, 0.8)"
+                          : "0 0 6px rgba(255, 255, 255, 0.35)",
                     }}
                   />
                 </button>
