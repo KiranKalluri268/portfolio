@@ -193,7 +193,7 @@ export default function ExperienceDetail({
   const projectsBySlug = new Map(projects.map((project) => [project.slug, project]));
 
   return (
-    <main className="relative z-10 min-h-[100svh] px-4 py-8 text-white sm:px-6 sm:py-12">
+    <main className="relative z-10 min-h-[100svh] px-4 pt-24 pb-8 text-white sm:px-6 sm:pt-28 sm:pb-12">
       <article className="mx-auto max-w-5xl">
         <BackNavigationButton className="mb-10 rounded-full border border-white/15 bg-black/55 px-4 py-2 text-sm text-gray-200 backdrop-blur-md transition-colors hover:border-accent-soft/40 hover:text-white">
           <span aria-hidden="true">←</span> Back

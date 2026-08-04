@@ -1,4 +1,3 @@
-import NavBar from '@/components/NavBar1';
 import Hero from '@/components/hero';
 import AboutSection from '@/components/AboutSection';
 import ProjectsSection from '@/components/projects';
@@ -35,10 +34,6 @@ export default function Home() {
         <SkipLink href="#experience">Skip to experience</SkipLink>
         <SkipLink href="#skills">Skip to skills</SkipLink>
         <SkipLink href="#contact">Skip to contact</SkipLink>
-
-        <ErrorBoundary>
-          <NavBar />
-        </ErrorBoundary>
 
         <ErrorBoundary>
           <SceneIndicator />

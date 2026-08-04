@@ -2,7 +2,8 @@
   min-height: 100svh;
   overflow-x: auto;
   background: #171717;
-  padding: 2rem 1rem;
+  /* Room at the top for the site header, which is fixed over every route. */
+  padding: 5.5rem 1rem 2rem;
 }
 
 .actions {
@@ -165,7 +166,8 @@
      geometry and is scaled to fit by PaperViewport, so it stays the shape of
      the document it represents rather than reflowing into a web page. */
   .page {
-    padding: 0;
+    /* Only the room the fixed header needs; the sheet keeps the full width. */
+    padding: 4.25rem 0 0;
   }
 
   .paperFrame {

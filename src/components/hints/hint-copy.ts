@@ -17,6 +17,7 @@ export type HintId =
   | "hero"
   | "projects"
   | "projects-end"
+  | "projects-grid"
   | "experience"
   | "skills"
   | "skill-web";
@@ -51,6 +52,12 @@ const HINTS: Record<HintId, Record<InputMode, string>> = {
   skills: {
     touch: "Tap any skill to see how I use it",
     pointer: "Click any skill to see how I use it",
+  },
+  // The grid has no edges and no scrollbar, so nothing on screen says it can
+  // be moved at all — the one hint here that answers "is this a picture?".
+  "projects-grid": {
+    touch: "Drag any way you like — the grid keeps going",
+    pointer: "Drag any way you like, or use the arrow keys — the grid keeps going",
   },
   "skill-web": {
     touch: "Drag to explore · Pinch to zoom · Tap a branch to focus",

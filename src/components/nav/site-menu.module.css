@@ -1,0 +1,169 @@
+.trigger {
+  display: flex;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  margin-left: 1rem;
+  border: none;
+  background: transparent;
+  padding: 0.25rem 0.5rem;
+  color: #fff;
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--color-accent-soft);
+  outline-offset: 4px;
+  border-radius: 0.25rem;
+}
+
+/* Three lines that fold into a cross. The middle one fades rather than moving,
+   which is what makes the outer two read as the two strokes of the cross. */
+.bars {
+  position: relative;
+  display: block;
+  height: 14px;
+  width: 24px;
+}
+
+.bars > span {
+  position: absolute;
+  left: 0;
+  display: block;
+  height: 2px;
+  width: 100%;
+  border-radius: 2px;
+  background: currentColor;
+  transition: transform 300ms ease, opacity 200ms ease;
+}
+
+.bars > span:nth-child(1) {
+  top: 0;
+}
+
+.bars > span:nth-child(2) {
+  top: 6px;
+}
+
+.bars > span:nth-child(3) {
+  top: 12px;
+}
+
+.bars[data-open="true"] > span:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.bars[data-open="true"] > span:nth-child(2) {
+  opacity: 0;
+}
+
+.bars[data-open="true"] > span:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+.panel {
+  position: fixed;
+  inset: 0;
+  /* Above the scene indicator and the projects grid's chrome, below the entry
+     screen — which must stay the only thing in front of an unentered page. */
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  background: #050505;
+  transition-property: clip-path, -webkit-clip-path;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.close {
+  position: fixed;
+  z-index: 1;
+  cursor: pointer;
+  /* Placed by its centre, on the coordinates the trigger was measured at. */
+  transform: translate(-50%, -50%);
+  border: none;
+  background: transparent;
+  padding: 0.25rem 0.5rem;
+  color: #fff;
+}
+
+.close:focus-visible {
+  outline: 2px solid var(--color-accent-soft);
+  outline-offset: 4px;
+  border-radius: 0.25rem;
+}
+
+.list {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0 1.5rem;
+}
+
+.link {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.35rem 0;
+  font-size: clamp(2.5rem, 12vw, 6rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: rgb(255 255 255 / 85%);
+  text-decoration: none;
+  opacity: 0;
+  transform: translateY(1.5rem);
+  transition-property: opacity, transform, color;
+  transition-duration: 420ms;
+  transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.panel[data-covered="true"] .link {
+  opacity: 1;
+  transform: none;
+}
+
+.link:hover,
+.link:focus-visible {
+  color: var(--color-accent-soft);
+}
+
+.link:focus-visible {
+  outline: none;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+/* The page you are already on, marked rather than removed — it still works as
+   a way to close the menu. */
+.link[data-current="true"] {
+  color: var(--color-accent-soft);
+}
+
+.index {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: rgb(255 255 255 / 35%);
+}
+
+@media (min-width: 640px) {
+  .list {
+    padding: 0 4rem;
+  }
+
+  .index {
+    font-size: 0.95rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .bars > span {
+    transition: none;
+  }
+}

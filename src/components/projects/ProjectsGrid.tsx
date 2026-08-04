@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import BackNavigationButton from "@/components/BackNavigationButton";
 import ProjectThumbnail from "@/components/content/ProjectThumbnail";
+import HintPill from "@/components/hints/HintPill";
+import { hintText } from "@/components/hints/hint-copy";
+import { useInputMode } from "@/components/hints/useIdleHint";
 import { SKILL_ICONS } from "@/components/skills/skill-icons";
 import { useReducedMotion } from "@/hooks/useMediaQuery";
 import type { ProjectOrigin } from "@/lib/content/relationships";
@@ -52,6 +54,14 @@ const LABEL_MIN_SCALE = ringFalloff(1.6);
  *  between rings, and nothing beyond them does. */
 const BLUR_DISTANCE = 1.05;
 
+/** Remembers that this visitor has already been told the grid moves. */
+const HINT_STORAGE_KEY = "projects-grid-hint";
+
+/** A beat after arriving before the hint appears, so it is not competing with
+ *  the page painting, and long enough on screen to be read at a glance. */
+const HINT_DELAY_MS = 900;
+const HINT_DURATION_MS = 9000;
+
 /** What each outline colour means, in the order the legend reads. */
 const ORIGINS: { origin: ProjectOrigin; label: string }[] = [
   { origin: "work", label: "Built in a role" },
@@ -77,6 +87,40 @@ export default function ProjectsGrid({
    *  a keypress, say. Null means "settle on whatever is nearest". */
   const target = useRef<Vec | null>(null);
   const reduceMotion = useReducedMotion();
+  const inputMode = useInputMode();
+
+  /** Shown once, to a visitor who has never seen the grid before. There is no
+   *  scrollbar and no edge, so nothing else says the thing can be moved. */
+  const [hintVisible, setHintVisible] = useState(false);
+  const hintDone = useRef(true);
+
+  const dismissHint = useCallback(() => {
+    if (hintDone.current) return;
+    hintDone.current = true;
+    setHintVisible(false);
+    try {
+      window.localStorage.setItem(HINT_STORAGE_KEY, "seen");
+    } catch {
+      // Private browsing can refuse storage; they will just be told again.
+    }
+  }, []);
+
+  useEffect(() => {
+    let seen = true;
+    try {
+      seen = window.localStorage.getItem(HINT_STORAGE_KEY) === "seen";
+    } catch {
+      seen = true;
+    }
+    if (seen) return;
+    hintDone.current = false;
+    const show = window.setTimeout(() => setHintVisible(true), HINT_DELAY_MS);
+    const hide = window.setTimeout(dismissHint, HINT_DELAY_MS + HINT_DURATION_MS);
+    return () => {
+      window.clearTimeout(show);
+      window.clearTimeout(hide);
+    };
+  }, [dismissHint]);
 
   const [cells, setCells] = useState<Cell[]>(() => visibleCells({ x: 0, y: 0 }, CULL_DISTANCE + MOUNT_SLACK));
   const [focusedCell, setFocusedCell] = useState<Cell>({ col: 0, row: 0 });
@@ -250,6 +294,8 @@ export default function ProjectsGrid({
       if (Math.hypot(event.clientX - held.x, event.clientY - held.y) < DRAG_THRESHOLD) return;
       held.moved = true;
       dragging.current = true;
+      // They have worked it out; the pill has nothing left to say.
+      dismissHint();
       stage.setPointerCapture(event.pointerId);
     }
 
@@ -308,6 +354,7 @@ export default function ProjectsGrid({
     const move = moves[event.key];
     if (!move) return;
     event.preventDefault();
+    dismissHint();
     moveFocus(move[0], move[1]);
   };
 
@@ -322,12 +369,6 @@ export default function ProjectsGrid({
 
   return (
     <>
-      {/* The grid takes the whole viewport, so the way out has to travel with
-          it rather than sitting in a page the visitor cannot scroll to. */}
-      <BackNavigationButton className={styles.back}>
-        <span aria-hidden="true">←</span> Back to portfolio
-      </BackNavigationButton>
-
       {/* Under the back button rather than across the top: the middle of the
           screen belongs to the focused card, and on a phone there is no room
           between the button and the view toggle. */}
@@ -409,6 +450,14 @@ export default function ProjectsGrid({
           </article>
         );
       })}
+
+      <HintPill
+        text={hintText("projects-grid", inputMode)}
+        visible={hintVisible}
+        // Above the colour key rather than beside it: on a phone the two are
+        // both wide enough to share the bottom of the screen otherwise.
+        className="fixed bottom-[calc(7rem+env(safe-area-inset-bottom))] left-1/2 sm:bottom-16"
+      />
 
       {/* Announced on its own so the focused project is reported as it changes,
           without the grid speaking every repeat of every card. */}
