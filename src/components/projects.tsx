@@ -94,7 +94,20 @@ export default function ProjectsSection({ projects }: { projects: ProjectContent
         }, 0)
         .to(title, {
           x: () => window.innerWidth < 640 ? "-20vw" : "-40vw",
-          y: () => window.innerWidth < 640 ? "-28vh" : "-24vh",
+          // On a phone the title parks on the same line as the 02/05 counter.
+          // A share of the viewport height put it wherever that worked out to —
+          // on a short screen, up under the logo — so it is measured from the
+          // counter itself, which is the thing it has to line up with.
+          y: () => {
+            if (window.innerWidth >= 640) return window.innerHeight * -0.24;
+            const counter = section.querySelector<HTMLElement>("[data-projects-counter]");
+            // The title's resting centre; top-3/8 with a -50% translate.
+            const restingCentre = section.clientHeight * 0.375;
+            const counterCentre = counter
+              ? counter.offsetTop + counter.offsetHeight / 2
+              : restingCentre;
+            return counterCentre - restingCentre;
+          },
           duration: 0.14,
         }, 0.02)
         .to(title, {
@@ -405,6 +418,7 @@ function CarouselProgress({ projects, lastPanelIndex, activePanel, isInCarousel,
       {/* Mobile: a counter, since a segmented rail cannot stay legible at
           this width alongside the scene indicator. */}
       <div
+        data-projects-counter
         className={`absolute right-4 top-20 z-30 transition-opacity duration-300 sm:hidden ${isOnProject && isInCarousel ? "opacity-100" : "pointer-events-none opacity-0"}`}
         aria-hidden="true"
       >
