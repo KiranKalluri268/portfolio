@@ -47,6 +47,11 @@ const TRAVEL_PER_SECOND = 0.0002;
  *  the name and skills would be illegible and only add noise. */
 const LABEL_MIN_SCALE = ringFalloff(1.6);
 
+/** How far out the backdrop blur is worth paying for. Just past the first ring,
+ *  so the nine cards in the middle of the lens keep it while it is crossing
+ *  between rings, and nothing beyond them does. */
+const BLUR_DISTANCE = 1.05;
+
 /** What each outline colour means, in the order the legend reads. */
 const ORIGINS: { origin: ProjectOrigin; label: string }[] = [
   { origin: "work", label: "Built in a role" },
@@ -111,7 +116,13 @@ export default function ProjectsGrid({
         ` scale(${cardScale})`;
       // Nearer cards paint over farther ones, so the lens reads as depth.
       element.style.zIndex = String(Math.round(1000 - spot.distance * 100));
-      element.dataset.faded = cardScale < LABEL_MIN_SCALE ? "true" : "false";
+      // These two drive selectors, so writing them invalidates style for the
+      // card even when the value is the same. Both change a handful of times a
+      // drag, not sixty times a second, so they are written only on a change.
+      const faded = cardScale < LABEL_MIN_SCALE ? "true" : "false";
+      if (element.dataset.faded !== faded) element.dataset.faded = faded;
+      const near = spot.distance <= BLUR_DISTANCE ? "true" : "false";
+      if (element.dataset.near !== near) element.dataset.near = near;
     }
   }, [cells]);
 

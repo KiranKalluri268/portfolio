@@ -30,9 +30,11 @@
   aspect-ratio: 4 / 5;
   max-height: calc(var(--focus-scale) * 100%);
   transform-origin: center center;
-  will-change: transform, opacity;
   /* No transition: position and scale are written every frame, and easing them
      as well would fight the drag and lag behind the finger. */
+  /* No will-change either. The translate3d in the transform already promotes
+     the card, and asking for a layer a second time on 125 cards cost 20% of
+     the frame on a throttled tablet for nothing. */
 }
 
 /* Where a project came from, read as a glow around the card. Set on the link
@@ -57,7 +59,6 @@
   border: 1px solid color-mix(in srgb, var(--origin-colour) 35%, transparent);
   border-radius: 1.25rem;
   background: rgb(0 0 0 / 55%);
-  backdrop-filter: blur(8px);
   text-decoration: none;
   color: inherit;
   /* Two shadows: a tight one that reads as an edge at any size, and a wide
@@ -109,6 +110,15 @@
 .skillIcon {
   height: 1.1rem;
   width: 1.1rem;
+}
+
+/* Blurring what is behind a card is a per-pixel GPU pass, and it was running
+   on every mounted card at once — the single most expensive thing on the page,
+   half the frame on a throttled tablet. It is only legible on the cards big
+   enough to have much behind them, so the middle of the lens keeps it and the
+   rest go without. */
+.card[data-near="true"] .cardLink {
+  backdrop-filter: blur(8px);
 }
 
 /* Far enough out that the words are a smear: show the picture alone. */
