@@ -328,6 +328,11 @@ export default function ProjectsGrid({
         <span aria-hidden="true">←</span> Back to portfolio
       </BackNavigationButton>
 
+      {/* Under the back button rather than across the top: the middle of the
+          screen belongs to the focused card, and on a phone there is no room
+          between the button and the view toggle. */}
+      <h1 className={styles.heading}>Projects</h1>
+
       <div className={styles.legend}>
         <ul className={styles.legendList}>
           {shownOrigins.map((entry) => (

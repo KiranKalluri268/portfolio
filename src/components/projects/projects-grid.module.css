@@ -152,6 +152,22 @@
   color: #fff;
 }
 
+.heading {
+  position: fixed;
+  top: 4rem;
+  left: 1rem;
+  z-index: 900;
+  pointer-events: none;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: #fff;
+  /* The grid runs under it, so the type needs its own separation from whatever
+     card happens to be behind it. */
+  text-shadow: 0 2px 18px rgb(0 0 0 / 85%);
+}
+
 .legend {
   position: fixed;
   bottom: 1rem;
@@ -193,6 +209,12 @@
   .back {
     top: 1.5rem;
     left: 1.5rem;
+  }
+
+  .heading {
+    top: 5rem;
+    left: 1.5rem;
+    font-size: 2.75rem;
   }
 
   .legend {
