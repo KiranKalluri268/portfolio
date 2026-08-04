@@ -95,15 +95,15 @@ export function getExperiencesForSkill(skill: SkillContent): ExperienceContent[]
 
 /** How a project came about — what the grid's card outlines stand for.
  *
- * "work" wins over "selected": a project built inside a role is work first,
- * however it is also being shown. */
-export type ProjectOrigin = "work" | "selected" | "personal";
+ * The line is a role, and nothing else: a project built inside one is work,
+ * and everything else is mine, whether or not it is also put forward as
+ * selected work. */
+export type ProjectOrigin = "work" | "personal";
 
 export function getProjectOrigin(project: ProjectContent): ProjectOrigin {
   validateRelationships();
   const fromWork = getAllExperiences().some((experience) =>
     experience.workItems.some((item) => item.projectSlug === project.slug),
   );
-  if (fromWork) return "work";
-  return project.showInProjectsSection ? "selected" : "personal";
+  return fromWork ? "work" : "personal";
 }

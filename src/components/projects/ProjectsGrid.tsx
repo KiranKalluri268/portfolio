@@ -50,7 +50,6 @@ const LABEL_MIN_SCALE = ringFalloff(1.6);
 /** What each outline colour means, in the order the legend reads. */
 const ORIGINS: { origin: ProjectOrigin; label: string }[] = [
   { origin: "work", label: "Built in a role" },
-  { origin: "selected", label: "Selected work" },
   { origin: "personal", label: "Built for myself" },
 ];
 
