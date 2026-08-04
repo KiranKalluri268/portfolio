@@ -57,18 +57,47 @@
   color: #ff7a18;
 }
 
+.paperFrame {
+  width: 100%;
+  max-width: 210mm;
+  margin: 0 auto;
+  /* On the sheet itself this would be clipped away by the frame, which has to
+     hide the unscaled box the transform leaves behind. */
+  box-shadow: 0 18px 55px rgb(0 0 0 / 45%);
+}
+
+.pages {
+  display: flex;
+  flex-direction: column;
+  gap: 7mm;
+}
+
 .paper {
   box-sizing: border-box;
-  width: min(210mm, 100%);
-  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  width: 210mm;
+  /* A page, not a strip: a short CV still looks like a sheet of paper. */
+  min-height: 297mm;
   padding: 12mm 13mm;
   background: #fff;
   color: #111;
-  box-shadow: 0 18px 55px rgb(0 0 0 / 45%);
   font-family: Arial, Helvetica, sans-serif;
   font-size: 10.5pt;
   line-height: 1.4;
   text-align: left;
+}
+
+.pageBody {
+  flex: 1 1 auto;
+}
+
+/* The same footer the downloaded PDF prints at the foot of every page. */
+.pageNumber {
+  margin: 6mm 0 0;
+  color: #888;
+  font-size: 8pt;
+  text-align: center;
 }
 
 .name {
@@ -283,8 +312,16 @@
 }
 
 @media (max-width: 640px) {
+  /* Only the toolbar adapts to a phone. The sheet below it keeps its A4
+     geometry and is scaled to fit by PaperViewport, so it stays the shape of
+     the document it represents rather than reflowing into a web page. */
   .page {
     padding: 0;
+  }
+
+  .paperFrame {
+    width: auto;
+    margin: 0.85rem max(0.85rem, env(safe-area-inset-right)) 1.75rem max(0.85rem, env(safe-area-inset-left));
   }
 
   .actions {
@@ -313,57 +350,40 @@
   .backLink {
     font-size: 0.72rem;
   }
-
-  .paper {
-    min-width: 100%;
-    padding: 1.25rem max(1rem, env(safe-area-inset-right)) 1.5rem max(1rem, env(safe-area-inset-left));
-    box-shadow: none;
-    font-size: 14px;
-    line-height: 1.5;
-  }
-
-  .name {
-    font-size: 22px;
-  }
-
-  .headline {
-    font-size: 15px;
-  }
-
-  .sectionTitle {
-    font-size: 15px;
-  }
-
-  .entryTitle,
-  .workItemTitle {
-    font-size: 15px;
-  }
-
-  .entryMeta {
-    font-size: 12.5px;
-    white-space: normal;
-  }
-
-  .entrySubtitle,
-  .subheading,
-  .techLine,
-  .quoteAttribution {
-    font-size: 13px;
-  }
-
-  .contactLine,
-  .links,
-  .paragraph,
-  .education,
-  .footerLine {
-    overflow-wrap: anywhere;
-  }
 }
 
 @media print {
+  /* PaperViewport's fit is inline, so it needs overriding by force here or a
+     phone would print the shrunk sheet rather than a full A4 page. */
+  .paperFrame {
+    max-width: none;
+    height: auto !important;
+    margin: 0;
+    overflow: visible !important;
+    box-shadow: none;
+  }
+
+  .paper {
+    transform: none !important;
+    break-after: page;
+    /* Exactly 297mm tall spills onto a second, blank page. The blocks were
+       packed to fit a page already, so let the content set the height. */
+    min-height: auto;
+  }
+
+  .paper:last-child {
+    break-after: auto;
+  }
+
+  .pages {
+    gap: 0;
+  }
+
   @page {
     size: A4;
-    margin: 14mm 13mm;
+    /* The sheets carry their own margins, so the page must not add more or
+       each one prints taller than the paper and spills. */
+    margin: 0;
   }
 
   .page {
@@ -378,9 +398,8 @@
   }
 
   .paper {
-    width: auto;
+    width: 210mm;
     margin: 0;
-    padding: 0;
     box-shadow: none;
     print-color-adjust: exact;
   }
