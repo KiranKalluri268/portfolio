@@ -36,8 +36,10 @@ const FRICTION_PER_SECOND = 0.0016;
  *  creeps for several seconds on a velocity too small to see. */
 const STILL = 0.05;
 
-/** What a second of snapping leaves of the remaining distance. */
-const SNAP_PER_SECOND = 0.0002;
+/** What a second of travel leaves of the remaining distance when the grid has
+ *  been asked for a particular cell — an arrow key. Nothing else pulls it:
+ *  released from a drag it rests exactly where it was left. */
+const TRAVEL_PER_SECOND = 0.0002;
 
 /** Cards smaller than this fraction of the focus card show only their image;
  *  the name and skills would be illegible and only add noise. */
@@ -118,8 +120,9 @@ export default function ProjectsGrid({ projects }: { projects: ProjectContent[] 
     paint();
   }, [paint, syncMounted]);
 
-  // The animation loop: coast on whatever velocity the drag left behind, then
-  // ease onto the nearest cell rather than stopping wherever it happens to be.
+  // The animation loop: coast on whatever velocity the drag left behind, and
+  // come to rest there. The grid is a field to wander, not a carousel of
+  // positions, so nothing tugs it onto the nearest card afterwards.
   useEffect(() => {
     let frame = 0;
     let previous = performance.now();
@@ -144,8 +147,9 @@ export default function ProjectsGrid({ projects }: { projects: ProjectContent[] 
       }
       velocity.current = { x: 0, y: 0 };
 
-      // Settled enough to snap. Easing rather than jumping keeps the rest soft.
-      const destination = target.current ?? cellFocus(nearestCell(focus.current));
+      // Only a deliberate request moves it now; a finished drag just stops.
+      const destination = target.current;
+      if (!destination) return;
       const dx = destination.x - focus.current.x;
       const dy = destination.y - focus.current.y;
       if (Math.abs(dx) < 0.0008 && Math.abs(dy) < 0.0008) {
@@ -157,7 +161,7 @@ export default function ProjectsGrid({ projects }: { projects: ProjectContent[] 
         }
         return;
       }
-      const pull = 1 - SNAP_PER_SECOND ** elapsed;
+      const pull = 1 - TRAVEL_PER_SECOND ** elapsed;
       focus.current = { x: focus.current.x + dx * pull, y: focus.current.y + dy * pull };
       paintRef.current();
       syncRef.current();
