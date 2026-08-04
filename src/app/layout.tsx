@@ -6,6 +6,7 @@ import BlackholeEffect from '@/background/BlackholeEffect';
 import StarsBackground from "@/background/StarsBackground";
 import { AudioProvider } from "@/context/AudioContextProvider";
 import { SmoothScrollProvider } from "@/context/SmoothScrollContext";
+import NavBar from "@/components/NavBar1";
 
 const SITE_URL = "https://saikirankalluri.vercel.app";
 const SITE_NAME = "Saikiran Kalluri";
@@ -133,6 +134,11 @@ export default function RootLayout({
 
                 {/* Blackhole: Interactive gravity field */}
                 <BlackholeEffect />
+
+                {/* The header is a fixture of the site, not of the home page:
+                    every other route used to have a single back button and no
+                    way to reach anything else. */}
+                <NavBar />
 
                 {/* Your main content */}
                 <div className="relative z-10">

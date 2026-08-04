@@ -34,7 +34,9 @@ export default function ProjectsView({ grid, list }: { grid: ReactNode; list: Re
 
   return (
     <>
-      <div className="pointer-events-none fixed top-4 right-4 z-[900] flex sm:top-6 sm:right-6">
+      {/* Below the site header, which owns the top-right corner on every route
+          — at top-4 the toggle sat under the audio bars and the menu button. */}
+      <div className="pointer-events-none fixed top-16 right-4 z-[900] flex sm:top-24 sm:right-6">
         <div
           role="group"
           aria-label="Projects view"

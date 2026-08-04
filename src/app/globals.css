@@ -169,3 +169,11 @@ textarea:-webkit-autofill:focus {
   /* The inset shadow is applied via a transition Chrome cannot override. */
   transition: background-color 9999s ease-out 0s;
 }
+
+@media print {
+  /* The site header is fixed, so without this it lands on the first printed
+     page of the résumé and the CV. */
+  header[role="banner"] {
+    display: none !important;
+  }
+}
