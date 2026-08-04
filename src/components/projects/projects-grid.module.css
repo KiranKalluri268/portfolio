@@ -121,6 +121,27 @@
   opacity: 0;
 }
 
+.back {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 900;
+  cursor: pointer;
+  border-radius: 9999px;
+  border: 1px solid rgb(255 255 255 / 15%);
+  background: rgb(0 0 0 / 70%);
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  color: rgb(229 231 235);
+  backdrop-filter: blur(12px);
+  transition: color 200ms ease, border-color 200ms ease;
+}
+
+.back:hover {
+  border-color: color-mix(in srgb, var(--color-accent-soft) 40%, transparent);
+  color: #fff;
+}
+
 .legend {
   position: fixed;
   bottom: 1rem;
@@ -168,6 +189,11 @@
 }
 
 @media (min-width: 640px) {
+  .back {
+    top: 1.5rem;
+    left: 1.5rem;
+  }
+
   .legend {
     bottom: 1.5rem;
     left: 1.5rem;

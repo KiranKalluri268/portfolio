@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import BackNavigationButton from "@/components/BackNavigationButton";
 import ProjectThumbnail from "@/components/content/ProjectThumbnail";
 import { SKILL_ICONS } from "@/components/skills/skill-icons";
 import { useReducedMotion } from "@/hooks/useMediaQuery";
@@ -310,6 +311,12 @@ export default function ProjectsGrid({
 
   return (
     <>
+      {/* The grid takes the whole viewport, so the way out has to travel with
+          it rather than sitting in a page the visitor cannot scroll to. */}
+      <BackNavigationButton className={styles.back}>
+        <span aria-hidden="true">←</span> Back to portfolio
+      </BackNavigationButton>
+
       <div className={styles.legend}>
         <p className={styles.legendTitle}>Where each project came from</p>
         <ul className={styles.legendList}>
