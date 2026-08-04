@@ -55,7 +55,8 @@ const BLUR_DISTANCE = 1.05;
 /** What each outline colour means, in the order the legend reads. */
 const ORIGINS: { origin: ProjectOrigin; label: string }[] = [
   { origin: "work", label: "Built in a role" },
-  { origin: "personal", label: "Built for myself" },
+  { origin: "selected", label: "Built for myself" },
+  { origin: "personal", label: "Built for myself, not listed" },
 ];
 
 export default function ProjectsGrid({

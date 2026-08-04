@@ -45,6 +45,11 @@
   --origin-colour: #63d8a4;
 }
 
+.cardLink[data-origin="selected"],
+.legendSwatch[data-origin="selected"] {
+  --origin-colour: var(--color-accent-soft, #ff7a18);
+}
+
 .cardLink[data-origin="personal"],
 .legendSwatch[data-origin="personal"] {
   --origin-colour: #ffffff;
