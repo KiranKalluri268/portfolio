@@ -11,6 +11,7 @@ import styles from "./site-menu.module.css";
 /** Everywhere the menu can take you. Only pages that exist: an entry that goes
  *  nowhere is worse than a short list. */
 const DESTINATIONS = [
+  { href: "/", label: "Home" },
   { href: "/projects", label: "Projects" },
   { href: "/skills", label: "Skills" },
   { href: "/resume", label: "Résumé" },
