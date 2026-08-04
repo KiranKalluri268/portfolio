@@ -26,7 +26,7 @@
  * `horizon`), so a smaller focus card brings more rings into view. The card's own
  * dimensions in CSS are driven from this too, through a custom property, so the
  * two cannot fall out of step. */
-export const FOCUS_SCALE = 0.4;
+export const FOCUS_SCALE = 0.5;
 
 /** The first step out is the steep one: the ring around the focused card is
  *  40% of it, which is what makes the middle card read as singled out. */
