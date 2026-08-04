@@ -24,9 +24,11 @@
   /* Placed from the middle: the focus point is the centre of the viewport. */
   top: 50%;
   left: 50%;
-  width: 50%;
+  /* Set from FOCUS_SCALE so the element matches what the transform maths
+     assumes; hardcoding it here once meant changing one and not the other. */
+  width: calc(var(--focus-scale) * 100%);
   aspect-ratio: 4 / 5;
-  max-height: 50%;
+  max-height: calc(var(--focus-scale) * 100%);
   transform-origin: center center;
   will-change: transform, opacity;
   /* No transition: position and scale are written every frame, and easing them

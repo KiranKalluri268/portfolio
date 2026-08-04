@@ -19,8 +19,14 @@
  * not rendered at all.
  */
 
-/** The focused card, as a fraction of the viewport. */
-export const FOCUS_SCALE = 0.5;
+/** The focused card, as a fraction of the viewport's width and height.
+ *
+ * Not just a size: it sets how much of the grid is on screen. The horizon the
+ * rings pile up against sits at PITCH x FOCUS_SCALE / ln(1/RING_RATIO) viewport
+ * widths, so a smaller focus card brings more rings into view. The card's own
+ * dimensions in CSS are driven from this too, through a custom property, so the
+ * two cannot fall out of step. */
+export const FOCUS_SCALE = 0.4;
 
 /** How much smaller and fainter each ring is than the one inside it. */
 export const RING_RATIO = 0.6;

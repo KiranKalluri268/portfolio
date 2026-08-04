@@ -289,6 +289,7 @@ export default function ProjectsGrid({ projects }: { projects: ProjectContent[] 
     <div
       ref={stageRef}
       className={styles.stage}
+      style={{ "--focus-scale": FOCUS_SCALE } as React.CSSProperties}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={endPress}
