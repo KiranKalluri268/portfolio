@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import BackNavigationButton from "@/components/BackNavigationButton";
+import ProjectsGrid from "@/components/projects/ProjectsGrid";
+import ProjectsView from "@/components/projects/ProjectsView";
 import ProjectLink from "@/components/content/ProjectLink";
 import ProjectThumbnail from "@/components/content/ProjectThumbnail";
 import SkillLink from "@/components/content/SkillLink";
@@ -181,6 +183,9 @@ export default function ProjectsPage() {
   const additional = projects.filter((project) => !project.featured);
 
   return (
+    <ProjectsView
+      grid={<ProjectsGrid projects={projects} />}
+      list={
     <main className="relative z-10 min-h-[100svh] overflow-hidden px-4 py-8 text-white sm:px-6 sm:py-12 lg:px-10">
       <div className="mx-auto w-full max-w-7xl">
         <BackNavigationButton className="mb-14 cursor-pointer rounded-full border border-white/15 bg-black/55 px-4 py-2 text-sm text-gray-200 backdrop-blur-md transition-colors hover:border-accent-soft/40 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft sm:mb-20">
@@ -241,5 +246,7 @@ export default function ProjectsPage() {
         </section>
       </div>
     </main>
+      }
+    />
   );
 }

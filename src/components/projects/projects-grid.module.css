@@ -1,0 +1,109 @@
+.stage {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  min-height: 100svh;
+  overflow: hidden;
+  cursor: grab;
+  /* The grid owns every direction, so the page must not scroll underneath it. */
+  touch-action: none;
+  outline: none;
+}
+
+.stage:active {
+  cursor: grabbing;
+}
+
+.stage:focus-visible {
+  outline: 2px solid var(--color-accent-soft);
+  outline-offset: -4px;
+}
+
+.card {
+  position: absolute;
+  /* Placed from the middle: the focus point is the centre of the viewport. */
+  top: 50%;
+  left: 50%;
+  width: 50%;
+  aspect-ratio: 4 / 5;
+  max-height: 50%;
+  transform-origin: center center;
+  will-change: transform, opacity;
+  /* No transition: position and scale are written every frame, and easing them
+     as well would fight the drag and lag behind the finger. */
+}
+
+.cardLink {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 1.25rem;
+  background: rgb(0 0 0 / 55%);
+  backdrop-filter: blur(8px);
+  text-decoration: none;
+  color: inherit;
+}
+
+.media {
+  position: relative;
+  display: block;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.image {
+  object-fit: cover;
+}
+
+.meta {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 0.9rem 0.9rem;
+  /* The lens shrinks whole cards, so type shrinks with them. Sized against the
+     card rather than the page so it stays in proportion at every ring. */
+  transition: opacity 200ms ease-out;
+}
+
+.title {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: clamp(0.75rem, 2.2cqw, 1.05rem);
+  font-weight: 700;
+  line-height: 1.25;
+  color: #fff;
+}
+
+.skills {
+  display: flex;
+  gap: 0.5rem;
+  color: rgb(255 255 255 / 70%);
+}
+
+.skillIcon {
+  height: 1.1rem;
+  width: 1.1rem;
+}
+
+/* Far enough out that the words are a smear: show the picture alone. */
+.card[data-faded="true"] .meta {
+  opacity: 0;
+}
+
+.liveRegion {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
