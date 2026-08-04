@@ -28,16 +28,30 @@
  * two cannot fall out of step. */
 export const FOCUS_SCALE = 0.4;
 
-/** How much smaller and fainter each ring is than the one inside it. */
-export const RING_RATIO = 0.6;
+/** How much smaller and fainter each ring is than the one inside it.
+ *
+ * Steeper than it looks: at 0.4 the third ring is already down to 6% of the
+ * focused card. It also pulls the horizon in, since the spacing falls away at
+ * the same rate — which is what brings the whole grid inside the viewport. */
+export const RING_RATIO = 0.4;
 
 /** Centre-to-centre spacing at the focus, in card widths. Above 1 so cards in
  *  the middle have air around them rather than touching. */
 export const PITCH = 1.16;
 
-/** Rings past this are sub-pixel and never rendered. At 0.6 per ring a card
- *  here is already under 7% of the viewport. */
-export const CULL_DISTANCE = 4.2;
+/** The smallest a card may be, against the focused one, before it is dropped.
+ *  Below this it is a few pixels on a phone: invisible, but still mounted and
+ *  transformed every frame. */
+const MIN_VISIBLE_FRACTION = 0.045;
+
+/** Rings past this are not rendered. Derived from the ring ratio rather than
+ *  fixed, so it follows if that changes — a steeper fall-off reaches the
+ *  invisible sooner and should stop sooner. Capped so a gentle ratio cannot
+ *  mount hundreds of cells. */
+export const CULL_DISTANCE = Math.min(
+  4.2,
+  Math.log(MIN_VISIBLE_FRACTION) / Math.log(RING_RATIO),
+);
 
 /** Odd rows are shifted half a cell, so the grid reads as a field rather than
  *  a table and no two columns ever line up all the way down. */

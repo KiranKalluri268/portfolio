@@ -84,11 +84,14 @@ describe("warp", () => {
 
   it("converges, so the endless grid fits in a finite disc", () => {
     const limit = horizon(PITCH);
-    expect(warp(50, PITCH)).toBeLessThan(limit);
+    // Approached from below and never passed. Checked at a distance where the
+    // ratio has not yet underflowed to zero, or the two are simply equal.
+    expect(warp(8, PITCH)).toBeLessThan(limit);
     expect(warp(50, PITCH)).toBeCloseTo(limit, 6);
-    // Just over one viewport from the middle: the horizon is on screen.
-    expect(limit).toBeGreaterThan(0.9);
-    expect(limit).toBeLessThan(1.4);
+    // Deliberately not pinned to the current constants — only that the horizon
+    // lands somewhere a visitor can actually see, rather than off in the void.
+    expect(limit).toBeGreaterThan(0.1);
+    expect(limit).toBeLessThan(2);
   });
 });
 
