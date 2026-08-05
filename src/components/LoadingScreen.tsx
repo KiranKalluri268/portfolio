@@ -97,6 +97,18 @@ interface LoadingScreenProps {
 
 const DEFAULT_ORBIT_RADII = [80, 90];
 
+/** What sits under the rings while the portfolio loads, and when it changes.
+ *  The first line is what every loading screen says; the second is what this
+ *  one has to say about it. */
+const LOADING_LINES = [
+  "Loading",
+  "Yeah kinda sucks, can't help but worth the wait",
+];
+
+/** How long the plain line holds before the second one takes over. Long enough
+ *  that a fast connection never sees the joke, which is the right way round. */
+const LOADING_QUIP_MS = 2500;
+
 /** The word fades while the orbit winds up, and the particles are let go at
  *  the end of it. Long enough to watch it speed up, which is the point of it.
  *  Shared with the hero, which waits for it before it starts typing. */
@@ -210,6 +222,8 @@ export default function LoadingScreen({
    *  wrapper, so no z-index here can reach over them from where this renders —
    *  it goes to the body instead. */
   const [portalReady, setPortalReady] = useState(false);
+  /** Which of the two lines under the rings is showing. */
+  const [loadingLine, setLoadingLine] = useState(0);
   /** Set the moment Enter is pressed, read by the draw loop every frame. A ref
    *  rather than state, so starting it does not rebuild the loop. */
   const flightRef = useRef<ExitFlight | null>(null);
@@ -525,6 +539,12 @@ export default function LoadingScreen({
   }, []);
 
   useEffect(() => {
+    if (isLoaded) return;
+    const timer = window.setTimeout(() => setLoadingLine(1), LOADING_QUIP_MS);
+    return () => window.clearTimeout(timer);
+  }, [isLoaded]);
+
+  useEffect(() => {
     if (!dismissed) overlayRef.current?.focus({ preventScroll: true });
   }, [dismissed, portalReady]);
 
@@ -633,6 +653,27 @@ export default function LoadingScreen({
               Enter
             </button>
           )}
+      </div>
+
+      {/* Under the rings, not inside them: the middle belongs to the count and
+          then to the word. Both lines sit in the same place so the change is a
+          crossfade rather than a jump, and neither is announced — the count
+          above already says what is happening. */}
+      <div
+        className="pointer-events-none absolute top-1/2 left-1/2 w-full -translate-x-1/2 translate-y-[7.5rem] px-6 text-center select-none"
+        aria-hidden="true"
+      >
+        {LOADING_LINES.map((line, index) => (
+          <span
+            key={line}
+            className={`absolute left-1/2 w-full -translate-x-1/2 px-6 text-xs font-light tracking-wider transition-opacity duration-500 ease-out sm:text-sm ${
+              !isLoaded && loadingLine === index ? "opacity-100" : "opacity-0"
+            }`}
+            style={{ color: colorToRgba(color, 0.55) }}
+          >
+            {line}
+          </span>
+        ))}
       </div>
 
       <p
