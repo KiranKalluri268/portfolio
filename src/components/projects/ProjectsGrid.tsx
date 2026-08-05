@@ -59,11 +59,17 @@ const BLUR_DISTANCE = 1.05;
  *
  * The stagger is what makes it a wave, but only while it stays short against
  * the card's own duration. At 190ms the rings were far enough apart to read as
- * one ring popping, then the next; at 90ms they overlap enough that the crest
- * — every card is at its widest about 40% of the way through — travels outward
- * as one thing. A wave is overlap, not sequence. */
+ * one ring popping, then the next; tightening it overlaps them so the crest —
+ * every card is at its widest about 40% of the way through — travels outward as
+ * one thing. A wave is overlap, not sequence.
+ *
+ * There is a floor. The spread across the whole visible field is the cull
+ * radius times this, so at 60ms the outermost ring starts 192ms after the
+ * middle. Much below this and everything arrives together and there is no
+ * travel left to see — the way to sharpen the crest from there is a shorter
+ * card, not a shorter delay. */
 const INTRO_CARD_MS = 950;
-const INTRO_STAGGER_MS = 90;
+const INTRO_STAGGER_MS = 60;
 
 /** The size a card starts at, against the size the lens says it should be.
  *  Small enough that the growth is the thing being watched. */
