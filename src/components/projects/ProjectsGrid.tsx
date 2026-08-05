@@ -7,6 +7,7 @@ import HintPill from "@/components/hints/HintPill";
 import { hintText } from "@/components/hints/hint-copy";
 import { useInputMode } from "@/components/hints/useIdleHint";
 import { SKILL_ICONS } from "@/components/skills/skill-icons";
+import { whenUncovered } from "@/components/nav/navigation-cover";
 import { useReducedMotion } from "@/hooks/useMediaQuery";
 import type { ProjectOrigin } from "@/lib/content/relationships";
 import type { ProjectContent } from "@/lib/content/types";
@@ -56,18 +57,19 @@ const BLUR_DISTANCE = 1.05;
 
 /** How long one card takes to arrive, and how much later each ring out starts.
  *  The stagger is what makes it a wave rather than everything at once. */
-const INTRO_CARD_MS = 620;
-const INTRO_STAGGER_MS = 125;
+const INTRO_CARD_MS = 950;
+const INTRO_STAGGER_MS = 190;
 
-/** The size a card starts at, against the size the lens says it should be. */
-const INTRO_FROM = 0.62;
+/** The size a card starts at, against the size the lens says it should be.
+ *  Small enough that the growth is the thing being watched. */
+const INTRO_FROM = 0.38;
 
 /** The spring the card arrives on. Damping sets how much of the overshoot
  *  survives; the frequency is chosen so there is exactly one swing past the
  *  target and one smaller dip under it before it rests — grows past its size,
  *  settles a little under, comes to rest. More swings than that reads as a
  *  wobble, fewer and it is just a fade. */
-const INTRO_DAMPING = 3;
+const INTRO_DAMPING = 3.4;
 const INTRO_FREQUENCY = 2.5 * Math.PI;
 
 /** Everything has arrived by here, including the outermost ring. */
@@ -119,6 +121,11 @@ export default function ProjectsGrid({
    *  stops doing the arithmetic for the rest of the visit. */
   const introStart = useRef<number | null>(null);
   const introArmed = useRef(false);
+  /** Waiting for a cover to lift before the wave can start. Nothing is drawn
+   *  while this is true: without it the grid paints at full size the moment the
+   *  menu's circle begins shrinking, and then animates itself in over the top
+   *  of what the visitor has already seen. */
+  const introPending = useRef(false);
 
   /** Shown once, to a visitor who has never seen the grid before. There is no
    *  scrollbar and no edge, so nothing else says the thing can be moved. */
@@ -145,9 +152,16 @@ export default function ProjectsGrid({
     }
     if (seen) return;
     hintDone.current = false;
-    const show = window.setTimeout(() => setHintVisible(true), HINT_DELAY_MS);
-    const hide = window.setTimeout(dismissHint, HINT_DELAY_MS + HINT_DURATION_MS);
+    let show = 0;
+    let hide = 0;
+    // Counted from the same moment the wave starts, not from mount, or arriving
+    // through the menu puts the pill on screen while cards are still landing.
+    const cancel = whenUncovered(() => {
+      show = window.setTimeout(() => setHintVisible(true), HINT_DELAY_MS);
+      hide = window.setTimeout(dismissHint, HINT_DELAY_MS + HINT_DURATION_MS);
+    });
     return () => {
+      cancel();
       window.clearTimeout(show);
       window.clearTimeout(hide);
     };
@@ -189,6 +203,10 @@ export default function ProjectsGrid({
     for (const cell of cells) {
       const element = cardRefs.current.get(key(cell));
       if (!element) continue;
+      if (introPending.current) {
+        element.style.visibility = "hidden";
+        continue;
+      }
       const spot = place(cell, focus.current, aspect);
       if (spot.distance > CULL_DISTANCE) {
         element.style.visibility = "hidden";
@@ -246,7 +264,16 @@ export default function ProjectsGrid({
   useLayoutEffect(() => {
     if (introArmed.current) return;
     introArmed.current = true;
-    if (!reduceMotion) introStart.current = performance.now();
+    if (reduceMotion) return;
+    // Navigated here from the menu, this page mounts behind its cover — so the
+    // wave would run while the screen is still hidden and be over by the time
+    // anyone could see it. It waits for the cover to lift. Arriving any other
+    // way, there is no cover and this runs at once.
+    introPending.current = true;
+    return whenUncovered(() => {
+      introPending.current = false;
+      introStart.current = performance.now();
+    });
   }, [reduceMotion]);
 
   useLayoutEffect(() => {
