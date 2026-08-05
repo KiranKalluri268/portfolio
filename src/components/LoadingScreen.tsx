@@ -93,8 +93,8 @@ interface LoadingScreenProps {
 const DEFAULT_ORBIT_RADII = [80, 90];
 
 /** The word fades while the orbit winds up, and the particles are let go at
- *  the end of it. */
-const SPIN_MS = 450;
+ *  the end of it. Long enough to watch it speed up, which is the point of it. */
+const SPIN_MS = 1500;
 
 /** How long they take to clear the screen once they are free. */
 const ESCAPE_MS = 750;
@@ -115,6 +115,17 @@ const ESCAPE_TAIL = 12;
 /** How narrow the opening gets across its short axis, against its long one, at
  *  the pointiest moment. It is a circle at both ends of the flight. */
 const SQUASH_MIN = 0.45;
+
+/** The curtain lifts off black as the orbit winds up. It has to: the page
+ *  behind it is black too, so cutting a hole in a black screen over a black
+ *  page shows nothing at all. By the time the opening appears the curtain is
+ *  grey and the page reads as the darker thing. */
+const CURTAIN_GREY = 61;
+
+/** Fraction of the escape spent growing the opening from nothing up to the
+ *  ring. Without it the opening arrives at the full width of the orbit on its
+ *  first frame, which pops. */
+const OPENING_LEAD_IN = 0.12;
 
 /** Fraction of the opening that is fully clear before the edge softens. */
 const FEATHER_FROM = 0.72;
@@ -378,8 +389,11 @@ export default function LoadingScreen({
 
         // The curtain moves to the canvas so the opening can be cut in it. The
         // black div behind is dropped on the same frame it is first painted,
-        // which is why this happens here rather than through React.
-        ctx.fillStyle = "#000";
+        // which is why this happens here rather than through React. It starts
+        // at black so there is nothing to see in the handover.
+        const windUp = Math.min(1, elapsed / SPIN_MS);
+        const level = Math.round(CURTAIN_GREY * (1 - (1 - windUp) ** 2));
+        ctx.fillStyle = `rgb(${level},${level},${level})`;
         ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
         if (backdropRef.current) backdropRef.current.style.opacity = "0";
 
@@ -387,18 +401,19 @@ export default function LoadingScreen({
         // so the page is uncovered by them rather than merely at the same time.
         // Their line swings round as they separate — they leave on a tangent,
         // not straight out — and the ellipse turns with it.
+        // Nothing opens while it is still winding up: the curtain is whole, and
+        // the orbit turns on it.
         const outer = particles.reduce((widest, p) => (p.baseOrbitRadius > widest.baseOrbitRadius ? p : widest), particles[0]);
-        if (outer) {
-          const pos = outer.released
-            ? {
-              x: outer.released.x + outer.released.dx * outer.travel,
-              y: outer.released.y + outer.released.dy * outer.travel,
-            }
-            : { x: flight.centre.x + outer.orbitRadius, y: flight.centre.y };
+        if (outer?.released) {
+          const pos = {
+            x: outer.released.x + outer.released.dx * outer.travel,
+            y: outer.released.y + outer.released.dy * outer.travel,
+          };
           const dx = pos.x - flight.centre.x;
           const dy = pos.y - flight.centre.y;
-          const major = Math.hypot(dx, dy);
           const escaped = Math.min(1, outer.travel / flight.distance);
+          const major =
+            Math.hypot(dx, dy) * Math.min(1, escaped / OPENING_LEAD_IN);
           // Round at both ends of the flight, pointiest in the middle.
           const squash = 1 - (1 - SQUASH_MIN) * Math.sin(Math.PI * escaped);
 
