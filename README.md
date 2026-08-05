@@ -140,6 +140,7 @@ docs/                    Architecture and operational documentation
 - [Configuration](docs/CONFIGURATION.md)
 - [Deployment](docs/DEPLOYMENT.md)
 - [Contributing](docs/CONTRIBUTING.md)
+- [What is left](docs/ROADMAP.md)
 - [Current project status](PROJECT_STATUS.md)
 - [Improvement backlog](IMPROVEMENTS.md)
 

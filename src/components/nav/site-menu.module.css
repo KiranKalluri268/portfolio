@@ -68,7 +68,11 @@
   z-index: 5000;
   display: flex;
   align-items: center;
-  background: #050505;
+  /* Grey rather than black. The page it opens over is black, so a black panel
+     made the circle sweeping across it invisible — the menu appeared to arrive
+     all at once. The same grey the entry screen's curtain lifts to, so the
+     site's two full-screen covers are the same surface. */
+  background: rgb(61 61 61);
   transition-property: clip-path, -webkit-clip-path;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -143,7 +147,9 @@
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.18em;
-  color: rgb(255 255 255 / 35%);
+  /* 35% was fine against near-black; on the lighter panel it fell to about
+     2.4:1, which is not a contrast, it is a rumour. */
+  color: rgb(255 255 255 / 55%);
 }
 
 @media (min-width: 640px) {

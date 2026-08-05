@@ -3,12 +3,28 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useScrollActions } from "@/context/SmoothScrollContext";
 import { useAudio } from "@/context/AudioContextProvider";
+import { ENTRY_RELEASE_MS } from "./entry-timing";
 import { useReducedMotion } from "@/hooks/useMediaQuery";
 
 export default function Hero() {
   const { scrollNext, scrollToSection } = useScrollActions();
   const { hasEntered } = useAudio();
   const reduceMotion = useReducedMotion();
+
+  /** The headline types itself, and for the first couple of seconds after Enter
+   *  the entry screen is still over it — so it would perform to a closed
+   *  curtain. It waits for the moment the curtain starts opening instead.
+   *
+   *  Only when the entry screen was actually used: arriving here from another
+   *  page, hasEntered is already true at mount and there is nothing to wait
+   *  for. */
+  const [curtainOpening, setCurtainOpening] = useState(hasEntered);
+
+  useEffect(() => {
+    if (curtainOpening || !hasEntered) return;
+    const timer = setTimeout(() => setCurtainOpening(true), reduceMotion ? 0 : ENTRY_RELEASE_MS);
+    return () => clearTimeout(timer);
+  }, [hasEntered, curtainOpening, reduceMotion]);
   const words = useMemo(
     () => [
       "MERN FULL-STACK DEVELOPER...",
@@ -44,7 +60,7 @@ export default function Hero() {
 
   // H1 Animation Sequence
   useEffect(() => {
-    if (!hasEntered || reduceMotion) return;
+    if (!curtainOpening || reduceMotion) return;
     let timeout: NodeJS.Timeout;
 
     switch (h1State) {
@@ -90,11 +106,11 @@ export default function Hero() {
     }
 
     return () => clearTimeout(timeout);
-  }, [displayText, h1State, introText, mainText, reduceMotion, hasEntered]);
+  }, [displayText, h1State, introText, mainText, reduceMotion, curtainOpening]);
 
   // Second line typing
   useEffect(() => {
-    if (!hasEntered || reduceMotion) return;
+    if (!curtainOpening || reduceMotion) return;
     if (!isFirstLineDone) return;
     let timeout: NodeJS.Timeout;
 
@@ -116,7 +132,7 @@ export default function Hero() {
     }
 
     return () => clearTimeout(timeout);
-  }, [secondLine, isDeleting, isFirstLineDone, currentWordIndex, words, reduceMotion, hasEntered]);
+  }, [secondLine, isDeleting, isFirstLineDone, currentWordIndex, words, reduceMotion, curtainOpening]);
 
   return (
     <section
