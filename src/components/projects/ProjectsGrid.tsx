@@ -57,19 +57,17 @@ const BLUR_DISTANCE = 1.05;
 
 /** How long one card takes to arrive, and how much later each ring out starts.
  *
- * The stagger is what makes it a wave, but only while it stays short against
- * the card's own duration. At 190ms the rings were far enough apart to read as
- * one ring popping, then the next; tightening it overlaps them so the crest —
- * every card is at its widest about 40% of the way through — travels outward as
- * one thing. A wave is overlap, not sequence.
+ * These two together decide whether the arrival reads as one swell or as layer
+ * after layer. Overlap them — a long card against a short delay — and every
+ * card is mid-flight at once, which looks like the whole field breathing.
+ * Separate them and each ring is recognisably its own event, arriving after
+ * the one inside it. The second is what was wanted here, so the delay is long
+ * against the card rather than short.
  *
- * There is a floor. The spread across the whole visible field is the cull
- * radius times this, so at 60ms the outermost ring starts 192ms after the
- * middle. Much below this and everything arrives together and there is no
- * travel left to see — the way to sharpen the crest from there is a shorter
- * card, not a shorter delay. */
+ * The spread across the visible field is the cull radius times the delay: at
+ * 280ms the outermost ring starts about 900ms after the middle one. */
 const INTRO_CARD_MS = 950;
-const INTRO_STAGGER_MS = 60;
+const INTRO_STAGGER_MS = 280;
 
 /** The size a card starts at, against the size the lens says it should be.
  *  Small enough that the growth is the thing being watched. */
