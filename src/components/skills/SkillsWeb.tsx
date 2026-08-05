@@ -20,7 +20,9 @@ import {
   type GraphNode,
 } from "./skill-web-layout";
 import HintPill from "../hints/HintPill";
+import { useReducedMotion } from "@/hooks/useMediaQuery";
 import { useIdleHint, useInputMode } from "../hints/useIdleHint";
+import { whenUncovered } from "../nav/navigation-cover";
 import { hintText } from "../hints/hint-copy";
 
 const MIN_SCALE = 0.28;
@@ -58,6 +60,53 @@ function midpoint(first: PointerPosition, second: PointerPosition) {
   };
 }
 
+/** The web assembles itself from the outside in: the skills appear, their lines
+ *  reach inward and meet to make a category, those lines reach in to make a
+ *  domain, and those meet at the centre. Each beat finishes before the next
+ *  starts — it is a thing being built, not a thing growing.
+ *
+ * Every line in a beat takes the same time regardless of how long it is. That
+ * is the whole trick: at a constant speed the short edges land first and there
+ * is no moment of collision, just lines finishing untidily. `pathLength="1"`
+ * normalises them so they all arrive on the same frame. */
+const LEAF_FADE_MS = 300;
+/** The leaves do not all appear at once; they sweep round the circle. */
+const LEAF_SWEEP_MS = 420;
+const LINE_MS = 460;
+const NODE_MS = 260;
+
+const T_CATEGORY_LINES = LEAF_SWEEP_MS + LEAF_FADE_MS;
+const T_CATEGORY_NODES = T_CATEGORY_LINES + LINE_MS;
+const T_DOMAIN_LINES = T_CATEGORY_NODES + NODE_MS;
+const T_DOMAIN_NODES = T_DOMAIN_LINES + LINE_MS;
+const T_CENTER_LINES = T_DOMAIN_NODES + NODE_MS;
+const T_CENTER_NODE = T_CENTER_LINES + LINE_MS;
+const INTRO_TOTAL_MS = T_CENTER_NODE + NODE_MS;
+
+/** When a node appears, by what it is. Skills are handled separately, since
+ *  they sweep rather than land together. */
+const NODE_DELAY: Record<GraphNode["kind"], number> = {
+  skill: 0,
+  category: T_CATEGORY_NODES,
+  domain: T_DOMAIN_NODES,
+  center: T_CENTER_NODE,
+};
+
+/** When an edge draws, by the child it runs to — the end it draws from. */
+const EDGE_DELAY: Record<GraphNode["kind"], number> = {
+  skill: T_CATEGORY_LINES,
+  category: T_DOMAIN_LINES,
+  domain: T_CENTER_LINES,
+  center: 0,
+};
+
+/** Where a leaf sits round the circle, 0 to 1, so they can sweep rather than
+ *  arrive in whatever order the data happens to be in. */
+function angleFraction(node: GraphNode) {
+  const turn = Math.atan2(node.y - CENTER_Y, node.x - CENTER_X) + Math.PI / 2;
+  return ((turn / (Math.PI * 2)) % 1 + 1) % 1;
+}
+
 export default function SkillsWeb({
   data,
   graph,
@@ -76,8 +125,73 @@ export default function SkillsWeb({
   const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [directoryOpen, setDirectoryOpen] = useState(false);
+  /** "waiting" until anything covering the page has gone, "building" while it
+   *  assembles, "done" once it is an ordinary web again — at which point every
+   *  inline style the intro used is dropped so nothing it did survives. */
+  const reduceMotion = useReducedMotion();
+  // Reduced motion never assembles; it is done before the first paint rather
+  // than switched to done by an effect afterwards.
+  const [assembly, setAssembly] = useState<"waiting" | "building" | "done">(
+    () => (typeof window !== "undefined"
+      && window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "done" : "waiting"),
+  );
   const inputMode = useInputMode();
-  const webHint = useIdleHint(hasInteracted ? null : "skill-web");
+  const webHint = useIdleHint(hasInteracted || assembly !== "done" ? null : "skill-web");
+
+  /** One frame of `transition: none` while a skipped build is snapped to its
+   *  finished state. Dropping the inline styles is not enough on its own: the
+   *  transitions are in their delay when the skip happens, and removing a
+   *  property whose target value is unchanged leaves the pending transition
+   *  running on its original schedule — so the web carries on assembling at
+   *  the same pace, exactly as if nothing had been skipped. */
+  const [snapping, setSnapping] = useState(false);
+
+  useEffect(() => {
+    if (!snapping) return;
+    // Two frames: one for the cancel to be applied, one before it is taken away.
+    let second = 0;
+    const first = requestAnimationFrame(() => {
+      second = requestAnimationFrame(() => setSnapping(false));
+    });
+    return () => {
+      cancelAnimationFrame(first);
+      cancelAnimationFrame(second);
+    };
+  }, [snapping]);
+
+  // Anyone who touches the web wants the web, not a performance about it. The
+  // first visit earns the build; the fifth does not.
+  useEffect(() => {
+    if (assembly !== "building") return;
+    const skip = () => {
+      setSnapping(true);
+      setAssembly("done");
+    };
+    window.addEventListener("pointerdown", skip, { passive: true });
+    window.addEventListener("wheel", skip, { passive: true });
+    window.addEventListener("keydown", skip, { passive: true });
+    return () => {
+      window.removeEventListener("pointerdown", skip);
+      window.removeEventListener("wheel", skip);
+      window.removeEventListener("keydown", skip);
+    };
+  }, [assembly]);
+
+  useEffect(() => {
+    if (reduceMotion) return;
+    let finish = 0;
+    // Reached through the site menu, this page mounts behind its cover; without
+    // waiting the web would build itself on a hidden screen.
+    const cancel = whenUncovered(() => {
+      setAssembly("building");
+      finish = window.setTimeout(() => setAssembly("done"), INTRO_TOTAL_MS);
+    });
+    return () => {
+      cancel();
+      window.clearTimeout(finish);
+    };
+  }, [reduceMotion]);
+
   const nodeById = useMemo(
     () => new Map(graph.nodes.map((node) => [node.id, node])),
     [graph.nodes],
@@ -354,20 +468,39 @@ export default function SkillsWeb({
           {graph.edges.map((edge) => {
             const isActive = !relatedNodeIds ||
               (relatedNodeIds.has(edge.from.id) && relatedNodeIds.has(edge.to.id));
+            // A negative offset reveals from the far end, so the line grows
+            // from the child inward to its parent rather than out from the
+            // parent. pathLength="1" makes that one unit for every edge, so
+            // long and short lines take the same time and arrive together.
+            const drawing = snapping
+              ? { strokeDasharray: 1, strokeDashoffset: 0, transition: "none" }
+              : assembly !== "done"
+                ? {
+                  strokeDasharray: 1,
+                  strokeDashoffset: assembly === "building" ? 0 : -1,
+                  transition: `stroke-dashoffset ${LINE_MS}ms ease-out ${EDGE_DELAY[edge.to.kind]}ms`,
+                }
+                : undefined;
             return (
               <g key={edge.id}>
                 <path
                   d={edge.path}
+                  pathLength="1"
                   fill="none"
                   stroke={edge.accent}
                   strokeWidth={isActive ? 2.2 : 1}
                   strokeOpacity={isActive ? 0.48 : 0.07}
                   filter={isActive && activeNode ? "url(#skill-web-glow)" : undefined}
                   className="transition-all duration-300"
+                  style={drawing}
                 />
-                <circle className="skill-web-particle" r="3" fill={edge.accent} opacity={isActive ? 0.8 : 0.1}>
-                  <animateMotion dur="5s" repeatCount="indefinite" path={edge.path} />
-                </circle>
+                {/* Held back until the web exists: otherwise these travel along
+                    lines that have not been drawn yet. */}
+                {assembly === "done" && (
+                  <circle className="skill-web-particle" r="3" fill={edge.accent} opacity={isActive ? 0.8 : 0.1}>
+                    <animateMotion dur="5s" repeatCount="indefinite" path={edge.path} />
+                  </circle>
+                )}
               </g>
             );
           })}
@@ -375,11 +508,31 @@ export default function SkillsWeb({
 
         {graph.nodes.map((node) => {
           const dimmed = relatedNodeIds && !relatedNodeIds.has(node.id);
+          // Skills sweep round the circle; everything else lands on its beat.
+          const appearsAt = node.kind === "skill"
+            ? angleFraction(node) * LEAF_SWEEP_MS
+            : NODE_DELAY[node.kind];
+          const appearsOver = node.kind === "skill" ? LEAF_FADE_MS : NODE_MS;
+          // `scale` rather than a transform, so it composes with the centring
+          // translate in the class list instead of replacing it — and with the
+          // hover scale, once this is out of the way.
+          const arriving = snapping
+            ? { opacity: 1, scale: "1", transition: "none" }
+            : assembly !== "done"
+              ? {
+                opacity: assembly === "building" ? 1 : 0,
+                scale: assembly === "building" ? "1" : "0.55",
+                transition: `opacity ${appearsOver}ms ease-out ${appearsAt}ms,`
+                  + ` scale ${appearsOver}ms cubic-bezier(0.2, 0.9, 0.3, 1.5) ${appearsAt}ms`,
+              }
+              : undefined;
+
           const sharedStyle = {
             left: node.x,
             top: node.y,
             borderColor: `${node.accent}66`,
             boxShadow: `0 0 ${node.kind === "center" ? 50 : 24}px ${node.accent}22`,
+            ...arriving,
           };
 
           if (node.kind === "skill" && node.skill) {
