@@ -2,6 +2,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useAudio } from "@/context/AudioContextProvider";
+import { ENTRY_RELEASE_MS } from "./entry-timing";
 import { useScrollActions } from "@/context/SmoothScrollContext";
 
 interface ParticleProps {
@@ -97,8 +98,9 @@ interface LoadingScreenProps {
 const DEFAULT_ORBIT_RADII = [80, 90];
 
 /** The word fades while the orbit winds up, and the particles are let go at
- *  the end of it. Long enough to watch it speed up, which is the point of it. */
-const SPIN_MS = 2000;
+ *  the end of it. Long enough to watch it speed up, which is the point of it.
+ *  Shared with the hero, which waits for it before it starts typing. */
+const SPIN_MS = ENTRY_RELEASE_MS;
 
 /** How long they take to clear the screen once they are free. */
 const ESCAPE_MS = 750;
