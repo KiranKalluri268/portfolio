@@ -475,7 +475,7 @@ export default function SkillsWeb({
       {activeNode && activeNode.kind !== "center" && (
         <aside
           data-web-control
-          className="pointer-events-none absolute right-4 top-4 z-50 hidden max-w-xs rounded-2xl border border-white/10 bg-black/80 p-4 shadow-2xl backdrop-blur-xl lg:block"
+          className="pointer-events-none absolute right-4 top-28 z-50 hidden max-w-xs rounded-2xl border border-white/10 bg-black/80 p-4 shadow-2xl backdrop-blur-xl lg:block"
           style={{ borderColor: `${activeNode.accent}55` }}
         >
           <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: activeNode.accent }}>
@@ -489,13 +489,18 @@ export default function SkillsWeb({
       {directoryOpen && (
         <div
           data-web-control
-          className="absolute inset-0 z-[80] overflow-y-auto bg-[#02030a]/95 p-4 backdrop-blur-xl sm:p-8"
+          className="absolute inset-0 z-[80] overflow-y-auto bg-[#02030a]/95 px-4 pb-4 backdrop-blur-xl sm:px-8 sm:pb-8"
           role="dialog"
           aria-modal="true"
           aria-labelledby="skill-directory-title"
         >
           <div className="mx-auto max-w-5xl">
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-[#02030a]/95 py-4 backdrop-blur-xl">
+            {/* The row's own padding is what clears the site header, and the
+                row is opaque to the top of the screen — so pinned, it covers
+                the strip the header sits in and nothing scrolls behind the
+                logo. At top-0 with no padding the title and the Close button
+                sat behind the logo and the menu button instead. */}
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-[#02030a] pt-16 pb-4 sm:pt-28">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-accent-soft">Alternative view</p>
                 <h2 id="skill-directory-title" className="mt-1 text-2xl font-bold">Skill directory</h2>
