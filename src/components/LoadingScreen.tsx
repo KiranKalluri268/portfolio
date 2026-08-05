@@ -24,8 +24,17 @@ class LoadingParticle {
   centerY: number;
   tailLength: number;
   trail: { x: number; y: number }[] = [];
+  /** Resting geometry, kept so the exit can work from it. */
+  readonly baseOrbitRadius: number;
+  readonly baseSpeed: number;
+  /** Set when the particle stops turning and keeps going straight: where it
+   *  was let go, the direction it was travelling, and how far along it is. */
+  released: { x: number; y: number; dx: number; dy: number } | null = null;
+  travel = 0;
 
   constructor(props: ParticleProps & { tailLength: number }) {
+    this.baseOrbitRadius = props.orbitRadius;
+    this.baseSpeed = props.speed;
     this.radius = props.radius;
     this.size = props.size;
     this.angle = props.angle;
@@ -36,7 +45,27 @@ class LoadingParticle {
     this.tailLength = props.tailLength;
   }
 
+  /** Stops turning and keeps the velocity it had: straight out along the
+   *  tangent, which is the direction it was already travelling. */
+  release() {
+    if (this.released) return;
+    this.released = {
+      x: this.centerX + this.orbitRadius * Math.cos(this.angle),
+      y: this.centerY + this.orbitRadius * Math.sin(this.angle),
+      dx: -Math.sin(this.angle),
+      dy: Math.cos(this.angle),
+    };
+  }
+
   update() {
+    if (this.released) {
+      const x = this.released.x + this.released.dx * this.travel;
+      const y = this.released.y + this.released.dy * this.travel;
+      this.trail.push({ x, y });
+      if (this.trail.length > this.tailLength) this.trail.shift();
+      return { x, y };
+    }
+
     this.angle += this.speed;
     if (this.angle > Math.PI * 2) this.angle -= Math.PI * 2;
 
@@ -62,6 +91,44 @@ interface LoadingScreenProps {
 }
 
 const DEFAULT_ORBIT_RADII = [80, 90];
+
+/** The word fades while the orbit winds up, and the particles are let go at
+ *  the end of it. */
+const SPIN_MS = 450;
+
+/** How long they take to clear the screen once they are free. */
+const ESCAPE_MS = 750;
+const EXIT_MS = SPIN_MS + ESCAPE_MS;
+
+/** Without an orbit to watch there is nothing to time a fade to, so reduced
+ *  motion gets a short one instead of a slow one. */
+const REDUCED_EXIT_MS = 300;
+
+/** What the orbit speeds up to before it lets go. */
+const RELEASE_SPIN = 3.6;
+
+/** The trail shortens as it goes: at its resting length it wraps the whole
+ *  orbit, which at speed draws a loop of string rather than something moving. */
+const SPIN_TAIL = 26;
+const ESCAPE_TAIL = 12;
+
+/** How narrow the opening gets across its short axis, against its long one, at
+ *  the pointiest moment. It is a circle at both ends of the flight. */
+const SQUASH_MIN = 0.45;
+
+/** Fraction of the opening that is fully clear before the edge softens. */
+const FEATHER_FROM = 0.72;
+
+/** Past the far corner rather than exactly to it, so the soft edge finishes
+ *  off screen instead of leaving a ring of dusk in the corners. */
+const OVERSHOOT = 1.35;
+
+interface ExitFlight {
+  startedAt: number;
+  centre: { x: number; y: number };
+  /** How far the particles travel from where they were let go. */
+  distance: number;
+}
 
 function hexToRgb(hex: string) {
   const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
@@ -108,6 +175,12 @@ export default function LoadingScreen({
    *  wrapper, so no z-index here can reach over them from where this renders —
    *  it goes to the body instead. */
   const [portalReady, setPortalReady] = useState(false);
+  /** Set the moment Enter is pressed, read by the draw loop every frame. A ref
+   *  rather than state, so starting it does not rebuild the loop. */
+  const flightRef = useRef<ExitFlight | null>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
+  /** Whether this exit is the flight or the plain fade reduced motion gets. */
+  const [isFlying, setIsFlying] = useState(false);
 
   // Loading progress state
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -271,7 +344,7 @@ export default function LoadingScreen({
     let lastFrame = 0;
     function draw(time = 0) {
       if (!canvas) return;
-      if (document.hidden || time - lastFrame < 1000 / 30) {
+      if (document.hidden || (!flightRef.current && time - lastFrame < 1000 / 30)) {
         animationFrameRef.current = requestAnimationFrame(draw);
         return;
       }
@@ -280,6 +353,71 @@ export default function LoadingScreen({
       if (!ctx) return;
 
       ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
+
+      const flight = flightRef.current;
+      if (flight) {
+        const elapsed = time - flight.startedAt;
+        const particles = particlesRef.current;
+
+        if (elapsed < SPIN_MS) {
+          // Winding up while the word fades from inside it.
+          const t = elapsed / SPIN_MS;
+          particles.forEach((p) => {
+            p.speed = p.baseSpeed * (1 + (RELEASE_SPIN - 1) * t * t);
+            p.tailLength = Math.round(tailLength + (SPIN_TAIL - tailLength) * t);
+          });
+        } else {
+          // Let go, and accelerating away along the tangent.
+          const t = Math.min(1, (elapsed - SPIN_MS) / ESCAPE_MS);
+          particles.forEach((p) => {
+            p.release();
+            p.travel = flight.distance * t ** 1.8;
+            p.tailLength = ESCAPE_TAIL;
+          });
+        }
+
+        // The curtain moves to the canvas so the opening can be cut in it. The
+        // black div behind is dropped on the same frame it is first painted,
+        // which is why this happens here rather than through React.
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
+        if (backdropRef.current) backdropRef.current.style.opacity = "0";
+
+        // The opening: an ellipse whose two ends are the particles themselves,
+        // so the page is uncovered by them rather than merely at the same time.
+        // Their line swings round as they separate — they leave on a tangent,
+        // not straight out — and the ellipse turns with it.
+        const outer = particles.reduce((widest, p) => (p.baseOrbitRadius > widest.baseOrbitRadius ? p : widest), particles[0]);
+        if (outer) {
+          const pos = outer.released
+            ? {
+              x: outer.released.x + outer.released.dx * outer.travel,
+              y: outer.released.y + outer.released.dy * outer.travel,
+            }
+            : { x: flight.centre.x + outer.orbitRadius, y: flight.centre.y };
+          const dx = pos.x - flight.centre.x;
+          const dy = pos.y - flight.centre.y;
+          const major = Math.hypot(dx, dy);
+          const escaped = Math.min(1, outer.travel / flight.distance);
+          // Round at both ends of the flight, pointiest in the middle.
+          const squash = 1 - (1 - SQUASH_MIN) * Math.sin(Math.PI * escaped);
+
+          ctx.save();
+          ctx.globalCompositeOperation = "destination-out";
+          ctx.translate(flight.centre.x, flight.centre.y);
+          ctx.rotate(Math.atan2(dy, dx));
+          ctx.scale(1, Math.max(squash, 0.01));
+          const opening = ctx.createRadialGradient(0, 0, 0, 0, 0, major);
+          opening.addColorStop(0, "rgba(0,0,0,1)");
+          opening.addColorStop(FEATHER_FROM, "rgba(0,0,0,1)");
+          opening.addColorStop(1, "rgba(0,0,0,0)");
+          ctx.fillStyle = opening;
+          ctx.beginPath();
+          ctx.arc(0, 0, major, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
 
       particlesRef.current.forEach((p) => {
         const pos = p.update();
@@ -344,8 +482,36 @@ export default function LoadingScreen({
     // These calls stay inside the user interaction for strict autoplay policies.
     document.querySelector<HTMLAudioElement>("[data-portfolio-audio]")?.play().catch(() => {});
     document.querySelector<HTMLVideoElement>("[data-blackhole-video]")?.play().catch(() => {});
+    // Before the flight, not after: the hero types its headline off hasEntered,
+    // so it is already coming in behind the black as this clears.
     enterPortfolio();
-    exitTimerRef.current = setTimeout(() => setDismissed(true), 700);
+
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setIsFlying(!reduced);
+    if (!reduced) {
+      const centre = { x: canvasSize.width / 2, y: canvasSize.height / 2 };
+      const corner = Math.hypot(
+        Math.max(centre.x, canvasSize.width - centre.x),
+        Math.max(centre.y, canvasSize.height - centre.y),
+      );
+      const orbit = particlesRef.current.reduce(
+        (widest, p) => Math.max(widest, p.baseOrbitRadius),
+        1,
+      );
+      // They leave on a tangent, so their distance from the centre is the
+      // hypotenuse of the orbit and how far they have run. This solves that
+      // for the run that puts the far corner inside the opening.
+      const reach = corner * OVERSHOOT;
+      flightRef.current = {
+        startedAt: performance.now(),
+        centre,
+        distance: Math.sqrt(Math.max(reach * reach - orbit * orbit, 1)),
+      };
+    }
+    exitTimerRef.current = setTimeout(
+      () => setDismissed(true),
+      reduced ? REDUCED_EXIT_MS : EXIT_MS,
+    );
   };
 
   if (dismissed || !portalReady) return null;
@@ -354,18 +520,34 @@ export default function LoadingScreen({
     <div
       ref={overlayRef}
       tabIndex={-1}
-      className={`fixed inset-0 z-[9999] flex min-h-[100svh] items-center justify-center bg-black outline-none transition-opacity duration-700 ease-out ${isExiting ? "pointer-events-none opacity-0" : "opacity-100"}`}
+      className={`fixed inset-0 z-[9999] flex min-h-[100svh] items-center justify-center outline-none ${isExiting ? "pointer-events-none" : ""}`}
       role="dialog"
       aria-modal="true"
       aria-label="Portfolio entry"
       aria-busy={!isLoaded}
     >
-      <canvas
-        ref={canvasRef}
-        className="pointer-events-none absolute top-0 left-0 h-[100dvh] w-screen rounded-full bg-transparent"
+      {/* Its own layer, so the canvas can take the black over and cut the
+          opening into it. Only reduced motion fades this. */}
+      <div
+        ref={backdropRef}
+        className="absolute inset-0 bg-black transition-opacity ease-out"
+        style={{
+          opacity: isExiting && !isFlying ? 0 : 1,
+          transitionDuration: `${isExiting && !isFlying ? REDUCED_EXIT_MS : 0}ms`,
+        }}
       />
 
-      <div className="relative z-10 flex flex-col items-center justify-center h-[60px]">
+      {/* No rounding: once this carries the curtain, a border radius would
+          clip the corners and leave the page showing through them. */}
+      <canvas
+        ref={canvasRef}
+        className="pointer-events-none absolute top-0 left-0 h-[100dvh] w-screen bg-transparent"
+      />
+
+      <div
+        className={`relative z-10 flex h-[60px] flex-col items-center justify-center transition-opacity ease-out ${isExiting ? "opacity-0" : "opacity-100"}`}
+        style={{ transitionDuration: `${SPIN_MS}ms` }}
+      >
           {!isLoaded ? (
             <p
               key="loading-text"
@@ -389,8 +571,8 @@ export default function LoadingScreen({
       </div>
 
       <p
-        className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-0 w-full px-4 text-center text-xs font-light tracking-wider select-none sm:text-sm md:text-base"
-        style={{ color: colorToRgba(color, 0.7) }}
+        className={`absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-0 w-full px-4 text-center text-xs font-light tracking-wider transition-opacity ease-out select-none sm:text-sm md:text-base ${isExiting ? "opacity-0" : "opacity-100"}`}
+        style={{ color: colorToRgba(color, 0.7), transitionDuration: `${SPIN_MS}ms` }}
       >
         Press Enter to open the portfolio with audio. You can mute it anytime from the top control.
       </p>
