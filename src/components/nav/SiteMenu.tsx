@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useScrollActions } from "@/context/SmoothScrollContext";
 import { useReducedMotion } from "@/hooks/useMediaQuery";
+import { dropCoverIn, raiseCover } from "./navigation-cover";
 import styles from "./site-menu.module.css";
 
 /** Everywhere the menu can take you. Only pages that exist: an entry that goes
@@ -64,6 +65,9 @@ export default function SiteMenu() {
   }, []);
 
   const close = useCallback(() => {
+    // Anything on the page that animates as it arrives has been waiting behind
+    // this; it starts when the screen is actually visible again.
+    dropCoverIn(reduceMotion ? 0 : REVEAL_MS);
     setCovered(false);
     setPending(null);
     window.setTimeout(() => {
@@ -153,6 +157,7 @@ export default function SiteMenu() {
       return;
     }
     setPending(href);
+    raiseCover();
     router.push(href);
   };
 
