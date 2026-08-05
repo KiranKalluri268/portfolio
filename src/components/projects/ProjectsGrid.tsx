@@ -56,9 +56,14 @@ const LABEL_MIN_SCALE = ringFalloff(1.6);
 const BLUR_DISTANCE = 1.05;
 
 /** How long one card takes to arrive, and how much later each ring out starts.
- *  The stagger is what makes it a wave rather than everything at once. */
+ *
+ * The stagger is what makes it a wave, but only while it stays short against
+ * the card's own duration. At 190ms the rings were far enough apart to read as
+ * one ring popping, then the next; at 90ms they overlap enough that the crest
+ * — every card is at its widest about 40% of the way through — travels outward
+ * as one thing. A wave is overlap, not sequence. */
 const INTRO_CARD_MS = 950;
-const INTRO_STAGGER_MS = 190;
+const INTRO_STAGGER_MS = 90;
 
 /** The size a card starts at, against the size the lens says it should be.
  *  Small enough that the growth is the thing being watched. */
