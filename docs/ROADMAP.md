@@ -36,7 +36,43 @@ Worth doing as part of it:
 - The résumé and CV read differently from the case studies by design; both need
   reading in their own right, not skimmed against each other.
 
-Cannot be done without Saikiran: every fact in it is his.
+Cannot be done without Saikiran: every fact in it is his. The gaps that can be
+found without him are listed below.
+
+#### What is missing, as of this writing
+
+Counted from `src/data/**`, not guessed:
+
+- **Five of ten projects have no image**: `aude-diagnostics`, `axion`,
+  `digichikitsak`, `elphie`, `healthymitra`. They render the "NOT AVAILABLE"
+  placeholder on the projects page and in the grid. These are exactly the five
+  built inside a role, so every green card on the grid's colour key is a
+  placeholder.
+- **Two of ten have a live link** (`certisafe`, `third-eye-ai`) and **three have
+  a repository link**. For the five work projects that is policy, and the page
+  already says so in his voice. `mind-plan` and `resume-by-ai` have neither and
+  are his own, which reads as a gap rather than a decision; `ipl-score-predictor`
+  has a repository but no demo.
+- **Two of ten have outcomes.** The outcome tiles on a case study render from
+  `outcomes`, so eight case studies show nothing there.
+- **No project has a gallery.** `gallery` is empty in all ten, so that part of
+  the case-study template never appears.
+- **No work item has an `impact`.** Zero across all nine work items in the three
+  roles.
+- **`eduskills-aws` is thin**: one work item and one skill, against four work
+  items and seven to twelve skills for the other two roles.
+- **Three skills have no brand mark**: `deep-learning`, `mobile-development`,
+  `rag`. They fall back to initials in the marquee and on their own page, which
+  is the same thing that was reported and fixed for other skills earlier.
+- **`flutter`'s "how I learned" is about half the length of every other skill's**
+  (42 characters against a median of 71).
+- **Every link needs opening by hand.** They cannot be checked from inside the
+  build environment, which has no outbound network.
+
+One decision rather than a gap: `resume.json` publishes a phone number, a
+personal email and a home address to a public page. That is normal on a résumé
+handed to a recruiter and a different thing on a web page that anyone can
+scrape. Worth deciding deliberately rather than by default.
 
 ### 2. Sort out the background music
 
@@ -116,14 +152,16 @@ with nothing keeping them in step. A fifth page will need the same treatment,
 and the first time the header's padding changes, all of them will be wrong at
 once. One shared token would end that.
 
-### Nothing has been checked in Safari
+### Safari is covered, but check each new effect there as it lands
 
-Every screenshot and measurement in this repo's recent history was taken in
-Chromium. The features leaned on hardest are exactly the ones that diverge
-most: `backdrop-filter`, `clip-path` transitions, canvas `mask`/`destination-out`
-compositing, `100dvh`, and a transparent video that already ships a
-Safari-specific `.mov` alongside the `.webm`. An hour on a real iPhone is worth
-more than another day of Chromium screenshots.
+Saikiran has been reviewing on iOS and iPadOS Safari throughout, so this is not
+an outstanding risk. It stays written down because the automated checks in this
+repo are all Chromium, and the features leaned on hardest are the ones that
+diverge most: `backdrop-filter`, `clip-path` transitions, canvas
+`destination-out` compositing, `100dvh`, and a transparent video that already
+ships a Safari-specific `.mov` alongside the `.webm`. Anything new in that list
+wants a look on a real device before it is called done — a passing Chromium
+screenshot is not evidence about Safari.
 
 ### The menu has room it is not using
 
