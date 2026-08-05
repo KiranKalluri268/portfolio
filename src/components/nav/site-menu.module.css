@@ -68,7 +68,10 @@
   z-index: 5000;
   display: flex;
   align-items: center;
-  background: #050505;
+  /* Grey rather than black. The page it opens over is black, so a black panel
+     made the circle sweeping across it invisible — the menu appeared to arrive
+     all at once. */
+  background: #2e2e2e;
   transition-property: clip-path, -webkit-clip-path;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
