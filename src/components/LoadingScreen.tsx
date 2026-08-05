@@ -137,10 +137,17 @@ const CURTAIN_GREY = 61;
  *  particles, so it does not jump the moment they are let go. */
 const OPENING_LEAD_IN = 0.12;
 
-/** How much of the inner orbit the hole has eaten by the time they are
- *  released. Short of the ring itself, so the orbit still reads as a ring
- *  around a hole rather than an edge. */
-const HOLE_AT_RELEASE = 0.92;
+/** The hole is there from the start, framing the orbit rather than growing out
+ *  of the middle of it: just inside the inner ring when the word begins to go,
+ *  just outside the outer one by the time they are let go. */
+const HOLE_FROM = 0.94;
+const HOLE_TO = 1.1;
+
+/** Fraction of the hole that is fully clear before its edge starts to soften,
+ *  while it is still a circle. Low, because a soft circumference is the point
+ *  of it — it should read as something coming through rather than as a disc
+ *  cut out of the curtain. */
+const HOLE_FEATHER = 0.45;
 
 /** Fraction of the opening that is fully clear before the edge softens. */
 const FEATHER_FROM = 0.72;
@@ -420,11 +427,15 @@ export default function LoadingScreen({
         // they are let go there is already a way through for them to tear open.
         const outer = particles.reduce((widest, p) => (p.baseOrbitRadius > widest.baseOrbitRadius ? p : widest), particles[0]);
         const inner = particles.reduce((narrowest, p) => Math.min(narrowest, p.baseOrbitRadius), Infinity);
-        const held = inner * HOLE_AT_RELEASE;
+        const held = outer.baseOrbitRadius * HOLE_TO;
         if (outer) {
           let major: number;
           let angle = 0;
           let squash = 1;
+          // How much of the curtain the hole takes away where it is fully
+          // open, and how far in from its rim that begins.
+          let clarity = 1;
+          let feather = FEATHER_FROM;
 
           if (outer.released) {
             const pos = {
@@ -434,17 +445,24 @@ export default function LoadingScreen({
             const dx = pos.x - flight.centre.x;
             const dy = pos.y - flight.centre.y;
             const escaped = Math.min(1, outer.travel / flight.distance);
-            // From where the wind-up left it out to the particles, so nothing
-            // jumps on the frame they are let go.
-            const lead = Math.min(1, escaped / OPENING_LEAD_IN);
-            major = held + (Math.hypot(dx, dy) - held) * lead;
+            // The hole is already a little ahead of them at release. They catch
+            // it up and drag it out from there, so it never shrinks back.
+            major = Math.max(held, Math.hypot(dx, dy));
             angle = Math.atan2(dy, dx);
             // Round at both ends of the flight, pointiest in the middle.
             squash = 1 - (1 - SQUASH_MIN) * Math.sin(Math.PI * escaped);
+            // The soft circumference firms up as it becomes an opening rather
+            // than a window.
+            const lead = Math.min(1, escaped / OPENING_LEAD_IN);
+            feather = HOLE_FEATHER + (FEATHER_FROM - HOLE_FEATHER) * lead;
           } else {
-            // A circle, growing with the word's fade. Rotation cannot show on
-            // a circle, so the swing to the particles' line costs nothing.
-            major = held * windUp ** 1.5;
+            // Not a dot inflating: a window the size of the ring, coming
+            // through as the word goes. Rotation cannot show on a circle, so
+            // the swing to the particles' line costs nothing here.
+            const from = inner * HOLE_FROM;
+            major = from + (held - from) * windUp;
+            clarity = windUp;
+            feather = HOLE_FEATHER;
           }
 
           ctx.save();
@@ -453,8 +471,8 @@ export default function LoadingScreen({
           ctx.rotate(angle);
           ctx.scale(1, Math.max(squash, 0.01));
           const opening = ctx.createRadialGradient(0, 0, 0, 0, 0, major);
-          opening.addColorStop(0, "rgba(0,0,0,1)");
-          opening.addColorStop(FEATHER_FROM, "rgba(0,0,0,1)");
+          opening.addColorStop(0, `rgba(0,0,0,${clarity})`);
+          opening.addColorStop(feather, `rgba(0,0,0,${clarity})`);
           opening.addColorStop(1, "rgba(0,0,0,0)");
           ctx.fillStyle = opening;
           ctx.beginPath();
