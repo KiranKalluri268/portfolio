@@ -66,15 +66,19 @@ class LoadingParticle {
       return { x, y };
     }
 
-    this.angle += this.speed;
-    if (this.angle > Math.PI * 2) this.angle -= Math.PI * 2;
-
-    const x = this.centerX + this.orbitRadius * Math.cos(this.angle);
-    const y = this.centerY + this.orbitRadius * Math.sin(this.angle);
-
-    this.trail.push({ x, y });
-
-    if (this.trail.length > this.tailLength) this.trail.shift();
+    // Sampled finely enough that the straight lines between points still read
+    // as a circle at speed.
+    const steps = Math.max(1, Math.ceil(Math.abs(this.speed) / MAX_TRAIL_STEP));
+    let x = this.centerX;
+    let y = this.centerY;
+    for (let i = 0; i < steps; i++) {
+      this.angle += this.speed / steps;
+      if (this.angle > Math.PI * 2) this.angle -= Math.PI * 2;
+      x = this.centerX + this.orbitRadius * Math.cos(this.angle);
+      y = this.centerY + this.orbitRadius * Math.sin(this.angle);
+      this.trail.push({ x, y });
+      if (this.trail.length > this.tailLength) this.trail.shift();
+    }
 
     return { x, y };
   }
@@ -94,7 +98,7 @@ const DEFAULT_ORBIT_RADII = [80, 90];
 
 /** The word fades while the orbit winds up, and the particles are let go at
  *  the end of it. Long enough to watch it speed up, which is the point of it. */
-const SPIN_MS = 1500;
+const SPIN_MS = 2000;
 
 /** How long they take to clear the screen once they are free. */
 const ESCAPE_MS = 750;
@@ -104,12 +108,19 @@ const EXIT_MS = SPIN_MS + ESCAPE_MS;
  *  motion gets a short one instead of a slow one. */
 const REDUCED_EXIT_MS = 300;
 
-/** What the orbit speeds up to before it lets go. */
-const RELEASE_SPIN = 3.6;
+/** What the orbit speeds up to before it lets go. Steep on purpose: the point
+ *  of the wind-up is watching it get away from itself. */
+const RELEASE_SPIN = 9;
 
-/** The trail shortens as it goes: at its resting length it wraps the whole
- *  orbit, which at speed draws a loop of string rather than something moving. */
-const SPIN_TAIL = 26;
+/** The furthest the orbit may advance between two trail points, in radians.
+ *  The trail is drawn as straight lines between what it sampled, so at nine
+ *  times the resting speed one point per frame turns the ring into a visible
+ *  polygon. Sub-stepping keeps it a curve and, as a side effect, keeps the arc
+ *  the same length in radians however fast it is going — so the wind-up reads
+ *  as one arc turning faster rather than as a growing smear. */
+const MAX_TRAIL_STEP = 0.06;
+
+/** Straight lines need no smoothing, so the tail can be short once free. */
 const ESCAPE_TAIL = 12;
 
 /** How narrow the opening gets across its short axis, against its long one, at
@@ -122,10 +133,14 @@ const SQUASH_MIN = 0.45;
  *  grey and the page reads as the darker thing. */
 const CURTAIN_GREY = 61;
 
-/** Fraction of the escape spent growing the opening from nothing up to the
- *  ring. Without it the opening arrives at the full width of the orbit on its
- *  first frame, which pops. */
+/** Fraction of the escape spent growing the opening from the ring out to the
+ *  particles, so it does not jump the moment they are let go. */
 const OPENING_LEAD_IN = 0.12;
+
+/** How much of the inner orbit the hole has eaten by the time they are
+ *  released. Short of the ring itself, so the orbit still reads as a ring
+ *  around a hole rather than an edge. */
+const HOLE_AT_RELEASE = 0.92;
 
 /** Fraction of the opening that is fully clear before the edge softens. */
 const FEATHER_FROM = 0.72;
@@ -368,6 +383,7 @@ export default function LoadingScreen({
       const flight = flightRef.current;
       if (flight) {
         const elapsed = time - flight.startedAt;
+        const windUp = Math.min(1, elapsed / SPIN_MS);
         const particles = particlesRef.current;
 
         if (elapsed < SPIN_MS) {
@@ -375,7 +391,6 @@ export default function LoadingScreen({
           const t = elapsed / SPIN_MS;
           particles.forEach((p) => {
             p.speed = p.baseSpeed * (1 + (RELEASE_SPIN - 1) * t * t);
-            p.tailLength = Math.round(tailLength + (SPIN_TAIL - tailLength) * t);
           });
         } else {
           // Let go, and accelerating away along the tangent.
@@ -391,7 +406,6 @@ export default function LoadingScreen({
         // black div behind is dropped on the same frame it is first painted,
         // which is why this happens here rather than through React. It starts
         // at black so there is nothing to see in the handover.
-        const windUp = Math.min(1, elapsed / SPIN_MS);
         const level = Math.round(CURTAIN_GREY * (1 - (1 - windUp) ** 2));
         ctx.fillStyle = `rgb(${level},${level},${level})`;
         ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
@@ -401,26 +415,42 @@ export default function LoadingScreen({
         // so the page is uncovered by them rather than merely at the same time.
         // Their line swings round as they separate — they leave on a tangent,
         // not straight out — and the ellipse turns with it.
-        // Nothing opens while it is still winding up: the curtain is whole, and
-        // the orbit turns on it.
+        // The hole opens inside the ring while the word fades, so the orbit is
+        // turning around something rather than around nothing, and by the time
+        // they are let go there is already a way through for them to tear open.
         const outer = particles.reduce((widest, p) => (p.baseOrbitRadius > widest.baseOrbitRadius ? p : widest), particles[0]);
-        if (outer?.released) {
-          const pos = {
-            x: outer.released.x + outer.released.dx * outer.travel,
-            y: outer.released.y + outer.released.dy * outer.travel,
-          };
-          const dx = pos.x - flight.centre.x;
-          const dy = pos.y - flight.centre.y;
-          const escaped = Math.min(1, outer.travel / flight.distance);
-          const major =
-            Math.hypot(dx, dy) * Math.min(1, escaped / OPENING_LEAD_IN);
-          // Round at both ends of the flight, pointiest in the middle.
-          const squash = 1 - (1 - SQUASH_MIN) * Math.sin(Math.PI * escaped);
+        const inner = particles.reduce((narrowest, p) => Math.min(narrowest, p.baseOrbitRadius), Infinity);
+        const held = inner * HOLE_AT_RELEASE;
+        if (outer) {
+          let major: number;
+          let angle = 0;
+          let squash = 1;
+
+          if (outer.released) {
+            const pos = {
+              x: outer.released.x + outer.released.dx * outer.travel,
+              y: outer.released.y + outer.released.dy * outer.travel,
+            };
+            const dx = pos.x - flight.centre.x;
+            const dy = pos.y - flight.centre.y;
+            const escaped = Math.min(1, outer.travel / flight.distance);
+            // From where the wind-up left it out to the particles, so nothing
+            // jumps on the frame they are let go.
+            const lead = Math.min(1, escaped / OPENING_LEAD_IN);
+            major = held + (Math.hypot(dx, dy) - held) * lead;
+            angle = Math.atan2(dy, dx);
+            // Round at both ends of the flight, pointiest in the middle.
+            squash = 1 - (1 - SQUASH_MIN) * Math.sin(Math.PI * escaped);
+          } else {
+            // A circle, growing with the word's fade. Rotation cannot show on
+            // a circle, so the swing to the particles' line costs nothing.
+            major = held * windUp ** 1.5;
+          }
 
           ctx.save();
           ctx.globalCompositeOperation = "destination-out";
           ctx.translate(flight.centre.x, flight.centre.y);
-          ctx.rotate(Math.atan2(dy, dx));
+          ctx.rotate(angle);
           ctx.scale(1, Math.max(squash, 0.01));
           const opening = ctx.createRadialGradient(0, 0, 0, 0, 0, major);
           opening.addColorStop(0, "rgba(0,0,0,1)");
