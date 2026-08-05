@@ -54,12 +54,37 @@ const LABEL_MIN_SCALE = ringFalloff(1.6);
  *  between rings, and nothing beyond them does. */
 const BLUR_DISTANCE = 1.05;
 
+/** How long one card takes to arrive, and how much later each ring out starts.
+ *  The stagger is what makes it a wave rather than everything at once. */
+const INTRO_CARD_MS = 620;
+const INTRO_STAGGER_MS = 125;
+
+/** The size a card starts at, against the size the lens says it should be. */
+const INTRO_FROM = 0.62;
+
+/** The spring the card arrives on. Damping sets how much of the overshoot
+ *  survives; the frequency is chosen so there is exactly one swing past the
+ *  target and one smaller dip under it before it rests — grows past its size,
+ *  settles a little under, comes to rest. More swings than that reads as a
+ *  wobble, fewer and it is just a fade. */
+const INTRO_DAMPING = 3;
+const INTRO_FREQUENCY = 2.5 * Math.PI;
+
+/** Everything has arrived by here, including the outermost ring. */
+const INTRO_TOTAL_MS = INTRO_CARD_MS + CULL_DISTANCE * INTRO_STAGGER_MS;
+
+/** A damped spring from `INTRO_FROM` to 1: below, past, a little under, rest. */
+function settle(t: number) {
+  if (t >= 1) return 1;
+  return 1 - (1 - INTRO_FROM) * Math.exp(-INTRO_DAMPING * t) * Math.cos(INTRO_FREQUENCY * t);
+}
+
 /** Remembers that this visitor has already been told the grid moves. */
 const HINT_STORAGE_KEY = "projects-grid-hint";
 
 /** A beat after arriving before the hint appears, so it is not competing with
  *  the page painting, and long enough on screen to be read at a glance. */
-const HINT_DELAY_MS = 900;
+const HINT_DELAY_MS = INTRO_TOTAL_MS + 500;
 const HINT_DURATION_MS = 9000;
 
 /** What each outline colour means, in the order the legend reads. */
@@ -88,6 +113,12 @@ export default function ProjectsGrid({
   const target = useRef<Vec | null>(null);
   const reduceMotion = useReducedMotion();
   const inputMode = useInputMode();
+
+  /** When the grid arrived. Cards ride in from the middle outwards against
+   *  this, and it is cleared once the last ring has landed so the paint loop
+   *  stops doing the arithmetic for the rest of the visit. */
+  const introStart = useRef<number | null>(null);
+  const introArmed = useRef(false);
 
   /** Shown once, to a visitor who has never seen the grid before. There is no
    *  scrollbar and no edge, so nothing else says the thing can be moved. */
@@ -138,6 +169,16 @@ export default function ProjectsGrid({
     const height = stage.clientHeight;
     if (!width || !height) return;
 
+    // Elapsed since the grid arrived, or null once everything has landed.
+    let intro: number | null = null;
+    if (introStart.current !== null) {
+      intro = performance.now() - introStart.current;
+      if (intro > INTRO_TOTAL_MS) {
+        introStart.current = null;
+        intro = null;
+      }
+    }
+
     const baseWidth = width * FOCUS_SCALE;
     const baseHeight = Math.min(height * FOCUS_SCALE, baseWidth * 1.25);
     const aspect = {
@@ -153,9 +194,23 @@ export default function ProjectsGrid({
         element.style.visibility = "hidden";
         continue;
       }
-      const cardScale = spot.scale / FOCUS_SCALE;
+      let cardScale = spot.scale / FOCUS_SCALE;
+      let entryFade = 1;
+      if (intro !== null) {
+        // Each ring starts later than the one inside it, so the arrival reads
+        // as a wave leaving the focused card rather than as everything landing
+        // together. Distance is the lens's own, so a card that is half a ring
+        // out starts half a beat later.
+        const t = (intro - spot.distance * INTRO_STAGGER_MS) / INTRO_CARD_MS;
+        if (t <= 0) {
+          element.style.visibility = "hidden";
+          continue;
+        }
+        cardScale *= settle(t);
+        entryFade = Math.min(1, t / 0.35);
+      }
       element.style.visibility = "visible";
-      element.style.opacity = String(spot.opacity);
+      element.style.opacity = String(spot.opacity * entryFade);
       element.style.transform =
         `translate3d(${spot.x * width - baseWidth / 2}px, ${spot.y * height - baseHeight / 2}px, 0)` +
         ` scale(${cardScale})`;
@@ -185,6 +240,14 @@ export default function ProjectsGrid({
   // the latest painter through these instead of closing over it.
   const paintRef = useRef(paint);
   const syncRef = useRef(syncMounted);
+
+  // Armed once, before the first paint, so no card is ever drawn at full size
+  // and then snapped back to start the wave.
+  useLayoutEffect(() => {
+    if (introArmed.current) return;
+    introArmed.current = true;
+    if (!reduceMotion) introStart.current = performance.now();
+  }, [reduceMotion]);
 
   useLayoutEffect(() => {
     paintRef.current = paint;
@@ -221,7 +284,12 @@ export default function ProjectsGrid({
 
       // Only a deliberate request moves it now; a finished drag just stops.
       const destination = target.current;
-      if (!destination) return;
+      if (!destination) {
+        // Standing still, but still arriving: the wave has to be painted even
+        // though there is nothing to integrate.
+        if (introStart.current !== null) paintRef.current();
+        return;
+      }
       const dx = destination.x - focus.current.x;
       const dy = destination.y - focus.current.y;
       if (Math.abs(dx) < 0.0008 && Math.abs(dy) < 0.0008) {
