@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useAudio } from "@/context/AudioContextProvider";
 import { useScrollActions } from "@/context/SmoothScrollContext";
 
@@ -102,6 +103,11 @@ export default function LoadingScreen({
   const { lenis } = useScrollActions();
   const [dismissed, setDismissed] = useState(hasEntered);
   const [isExiting, setIsExiting] = useState(false);
+  /** The entry screen has to cover the site header and the scene dots. Both sit
+   *  in the document's own stacking context while the page is inside a z-10
+   *  wrapper, so no z-index here can reach over them from where this renders —
+   *  it goes to the body instead. */
+  const [portalReady, setPortalReady] = useState(false);
 
   // Loading progress state
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -127,7 +133,9 @@ export default function LoadingScreen({
     updateCanvasSize();
     window.addEventListener("resize", updateCanvasSize);
     return () => window.removeEventListener("resize", updateCanvasSize);
-  }, []);
+    // portalReady: the canvas does not exist until the overlay has been
+    // portalled, and measuring a ref that is still null does nothing at all.
+  }, [portalReady]);
 
   // Prepare only assets needed for the first frame and entry experience.
   useLayoutEffect(() => {
@@ -306,11 +314,16 @@ export default function LoadingScreen({
     return () => {
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
-  }, [canvasSize, color, thickness, speed, numParticles, orbitRadii, particleRadius, tailLength, dismissed]);
+  }, [canvasSize, color, thickness, speed, numParticles, orbitRadii, particleRadius, tailLength, dismissed, portalReady]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPortalReady(true);
+  }, []);
 
   useEffect(() => {
     if (!dismissed) overlayRef.current?.focus({ preventScroll: true });
-  }, [dismissed]);
+  }, [dismissed, portalReady]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -335,9 +348,9 @@ export default function LoadingScreen({
     exitTimerRef.current = setTimeout(() => setDismissed(true), 700);
   };
 
-  if (dismissed) return null;
+  if (dismissed || !portalReady) return null;
 
-  return (
+  return createPortal(
     <div
       ref={overlayRef}
       tabIndex={-1}
@@ -381,6 +394,7 @@ export default function LoadingScreen({
       >
         Press Enter to open the portfolio with audio. You can mute it anytime from the top control.
       </p>
-    </div>
+    </div>,
+    document.body,
   );
 }
