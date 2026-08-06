@@ -224,6 +224,31 @@ export function buildSkillWebGraph(data: SkillWebData) {
   return { nodes, edges };
 }
 
+/** The same curve, described from the child back to the parent.
+ *
+ * A dash-offset draw always begins at the start of the path, so an edge that
+ * has to grow from the child inward needs a path that starts at the child.
+ * Reversing a cubic is just swapping the ends and the two controls. */
+export function skillWebEdgePathFromChild(edge: GraphEdge) {
+  const { control1, control2 } = edgeControls(edge);
+  return [
+    `M ${roundCoordinate(edge.to.x)} ${roundCoordinate(edge.to.y)}`,
+    `C ${roundCoordinate(control2.x)} ${roundCoordinate(control2.y)},`,
+    `${roundCoordinate(control1.x)} ${roundCoordinate(control1.y)},`,
+    `${roundCoordinate(edge.from.x)} ${roundCoordinate(edge.from.y)}`,
+  ].join(" ");
+}
+
+function edgeControls(edge: GraphEdge) {
+  const dx = edge.to.x - edge.from.x;
+  const dy = edge.to.y - edge.from.y;
+  const bend = edge.from.kind === "center" ? 0.36 : 0.44;
+  return {
+    control1: { x: edge.from.x + dx * bend, y: edge.from.y + dy * bend },
+    control2: { x: edge.to.x - dx * bend, y: edge.to.y - dy * bend },
+  };
+}
+
 export function skillWebEdgePath(edge: GraphEdge) {
   const dx = edge.to.x - edge.from.x;
   const dy = edge.to.y - edge.from.y;

@@ -16,6 +16,7 @@ import {
   CENTER_Y,
   WORLD_HEIGHT,
   WORLD_WIDTH,
+  skillWebEdgePathFromChild,
   type GraphEdge,
   type GraphNode,
 } from "./skill-web-layout";
@@ -69,13 +70,18 @@ function midpoint(first: PointerPosition, second: PointerPosition) {
  * is the whole trick: at a constant speed the short edges land first and there
  * is no moment of collision, just lines finishing untidily. `pathLength="1"`
  * normalises them so they all arrive on the same frame. */
-const LEAF_FADE_MS = 300;
+/** Every node arrives on the same damped spring — under its size, past it, a
+ *  little under again, rest. The curve itself is in globals.css as keyframes;
+ *  this is how long it takes. */
+const NODE_MS = 420;
 /** The leaves do not all appear at once; they sweep round the circle. */
-const LEAF_SWEEP_MS = 420;
-const LINE_MS = 460;
-const NODE_MS = 260;
+const LEAF_SWEEP_MS = 360;
+/** How long a comet takes to run its edge, whatever that edge's length. */
+const LINE_MS = 480;
+/** The comet's bright head, as a fraction of the edge it is running. */
+const COMET_LENGTH = 0.16;
 
-const T_CATEGORY_LINES = LEAF_SWEEP_MS + LEAF_FADE_MS;
+const T_CATEGORY_LINES = LEAF_SWEEP_MS + NODE_MS;
 const T_CATEGORY_NODES = T_CATEGORY_LINES + LINE_MS;
 const T_DOMAIN_LINES = T_CATEGORY_NODES + NODE_MS;
 const T_DOMAIN_NODES = T_DOMAIN_LINES + LINE_MS;
@@ -138,35 +144,11 @@ export default function SkillsWeb({
   const inputMode = useInputMode();
   const webHint = useIdleHint(hasInteracted || assembly !== "done" ? null : "skill-web");
 
-  /** One frame of `transition: none` while a skipped build is snapped to its
-   *  finished state. Dropping the inline styles is not enough on its own: the
-   *  transitions are in their delay when the skip happens, and removing a
-   *  property whose target value is unchanged leaves the pending transition
-   *  running on its original schedule — so the web carries on assembling at
-   *  the same pace, exactly as if nothing had been skipped. */
-  const [snapping, setSnapping] = useState(false);
-
-  useEffect(() => {
-    if (!snapping) return;
-    // Two frames: one for the cancel to be applied, one before it is taken away.
-    let second = 0;
-    const first = requestAnimationFrame(() => {
-      second = requestAnimationFrame(() => setSnapping(false));
-    });
-    return () => {
-      cancelAnimationFrame(first);
-      cancelAnimationFrame(second);
-    };
-  }, [snapping]);
-
   // Anyone who touches the web wants the web, not a performance about it. The
   // first visit earns the build; the fifth does not.
   useEffect(() => {
     if (assembly !== "building") return;
-    const skip = () => {
-      setSnapping(true);
-      setAssembly("done");
-    };
+    const skip = () => setAssembly("done");
     window.addEventListener("pointerdown", skip, { passive: true });
     window.addEventListener("wheel", skip, { passive: true });
     window.addEventListener("keydown", skip, { passive: true });
@@ -472,19 +454,23 @@ export default function SkillsWeb({
             // from the child inward to its parent rather than out from the
             // parent. pathLength="1" makes that one unit for every edge, so
             // long and short lines take the same time and arrive together.
-            const drawing = snapping
-              ? { strokeDasharray: 1, strokeDashoffset: 0, transition: "none" }
-              : assembly !== "done"
-                ? {
-                  strokeDasharray: 1,
-                  strokeDashoffset: assembly === "building" ? 0 : -1,
-                  transition: `stroke-dashoffset ${LINE_MS}ms ease-out ${EDGE_DELAY[edge.to.kind]}ms`,
-                }
-                : undefined;
+            const drawDelay = EDGE_DELAY[edge.to.kind];
+            // The line the comet leaves behind. It does not fade — what the
+            // head has passed over stays drawn.
+            const drawing = assembly === "done"
+              ? undefined
+              : {
+                strokeDasharray: "1 1",
+                strokeDashoffset: 1,
+                animation: assembly === "building"
+                  ? `skill-edge-draw ${LINE_MS}ms linear ${drawDelay}ms both`
+                  : undefined,
+              };
+
             return (
               <g key={edge.id}>
                 <path
-                  d={edge.path}
+                  d={assembly === "done" ? edge.path : skillWebEdgePathFromChild(edge)}
                   pathLength="1"
                   fill="none"
                   stroke={edge.accent}
@@ -494,6 +480,28 @@ export default function SkillsWeb({
                   className="transition-all duration-300"
                   style={drawing}
                 />
+                {/* The comet: a bright head riding the leading edge of the line
+                    being drawn. Its dash offset is the line's own offset shifted
+                    by its length, so the two cannot come apart however long the
+                    edge is. */}
+                {assembly === "building" && (
+                  <path
+                    d={skillWebEdgePathFromChild(edge)}
+                    pathLength="1"
+                    fill="none"
+                    stroke={edge.accent}
+                    strokeWidth={3.4}
+                    strokeLinecap="round"
+                    filter="url(#skill-web-glow)"
+                    style={{
+                      "--comet-length": COMET_LENGTH,
+                      strokeDasharray: `${COMET_LENGTH} 1`,
+                      strokeDashoffset: COMET_LENGTH,
+                      animation: `skill-edge-comet ${LINE_MS}ms linear ${drawDelay}ms both`,
+                    } as React.CSSProperties}
+                  />
+                )}
+
                 {/* Held back until the web exists: otherwise these travel along
                     lines that have not been drawn yet. */}
                 {assembly === "done" && (
@@ -512,20 +520,20 @@ export default function SkillsWeb({
           const appearsAt = node.kind === "skill"
             ? angleFraction(node) * LEAF_SWEEP_MS
             : NODE_DELAY[node.kind];
-          const appearsOver = node.kind === "skill" ? LEAF_FADE_MS : NODE_MS;
+
           // `scale` rather than a transform, so it composes with the centring
           // translate in the class list instead of replacing it — and with the
           // hover scale, once this is out of the way.
-          const arriving = snapping
-            ? { opacity: 1, scale: "1", transition: "none" }
-            : assembly !== "done"
-              ? {
-                opacity: assembly === "building" ? 1 : 0,
-                scale: assembly === "building" ? "1" : "0.55",
-                transition: `opacity ${appearsOver}ms ease-out ${appearsAt}ms,`
-                  + ` scale ${appearsOver}ms cubic-bezier(0.2, 0.9, 0.3, 1.5) ${appearsAt}ms`,
-              }
-              : undefined;
+          const arriving = assembly === "done"
+            ? undefined
+            : {
+              // The pre-animation state, which is also what "waiting" shows.
+              opacity: 0,
+              scale: "0.5",
+              animation: assembly === "building"
+                ? `skill-node-pop ${NODE_MS}ms linear ${appearsAt}ms both`
+                : undefined,
+            };
 
           const sharedStyle = {
             left: node.x,
