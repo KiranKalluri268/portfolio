@@ -105,8 +105,9 @@ const LOADING_LINES = [
   "Yeah kinda sucks, can't help but worth the wait",
 ];
 
-/** How long the plain line holds before the second one takes over. Long enough
- *  that a fast connection never sees the joke, which is the right way round. */
+/** How long the plain line holds alone before the second one joins it under.
+ *  Long enough that a fast connection never sees the joke, which is the right
+ *  way round. */
 const LOADING_QUIP_MS = 2500;
 
 /** The word fades while the orbit winds up, and the particles are let go at
@@ -656,23 +657,25 @@ export default function LoadingScreen({
       </div>
 
       {/* Under the rings, not inside them: the middle belongs to the count and
-          then to the word. Both lines sit in the same place so the change is a
-          crossfade rather than a jump, and neither is announced — the count
-          above already says what is happening. */}
+          then to the word. The second line arrives beneath the first rather
+          than in place of it — the remark is about the wait, so the wait has to
+          still be on screen for it to be a remark. They stack downward, so
+          nothing already read moves when it lands. Neither is announced: the
+          count above already says what is happening. */}
       <div
-        className="pointer-events-none absolute top-1/2 left-1/2 w-full -translate-x-1/2 translate-y-[7.5rem] px-6 text-center select-none"
+        className="entry-lines pointer-events-none absolute top-1/2 left-1/2 w-full -translate-x-1/2 translate-y-[7.5rem] px-6 text-center select-none"
         aria-hidden="true"
       >
         {LOADING_LINES.map((line, index) => (
-          <span
+          <p
             key={line}
-            className={`absolute left-1/2 w-full -translate-x-1/2 px-6 text-xs font-light tracking-wider transition-opacity duration-500 ease-out sm:text-sm ${
-              !isLoaded && loadingLine === index ? "opacity-100" : "opacity-0"
-            }`}
+            className={`text-xs font-light tracking-wider transition-opacity duration-500 ease-out sm:text-sm ${
+              index > 0 ? "mt-2" : ""
+            } ${!isLoaded && loadingLine >= index ? "opacity-100" : "opacity-0"}`}
             style={{ color: colorToRgba(color, 0.55) }}
           >
             {line}
-          </span>
+          </p>
         ))}
       </div>
 
