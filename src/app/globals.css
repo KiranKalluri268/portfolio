@@ -180,20 +180,25 @@ textarea:-webkit-autofill:focus {
    target value has not changed leaves it running on its original schedule. */
 
 /* A damped spring — under, past, a little under again, rest. Sampled from
-   1 - 0.5 * e^(-3.4t) * cos(2.5*pi*t), the same curve the projects grid
-   arrives on, so the two pages settle the same way. */
+   1 - (1 - from) * e^(-3.4t) * cos(2.5*pi*t), the same curve the projects grid
+   arrives on, so the two pages settle the same way.
+
+   The starting size is a variable rather than a constant because the overshoot
+   is proportional to how far the node has to travel: a node starting at 0.5
+   only ever swings 6% past its size, which on a large node is invisible. The
+   smaller the start, the more spring there is to see. */
 @keyframes skill-node-pop {
-  0% { opacity: 0; scale: 0.5; }
+  0% { opacity: 0; scale: var(--pop-from); }
+  10% { scale: calc(1 - (1 - var(--pop-from)) * 0.503); }
   12% { opacity: 1; }
-  10% { scale: 0.748; }
   20% { scale: 1; }
-  30% { scale: 1.128; }
-  40% { scale: 1.128; }
-  50% { scale: 1.065; }
+  30% { scale: calc(1 + (1 - var(--pop-from)) * 0.255); }
+  40% { scale: calc(1 + (1 - var(--pop-from)) * 0.257); }
+  50% { scale: calc(1 + (1 - var(--pop-from)) * 0.129); }
   60% { scale: 1; }
-  70% { scale: 0.967; }
-  80% { scale: 0.967; }
-  90% { scale: 0.983; }
+  70% { scale: calc(1 - (1 - var(--pop-from)) * 0.065); }
+  80% { scale: calc(1 - (1 - var(--pop-from)) * 0.066); }
+  90% { scale: calc(1 - (1 - var(--pop-from)) * 0.033); }
   100% { opacity: 1; scale: 1; }
 }
 
@@ -205,11 +210,20 @@ textarea:-webkit-autofill:focus {
 }
 
 /* The head itself, riding the leading edge of that line. Its offset is the
-   line's offset shifted by its own length, so the two cannot come apart. */
+   line's offset shifted by its own length, so the two cannot come apart. It
+   holds full brightness all the way in — it used to fade over its last 15%,
+   which meant it vanished short of the node and the arrival was never seen. */
 @keyframes skill-edge-comet {
-  from { stroke-dashoffset: var(--comet-length); opacity: 1; }
-  85% { opacity: 1; }
-  to { stroke-dashoffset: calc(var(--comet-length) - 1); opacity: 0; }
+  from { stroke-dashoffset: var(--comet-length); }
+  to { stroke-dashoffset: calc(var(--comet-length) - 1); }
+}
+
+/* Once it has landed the head sits on the meeting point for a beat, so the
+   touch registers, and only then goes — by which time the node it made is
+   already springing out from underneath it. */
+@keyframes skill-comet-land {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

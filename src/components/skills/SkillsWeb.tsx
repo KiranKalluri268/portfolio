@@ -80,6 +80,25 @@ const LEAF_SWEEP_MS = 450;
 const LINE_MS = 600;
 /** The comet's bright head, as a fraction of the edge it is running. */
 const COMET_LENGTH = 0.16;
+/** The beat between the comets landing on a meeting point and the node they
+ *  made springing out of it. Without it the node started on the same frame the
+ *  heads arrived and covered the collision it was supposed to be caused by. */
+const TOUCH_HOLD_MS = 140;
+/** How long the landed head takes to go, once the node is on its way out from
+ *  under it. */
+const COMET_LAND_MS = 180;
+
+/** The size a node starts at, as a fraction of its own. The spring's overshoot
+ *  is proportional to the distance travelled — a node starting at 0.5 only ever
+ *  swings 6% past its size, which reads as nothing on something as large as the
+ *  centre. The structural nodes start far smaller than the leaves for that
+ *  reason: same curve, visible amplitude. */
+const POP_FROM: Record<GraphNode["kind"], number> = {
+  skill: 0.34,
+  category: 0.12,
+  domain: 0.1,
+  center: 0.08,
+};
 
 /** How long to wait for the page to go quiet before starting, and how long to
  *  wait for that wait. A browser without requestIdleCallback gets the flat
@@ -88,12 +107,16 @@ const SETTLE_TIMEOUT_MS = 600;
 const SETTLE_FALLBACK_MS = 260;
 
 const T_CATEGORY_LINES = LEAF_SWEEP_MS + NODE_MS;
-const T_CATEGORY_NODES = T_CATEGORY_LINES + LINE_MS;
+const T_CATEGORY_NODES = T_CATEGORY_LINES + LINE_MS + TOUCH_HOLD_MS;
 const T_DOMAIN_LINES = T_CATEGORY_NODES + NODE_MS;
-const T_DOMAIN_NODES = T_DOMAIN_LINES + LINE_MS;
+const T_DOMAIN_NODES = T_DOMAIN_LINES + LINE_MS + TOUCH_HOLD_MS;
 const T_CENTER_LINES = T_DOMAIN_NODES + NODE_MS;
-const T_CENTER_NODE = T_CENTER_LINES + LINE_MS;
-const INTRO_TOTAL_MS = T_CENTER_NODE + NODE_MS;
+const T_CENTER_NODE = T_CENTER_LINES + LINE_MS + TOUCH_HOLD_MS;
+/** The animations begin a frame or two after the timer that will end them, so
+ *  the two clocks are not the same clock. Without the tail the last node loses
+ *  the end of its spring and snaps the final percent. */
+const INTRO_TAIL_MS = 90;
+const INTRO_TOTAL_MS = T_CENTER_NODE + NODE_MS + INTRO_TAIL_MS;
 
 /** When a node appears, by what it is. Skills are handled separately, since
  *  they sweep rather than land together. */
@@ -503,7 +526,9 @@ export default function SkillsWeb({
                 {/* The comet: a bright head riding the leading edge of the line
                     being drawn. Its dash offset is the line's own offset shifted
                     by its length, so the two cannot come apart however long the
-                    edge is. */}
+                    edge is. Two animations: the run in, then — after it has sat
+                    on the meeting point long enough to be seen touching — the
+                    fade, by which time the node is springing out beneath it. */}
                 {assembly === "building" && (
                   <path
                     d={skillWebEdgePathFromChild(edge)}
@@ -517,7 +542,10 @@ export default function SkillsWeb({
                       "--comet-length": COMET_LENGTH,
                       strokeDasharray: `${COMET_LENGTH} 1`,
                       strokeDashoffset: COMET_LENGTH,
-                      animation: `skill-edge-comet ${LINE_MS}ms linear ${drawDelay}ms both`,
+                      animation: [
+                        `skill-edge-comet ${LINE_MS}ms linear ${drawDelay}ms both`,
+                        `skill-comet-land ${COMET_LAND_MS}ms linear ${drawDelay + LINE_MS + TOUCH_HOLD_MS}ms both`,
+                      ].join(", "),
                     } as React.CSSProperties}
                   />
                 )}
@@ -537,12 +565,17 @@ export default function SkillsWeb({
           // `scale` rather than a transform, so it composes with the centring
           // translate in the class list instead of replacing it — and with the
           // hover scale, once this is out of the way.
+          const popFrom = POP_FROM[node.kind];
           const arriving = assembly === "done"
             ? undefined
             : {
               // The pre-animation state, which is also what "waiting" shows.
               opacity: 0,
-              scale: "0.5",
+              scale: String(popFrom),
+              // The keyframes read every intermediate off this, so one curve
+              // covers a leaf starting at a third of its size and a centre
+              // starting at a twelfth.
+              "--pop-from": popFrom,
               animation: assembly === "building"
                 ? `skill-node-pop ${NODE_MS}ms linear ${appearsAt}ms both`
                 : undefined,
@@ -565,7 +598,7 @@ export default function SkillsWeb({
             borderColor: `${node.accent}66`,
             boxShadow: `0 0 ${node.kind === "center" ? 50 : 24}px ${node.accent}22`,
             ...arriving,
-          };
+          } as React.CSSProperties;
 
           if (node.kind === "skill" && node.skill) {
             return (
