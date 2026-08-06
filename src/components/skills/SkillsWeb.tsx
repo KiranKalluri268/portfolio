@@ -502,13 +502,6 @@ export default function SkillsWeb({
                   />
                 )}
 
-                {/* Held back until the web exists: otherwise these travel along
-                    lines that have not been drawn yet. */}
-                {assembly === "done" && (
-                  <circle className="skill-web-particle" r="3" fill={edge.accent} opacity={isActive ? 0.8 : 0.1}>
-                    <animateMotion dur="5s" repeatCount="indefinite" path={edge.path} />
-                  </circle>
-                )}
               </g>
             );
           })}

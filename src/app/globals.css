@@ -119,10 +119,6 @@ canvas {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-
-  .skill-web-particle {
-    display: none;
-  }
 }
 
 .indicator-line {
