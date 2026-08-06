@@ -16,11 +16,14 @@ import {
   CENTER_Y,
   WORLD_HEIGHT,
   WORLD_WIDTH,
+  skillWebEdgePathFromChild,
   type GraphEdge,
   type GraphNode,
 } from "./skill-web-layout";
 import HintPill from "../hints/HintPill";
+import { useReducedMotion } from "@/hooks/useMediaQuery";
 import { useIdleHint, useInputMode } from "../hints/useIdleHint";
+import { whenUncovered } from "../nav/navigation-cover";
 import { hintText } from "../hints/hint-copy";
 
 const MIN_SCALE = 0.28;
@@ -58,6 +61,87 @@ function midpoint(first: PointerPosition, second: PointerPosition) {
   };
 }
 
+/** The web assembles itself from the outside in: the skills appear, their lines
+ *  reach inward and meet to make a category, those lines reach in to make a
+ *  domain, and those meet at the centre. Each beat finishes before the next
+ *  starts — it is a thing being built, not a thing growing.
+ *
+ * Every line in a beat takes the same time regardless of how long it is. That
+ * is the whole trick: at a constant speed the short edges land first and there
+ * is no moment of collision, just lines finishing untidily. `pathLength="1"`
+ * normalises them so they all arrive on the same frame. */
+/** Every node arrives on the same damped spring — under its size, past it, a
+ *  little under again, rest. The curve itself is in globals.css as keyframes;
+ *  this is how long it takes. */
+const NODE_MS = 520;
+/** The leaves do not all appear at once; they sweep round the circle. */
+const LEAF_SWEEP_MS = 450;
+/** How long a comet takes to run its edge, whatever that edge's length. */
+const LINE_MS = 600;
+/** The comet's bright head, as a fraction of the edge it is running. */
+const COMET_LENGTH = 0.16;
+/** The beat between the comets landing on a meeting point and the node they
+ *  made springing out of it. Without it the node started on the same frame the
+ *  heads arrived and covered the collision it was supposed to be caused by. */
+const TOUCH_HOLD_MS = 140;
+/** How long the landed head takes to go, once the node is on its way out from
+ *  under it. */
+const COMET_LAND_MS = 180;
+
+/** The size a node starts at, as a fraction of its own. The spring's overshoot
+ *  is proportional to the distance travelled — a node starting at 0.5 only ever
+ *  swings 6% past its size, which reads as nothing on something as large as the
+ *  centre. The structural nodes start far smaller than the leaves for that
+ *  reason: same curve, visible amplitude. */
+const POP_FROM: Record<GraphNode["kind"], number> = {
+  skill: 0.34,
+  category: 0.12,
+  domain: 0.1,
+  center: 0.08,
+};
+
+/** How long to wait for the page to go quiet before starting, and how long to
+ *  wait for that wait. A browser without requestIdleCallback gets the flat
+ *  delay instead. */
+const SETTLE_TIMEOUT_MS = 600;
+const SETTLE_FALLBACK_MS = 260;
+
+const T_CATEGORY_LINES = LEAF_SWEEP_MS + NODE_MS;
+const T_CATEGORY_NODES = T_CATEGORY_LINES + LINE_MS + TOUCH_HOLD_MS;
+const T_DOMAIN_LINES = T_CATEGORY_NODES + NODE_MS;
+const T_DOMAIN_NODES = T_DOMAIN_LINES + LINE_MS + TOUCH_HOLD_MS;
+const T_CENTER_LINES = T_DOMAIN_NODES + NODE_MS;
+const T_CENTER_NODE = T_CENTER_LINES + LINE_MS + TOUCH_HOLD_MS;
+/** The animations begin a frame or two after the timer that will end them, so
+ *  the two clocks are not the same clock. Without the tail the last node loses
+ *  the end of its spring and snaps the final percent. */
+const INTRO_TAIL_MS = 90;
+const INTRO_TOTAL_MS = T_CENTER_NODE + NODE_MS + INTRO_TAIL_MS;
+
+/** When a node appears, by what it is. Skills are handled separately, since
+ *  they sweep rather than land together. */
+const NODE_DELAY: Record<GraphNode["kind"], number> = {
+  skill: 0,
+  category: T_CATEGORY_NODES,
+  domain: T_DOMAIN_NODES,
+  center: T_CENTER_NODE,
+};
+
+/** When an edge draws, by the child it runs to — the end it draws from. */
+const EDGE_DELAY: Record<GraphNode["kind"], number> = {
+  skill: T_CATEGORY_LINES,
+  category: T_DOMAIN_LINES,
+  domain: T_CENTER_LINES,
+  center: 0,
+};
+
+/** Where a leaf sits round the circle, 0 to 1, so they can sweep rather than
+ *  arrive in whatever order the data happens to be in. */
+function angleFraction(node: GraphNode) {
+  const turn = Math.atan2(node.y - CENTER_Y, node.x - CENTER_X) + Math.PI / 2;
+  return ((turn / (Math.PI * 2)) % 1 + 1) % 1;
+}
+
 export default function SkillsWeb({
   data,
   graph,
@@ -76,8 +160,63 @@ export default function SkillsWeb({
   const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [directoryOpen, setDirectoryOpen] = useState(false);
+  /** "waiting" until anything covering the page has gone, "building" while it
+   *  assembles, "done" once it is an ordinary web again — at which point every
+   *  inline style the intro used is dropped so nothing it did survives. */
+  const reduceMotion = useReducedMotion();
+  // Reduced motion never assembles; it is done before the first paint rather
+  // than switched to done by an effect afterwards.
+  const [assembly, setAssembly] = useState<"waiting" | "building" | "done">(
+    () => (typeof window !== "undefined"
+      && window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "done" : "waiting"),
+  );
   const inputMode = useInputMode();
-  const webHint = useIdleHint(hasInteracted ? null : "skill-web");
+  const webHint = useIdleHint(hasInteracted || assembly !== "done" ? null : "skill-web");
+
+  // Anyone who touches the web wants the web, not a performance about it. The
+  // first visit earns the build; the fifth does not.
+  useEffect(() => {
+    if (assembly !== "building") return;
+    const skip = () => setAssembly("done");
+    window.addEventListener("pointerdown", skip, { passive: true });
+    window.addEventListener("wheel", skip, { passive: true });
+    window.addEventListener("keydown", skip, { passive: true });
+    return () => {
+      window.removeEventListener("pointerdown", skip);
+      window.removeEventListener("wheel", skip);
+      window.removeEventListener("keydown", skip);
+    };
+  }, [assembly]);
+
+  useEffect(() => {
+    if (reduceMotion) return;
+    let finish = 0;
+    // Reached through the site menu, this page mounts behind its cover; without
+    // waiting the web would build itself on a hidden screen.
+    let idle = 0;
+    let usedIdle = false;
+    const cancel = whenUncovered(() => {
+      // Not on the frame the page mounts: hydration and thirty-seven icon
+      // images land in the first few hundred milliseconds, and starting into
+      // that spends the opening beat on frames that are already late.
+      const begin = () => {
+        setAssembly("building");
+        finish = window.setTimeout(() => setAssembly("done"), INTRO_TOTAL_MS);
+      };
+      const idleAvailable = typeof window.requestIdleCallback === "function";
+      idle = idleAvailable
+        ? window.requestIdleCallback(begin, { timeout: SETTLE_TIMEOUT_MS })
+        : window.setTimeout(begin, SETTLE_FALLBACK_MS);
+      usedIdle = idleAvailable;
+    });
+    return () => {
+      cancel();
+      window.clearTimeout(finish);
+      if (usedIdle) window.cancelIdleCallback(idle);
+      else window.clearTimeout(idle);
+    };
+  }, [reduceMotion]);
+
   const nodeById = useMemo(
     () => new Map(graph.nodes.map((node) => [node.id, node])),
     [graph.nodes],
@@ -313,19 +452,6 @@ export default function SkillsWeb({
           transformOrigin: "0 0",
         }}
       >
-        <div
-          className="pointer-events-none absolute inset-0 opacity-55"
-          style={{
-            backgroundImage: [
-              "radial-gradient(circle, rgba(255,255,255,.75) 0 1px, transparent 1.5px)",
-              "radial-gradient(circle, rgba(255,122,24,.5) 0 1px, transparent 1.5px)",
-            ].join(","),
-            backgroundPosition: "0 0, 42px 58px",
-            backgroundSize: "86px 86px, 113px 113px",
-            maskImage: "radial-gradient(circle at center, black 25%, transparent 78%)",
-          }}
-        />
-
         <svg
           className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
           viewBox={`0 0 ${WORLD_WIDTH} ${WORLD_HEIGHT}`}
@@ -354,20 +480,63 @@ export default function SkillsWeb({
           {graph.edges.map((edge) => {
             const isActive = !relatedNodeIds ||
               (relatedNodeIds.has(edge.from.id) && relatedNodeIds.has(edge.to.id));
+            // A negative offset reveals from the far end, so the line grows
+            // from the child inward to its parent rather than out from the
+            // parent. pathLength="1" makes that one unit for every edge, so
+            // long and short lines take the same time and arrive together.
+            const drawDelay = EDGE_DELAY[edge.to.kind];
+            // The line the comet leaves behind. It does not fade — what the
+            // head has passed over stays drawn.
+            const drawing = assembly === "done"
+              ? undefined
+              : {
+                strokeDasharray: "1 1",
+                strokeDashoffset: 1,
+                animation: assembly === "building"
+                  ? `skill-edge-draw ${LINE_MS}ms linear ${drawDelay}ms both`
+                  : undefined,
+              };
+
             return (
               <g key={edge.id}>
                 <path
-                  d={edge.path}
+                  d={assembly === "done" ? edge.path : skillWebEdgePathFromChild(edge)}
+                  pathLength="1"
                   fill="none"
                   stroke={edge.accent}
                   strokeWidth={isActive ? 2.2 : 1}
                   strokeOpacity={isActive ? 0.48 : 0.07}
                   filter={isActive && activeNode ? "url(#skill-web-glow)" : undefined}
                   className="transition-all duration-300"
+                  style={drawing}
                 />
-                <circle className="skill-web-particle" r="3" fill={edge.accent} opacity={isActive ? 0.8 : 0.1}>
-                  <animateMotion dur="5s" repeatCount="indefinite" path={edge.path} />
-                </circle>
+                {/* The comet: a bright head riding the leading edge of the line
+                    being drawn. Its dash offset is the line's own offset shifted
+                    by its length, so the two cannot come apart however long the
+                    edge is. Two animations: the run in, then — after it has sat
+                    on the meeting point long enough to be seen touching — the
+                    fade, by which time the node is springing out beneath it. */}
+                {assembly === "building" && (
+                  <path
+                    d={skillWebEdgePathFromChild(edge)}
+                    pathLength="1"
+                    fill="none"
+                    stroke={edge.accent}
+                    strokeWidth={3.4}
+                    strokeLinecap="round"
+                    filter="url(#skill-web-glow)"
+                    style={{
+                      "--comet-length": COMET_LENGTH,
+                      strokeDasharray: `${COMET_LENGTH} 1`,
+                      strokeDashoffset: COMET_LENGTH,
+                      animation: [
+                        `skill-edge-comet ${LINE_MS}ms linear ${drawDelay}ms both`,
+                        `skill-comet-land ${COMET_LAND_MS}ms linear ${drawDelay + LINE_MS + TOUCH_HOLD_MS}ms both`,
+                      ].join(", "),
+                    } as React.CSSProperties}
+                  />
+                )}
+
               </g>
             );
           })}
@@ -375,12 +544,48 @@ export default function SkillsWeb({
 
         {graph.nodes.map((node) => {
           const dimmed = relatedNodeIds && !relatedNodeIds.has(node.id);
+          // Skills sweep round the circle; everything else lands on its beat.
+          const appearsAt = node.kind === "skill"
+            ? angleFraction(node) * LEAF_SWEEP_MS
+            : NODE_DELAY[node.kind];
+
+          // `scale` rather than a transform, so it composes with the centring
+          // translate in the class list instead of replacing it — and with the
+          // hover scale, once this is out of the way.
+          const popFrom = POP_FROM[node.kind];
+          const arriving = assembly === "done"
+            ? undefined
+            : {
+              // The pre-animation state, which is also what "waiting" shows.
+              opacity: 0,
+              scale: String(popFrom),
+              // The keyframes read every intermediate off this, so one curve
+              // covers a leaf starting at a third of its size and a centre
+              // starting at a twelfth.
+              "--pop-from": popFrom,
+              animation: assembly === "building"
+                ? `skill-node-pop ${NODE_MS}ms linear ${appearsAt}ms both`
+                : undefined,
+            };
+
+          /* Every node carries a backdrop blur, and the build animates the
+             scale of all fifty-eight at once — so the browser re-samples and
+             re-blurs what is behind each of them, every frame. Measured: it
+             halves the frame rate for the whole build, 33.3ms a frame against
+             16.7ms without it. The utility is left off while it arrives rather
+             than overridden: a rule setting backdrop-filter:none is minified
+             down to the -webkit- form alone and Chrome then ignores it. */
+          const blur = assembly === "building"
+            ? ""
+            : node.kind === "skill" ? "backdrop-blur-md" : "backdrop-blur-xl";
+
           const sharedStyle = {
             left: node.x,
             top: node.y,
             borderColor: `${node.accent}66`,
             boxShadow: `0 0 ${node.kind === "center" ? 50 : 24}px ${node.accent}22`,
-          };
+            ...arriving,
+          } as React.CSSProperties;
 
           if (node.kind === "skill" && node.skill) {
             return (
@@ -388,7 +593,7 @@ export default function SkillsWeb({
                 key={node.id}
                 data-web-node
                 href={`/skills/${node.skill.slug}`}
-                className={`absolute z-20 flex min-h-12 w-36 -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border bg-black/80 px-3 py-2 text-left text-sm text-white shadow-xl backdrop-blur-md transition-all hover:z-40 hover:scale-110 hover:bg-black focus-visible:z-40 focus-visible:scale-110 ${dimmed ? "opacity-20" : "opacity-100"}`}
+                className={`absolute z-20 flex min-h-12 w-36 -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border bg-black/80 px-3 py-2 text-left text-sm text-white shadow-xl transition-all hover:z-40 hover:scale-110 hover:bg-black focus-visible:z-40 focus-visible:scale-110 ${blur} ${dimmed ? "opacity-20" : "opacity-100"}`}
                 style={sharedStyle}
                 onPointerEnter={() => setActiveNodeId(node.id)}
                 onPointerLeave={() => setActiveNodeId(null)}
@@ -422,7 +627,7 @@ export default function SkillsWeb({
               key={node.id}
               type="button"
               data-web-node
-              className={`absolute z-30 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center border bg-black/80 text-center text-white backdrop-blur-xl transition-all hover:z-40 hover:scale-105 focus-visible:z-40 focus-visible:scale-105 ${sizeClasses} ${dimmed ? "opacity-25" : "opacity-100"}`}
+              className={`absolute z-30 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center border bg-black/80 text-center text-white transition-all hover:z-40 hover:scale-105 focus-visible:z-40 focus-visible:scale-105 ${blur} ${sizeClasses} ${dimmed ? "opacity-25" : "opacity-100"}`}
               style={sharedStyle}
               onClick={() => node.kind === "center" ? fitWeb() : focusNode(node, node.kind === "domain" ? 0.82 : 1.02)}
               onPointerEnter={() => setActiveNodeId(node.id)}
@@ -465,11 +670,15 @@ export default function SkillsWeb({
 
       {/* Same hint system as the homepage: it waits until someone has stalled
           rather than greeting everyone, and retires once they start dragging.
-          Absolute rather than fixed so it sits inside the canvas. */}
+          Absolute rather than fixed so it sits inside the canvas.
+
+          Clear of the zoom controls, which are 52px tall and sit 16px off the
+          bottom (24px above sm) — the pill used to sit at 20px and the two
+          overlapped, with the controls painting over the middle of the hint. */}
       <HintPill
         text={hintText("skill-web", inputMode)}
         visible={webHint.visible}
-        className="absolute bottom-5 left-1/2 sm:bottom-7"
+        className="absolute bottom-20 left-1/2 sm:bottom-24"
       />
 
       {activeNode && activeNode.kind !== "center" && (

@@ -143,6 +143,30 @@ from 4.2 to 3.2, so it is not a regression from that — it is the vertical warp
 not being scaled against the viewport's aspect ratio. Small, understood, and
 visible on the page as it stands.
 
+### The skill web runs at about 51fps while it is just sitting there
+
+Not the entry animation — the page at rest, once everything has arrived.
+Measured over 11 seconds on a desktop Chromium at 1280x860: 557 frames where
+the résumé page manages 661, a p90 frame of 33.3ms against 16.7ms, and no long
+JavaScript task anywhere in the trace. It is paint, not script.
+
+It takes two things together, and removing either one fixes it:
+
+- the animated starfield canvas behind the web, which invalidates the screen
+  every frame;
+- `backdrop-filter` on all fifty-eight nodes, which means every one of those
+  invalidations re-blurs fifty-eight regions.
+
+With the canvas hidden: 597 frames, p90 16.8ms. With the blur off the nodes:
+619 frames, p90 16.7ms. Neither alone is the cost; the combination is. This is
+the same finding that made the entry animation drop its blur while it builds,
+except that this one applies for as long as the page is open.
+
+Left alone deliberately, because the fix is a design decision rather than a
+patch: drop the blur on the leaves, stop the starfield on this page, or accept
+it. Worth pairing with the accessibility pass, since both are one sweep over
+what the page costs rather than a change to what it does.
+
 ### The site header's height is written out in several places
 
 Since the header moved into the layout, four things have had to be told how
