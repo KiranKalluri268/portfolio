@@ -5,6 +5,8 @@ import resume from "@/data/resume.json";
 import BackNavigationButton from "@/components/BackNavigationButton";
 import { getResumeData } from "@/lib/content/resume";
 import PaperViewport from "@/components/PaperViewport";
+import PaperReveal from "@/components/PaperReveal";
+import { REVEAL_LEAD_IN_MS, RESUME_STEP_MS, revealProps } from "@/components/paper-reveal";
 import DownloadResumeButton from "./DownloadResumeButton";
 import styles from "./resume.module.css";
 
@@ -21,9 +23,16 @@ export const metadata: Metadata = {
   },
 };
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+/** Reading order, and the only place it is written down. The header is the
+ *  first piece to land and the footer the last; everything between is a
+ *  section, in the order it appears on the sheet. */
+function landsAt(order: number) {
+  return revealProps(REVEAL_LEAD_IN_MS + order * RESUME_STEP_MS);
+}
+
+function Section({ title, order, children }: { title: string; order: number; children: ReactNode }) {
   return (
-    <section className={styles.section}>
+    <section className={styles.section} {...landsAt(order)}>
       <h2 className={styles.sectionTitle}>{title}</h2>
       {children}
     </section>
@@ -46,9 +55,10 @@ export default function ResumePage() {
         </div>
         <DownloadResumeButton internships={internships} projects={projects} skillGroups={skillGroups} />
       </div>
+      <PaperReveal>
       <PaperViewport className={styles.paperFrame}>
         <article className={styles.paper} aria-label={`${resume.basics.name} resume`}>
-        <header>
+        <header {...landsAt(0)}>
           <h1 className={styles.name}>{resume.basics.name}</h1>
           <p className={styles.contactLine}>
             {resume.basics.location} <span className={styles.separator}>|</span>{" "}
@@ -72,11 +82,11 @@ export default function ResumePage() {
           </p>
         </header>
 
-        <Section title="Objective">
+        <Section title="Objective" order={1}>
           <p className={styles.paragraph}>{resume.objective}</p>
         </Section>
 
-        <Section title="Core Skills">
+        <Section title="Core Skills" order={2}>
           {skillGroups.map((skill) => (
             <p className={styles.skill} key={skill.category}>
               <span className={styles.skillLabel}>{skill.category}:</span>{" "}
@@ -85,7 +95,7 @@ export default function ResumePage() {
           ))}
         </Section>
 
-        <Section title="Projects">
+        <Section title="Projects" order={3}>
           {projects.map((project) => (
             <div key={project.slug}>
               <h3 className={styles.entryTitle}>
@@ -99,7 +109,7 @@ export default function ResumePage() {
           ))}
         </Section>
 
-        <Section title="Internships">
+        <Section title="Internships" order={4}>
           {internships.map((internship) => (
             <div key={`${internship.company}-${internship.role}`}>
               <h3 className={styles.entryTitle}>
@@ -113,7 +123,7 @@ export default function ResumePage() {
           ))}
         </Section>
 
-        <Section title="Education">
+        <Section title="Education" order={5}>
           <p className={styles.education}>
             {resume.education.degree} <span className={styles.separator}>|</span>{" "}
             {resume.education.institution} <span className={styles.separator}>|</span>{" "}
@@ -122,7 +132,7 @@ export default function ResumePage() {
           </p>
         </Section>
 
-        <Section title="Certifications">
+        <Section title="Certifications" order={6}>
           <ul className={styles.list}>
             {resume.certifications.map((certification) => (
               <li key={certification}>{certification}</li>
@@ -130,7 +140,7 @@ export default function ResumePage() {
           </ul>
         </Section>
 
-        <div className={styles.footer}>
+        <div className={styles.footer} {...landsAt(7)}>
           <p className={styles.footerLine}>
             <span className={styles.footerLabel}>Languages:</span> {resume.languages.join(", ")}{" "}
             <span className={styles.separator}>|</span>{" "}
@@ -139,6 +149,7 @@ export default function ResumePage() {
         </div>
         </article>
       </PaperViewport>
+      </PaperReveal>
     </main>
   );
 }

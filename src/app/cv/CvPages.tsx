@@ -1,6 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { CV_PAGE_GAP_MS, CV_STEP_MS, REVEAL_LEAD_IN_MS, revealProps } from "@/components/paper-reveal";
 import styles from "./cv.module.css";
 
 /** A4 height and the CV's own vertical padding, in millimetres. */
@@ -85,8 +86,8 @@ export default function CvPages({ blocks, label }: { blocks: CvBlock[]; label: s
   if (pages === null) {
     return (
       <article ref={sheetRef} className={styles.paper} aria-label={label}>
-        {blocks.map((block) => (
-          <div data-cv-block key={block.id}>
+        {blocks.map((block, index) => (
+          <div data-cv-block key={block.id} {...revealProps(REVEAL_LEAD_IN_MS + index * CV_STEP_MS)}>
             {block.node}
           </div>
         ))}
@@ -99,8 +100,17 @@ export default function CvPages({ blocks, label }: { blocks: CvBlock[]; label: s
       {pages.map((indices, pageIndex) => (
         <div className={styles.paper} key={blocks[indices[0]]?.id ?? pageIndex}>
           <div className={styles.pageBody}>
+            {/* A page holds its blocks' indices into the flat list, in order, so
+                `index` is already the position in the whole document — the
+                writing carries on across a break rather than restarting at the
+                top of each sheet. The extra beat per page is what makes the
+                breaks legible as pages. */}
             {indices.map((index) => (
-              <div data-cv-block key={blocks[index].id}>
+              <div
+                data-cv-block
+                key={blocks[index].id}
+                {...revealProps(REVEAL_LEAD_IN_MS + index * CV_STEP_MS + pageIndex * CV_PAGE_GAP_MS)}
+              >
                 {blocks[index].node}
               </div>
             ))}
