@@ -7,6 +7,8 @@ import StarsBackground from "@/background/StarsBackground";
 import { AudioProvider } from "@/context/AudioContextProvider";
 import { SmoothScrollProvider } from "@/context/SmoothScrollContext";
 import NavBar from "@/components/NavBar1";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const SITE_URL = "https://saikirankalluri.vercel.app";
 const SITE_NAME = "Saikiran Kalluri";
@@ -144,6 +146,17 @@ export default function RootLayout({
                 <div className="relative z-10">
                   {children}
                 </div>
+
+                {/* Nothing measured this site once it shipped: every frame time
+                    and load figure in its history was taken by hand, on one
+                    machine, before deploy. These are the two that need no
+                    account and no key on Vercel — page views and referrers,
+                    and real Core Web Vitals from real devices. Neither sets a
+                    cookie or collects anything that identifies a visitor.
+                    Error reporting is still missing and needs a service
+                    chosen; see STATUS.md. */}
+                <Analytics />
+                <SpeedInsights />
               </AudioProvider>
         </SmoothScrollProvider>
       </body>
