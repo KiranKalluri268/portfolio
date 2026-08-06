@@ -1,0 +1,38 @@
+version: 2
+
+# Nothing was watching dependencies, so three high-severity advisories (sharp's
+# libvips CVEs, two postcss path traversals) sat in the tree until someone
+# happened to run `npm audit`. Weekly is often enough for a site with no users
+# to lose and infrequent enough not to become noise.
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    # Grouped, because ten separate patch PRs a week is how people learn to
+    # ignore Dependabot. Security fixes are deliberately left ungrouped so they
+    # arrive on their own and are obvious.
+    groups:
+      production:
+        dependency-type: production
+        update-types: [minor, patch]
+      development:
+        dependency-type: development
+        update-types: [minor, patch]
+    ignore:
+      # Pinned on purpose: jsdom 30 needs Node >= 22.22 and CI runs Node 20.
+      # Its bundled undici calls an API that does not exist there and takes the
+      # Vitest worker down with it. See CLAUDE.md.
+      - dependency-name: jsdom
+        versions: [">=30"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ["*"]

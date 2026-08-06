@@ -18,7 +18,7 @@ Contact delivery is optional during UI development. Never commit real API keys o
 
 - Read [Architecture](ARCHITECTURE.md) for ownership boundaries.
 - Read [Animation system](ANIMATIONS.md) before modifying scrolling or motion.
-- Check [IMPROVEMENTS.md](../IMPROVEMENTS.md) for known work.
+- Check [STATUS.md](../STATUS.md) for known work and known issues.
 - Keep changes focused; avoid mixing visual redesigns with architecture refactors.
 
 ## Code expectations

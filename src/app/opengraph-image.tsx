@@ -1,10 +1,7 @@
-/* eslint-disable @next/next/no-img-element */
 import { ImageResponse } from "next/og";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-const SITE_URL = "https://saikirankalluri.vercel.app";
-const BLACK_HOLE_URL = `${SITE_URL}/images/blackhole.png`;
 const STAR_COLORS = ["255,255,255", "255,233,196", "212,251,255"] as const;
 
 function createStars(count: number) {
@@ -35,10 +32,18 @@ export const contentType = "image/png";
 export const runtime = "nodejs";
 
 export default async function OpenGraphImage() {
-  const [regularBuffer, boldBuffer] = await Promise.all([
+  // Everything this card needs comes off disk. The black hole used to be
+  // fetched from the deployed site, which made building the next deploy depend
+  // on the last one being up and failed outright anywhere without outbound
+  // network — including CI, where the build logged
+  // "Can't load image ... Unsupported image type: unknown" on every run and
+  // produced the card without its background.
+  const [regularBuffer, boldBuffer, blackHoleBuffer] = await Promise.all([
     readFile(path.join(process.cwd(), "public", "fonts", "tektur-regular.ttf")),
     readFile(path.join(process.cwd(), "public", "fonts", "tektur-bold.ttf")),
+    readFile(path.join(process.cwd(), "public", "images", "blackhole.png")),
   ]);
+  const blackHole = `data:image/png;base64,${blackHoleBuffer.toString("base64")}`;
   const regular = regularBuffer.buffer.slice(
     regularBuffer.byteOffset,
     regularBuffer.byteOffset + regularBuffer.byteLength,
@@ -115,7 +120,7 @@ export default async function OpenGraphImage() {
           }}
         >
           <img
-            src={BLACK_HOLE_URL}
+            src={blackHole}
             alt=""
             width="650"
             height="362"
