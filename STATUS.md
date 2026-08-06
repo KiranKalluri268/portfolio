@@ -13,11 +13,11 @@ reasoning lives in `docs/`, and the rules for changing things live in
 | | | |
 |---|---|---|
 | Build | ✅ | clean |
-| Tests | ✅ | 160 passing, 14 files |
+| Unit tests | ✅ | 193 passing, 17 files |
+| Browser tests | ✅ | 36 passing, 5 files, Chromium in CI |
 | Lint / types | ✅ | clean |
 | Vulnerabilities | ✅ | 0 (Dependabot watches weekly) |
-| Coverage | ⚠️ | 19% of statements — content layer 80–100%, components 0% |
-| Browser tests | ❌ | none; every visual check so far has been by hand |
+| Unit coverage | ⚠️ | 21% of statements. Low by design — the big components are covered by browser tests, which this number cannot see. |
 | Analytics | ✅ | Vercel Analytics + Speed Insights |
 | Error reporting | ❌ | nothing collects production errors |
 
@@ -31,7 +31,7 @@ Ordered. Detail and reasoning in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 |---|---|---|
 | 1 | **Audit the content** | Only item that can make the site *wrong*. 5 of 10 projects have no image, 2 have outcomes, 0 have a gallery. Nobody else can do it. |
 | 2 | **Licence the background music** | Current track may not be licensed for this use. An afternoon. |
-| 3 | **Component tests + Playwright in CI** | The two gaps in Health above. |
+| 3 | **Cover the carousel and the projects grid** | The two biggest untested behaviours left. Both need real touch input, which no existing test does. |
 | 4 | **Security headers** | No CSP, HSTS, `X-Frame-Options` or `Referrer-Policy` anywhere. |
 | 5 | **Error reporting** | Needs a service picked (Sentry means an account and a DSN). |
 | 6 | **Hiring call to action** | Availability, preferred role, location — one prominent contact action. Needs Saikiran's decisions, not code. |
@@ -51,6 +51,7 @@ Ordered. Detail and reasoning in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 | Projects grid leaves a band top and bottom | Vertical warp not scaled to viewport aspect. Not a regression. |
 | Header height is hardcoded in 4 places | `56px` / `96px` as Tailwind classes, nothing keeping them in step. |
 | Contact rate limit is per-instance | In-memory `Map` in the route; each serverless instance has its own and a cold start resets it. A speed bump, not a limit. |
+| The skill directory's Close button does not close | The audio toggle (x 1090–1120) sits inside the Close button (x 1082–1152) and wins the click at its centre. Found by the browser suite; the test for it is `test.fixme` in `e2e/layout.spec.ts`. |
 | `resume.json` publishes phone, email, home address | A decision to make deliberately, not by default. |
 
 ---
@@ -65,10 +66,11 @@ Ordered. Detail and reasoning in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 | `docs/ROADMAP.md` | The why behind "What's left" |
 | `docs/CONFIGURATION.md` · `docs/DEPLOYMENT.md` | Env vars, deploy |
 | `src/data/**` | All content. Prefer changing this over changing components. |
+| `e2e/` | Browser tests. `npm run test:e2e`. |
 
 ---
 
 ## Recently shipped
 
 Site menu · entry animation · projects grid + its intro · skills web intro ·
-résumé and CV reveal · 404 and error pages · analytics.
+résumé and CV reveal · 404 and error pages · analytics · browser tests in CI.

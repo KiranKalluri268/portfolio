@@ -79,3 +79,27 @@ Do not contribute material that you do not have permission to redistribute. Thir
 ## Attribution when creating your own portfolio
 
 If you reuse covered design, content, documentation, or assets, follow [LICENSE-CONTENT.md](../LICENSE-CONTENT.md). Replace Saikiran's résumé, photograph, project screenshots, contact details, employer information, and personal writing with your own material.
+
+## Tests
+
+Two suites, and the split matters more than the totals.
+
+- `npm run test` — Vitest and jsdom. Content loading, pure geometry, state
+  machines, small components. Fast, and blind to layout: jsdom has no paint, no
+  scroll containers and no real touch, so a passing unit test says nothing
+  about whether a thing is on screen.
+- `npm run test:e2e` — Playwright and Chromium, against a production build.
+  Everything the unit suite cannot see: routes and their status codes, sideways
+  scroll, print, the menu, the entry animations. This is where every visual
+  regression in this project's history would have been caught.
+
+Reduced motion is on for all browser tests except `*.motion.spec.ts`, which is
+what makes the rest of them deterministic. Put a spec there only if it is about
+an animation.
+
+The sandbox has a Chromium at a different revision from the one Playwright
+expects. Point at it rather than downloading another:
+
+    PLAYWRIGHT_CHROMIUM_EXECUTABLE=/opt/pw-browsers/chromium npm run test:e2e
+
+CI installs its own and leaves that variable unset.
