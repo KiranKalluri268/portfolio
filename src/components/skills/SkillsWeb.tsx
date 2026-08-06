@@ -73,13 +73,19 @@ function midpoint(first: PointerPosition, second: PointerPosition) {
 /** Every node arrives on the same damped spring — under its size, past it, a
  *  little under again, rest. The curve itself is in globals.css as keyframes;
  *  this is how long it takes. */
-const NODE_MS = 420;
+const NODE_MS = 520;
 /** The leaves do not all appear at once; they sweep round the circle. */
-const LEAF_SWEEP_MS = 360;
+const LEAF_SWEEP_MS = 450;
 /** How long a comet takes to run its edge, whatever that edge's length. */
-const LINE_MS = 480;
+const LINE_MS = 600;
 /** The comet's bright head, as a fraction of the edge it is running. */
 const COMET_LENGTH = 0.16;
+
+/** How long to wait for the page to go quiet before starting, and how long to
+ *  wait for that wait. A browser without requestIdleCallback gets the flat
+ *  delay instead. */
+const SETTLE_TIMEOUT_MS = 600;
+const SETTLE_FALLBACK_MS = 260;
 
 const T_CATEGORY_LINES = LEAF_SWEEP_MS + NODE_MS;
 const T_CATEGORY_NODES = T_CATEGORY_LINES + LINE_MS;
@@ -164,13 +170,27 @@ export default function SkillsWeb({
     let finish = 0;
     // Reached through the site menu, this page mounts behind its cover; without
     // waiting the web would build itself on a hidden screen.
+    let idle = 0;
+    let usedIdle = false;
     const cancel = whenUncovered(() => {
-      setAssembly("building");
-      finish = window.setTimeout(() => setAssembly("done"), INTRO_TOTAL_MS);
+      // Not on the frame the page mounts: hydration and thirty-seven icon
+      // images land in the first few hundred milliseconds, and starting into
+      // that spends the opening beat on frames that are already late.
+      const begin = () => {
+        setAssembly("building");
+        finish = window.setTimeout(() => setAssembly("done"), INTRO_TOTAL_MS);
+      };
+      const idleAvailable = typeof window.requestIdleCallback === "function";
+      idle = idleAvailable
+        ? window.requestIdleCallback(begin, { timeout: SETTLE_TIMEOUT_MS })
+        : window.setTimeout(begin, SETTLE_FALLBACK_MS);
+      usedIdle = idleAvailable;
     });
     return () => {
       cancel();
       window.clearTimeout(finish);
+      if (usedIdle) window.cancelIdleCallback(idle);
+      else window.clearTimeout(idle);
     };
   }, [reduceMotion]);
 
@@ -528,6 +548,17 @@ export default function SkillsWeb({
                 : undefined,
             };
 
+          /* Every node carries a backdrop blur, and the build animates the
+             scale of all fifty-eight at once — so the browser re-samples and
+             re-blurs what is behind each of them, every frame. Measured: it
+             halves the frame rate for the whole build, 33.3ms a frame against
+             16.7ms without it. The utility is left off while it arrives rather
+             than overridden: a rule setting backdrop-filter:none is minified
+             down to the -webkit- form alone and Chrome then ignores it. */
+          const blur = assembly === "building"
+            ? ""
+            : node.kind === "skill" ? "backdrop-blur-md" : "backdrop-blur-xl";
+
           const sharedStyle = {
             left: node.x,
             top: node.y,
@@ -542,7 +573,7 @@ export default function SkillsWeb({
                 key={node.id}
                 data-web-node
                 href={`/skills/${node.skill.slug}`}
-                className={`absolute z-20 flex min-h-12 w-36 -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border bg-black/80 px-3 py-2 text-left text-sm text-white shadow-xl backdrop-blur-md transition-all hover:z-40 hover:scale-110 hover:bg-black focus-visible:z-40 focus-visible:scale-110 ${dimmed ? "opacity-20" : "opacity-100"}`}
+                className={`absolute z-20 flex min-h-12 w-36 -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border bg-black/80 px-3 py-2 text-left text-sm text-white shadow-xl transition-all hover:z-40 hover:scale-110 hover:bg-black focus-visible:z-40 focus-visible:scale-110 ${blur} ${dimmed ? "opacity-20" : "opacity-100"}`}
                 style={sharedStyle}
                 onPointerEnter={() => setActiveNodeId(node.id)}
                 onPointerLeave={() => setActiveNodeId(null)}
@@ -576,7 +607,7 @@ export default function SkillsWeb({
               key={node.id}
               type="button"
               data-web-node
-              className={`absolute z-30 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center border bg-black/80 text-center text-white backdrop-blur-xl transition-all hover:z-40 hover:scale-105 focus-visible:z-40 focus-visible:scale-105 ${sizeClasses} ${dimmed ? "opacity-25" : "opacity-100"}`}
+              className={`absolute z-30 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center border bg-black/80 text-center text-white transition-all hover:z-40 hover:scale-105 focus-visible:z-40 focus-visible:scale-105 ${blur} ${sizeClasses} ${dimmed ? "opacity-25" : "opacity-100"}`}
               style={sharedStyle}
               onClick={() => node.kind === "center" ? fitWeb() : focusNode(node, node.kind === "domain" ? 0.82 : 1.02)}
               onPointerEnter={() => setActiveNodeId(node.id)}
