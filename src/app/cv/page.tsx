@@ -5,6 +5,7 @@ import BackNavigationButton from "@/components/BackNavigationButton";
 import { getCvData } from "@/lib/content/cv";
 import type { CvProject, CvRole } from "@/lib/content/types";
 import PaperViewport from "@/components/PaperViewport";
+import PaperReveal from "@/components/PaperReveal";
 import CvPages, { type CvBlock } from "./CvPages";
 import DownloadCvButton from "./DownloadCvButton";
 import styles from "./cv.module.css";
@@ -273,9 +274,11 @@ export default function CvPage() {
         <DownloadCvButton cv={cv} />
       </div>
 
-      <PaperViewport className={styles.paperFrame}>
-        <CvPages label={`${cv.basics.name} curriculum vitae`} blocks={blocks} />
-      </PaperViewport>
+      <PaperReveal>
+        <PaperViewport className={styles.paperFrame}>
+          <CvPages label={`${cv.basics.name} curriculum vitae`} blocks={blocks} />
+        </PaperViewport>
+      </PaperReveal>
     </main>
   );
 }

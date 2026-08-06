@@ -166,11 +166,44 @@ textarea:-webkit-autofill:focus {
   transition: background-color 9999s ease-out 0s;
 }
 
+/* The résumé and the CV writing themselves onto their sheets. The paper is
+   already there; these are the pieces landing on it, each held back by its own
+   `--reveal-delay` so the order lives with the document rather than here. */
+.paper-blank [data-reveal] {
+  opacity: 0;
+}
+
+.paper-writing [data-reveal] {
+  animation: paper-reveal var(--paper-reveal-ms, 460ms) ease-out var(--reveal-delay, 0ms) both;
+}
+
+@keyframes paper-reveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paper-blank [data-reveal],
+  .paper-writing [data-reveal] {
+    opacity: 1;
+    animation: none;
+  }
+}
+
 @media print {
   /* The site header is fixed, so without this it lands on the first printed
      page of the résumé and the CV. */
   header[role="banner"] {
     display: none !important;
+  }
+
+  /* Printing mid-reveal must not print blank sheets. Nothing pauses the page
+     for the print dialog, so whatever had not arrived yet would have gone to
+     paper as white space. */
+  .paper-blank [data-reveal],
+  .paper-writing [data-reveal] {
+    opacity: 1 !important;
+    animation: none !important;
   }
 }
 
