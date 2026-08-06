@@ -452,19 +452,6 @@ export default function SkillsWeb({
           transformOrigin: "0 0",
         }}
       >
-        <div
-          className="pointer-events-none absolute inset-0 opacity-55"
-          style={{
-            backgroundImage: [
-              "radial-gradient(circle, rgba(255,255,255,.75) 0 1px, transparent 1.5px)",
-              "radial-gradient(circle, rgba(255,122,24,.5) 0 1px, transparent 1.5px)",
-            ].join(","),
-            backgroundPosition: "0 0, 42px 58px",
-            backgroundSize: "86px 86px, 113px 113px",
-            maskImage: "radial-gradient(circle at center, black 25%, transparent 78%)",
-          }}
-        />
-
         <svg
           className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
           viewBox={`0 0 ${WORLD_WIDTH} ${WORLD_HEIGHT}`}
@@ -683,11 +670,15 @@ export default function SkillsWeb({
 
       {/* Same hint system as the homepage: it waits until someone has stalled
           rather than greeting everyone, and retires once they start dragging.
-          Absolute rather than fixed so it sits inside the canvas. */}
+          Absolute rather than fixed so it sits inside the canvas.
+
+          Clear of the zoom controls, which are 52px tall and sit 16px off the
+          bottom (24px above sm) — the pill used to sit at 20px and the two
+          overlapped, with the controls painting over the middle of the hint. */}
       <HintPill
         text={hintText("skill-web", inputMode)}
         visible={webHint.visible}
-        className="absolute bottom-5 left-1/2 sm:bottom-7"
+        className="absolute bottom-20 left-1/2 sm:bottom-24"
       />
 
       {activeNode && activeNode.kind !== "center" && (
