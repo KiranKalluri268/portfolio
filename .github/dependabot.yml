@@ -28,6 +28,18 @@ updates:
       - dependency-name: jsdom
         versions: [">=30"]
 
+      # Pinned on purpose: 5.7 removed six of the brand marks the skills map
+      # uses, so the bump is not a version change, it is AWS, DynamoDB, Canva,
+      # GPT-4 and Tableau losing their logos. Reasoning lives with the map, in
+      # src/components/skills/skill-icons.tsx.
+      #
+      # Only version updates are ignored — a security advisory for this package
+      # still opens a PR.
+      - dependency-name: react-icons
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-major
+
   - package-ecosystem: github-actions
     directory: /
     schedule:
