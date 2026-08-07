@@ -27,8 +27,9 @@ Worth doing as part of it:
 
 - Every `liveUrl` and `repositoryUrl` in `src/data/projects/*.json`, followed by
   hand. A 404 behind "Open live project" is worse than no link.
-- Project images: several are placeholders, and the projects grid shows a
-  "NOT AVAILABLE" card for anything without one.
+- Project images: five projects have none. They are not broken without one —
+  `ProjectThumbnail` draws a monogram from the title on a warm gradient panel,
+  so the grid stays even — but a real screenshot says more than "AX" does.
 - `showInResume`, `showInProjectsSection` and `featured` flags — they decide
   three different things and nothing checks they still say what is meant. Note
   that no project is currently "personal" on the grid's colour key, because
@@ -44,10 +45,11 @@ found without him are listed below.
 Counted from `src/data/**`, not guessed:
 
 - **Five of ten projects have no image**: `aude-diagnostics`, `axion`,
-  `digichikitsak`, `elphie`, `healthymitra`. They render the "NOT AVAILABLE"
-  placeholder on the projects page and in the grid. These are exactly the five
-  built inside a role, so every green card on the grid's colour key is a
-  placeholder.
+  `digichikitsak`, `elphie`, `healthymitra`. They fall back to a generated
+  monogram panel rather than a hole, so the pages read as finished; the gap is
+  that a screenshot of the actual work would say far more. These are exactly
+  the five built inside a role, so every green card on the grid's colour key is
+  a monogram.
 - **Two of ten have a live link** (`certisafe`, `third-eye-ai`) and **three have
   a repository link**. For the five work projects that is policy, and the page
   already says so in his voice. `mind-plan` and `resume-by-ai` have neither and
