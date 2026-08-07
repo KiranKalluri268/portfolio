@@ -56,9 +56,22 @@ describe("getHomepageProjects", () => {
     }
   });
 
-  it("gives every carousel project an image, since the carousel is image-led", () => {
+  it("can show something for every carousel project, image or not", () => {
+    // This used to require an image on every panel. It no longer does: two of
+    // them pointed at a stock "NOT AVAILABLE" graphic, which is worse than
+    // nothing, and ProjectThumbnail already draws a monogram from the title
+    // with the role beneath it when there is no image.
+    //
+    // What the carousel cannot survive is a project with neither — no image
+    // and nothing to build the fallback from. An image without alt text is
+    // also a hole, and the old assertion did not cover it.
     for (const project of getHomepageProjects()) {
-      expect(project.image).toBeTruthy();
+      if (project.image) {
+        expect(project.imageAlt).toBeTruthy();
+        continue;
+      }
+      expect(project.title.trim()).toBeTruthy();
+      expect(project.role.trim()).toBeTruthy();
     }
   });
 });
