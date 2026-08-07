@@ -108,6 +108,19 @@ canvas {
   .hint-pill {
     display: none;
   }
+
+  /* Two lines under the loading ring instead of one, and on a landscape phone
+     there is 90px between the ring and the "Press Enter" line to put them in.
+     At the full offset the second line lands 2px above that line and the two
+     read as one paragraph. Centred in the gap instead, 20px clear at both ends.
+
+     `translate`, not `transform`: Tailwind 4 compiles the utilities on this
+     element to the `translate` property, so a transform here would compose with
+     them rather than replace them — it put the lines 220px down, off the foot
+     of the screen. Restates the horizontal half because it is one property. */
+  .entry-lines {
+    translate: -50% 6.25rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

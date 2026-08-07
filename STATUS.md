@@ -51,6 +51,7 @@ Ordered. Detail and reasoning in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 | Projects grid leaves a band top and bottom | Vertical warp not scaled to viewport aspect. Not a regression. |
 | Header height is hardcoded in 4 places | `56px` / `96px` as Tailwind classes, nothing keeping them in step. |
 | Contact rate limit is per-instance | In-memory `Map` in the route; each serverless instance has its own and a cold start resets it. A speed bump, not a limit. |
+| `react-icons` is pinned at 5.5.x | 5.7 removed the marks for AWS, DynamoDB, Canva, GPT-4 and Tableau. Unpinning costs five logos; putting them back as local assets is a trademark question. Reasoning is in `skill-icons.tsx`. |
 | `resume.json` publishes phone, email, home address | A decision to make deliberately, not by default. |
 
 ---
