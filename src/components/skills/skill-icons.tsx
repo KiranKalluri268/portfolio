@@ -49,6 +49,20 @@ import {
  * A slug missing from this map is not a mistake. Deep Learning, RAG and
  * Mobile Development are practices rather than products, so they have no logo
  * to show and keep the `iconText` initials the JSON gives them.
+ *
+ * `react-icons` is pinned to 5.5.x, and this map is why. Simple Icons removes
+ * brands on request, and 5.7 dropped six that are used here:
+ *
+ *   SiAmazonwebservices  SiAmazondynamodb  SiCanva  SiOpenai  SiTableau
+ *   SiCss3 — the only one with a successor, renamed to SiCss
+ *
+ * So the upgrade is not a version bump, it is five skills losing their logo
+ * for their initials: AWS, DynamoDB, Canva, GPT-4 and Tableau. 5.7 has more
+ * icons overall (3446 against 3275), just not those. Shipping the missing
+ * logos as local assets would put back exactly what upstream removed for
+ * trademark reasons, which is a decision for Saikiran and not a code fix.
+ * Dependabot is told to leave the version alone; security updates still come
+ * through. Before unpinning, check every name below still exists.
  */
 export const SKILL_ICONS: Record<string, ComponentType<{ className?: string }>> = {
   aws: SiAmazonwebservices,

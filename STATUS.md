@@ -13,8 +13,8 @@ reasoning lives in `docs/`, and the rules for changing things live in
 | | | |
 |---|---|---|
 | Build | ✅ | clean |
-| Unit tests | ✅ | 193 passing, 17 files |
-| Browser tests | ✅ | 36 passing, 5 files, Chromium in CI |
+| Unit tests | ✅ | 229 passing, 18 files |
+| Browser tests | ✅ | 36 passing + 1 known failure held open, 5 files, Chromium in CI |
 | Lint / types | ✅ | clean |
 | Vulnerabilities | ✅ | 0 (Dependabot watches weekly) |
 | Unit coverage | ⚠️ | 21% of statements. Low by design — the big components are covered by browser tests, which this number cannot see. |
@@ -52,6 +52,7 @@ Ordered. Detail and reasoning in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 | Header height is hardcoded in 4 places | `56px` / `96px` as Tailwind classes, nothing keeping them in step. |
 | Contact rate limit is per-instance | In-memory `Map` in the route; each serverless instance has its own and a cold start resets it. A speed bump, not a limit. |
 | The skill directory's Close button does not close | The audio toggle (x 1090–1120) sits inside the Close button (x 1082–1152) and wins the click at its centre. Found by the browser suite; the test for it is `test.fixme` in `e2e/layout.spec.ts`. |
+| `react-icons` is pinned at 5.5.x | 5.7 removed the marks for AWS, DynamoDB, Canva, GPT-4 and Tableau. Unpinning costs five logos; putting them back as local assets is a trademark question. Reasoning is in `skill-icons.tsx`. |
 | `resume.json` publishes phone, email, home address | A decision to make deliberately, not by default. |
 
 ---
