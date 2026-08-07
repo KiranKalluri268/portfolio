@@ -173,6 +173,24 @@ export default function SkillsWeb({
   const inputMode = useInputMode();
   const webHint = useIdleHint(hasInteracted || assembly !== "done" ? null : "skill-web");
 
+  // The directory is a full-screen dialog, and the site header is fixed in the
+  // layout, so it paints over the top of it. That put the logo on top of
+  // "Alternative view" and the menu button on top of Close at 402px, and on a
+  // desktop it put the audio toggle inside the Close button, where it took the
+  // click — pressing the middle of "Close" played audio instead of closing.
+  //
+  // A dialog that covers the screen owns the screen, so the header goes away
+  // for as long as it is open. That is what the site menu already does by
+  // covering everything, and it means the dialog's own controls are the only
+  // ones on screen.
+  useEffect(() => {
+    if (!directoryOpen) return;
+    document.body.dataset.modalOpen = "true";
+    return () => {
+      delete document.body.dataset.modalOpen;
+    };
+  }, [directoryOpen]);
+
   // Anyone who touches the web wants the web, not a performance about it. The
   // first visit earns the build; the fifth does not.
   useEffect(() => {

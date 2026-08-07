@@ -203,6 +203,14 @@ textarea:-webkit-autofill:focus {
   }
 }
 
+/* A dialog that covers the screen owns the screen. The header is fixed, so it
+   paints over anything inside the page — including a dialog's own title and
+   its close button, which is how the skill directory ended up with the logo on
+   its heading and the audio toggle inside its Close button. */
+body[data-modal-open] header[role="banner"] {
+  display: none;
+}
+
 @media print {
   /* The site header is fixed, so without this it lands on the first printed
      page of the résumé and the CV. */

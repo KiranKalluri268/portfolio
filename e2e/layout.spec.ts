@@ -64,43 +64,38 @@ test.describe("the documents keep their controls reachable", () => {
 });
 
 test.describe("the header does not sit on top of the page's own controls", () => {
-  test("the skills directory heading clears the logo", async ({ page }) => {
-    await page.goto("/skills");
-    await page.getByRole("button", { name: /open accessible skill directory/i }).click();
+  // Found by this suite on its first run and fixed since. The site header is
+  // fixed in the layout, so it painted over this dialog: at 402px the logo
+  // landed on "Alternative view" and the menu button on Close, and at 1280px
+  // the audio toggle sat inside the Close button and took its click — pressing
+  // the middle of "Close" played audio. The header is now hidden while a
+  // full-screen dialog is open.
+  for (const [name, size] of [
+    ["a phone", { width: 402, height: 860 }],
+    ["a desktop", { width: 1280, height: 800 }],
+  ] as const) {
+    test(`nothing from the header sits on the directory on ${name}`, async ({ page }) => {
+      await page.setViewportSize(size);
+      await page.goto("/skills");
+      await page.getByRole("button", { name: /open accessible skill directory/i }).click();
 
-    const heading = page.getByRole("heading", { name: "Skill directory" });
-    await expect(heading).toBeVisible();
+      const close = page.getByRole("button", { name: /close skill directory/i });
+      await expect(close).toBeVisible();
 
-    const logo = await page.getByRole("banner").getByRole("link").first().boundingBox();
-    const title = await heading.boundingBox();
-    expect(logo).not.toBeNull();
-    expect(title).not.toBeNull();
-    expect(title!.x).toBeGreaterThanOrEqual(logo!.x + logo!.width);
-  });
+      // Nothing of the site header may be on screen over the dialog.
+      await expect(page.getByRole("banner")).toBeHidden();
 
-  // Found by this suite on its first run, and left failing rather than quietly
-  // fixed — there is more than one reasonable way to fix it and the choice
-  // changes what a visitor sees. Measured at 1280x720:
-  //
-  //   audio toggle  x 1090-1120  y 69-87
-  //   Close button  x 1082-1152  y 55-93
-  //
-  // The toggle sits entirely inside the Close button, and elementFromPoint at
-  // the centre of Close returns the toggle — so clicking the middle of "Close"
-  // plays audio instead of closing the directory. Recorded in STATUS.md.
-  test.fixme("the directory's Close button is the thing you click on", async ({ page }) => {
-    await page.goto("/skills");
-    await page.getByRole("button", { name: /open accessible skill directory/i }).click();
+      // And the dialog's own control is the thing under the pointer.
+      const box = (await close.boundingBox())!;
+      const atCentre = await page.evaluate(([x, y]) => {
+        const el = document.elementFromPoint(x, y) as HTMLElement | null;
+        return el?.closest("button")?.getAttribute("aria-label") ?? el?.tagName ?? "nothing";
+      }, [box.x + box.width / 2, box.y + box.height / 2]);
+      expect(atCentre).toMatch(/close skill directory/i);
 
-    const close = page.getByRole("button", { name: /close skill directory/i });
-    await expect(close).toBeVisible();
-    const box = (await close.boundingBox())!;
-
-    const atCentre = await page.evaluate(([x, y]) => {
-      const el = document.elementFromPoint(x, y) as HTMLElement | null;
-      return el?.closest("button")?.getAttribute("aria-label") ?? el?.tagName ?? "nothing";
-    }, [box.x + box.width / 2, box.y + box.height / 2]);
-
-    expect(atCentre).toMatch(/close skill directory/i);
-  });
+      // Closing it gives the site back.
+      await close.click();
+      await expect(page.getByRole("banner")).toBeVisible();
+    });
+  }
 });
