@@ -53,6 +53,7 @@ Ordered. Detail and reasoning in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 | Contact rate limit is per-instance | In-memory `Map` in the route; each serverless instance has its own and a cold start resets it. A speed bump, not a limit. |
 | `react-icons` is pinned at 5.5.x | 5.7 removed the marks for AWS, DynamoDB, Canva, GPT-4 and Tableau. Unpinning costs five logos; putting them back as local assets is a trademark question. Reasoning is in `skill-icons.tsx`. |
 | `resume.json` publishes phone, email, home address | A decision to make deliberately, not by default. |
+| About's scroll lock can be skipped returning to `/` | Reload on another page, then navigate back to home via the site menu: About's pinned reveal doesn't lock scroll until its text animation finishes, so a scroll straight through it isn't caught. Seen on iOS Safari. Unconfirmed elsewhere, low-traffic path. |
 
 ---
 
