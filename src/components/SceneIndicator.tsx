@@ -17,8 +17,8 @@ interface SceneInfo {
 const scenes: SceneInfo[] = [
   { index: 0, id: "hero", name: "Hero" },
   { index: 1, id: "about", name: "About" },
-  { index: 2, id: "projects", name: "Projects" },
-  { index: 3, id: "experience", name: "Experience" },
+  { index: 2, id: "experience", name: "Experience" },
+  { index: 3, id: "projects", name: "Projects" },
   { index: 4, id: "skills", name: "Tech Stack" },
   { index: 5, id: "contact", name: "Contact" },
 ];
