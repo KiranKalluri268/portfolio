@@ -21,7 +21,8 @@
     "Delivered features across four products, working directly with clients to implement them and optimize existing workflows.",
     "Built voice input and commands with the ElevenLabs and Bhashini APIs, and containerised and deployed the platform on AWS ECS with GitHub Actions CI/CD and CloudWatch alerting.",
     "Worked inside a C++ desktop application to add AWS S3 video storage and AWS IVS live streaming, and built its companion Next.js web application from scratch.",
-    "Built a mobile-driven desktop automation system and a caregiving platform with WebRTC consultations, Razorpay payments, and an admin dashboard."
+    "Built Axion, a mobile-driven desktop automation system — a Next.js web app, a MERN cloud relay, and a Python desktop agent — controllable by prompt or voice with live step-by-step visibility.",
+    "Built a remote caregiving platform with WebRTC consultations, Razorpay payments, and an admin dashboard."
   ],
   "overview": [
     "As a forward deployed engineer the work sat close to the client: gathering requirements directly, then implementing against them across the company's products.",
