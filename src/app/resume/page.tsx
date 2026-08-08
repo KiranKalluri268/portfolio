@@ -95,21 +95,7 @@ export default function ResumePage() {
           ))}
         </Section>
 
-        <Section title="Projects" order={3}>
-          {projects.map((project) => (
-            <div key={project.slug}>
-              <h3 className={styles.entryTitle}>
-                {project.name}{" "}
-                <span className={styles.technologies}>({project.technologies})</span>
-              </h3>
-              <ul className={styles.list}>
-                {project.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}
-              </ul>
-            </div>
-          ))}
-        </Section>
-
-        <Section title="Internships" order={4}>
+        <Section title="Internships" order={3}>
           {internships.map((internship) => (
             <div key={`${internship.company}-${internship.role}`}>
               <h3 className={styles.entryTitle}>
@@ -118,6 +104,20 @@ export default function ResumePage() {
               </h3>
               <ul className={styles.list}>
                 {internship.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}
+              </ul>
+            </div>
+          ))}
+        </Section>
+
+        <Section title="Projects" order={4}>
+          {projects.map((project) => (
+            <div key={project.slug}>
+              <h3 className={styles.entryTitle}>
+                {project.name}{" "}
+                <span className={styles.technologies}>({project.technologies})</span>
+              </h3>
+              <ul className={styles.list}>
+                {project.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}
               </ul>
             </div>
           ))}
@@ -132,15 +132,7 @@ export default function ResumePage() {
           </p>
         </Section>
 
-        <Section title="Certifications" order={6}>
-          <ul className={styles.list}>
-            {resume.certifications.map((certification) => (
-              <li key={certification}>{certification}</li>
-            ))}
-          </ul>
-        </Section>
-
-        <div className={styles.footer} {...landsAt(7)}>
+        <div className={styles.footer} {...landsAt(6)}>
           <p className={styles.footerLine}>
             <span className={styles.footerLabel}>Languages:</span> {resume.languages.join(", ")}{" "}
             <span className={styles.separator}>|</span>{" "}
