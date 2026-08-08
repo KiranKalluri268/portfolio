@@ -116,7 +116,7 @@ export default function ResumePdfDocument({
           <Text style={styles.name}>{resume.basics.name}</Text>
           <Text style={styles.headline}>{resume.basics.headline}</Text>
           <View style={styles.contact}>
-            <Text>{resume.basics.availability} · {resume.basics.location} | </Text>
+            <Text>{resume.basics.location} | </Text>
             <Link src={phoneUrl} style={styles.contactLink}>{resume.basics.phone}</Link>
             <Text> | </Text>
             <Link src={`mailto:${resume.basics.email}`} style={styles.contactLink}>

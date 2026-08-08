@@ -62,7 +62,6 @@ export default function ResumePage() {
           <h1 className={styles.name}>{resume.basics.name}</h1>
           <p className={styles.headline}>{resume.basics.headline}</p>
           <p className={styles.contactLine}>
-            {resume.basics.availability} <span className={styles.separator}>·</span>{" "}
             {resume.basics.location} <span className={styles.separator}>|</span>{" "}
             <a className={styles.contactLink} href={`tel:${resume.basics.phone.replace(/[^+\d]/g, "")}`}>
               {resume.basics.phone}
