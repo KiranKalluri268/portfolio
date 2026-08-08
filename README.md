@@ -2,7 +2,7 @@
 
 A responsive, animated software engineering portfolio built with Next.js, React, GSAP, Lenis, and Tailwind CSS. It presents Saikiran Kalluri's work, experience, technical skills, résumé, and contact information through a continuous vertical narrative with a pinned horizontal Projects section.
 
-**Live site:** [saikirankalluri.vercel.app](https://saikirankalluri.vercel.app)  
+**Live site:** [saikirankalluri.dev](https://saikirankalluri.dev)  
 **Repository:** [github.com/KiranKalluri268/portfolio1](https://github.com/KiranKalluri268/portfolio1)
 
 ## Features
