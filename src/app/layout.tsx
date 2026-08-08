@@ -11,7 +11,7 @@ import EntryCurtain from "@/components/EntryCurtain";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
-const SITE_URL = "https://saikirankalluri.vercel.app";
+const SITE_URL = "https://saikirankalluri.dev";
 const SITE_NAME = "Saikiran Kalluri";
 const SITE_DESCRIPTION =
   "Portfolio of Saikiran Kalluri, a software engineer building full-stack, AI-assisted, cloud, and developer-focused products.";

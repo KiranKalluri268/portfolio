@@ -179,7 +179,7 @@ export default async function OpenGraphImage() {
 
           <div style={{ display: "flex", alignItems: "center", fontSize: 22, color: "#a3a3a3" }}>
             <div style={{ width: 30, height: 2, marginRight: 14, background: "#e0450a" }} />
-            saikirankalluri.vercel.app
+            saikirankalluri.dev
           </div>
         </div>
       </div>

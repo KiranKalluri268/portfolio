@@ -3,7 +3,7 @@ import { getAllExperiences } from "@/lib/content/experience";
 import { getAllProjects } from "@/lib/content/projects";
 import { getAllSkills } from "@/lib/content/skills";
 
-const SITE_URL = "https://saikirankalluri.vercel.app";
+const SITE_URL = "https://saikirankalluri.dev";
 
 export default function sitemap(): MetadataRoute.Sitemap {
     const lastModified = new Date();
