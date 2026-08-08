@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
   contact: { flexDirection: "row", flexWrap: "wrap" },
   contactLink: { color: "#111111", textDecoration: "none" },
   links: { flexDirection: "row", flexWrap: "wrap", gap: 4 },
-  link: { color: "#b8380a", textDecoration: "underline" },
+  link: { color: "#0563c1", textDecoration: "underline" },
   section: { marginTop: 1.25 },
   sectionTitle: {
     borderTopWidth: 0.6,
