@@ -226,8 +226,8 @@ export default function CvPage() {
             <strong>{cv.education.degree}</strong>
             <br />
             {cv.education.institution} <span className={styles.separator}>|</span>{" "}
-            {cv.education.period} <span className={styles.separator}>|</span> CGPA:{" "}
-            {cv.education.cgpa}
+            {cv.education.period} <span className={styles.separator}>|</span>{" "}
+            <span className={styles.noBreak}>CGPA: {cv.education.cgpa}</span>
           </p>
         ),
       },

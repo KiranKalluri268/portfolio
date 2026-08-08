@@ -7,6 +7,7 @@ import StarsBackground from "@/background/StarsBackground";
 import { AudioProvider } from "@/context/AudioContextProvider";
 import { SmoothScrollProvider } from "@/context/SmoothScrollContext";
 import NavBar from "@/components/NavBar1";
+import EntryCurtain from "@/components/EntryCurtain";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -141,6 +142,10 @@ export default function RootLayout({
                     every other route used to have a single back button and no
                     way to reach anything else. */}
                 <NavBar />
+
+                {/* Stands in for LoadingScreen's own backdrop until its portal
+                    is ready - see EntryCurtain for why the gap is real. */}
+                <EntryCurtain />
 
                 {/* Your main content */}
                 <div className="relative z-10">

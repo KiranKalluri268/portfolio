@@ -1,0 +1,108 @@
+{
+  "id": 11,
+  "slug": "portfolio",
+  "title": "Personal Portfolio – Content-Driven Case-Study Platform",
+  "summary": "This site. A content-driven Next.js portfolio with its own scroll-choreographed animations, an interactive skill graph, and a CI pipeline that gates every change on real tests rather than on trust.",
+  "status": "published",
+  "featured": false,
+  "showInProjectsSection": true,
+  "projectsSectionOrder": 11,
+  "showInResume": true,
+  "resume": {
+    "technologies": "Next.js, TypeScript, GSAP, Vitest, Playwright",
+    "highlights": [
+      "Content-driven site built from typed JSON, with 229 unit tests and 37 real-browser tests gated in CI alongside lint and type checks.",
+      "Diagnosed a frame-time regression on iPad by measuring rather than guessing — isolated backdrop-filter across 125 cards as the entire cost, taking frames from 83ms to 16.7ms.",
+      "Maintain a public status document recording known defects and deferred work, including the limits of my own code."
+    ],
+    "order": 3
+  },
+  "role": "Full-stack development and site engineering",
+  "skills": [
+    "next-js",
+    "react",
+    "typescript",
+    "tailwind-css",
+    "git"
+  ],
+  "overview": [
+    "The site you are reading this on. Every page is built from typed JSON content files read through server-only modules, so the case studies, the skill graph, and the résumé all draw on the same facts rather than three copies of them.",
+    "It is also the one project here I use every day: every change goes through the same CI pipeline before it reaches this page."
+  ],
+  "problem": "A portfolio is usually read once, and most of the engineering evidence on one lives in claims rather than in anything a reader can check.",
+  "solution": "Built the site itself as the evidence — a content-driven codebase with CI-gated tests, interactions that were measured rather than assumed, and a status document that records what is still wrong with it.",
+  "howItWorks": [
+    {
+      "title": "Content layer",
+      "description": "Every project, role, and skill is a typed JSON file, read and validated at build time through server-only modules — the same data renders the case-study pages, the skill graph, and the downloadable résumé and CV."
+    },
+    {
+      "title": "Motion layer",
+      "description": "GSAP and ScrollTrigger drive a pinned projects carousel with one single source of truth for scroll position; a Lenis-smoothed scroll and a canvas starfield sit underneath the rest of the site."
+    },
+    {
+      "title": "Verification layer",
+      "description": "GitHub Actions runs lint, type checks, unit tests, and a Playwright suite against a production build on every change, before anything reaches this page."
+    }
+  ],
+  "buildingProcess": [
+    {
+      "title": "Measuring before fixing",
+      "description": "The projects grid was dropping to 83ms a frame on an iPad. Rather than guess at the cause, isolated each suspect in turn until backdrop-filter across every card turned out to be the entire cost, and fixed only that."
+    },
+    {
+      "title": "Testing what a unit test cannot see",
+      "description": "Added a Playwright suite that runs against a real production build, because the regressions this site actually had — a sideways-scrolling page, a document that prints blank mid-animation — are invisible to jsdom. It found a real bug on its first run: a full-screen dialog's Close button sitting under the fixed site header, so a click on Close was landing on the audio toggle instead."
+    },
+    {
+      "title": "Writing down what is unfinished",
+      "description": "Keep a status document recording known defects, deferred work, and the reasoning behind decisions like pinning a dependency — so the gaps are visible rather than something a visitor has to find themselves."
+    }
+  ],
+  "challenges": [
+    {
+      "challenge": "A backdrop-blur effect across the projects grid dropped frame times to 83ms on an iPad, and the obvious guesses about the cause were wrong.",
+      "solution": "Measured instead of guessing, and isolated the cost by removing one suspect at a time until backdrop-filter across every card turned out to be the entire cost.",
+      "lesson": "Measuring the actual page beats reasoning about what should be slow."
+    },
+    {
+      "challenge": "A dependency update silently removed six icons the site's skill map depended on, and the build only caught one of them before stopping.",
+      "solution": "Checked every imported icon against the new version rather than trusting the first error, found five more missing, and pinned the dependency with the reasoning written next to the code that depends on it.",
+      "lesson": "A dependency bump is a claim, not a fact, until it has actually been checked."
+    }
+  ],
+  "features": [
+    "Content-driven pages built from typed, validated JSON",
+    "GSAP, ScrollTrigger and Lenis scroll choreography with a single source of truth for scroll position",
+    "Interactive, pannable and zoomable skill graph with an accessible list fallback",
+    "Résumé and CV rendered as both a web page and a downloadable PDF from the same data",
+    "CI-gated unit and real-browser test suites, with a public record of known defects"
+  ],
+  "highlights": [
+    "Built a content-driven site where the case studies, skill graph, and downloadable résumé all read from the same typed JSON.",
+    "Diagnosed an iPad frame-rate regression by measuring rather than guessing, isolating backdrop-filter as the entire cost and cutting frame time from 83ms to 16.7ms.",
+    "Added a real-browser test suite that found a genuine layering bug — a dialog's Close button losing its click to a header control — on its first run.",
+    "Maintain a public status document recording what is still unfinished, including limitations in my own code."
+  ],
+  "outcomes": [
+    {
+      "value": "16.7ms",
+      "label": "iPad frame time, down from 83ms"
+    },
+    {
+      "value": "266",
+      "label": "automated tests gated in CI"
+    }
+  ],
+  "lessonsLearned": [
+    "How to tell a shipped feature from a shipped and verified one.",
+    "That a status document written for the builder is more honest than one written for an audience.",
+    "How much of 'it feels slow' turns out to be one measurable thing, once you stop guessing."
+  ],
+  "gallery": [],
+  "repositoryUrl": "https://github.com/KiranKalluri268/portfolio",
+  "seo": {
+    "title": "Personal Portfolio Case Study",
+    "description": "How this site is built and verified: content-driven pages, CI-gated tests, and a measured performance fix."
+  }
+}

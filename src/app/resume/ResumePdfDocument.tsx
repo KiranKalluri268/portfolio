@@ -12,52 +12,60 @@ import resume from "@/data/resume.json";
 import type { ResumeInternship } from "@/lib/content/types";
 import type { ResumeProject, ResumeSkillGroup } from "@/lib/content/resume";
 
+// `wrap={false}` on the Page below means react-pdf never paginates: content
+// taller than the declared A4 height does not clip, it silently grows the
+// page past 841.89pt instead. A page report of "1 page" therefore does not
+// mean "fits on A4" — it has to be checked against the real page height, not
+// assumed from the page count. These constants were tightened by measuring
+// the rendered PDF's actual height and trimming until it matched true A4
+// (595.28 x 841.89pt), rather than by guessing at a safe-looking number.
 const styles = StyleSheet.create({
   page: {
     width: 595.28,
     height: 841.89,
-    paddingTop: 25,
+    paddingTop: 13,
     paddingRight: 28,
-    paddingBottom: 25,
+    paddingBottom: 13,
     paddingLeft: 28,
     backgroundColor: "#ffffff",
     color: "#111111",
     fontFamily: "Helvetica",
     fontSize: 10.5,
-    lineHeight: 1.27,
+    lineHeight: 1.2,
   },
   content: {
     flexGrow: 1,
     justifyContent: "space-between",
   },
   name: { fontFamily: "Helvetica-Bold", fontSize: 12, marginBottom: 1 },
+  headline: { fontFamily: "Helvetica-Bold", fontSize: 10.5, marginBottom: 0.5 },
   contact: { flexDirection: "row", flexWrap: "wrap" },
   contactLink: { color: "#111111", textDecoration: "none" },
   links: { flexDirection: "row", flexWrap: "wrap", gap: 4 },
-  link: { color: "#b8380a", textDecoration: "underline" },
-  section: { marginTop: 2.25 },
+  link: { color: "#0563c1", textDecoration: "underline" },
+  section: { marginTop: 1.25 },
   sectionTitle: {
     borderTopWidth: 0.6,
     borderTopColor: "#8b8b8b",
-    paddingTop: 2.25,
-    marginBottom: 1.5,
+    paddingTop: 1.25,
+    marginBottom: 0.75,
     fontFamily: "Helvetica-Bold",
     fontSize: 11,
   },
-  entry: { marginTop: 0.75 },
+  entry: { marginTop: 0.4 },
   entryTitle: { fontFamily: "Helvetica-Bold", fontSize: 10.5 },
   italic: { fontFamily: "Helvetica-BoldOblique" },
   skillLine: { flexDirection: "row", flexWrap: "wrap" },
   bold: { fontFamily: "Helvetica-Bold" },
-  list: { marginTop: 0.75, marginBottom: 1.5, paddingLeft: 23 },
+  list: { marginTop: 0.4, marginBottom: 0.75, paddingLeft: 23 },
   listItem: { flexDirection: "row" },
   bullet: { width: 10 },
   listText: { flex: 1 },
   footer: {
     borderTopWidth: 0.6,
     borderTopColor: "#8b8b8b",
-    paddingTop: 2.25,
-    marginTop: 2.25,
+    paddingTop: 1.25,
+    marginTop: 1.25,
     flexDirection: "row",
     flexWrap: "wrap",
   },
@@ -106,6 +114,7 @@ export default function ResumePdfDocument({
         <View style={styles.content}>
           <View>
           <Text style={styles.name}>{resume.basics.name}</Text>
+          <Text style={styles.headline}>{resume.basics.headline}</Text>
           <View style={styles.contact}>
             <Text>{resume.basics.location} | </Text>
             <Link src={phoneUrl} style={styles.contactLink}>{resume.basics.phone}</Link>
@@ -124,7 +133,7 @@ export default function ResumePdfDocument({
           </View>
           </View>
 
-          <PdfSection title="Objective">
+          <PdfSection title="Summary">
             <Text>{resume.objective}</Text>
           </PdfSection>
 
@@ -133,17 +142,6 @@ export default function ResumePdfDocument({
               <View style={styles.skillLine} key={skill.category}>
                 <Text style={styles.bold}>{skill.category}: </Text>
                 <Text>{skill.items.join(", ")}</Text>
-              </View>
-            ))}
-          </PdfSection>
-
-          <PdfSection title="Projects">
-            {projects.map((project) => (
-              <View style={styles.entry} key={project.slug}>
-                <Text style={styles.entryTitle}>
-                  {project.name} <Text style={styles.italic}>({project.technologies})</Text>
-                </Text>
-                <BulletList items={project.highlights} />
               </View>
             ))}
           </PdfSection>
@@ -160,14 +158,24 @@ export default function ResumePdfDocument({
             ))}
           </PdfSection>
 
-          <PdfSection title="Education">
-            <Text>
-              {resume.education.degree} | {resume.education.institution} | {resume.education.period} | CGPA: {resume.education.cgpa}
-            </Text>
+          <PdfSection title="Projects">
+            {projects.map((project) => (
+              <View style={styles.entry} key={project.slug}>
+                <Text style={styles.entryTitle}>
+                  {project.name} <Text style={styles.italic}>({project.technologies})</Text>
+                </Text>
+                <BulletList items={project.highlights} />
+              </View>
+            ))}
           </PdfSection>
 
-          <PdfSection title="Certifications">
-            <BulletList items={resume.certifications} />
+          <PdfSection title="Education">
+            <Text>
+              {resume.education.degree} | {resume.education.institution} | {resume.education.period} |{" "}
+              {/* A non-breaking space keeps "CGPA:" and its value from
+                  splitting across a wrap. */}
+              CGPA:{" "}{resume.education.cgpa}
+            </Text>
           </PdfSection>
 
           <View style={styles.footer}>

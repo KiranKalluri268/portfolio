@@ -10,9 +10,10 @@
   "period": {
     "startLabel": "January 2026",
     "startDate": "2026-01",
-    "endLabel": "Present"
+    "endLabel": "July 2026",
+    "endDate": "2026-07"
   },
-  "resumePeriod": "Jan 2026 – Present",
+  "resumePeriod": "Jan 2026 – Jul 2026",
   "location": "Remote",
   "workMode": "Remote",
   "summary": "Joined as a software engineer intern on the product team, working across a Next.js frontend and a Node and Express backend. After the first month I was given the chance to design and build an internal diagnostics application, which became the main focus of the role.",

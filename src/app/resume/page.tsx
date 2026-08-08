@@ -60,6 +60,7 @@ export default function ResumePage() {
         <article className={styles.paper} aria-label={`${resume.basics.name} resume`}>
         <header {...landsAt(0)}>
           <h1 className={styles.name}>{resume.basics.name}</h1>
+          <p className={styles.headline}>{resume.basics.headline}</p>
           <p className={styles.contactLine}>
             {resume.basics.location} <span className={styles.separator}>|</span>{" "}
             <a className={styles.contactLink} href={`tel:${resume.basics.phone.replace(/[^+\d]/g, "")}`}>
@@ -82,7 +83,7 @@ export default function ResumePage() {
           </p>
         </header>
 
-        <Section title="Objective" order={1}>
+        <Section title="Summary" order={1}>
           <p className={styles.paragraph}>{resume.objective}</p>
         </Section>
 
@@ -95,21 +96,7 @@ export default function ResumePage() {
           ))}
         </Section>
 
-        <Section title="Projects" order={3}>
-          {projects.map((project) => (
-            <div key={project.slug}>
-              <h3 className={styles.entryTitle}>
-                {project.name}{" "}
-                <span className={styles.technologies}>({project.technologies})</span>
-              </h3>
-              <ul className={styles.list}>
-                {project.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}
-              </ul>
-            </div>
-          ))}
-        </Section>
-
-        <Section title="Internships" order={4}>
+        <Section title="Internships" order={3}>
           {internships.map((internship) => (
             <div key={`${internship.company}-${internship.role}`}>
               <h3 className={styles.entryTitle}>
@@ -123,24 +110,30 @@ export default function ResumePage() {
           ))}
         </Section>
 
+        <Section title="Projects" order={4}>
+          {projects.map((project) => (
+            <div key={project.slug}>
+              <h3 className={styles.entryTitle}>
+                {project.name}{" "}
+                <span className={styles.technologies}>({project.technologies})</span>
+              </h3>
+              <ul className={styles.list}>
+                {project.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}
+              </ul>
+            </div>
+          ))}
+        </Section>
+
         <Section title="Education" order={5}>
           <p className={styles.education}>
             {resume.education.degree} <span className={styles.separator}>|</span>{" "}
             {resume.education.institution} <span className={styles.separator}>|</span>{" "}
             {resume.education.period} <span className={styles.separator}>|</span>{" "}
-            CGPA: {resume.education.cgpa}
+            <span className={styles.noBreak}>CGPA: {resume.education.cgpa}</span>
           </p>
         </Section>
 
-        <Section title="Certifications" order={6}>
-          <ul className={styles.list}>
-            {resume.certifications.map((certification) => (
-              <li key={certification}>{certification}</li>
-            ))}
-          </ul>
-        </Section>
-
-        <div className={styles.footer} {...landsAt(7)}>
+        <div className={styles.footer} {...landsAt(6)}>
           <p className={styles.footerLine}>
             <span className={styles.footerLabel}>Languages:</span> {resume.languages.join(", ")}{" "}
             <span className={styles.separator}>|</span>{" "}
