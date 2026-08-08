@@ -279,7 +279,8 @@ export default function CvPdfDocument({ cv }: { cv: CvData }) {
         <PdfSection title="EDUCATION">
           <Text style={styles.bold}>{cv.education.degree}</Text>
           <Text>
-            {cv.education.institution} | {cv.education.period} | CGPA: {cv.education.cgpa}
+            {cv.education.institution} | {cv.education.period} | CGPA:{" "}
+            {cv.education.cgpa}
           </Text>
         </PdfSection>
 
