@@ -24,7 +24,12 @@ export default function DownloadResumeButton({
         import("./ResumePdfDocument"),
       ]);
       const blob = await pdf(<ResumePdfDocument internships={internships} projects={projects} skillGroups={skillGroups} />).toBlob();
-      const url = URL.createObjectURL(blob);
+      // Safari's built-in PDF viewer intercepts application/pdf blobs and
+      // opens them inline instead of honouring the `download` attribute.
+      // Re-typing as generic binary stops it recognising the blob as a
+      // previewable PDF; the .pdf extension below still names the saved file.
+      const downloadBlob = new Blob([blob], { type: "application/octet-stream" });
+      const url = URL.createObjectURL(downloadBlob);
       const anchor = document.createElement("a");
       anchor.href = url;
       anchor.download = "Saikiran-Kalluri-Resume.pdf";
