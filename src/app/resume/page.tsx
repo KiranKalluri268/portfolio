@@ -60,7 +60,9 @@ export default function ResumePage() {
         <article className={styles.paper} aria-label={`${resume.basics.name} resume`}>
         <header {...landsAt(0)}>
           <h1 className={styles.name}>{resume.basics.name}</h1>
+          <p className={styles.headline}>{resume.basics.headline}</p>
           <p className={styles.contactLine}>
+            {resume.basics.availability} <span className={styles.separator}>·</span>{" "}
             {resume.basics.location} <span className={styles.separator}>|</span>{" "}
             <a className={styles.contactLink} href={`tel:${resume.basics.phone.replace(/[^+\d]/g, "")}`}>
               {resume.basics.phone}
@@ -82,7 +84,7 @@ export default function ResumePage() {
           </p>
         </header>
 
-        <Section title="Objective" order={1}>
+        <Section title="Summary" order={1}>
           <p className={styles.paragraph}>{resume.objective}</p>
         </Section>
 
@@ -128,7 +130,7 @@ export default function ResumePage() {
             {resume.education.degree} <span className={styles.separator}>|</span>{" "}
             {resume.education.institution} <span className={styles.separator}>|</span>{" "}
             {resume.education.period} <span className={styles.separator}>|</span>{" "}
-            CGPA: {resume.education.cgpa}
+            <span className={styles.noBreak}>CGPA: {resume.education.cgpa}</span>
           </p>
         </Section>
 

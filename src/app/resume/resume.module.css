@@ -87,6 +87,19 @@
   font-weight: 700;
 }
 
+.headline {
+  margin: 0 0 1px;
+  font-weight: 700;
+}
+
+/* "CGPA:" and its value are two words either side of a space, so an ordinary
+   line wrap can split them — the label stranded at the end of one line, the
+   number alone at the start of the next. Keeps the pair as one unit so the
+   wrap, if it happens, happens before "CGPA", not inside it. */
+.noBreak {
+  white-space: nowrap;
+}
+
 .contactLine,
 .links,
 .paragraph,
