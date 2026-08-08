@@ -30,8 +30,8 @@ export default function Home() {
       <div id="portfolio-content">
         <SkipLink href="#main-content">Skip to main content</SkipLink>
         <SkipLink href="#about">Skip to about</SkipLink>
-        <SkipLink href="#projects">Skip to projects</SkipLink>
         <SkipLink href="#experience">Skip to experience</SkipLink>
+        <SkipLink href="#projects">Skip to projects</SkipLink>
         <SkipLink href="#skills">Skip to skills</SkipLink>
         <SkipLink href="#contact">Skip to contact</SkipLink>
 
@@ -60,12 +60,12 @@ export default function Home() {
           </SceneWrapper>
           <SceneWrapper index={2}>
             <ErrorBoundary>
-              <ProjectsSection projects={projects} />
+              <ExperienceTimeline experiences={experiences} />
             </ErrorBoundary>
           </SceneWrapper>
           <SceneWrapper index={3}>
             <ErrorBoundary>
-              <ExperienceTimeline experiences={experiences} />
+              <ProjectsSection projects={projects} />
             </ErrorBoundary>
           </SceneWrapper>
           <SceneWrapper index={4}>

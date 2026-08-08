@@ -14,7 +14,7 @@ import Lenis from "lenis";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 
-export const SECTION_IDS = ["hero", "about", "projects", "experience", "skills", "contact"] as const;
+export const SECTION_IDS = ["hero", "about", "experience", "projects", "skills", "contact"] as const;
 export type SectionId = (typeof SECTION_IDS)[number];
 
 interface ScrollActionsContextValue {
