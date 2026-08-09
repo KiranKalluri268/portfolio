@@ -214,10 +214,20 @@ export default function LoadingScreen({
   const animationFrameRef = useRef<number | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const exitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { hasEntered, enterPortfolio } = useAudio();
+  const { hasEntered, enterPortfolio, markEntryComplete } = useAudio();
   const { lenis } = useScrollActions();
   const [dismissed, setDismissed] = useState(hasEntered);
   const [isExiting, setIsExiting] = useState(false);
+
+  // hasEntered flips the instant Enter is pressed, but the exit flight still
+  // holds the scroll lock below for a further SPIN_MS + ESCAPE_MS - anything
+  // gated on hasEntered alone sets up while the page is still scroll-locked
+  // underneath it. This is the real "dismissed" signal, covering both a fresh
+  // dismissal and mounting already-dismissed (hasEntered carried over from
+  // earlier in the session, so there was never a lock to wait out).
+  useEffect(() => {
+    if (dismissed) markEntryComplete();
+  }, [dismissed, markEntryComplete]);
   /** The entry screen has to cover the site header and the scene dots. Both sit
    *  in the document's own stacking context while the page is inside a z-10
    *  wrapper, so no z-index here can reach over them from where this renders —

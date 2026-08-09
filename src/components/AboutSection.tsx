@@ -9,7 +9,7 @@ import { useAudio } from "@/context/AudioContextProvider";
 import { whenUncovered } from "./nav/navigation-cover";
 
 export default function AboutSection() {
-  const { hasEntered } = useAudio();
+  const { entryComplete } = useAudio();
   const sectionRef = useRef<HTMLElement>(null);
   const copyRef = useRef<HTMLDivElement>(null);
   const resumeLinkRef = useRef<HTMLAnchorElement>(null);
@@ -31,7 +31,11 @@ export default function AboutSection() {
   );
 
   useLayoutEffect(() => {
-    if (!hasEntered) return;
+    // hasEntered flips the instant Enter is pressed, but the entry screen's
+    // own exit flight still holds the page's scroll locked for a further
+    // beat after that - measuring against scroll position needs the lock
+    // actually gone, not just the click that started releasing it.
+    if (!entryComplete) return;
     const section = sectionRef.current;
     const copy = copyRef.current;
     const resumeLink = resumeLinkRef.current;
@@ -182,7 +186,7 @@ export default function AboutSection() {
       cancelWait();
       cleanup?.();
     };
-  }, [hasEntered]);
+  }, [entryComplete]);
 
   return (
     <section
