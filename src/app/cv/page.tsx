@@ -261,17 +261,17 @@ export default function CvPage() {
   return (
     <main className={styles.page}>
       <div className={styles.actions}>
-        <div className={styles.actionCopy}>
+        <div className={styles.topRow}>
           <BackNavigationButton className={styles.backLink}>
             ← Back to portfolio
           </BackNavigationButton>
-          <p className={styles.cvNote}>
-            This is the long form of the résumé — every role, the work shipped in each, and
-            full project detail. For the one-page version, see the{" "}
-            <Link href="/resume">résumé</Link>.
-          </p>
+          <DownloadCvButton cv={cv} />
         </div>
-        <DownloadCvButton cv={cv} />
+        <p className={styles.cvNote}>
+          This is the long form of the résumé — every role, the work shipped in each, and
+          full project detail. For the one-page version, see the{" "}
+          <Link href="/resume">résumé</Link>.
+        </p>
       </div>
 
       <PaperReveal>
