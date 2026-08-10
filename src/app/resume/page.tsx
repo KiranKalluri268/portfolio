@@ -44,16 +44,16 @@ export default function ResumePage() {
   return (
     <main className={styles.page}>
       <div className={styles.actions}>
-        <div className={styles.actionCopy}>
+        <div className={styles.topRow}>
           <BackNavigationButton className={styles.backLink}>
             ← Back to portfolio
           </BackNavigationButton>
-          <p className={styles.resumeNote}>
-            This is not an embedded PDF. The resume is built from structured JSON and rendered as accessible HTML.
-            For the long form with every role and project, see the <Link href="/cv">CV</Link>.
-          </p>
+          <DownloadResumeButton internships={internships} projects={projects} skillGroups={skillGroups} />
         </div>
-        <DownloadResumeButton internships={internships} projects={projects} skillGroups={skillGroups} />
+        <p className={styles.resumeNote}>
+          This is not an embedded PDF. The resume is built from structured JSON and rendered as accessible HTML.
+          For the long form with every role and project, see the <Link href="/cv">CV</Link>.
+        </p>
       </div>
       <PaperReveal>
       <PaperViewport className={styles.paperFrame}>
