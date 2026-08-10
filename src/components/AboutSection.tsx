@@ -6,10 +6,9 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import about from "@/data/about.json";
 import { useAudio } from "@/context/AudioContextProvider";
-import { whenUncovered } from "./nav/navigation-cover";
 
 export default function AboutSection() {
-  const { entryComplete } = useAudio();
+  const { hasEntered } = useAudio();
   const sectionRef = useRef<HTMLElement>(null);
   const copyRef = useRef<HTMLDivElement>(null);
   const resumeLinkRef = useRef<HTMLAnchorElement>(null);
@@ -31,162 +30,145 @@ export default function AboutSection() {
   );
 
   useLayoutEffect(() => {
-    // hasEntered flips the instant Enter is pressed, but the entry screen's
-    // own exit flight still holds the page's scroll locked for a further
-    // beat after that - measuring against scroll position needs the lock
-    // actually gone, not just the click that started releasing it.
-    if (!entryComplete) return;
+    if (!hasEntered) return;
     const section = sectionRef.current;
     const copy = copyRef.current;
     const resumeLink = resumeLinkRef.current;
     const words = wordRefs.current.filter((word): word is HTMLSpanElement => word !== null);
     if (!section || !copy || !resumeLink || words.length === 0) return;
 
-    // Reached through the site menu, this section mounts behind its cover.
-    // Creating the ScrollTrigger before the cover lifts measures it against a
-    // layout that has not settled yet, so its start/end points come out
-    // wrong and the reveal never lines up with the real scroll position - it
-    // can be scrolled straight through rather than tracking it.
-    let cleanup: (() => void) | undefined;
-    const cancelWait = whenUncovered(() => {
-      gsap.registerPlugin(ScrollTrigger);
-      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    gsap.registerPlugin(ScrollTrigger);
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-      const rootStyles = getComputedStyle(document.documentElement);
-      const readToken = (name: string, fallback: string) =>
-        rootStyles.getPropertyValue(name).trim() || fallback;
-      const accentColor = readToken("--color-accent-soft", "#ff7a18");
-      const unreadColor = readToken("--color-muted", "#64748b");
+    const rootStyles = getComputedStyle(document.documentElement);
+    const readToken = (name: string, fallback: string) =>
+      rootStyles.getPropertyValue(name).trim() || fallback;
+    const accentColor = readToken("--color-accent-soft", "#ff7a18");
+    const unreadColor = readToken("--color-muted", "#64748b");
 
-      // The resume link fades in with scroll progress, but a keyboard user reaches
-      // it long before then. Focus overrides the scroll-driven state rather than
-      // pulling the link out of the tab order.
-      let linkFocused = false;
-      let linkProgress = 0;
+    // The resume link fades in with scroll progress, but a keyboard user reaches
+    // it long before then. Focus overrides the scroll-driven state rather than
+    // pulling the link out of the tab order.
+    let linkFocused = false;
+    let linkProgress = 0;
 
-      const applyLinkVisibility = () => {
-        if (linkFocused) {
-          resumeLink.style.opacity = "1";
-          resumeLink.style.pointerEvents = "auto";
-          return;
-        }
-        resumeLink.style.opacity = String(0.08 + linkProgress * 0.92);
-        resumeLink.style.pointerEvents = linkProgress > 0.2 ? "auto" : "none";
-      };
+    const applyLinkVisibility = () => {
+      if (linkFocused) {
+        resumeLink.style.opacity = "1";
+        resumeLink.style.pointerEvents = "auto";
+        return;
+      }
+      resumeLink.style.opacity = String(0.08 + linkProgress * 0.92);
+      resumeLink.style.pointerEvents = linkProgress > 0.2 ? "auto" : "none";
+    };
 
-      const handleLinkFocus = () => {
-        linkFocused = true;
-        applyLinkVisibility();
-      };
-      const handleLinkBlur = () => {
-        linkFocused = false;
-        applyLinkVisibility();
-      };
+    const handleLinkFocus = () => {
+      linkFocused = true;
+      applyLinkVisibility();
+    };
+    const handleLinkBlur = () => {
+      linkFocused = false;
+      applyLinkVisibility();
+    };
 
-      resumeLink.addEventListener("focus", handleLinkFocus);
-      resumeLink.addEventListener("blur", handleLinkBlur);
+    resumeLink.addEventListener("focus", handleLinkFocus);
+    resumeLink.addEventListener("blur", handleLinkBlur);
 
-      const context = gsap.context(() => {
-        if (reducedMotion) {
-          gsap.set(words, {
-            opacity: 1,
-            color: (_, word: HTMLSpanElement) =>
-              word.dataset.accent === "true" ? accentColor : "#ffffff",
-          });
-          gsap.set(resumeLink, { opacity: 1, pointerEvents: "auto" });
-          return;
-        }
-
-        gsap.fromTo(copy, { y: 0 }, {
-          y: () => -window.innerHeight * 0.05,
-          ease: "none",
-          force3D: true,
-          scrollTrigger: {
-            trigger: section,
-            start: "top 20%",
-            end: "bottom 35%",
-            scrub: 1,
-            invalidateOnRefresh: true,
-          },
+    const context = gsap.context(() => {
+      if (reducedMotion) {
+        gsap.set(words, {
+          opacity: 1,
+          color: (_, word: HTMLSpanElement) =>
+            word.dataset.accent === "true" ? accentColor : "#ffffff",
         });
+        gsap.set(resumeLink, { opacity: 1, pointerEvents: "auto" });
+        return;
+      }
 
-        let wordLines: number[] = [];
-
-        const measureLines = () => {
-          let currentLine = -1;
-          let previousTop = Number.NEGATIVE_INFINITY;
-          wordLines = words.map((word) => {
-            if (Math.abs(word.offsetTop - previousTop) > 2) {
-              currentLine += 1;
-              previousTop = word.offsetTop;
-            }
-            return currentLine;
-          });
-        };
-
-        const renderProgress = (progress: number) => {
-          const paragraphProgress = gsap.utils.clamp(0, 1, progress / 0.88);
-          const revealPosition = paragraphProgress * words.length;
-          const activeWordIndex = Math.min(
-            words.length - 1,
-            Math.max(0, Math.floor(revealPosition)),
-          );
-          const activeLine = wordLines[activeWordIndex] ?? 0;
-          const activeLineStart = wordLines.indexOf(activeLine);
-          const activeLineEnd = wordLines.lastIndexOf(activeLine);
-          const activeLineProgress = gsap.utils.clamp(
-            0,
-            1,
-            (revealPosition - activeLineStart) / Math.max(1, activeLineEnd - activeLineStart + 1),
-          );
-
-          words.forEach((word, index) => {
-            const wordProgress = gsap.utils.clamp(0, 1, revealPosition - index);
-            const wordLine = wordLines[index] ?? 0;
-            const isReadLine = wordLine < activeLine;
-            const isImmediatelyPreviousLine = wordLine === activeLine - 1;
-            const isActiveLine = wordLine === activeLine;
-            const opacity = isImmediatelyPreviousLine
-              ? gsap.utils.interpolate(1, 0.38, activeLineProgress)
-              : isReadLine
-                ? 0.38
-                : isActiveLine
-                  ? 0.1 + wordProgress * 0.9
-                  : 0.1;
-            const readColor = word.dataset.accent === "true" ? accentColor : "#ffffff";
-
-            word.style.opacity = String(opacity);
-            word.style.color = wordProgress > 0 || isReadLine ? readColor : unreadColor;
-          });
-
-          linkProgress = gsap.utils.clamp(0, 1, (progress - 0.87) / 0.05);
-          applyLinkVisibility();
-        };
-
-        measureLines();
-        ScrollTrigger.create({
+      gsap.fromTo(copy, { y: 0 }, {
+        y: () => -window.innerHeight * 0.05,
+        ease: "none",
+        force3D: true,
+        scrollTrigger: {
           trigger: section,
           start: "top 20%",
           end: "bottom 35%",
-          scrub: 0.35,
+          scrub: 1,
           invalidateOnRefresh: true,
-          onRefresh: measureLines,
-          onUpdate: ({ progress }) => renderProgress(progress),
-        });
-      }, section);
+        },
+      });
 
-      cleanup = () => {
-        resumeLink.removeEventListener("focus", handleLinkFocus);
-        resumeLink.removeEventListener("blur", handleLinkBlur);
-        context.revert();
+      let wordLines: number[] = [];
+
+      const measureLines = () => {
+        let currentLine = -1;
+        let previousTop = Number.NEGATIVE_INFINITY;
+        wordLines = words.map((word) => {
+          if (Math.abs(word.offsetTop - previousTop) > 2) {
+            currentLine += 1;
+            previousTop = word.offsetTop;
+          }
+          return currentLine;
+        });
       };
-    });
+
+      const renderProgress = (progress: number) => {
+        const paragraphProgress = gsap.utils.clamp(0, 1, progress / 0.88);
+        const revealPosition = paragraphProgress * words.length;
+        const activeWordIndex = Math.min(
+          words.length - 1,
+          Math.max(0, Math.floor(revealPosition)),
+        );
+        const activeLine = wordLines[activeWordIndex] ?? 0;
+        const activeLineStart = wordLines.indexOf(activeLine);
+        const activeLineEnd = wordLines.lastIndexOf(activeLine);
+        const activeLineProgress = gsap.utils.clamp(
+          0,
+          1,
+          (revealPosition - activeLineStart) / Math.max(1, activeLineEnd - activeLineStart + 1),
+        );
+
+        words.forEach((word, index) => {
+          const wordProgress = gsap.utils.clamp(0, 1, revealPosition - index);
+          const wordLine = wordLines[index] ?? 0;
+          const isReadLine = wordLine < activeLine;
+          const isImmediatelyPreviousLine = wordLine === activeLine - 1;
+          const isActiveLine = wordLine === activeLine;
+          const opacity = isImmediatelyPreviousLine
+            ? gsap.utils.interpolate(1, 0.38, activeLineProgress)
+            : isReadLine
+              ? 0.38
+              : isActiveLine
+                ? 0.1 + wordProgress * 0.9
+                : 0.1;
+          const readColor = word.dataset.accent === "true" ? accentColor : "#ffffff";
+
+          word.style.opacity = String(opacity);
+          word.style.color = wordProgress > 0 || isReadLine ? readColor : unreadColor;
+        });
+
+        linkProgress = gsap.utils.clamp(0, 1, (progress - 0.87) / 0.05);
+        applyLinkVisibility();
+      };
+
+      measureLines();
+      ScrollTrigger.create({
+        trigger: section,
+        start: "top 20%",
+        end: "bottom 35%",
+        scrub: 0.35,
+        invalidateOnRefresh: true,
+        onRefresh: measureLines,
+        onUpdate: ({ progress }) => renderProgress(progress),
+      });
+    }, section);
 
     return () => {
-      cancelWait();
-      cleanup?.();
+      resumeLink.removeEventListener("focus", handleLinkFocus);
+      resumeLink.removeEventListener("blur", handleLinkBlur);
+      context.revert();
     };
-  }, [entryComplete]);
+  }, [hasEntered]);
 
   return (
     <section
