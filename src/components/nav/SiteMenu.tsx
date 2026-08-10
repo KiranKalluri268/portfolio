@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useScrollActions } from "@/context/SmoothScrollContext";
 import { useReducedMotion } from "@/hooks/useMediaQuery";
+import { lockPageScroll } from "../page-scroll-lock";
 import { dropCoverIn, raiseCover } from "./navigation-cover";
 import styles from "./site-menu.module.css";
 
@@ -98,13 +99,9 @@ export default function SiteMenu() {
   // scrolling on every route, so asking the window not to scroll is not enough.
   useEffect(() => {
     if (!open) return;
-    lenis?.stop();
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      lenis?.start();
-      document.body.style.overflow = previous;
-    };
+    // Counted, because the entry screen holds the page still too and both are
+    // holding it at once while a route change to `/` is in flight.
+    return lockPageScroll(lenis);
   }, [open, lenis]);
 
   useEffect(() => {
