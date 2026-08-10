@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useAudio } from "@/context/AudioContextProvider";
 import { ENTRY_RELEASE_MS } from "./entry-timing";
+import { lockPageScroll } from "./page-scroll-lock";
 import { useScrollActions } from "@/context/SmoothScrollContext";
 
 interface ParticleProps {
@@ -333,21 +334,19 @@ export default function LoadingScreen({
 
   useEffect(() => {
     if (dismissed) return;
-    const body = document.body;
     const portfolio = document.getElementById("portfolio-content");
-    const previousOverflow = body.style.overflow;
-    body.style.overflow = "hidden";
+    // Counted, because the site menu holds the page still too and both are
+    // holding it at once when Home is reached through the menu.
+    const releaseScroll = lockPageScroll(lenis);
     window.scrollTo(0, 0);
     lenis?.scrollTo(0, { immediate: true });
-    lenis?.stop();
     if (portfolio) {
       portfolio.inert = true;
       portfolio.setAttribute("aria-hidden", "true");
     }
 
     return () => {
-      body.style.overflow = previousOverflow;
-      lenis?.start();
+      releaseScroll();
       if (portfolio) {
         portfolio.inert = false;
         portfolio.removeAttribute("aria-hidden");
