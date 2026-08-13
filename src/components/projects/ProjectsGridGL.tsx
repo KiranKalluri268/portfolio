@@ -11,7 +11,15 @@ import { useMediaQuery, useReducedMotion } from "@/hooks/useMediaQuery";
 import type { ProjectOrigin } from "@/lib/content/relationships";
 import type { ProjectContent, SkillContent } from "@/lib/content/types";
 import { type Cell, type Vec, cellFocus, nearestCell, projectIndexFor } from "./grid-math";
-import { PITCH, REST_CURVATURE, curvatureFor, domeAt, leanFor, surfacePoint } from "./grid-sphere";
+import {
+  PITCH,
+  REST_CURVATURE,
+  curvatureFor,
+  domeHeight,
+  leanFor,
+  radiusLimitFor,
+  surfacePoint,
+} from "./grid-sphere";
 import { CARD_SHAPES, drawCard, textureSizeFor } from "./stack-card";
 import styles from "./projects-grid.module.css";
 
@@ -70,6 +78,11 @@ const TEXTURE_RESOLUTION = 0.5;
  *  moment a finger lifts, and the surface should relax rather than snap flat. */
 const CURVATURE_SETTLE_PER_SECOND = 0.00005;
 
+/** Every vertex of every card is put on one sphere, evaluated from the same
+ *  function of where it lands in the field. That is what makes the field read
+ *  as a single curved surface cut into cells rather than a mosaic of flat
+ *  tiles tilted to face along it — a card's edge and its neighbour's are the
+ *  same point on the sphere, so they meet. */
 const VERTEX_SHADER = /* glsl */ `
   attribute vec3 position;
   attribute vec2 uv;
@@ -77,11 +90,29 @@ const VERTEX_SHADER = /* glsl */ `
   uniform mat4 modelViewMatrix;
   uniform mat4 projectionMatrix;
 
+  /** This card's centre, in pixels from the dome's peak. */
+  uniform vec2 uCardCentre;
+  /** The card's drawn size in pixels, so a local corner can be put in the field. */
+  uniform vec2 uSize;
+  uniform float uCurvature;
+  uniform float uRadiusLimit;
+
   varying vec2 vUv;
+
+  float domeHeight(vec2 p) {
+    float r = length(p);
+    float scale = r > 0.0001 ? min(r, uRadiusLimit) / r : 1.0;
+    vec2 c = p * scale;
+    return -dot(c, c) * uCurvature * 0.5;
+  }
 
   void main() {
     vUv = uv;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    vec2 field = uCardCentre + position.xy * uSize;
+    // Relative to the card's own centre, which the model matrix has already
+    // placed along z so the renderer can still sort the cards by depth.
+    float z = domeHeight(field) - domeHeight(uCardCentre);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position.x, position.y, z, 1.0);
   }
 `;
 
@@ -249,7 +280,10 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
       const textures = canvases.map(
         (image) => new Texture(gl, { image, generateMipmaps: false }),
       );
-      const geometry = new Plane(gl);
+      // Enough segments for the card to bend with the surface rather than
+      // facet it. The grid draws far more cards than the list view, so this is
+      // the one number to reach for first if an old phone struggles.
+      const geometry = new Plane(gl, { widthSegments: 8, heightSegments: 8 });
 
       /** A mesh per slot in the window, reused as the window moves — the cell a
        *  slot shows changes, the mesh does not. */
@@ -275,7 +309,14 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
           const program = new Program(gl, {
             vertex: VERTEX_SHADER,
             fragment: FRAGMENT_SHADER,
-            uniforms: { tMap: { value: textures[0] }, uAlpha: { value: 1 } },
+            uniforms: {
+              tMap: { value: textures[0] },
+              uAlpha: { value: 1 },
+              uCardCentre: { value: new Float32Array(2) },
+              uSize: { value: new Float32Array(2) },
+              uCurvature: { value: 0 },
+              uRadiusLimit: { value: Number.MAX_VALUE },
+            },
             transparent: true,
             depthTest: false,
           });
@@ -360,6 +401,7 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
           settledFrames = 1;
         }
 
+        const radiusLimit = radiusLimitFor(curvature, camera.position.z);
         const halfWidth = stage.clientWidth / 2 + planeWidth * CULL_SLACK;
         const halfHeight = stage.clientHeight / 2 + planeHeight * CULL_SLACK;
 
@@ -384,11 +426,22 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
             }
             slot.mesh.visible = true;
 
-            const dome = domeAt(flat.x - peak.x, flat.y - peak.y, curvature);
-
-            slot.mesh.position.set(flat.x, flat.y, dome.z);
-            slot.mesh.rotation.set(dome.tiltX, dome.tiltY, 0);
-            slot.program.uniforms.tMap.value = textures[projectIndexFor(cell, entries.length)];
+            const centreX = flat.x - peak.x;
+            const centreY = flat.y - peak.y;
+            // Only the card's own centre is placed here; every vertex finds its
+            // own height on the sphere in the shader. Nothing is rotated — a
+            // card is part of the surface rather than a tile lying on it.
+            slot.mesh.position.set(
+              flat.x,
+              flat.y,
+              domeHeight(centreX, centreY, curvature, radiusLimit),
+            );
+            const uniforms = slot.program.uniforms;
+            (uniforms.uCardCentre.value as Float32Array).set([centreX, centreY]);
+            (uniforms.uSize.value as Float32Array).set([planeWidth, planeHeight]);
+            uniforms.uCurvature.value = curvature;
+            uniforms.uRadiusLimit.value = radiusLimit;
+            uniforms.tMap.value = textures[projectIndexFor(cell, entries.length)];
           }
         }
 

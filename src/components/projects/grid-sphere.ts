@@ -7,9 +7,12 @@
  *
  * This is the same lattice held in three. The cards are evenly spaced and the
  * size fall-off is the camera's, not a function — a card further away is
- * smaller because it is further away. At rest the surface is flat. As the grid
- * is dragged it swells into a dome, and the faster it moves the tighter that
- * dome is.
+ * smaller because it is further away.
+ *
+ * At rest the surface is a globe seen from outside: it bulges towards you and
+ * its edges fall away. Dragging inverts it — through flat, and out the other
+ * side into the view from inside the sphere, where the edges wrap towards you.
+ * The inversion is the thing you feel when the grid starts moving.
  *
  * The lattice helpers themselves are shared with `grid-math.ts`, which still
  * owns what a cell is and which project sits in it.
@@ -21,17 +24,17 @@ import { ROW_STAGGER, type Cell, type Vec, latticePoint } from "./grid-math";
  *  them rather than touching. */
 export const PITCH = 1.22;
 
-/** The curvature the surface holds when nothing is moving, as 1/px.
- *
- *  The grid was flat at rest at first, and the swell was too easy to miss —
- *  it only existed while you were already busy dragging. The dome is the
- *  resting shape now, and moving tightens it. */
+/** The curvature at a standstill, as 1/px. Positive is convex: the middle of
+ *  the field nearest, its edges falling away — a globe seen from outside. */
 export const REST_CURVATURE = 0.0013;
 
-/** The dome's curvature at full speed. The surface is a paraboloid, which is a
- *  sphere well past the angles reached here and costs two multiplies rather
- *  than a trig call per card per frame. */
-export const MAX_CURVATURE = 0.0034;
+/** The curvature at full speed. Negative is concave: the edges wrap towards
+ *  you and the middle is furthest — the sphere seen from inside.
+ *
+ *  Smaller in magnitude than the resting one on purpose. Concave brings cards
+ *  towards the camera, and unlike falling away that has somewhere it cannot go
+ *  past; see `zLimitFor`. */
+export const MOVING_CURVATURE = -0.0009;
 
 /** Speed, in cells per second, at which the dome reaches full curvature. The
  *  grid's own physics is already in cells per second and framerate-independent,
@@ -48,7 +51,37 @@ export const MAX_LEAN = 1.15;
  *  thrown. */
 export function curvatureFor(speed: number) {
   const reach = Math.min(1, speed / FULL_CURVATURE_SPEED);
-  return REST_CURVATURE + (MAX_CURVATURE - REST_CURVATURE) * reach;
+  return REST_CURVATURE + (MOVING_CURVATURE - REST_CURVATURE) * reach;
+}
+
+/** How far the surface may travel along z, given which way it is curved.
+ *
+ * Falling away from the camera is harmless — a card just gets small. Coming
+ * towards it is not: the paraboloid grows without bound, and at the curvatures
+ * that read well a card at the corner of the screen would reach the camera and
+ * turn inside out. So the concave side is held to about a third of the way to
+ * the lens and the convex side is left alone. */
+export function zLimitFor(curvature: number, cameraDistance: number) {
+  return cameraDistance * (curvature < 0 ? 0.35 : 2.5);
+}
+
+/** The radius past which the surface stops curving, so `zLimitFor` is never
+ *  exceeded. Clamping the radius rather than z keeps the surface's slope
+ *  honest — a clamped z would leave a crease where the two disagreed. */
+export function radiusLimitFor(curvature: number, cameraDistance: number) {
+  if (curvature === 0) return Number.MAX_VALUE;
+  return Math.sqrt((2 * zLimitFor(curvature, cameraDistance)) / Math.abs(curvature));
+}
+
+/** The surface's height at a point, in pixels from the dome's peak. Shared with
+ *  the vertex shader, which runs the same arithmetic per vertex — this one is
+ *  for placing a card's centre so the renderer can still sort by depth. */
+export function domeHeight(dx: number, dy: number, curvature: number, radiusLimit: number) {
+  const r = Math.hypot(dx, dy);
+  const scale = r > 0.0001 ? Math.min(r, radiusLimit) / r : 1;
+  const cx = dx * scale;
+  const cy = dy * scale;
+  return (-(cx * cx + cy * cy) * curvature) / 2;
 }
 
 /** Where the dome's peak sits, in cells, given the velocity that is moving the
