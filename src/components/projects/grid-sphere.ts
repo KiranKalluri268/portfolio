@@ -140,25 +140,36 @@ export function visibleCells(focus: Vec, halfCols: number, halfRows: number): Ce
   return cells;
 }
 
-/** How much smaller a card at the rim is than the one in the middle, at the
- *  resting curvature. Perspective alone gives some of this — a card further
- *  away is smaller — but not enough to read as a lens, so the size is graded
- *  by hand on top of it. */
-export const MAX_SIZE_FALLOFF = 0.35;
-
-/** A card's size against the one at the centre, given how far out it is and
- *  which way the surface is curved.
+/** The two sizes a card is ever drawn at, as a fraction of its full width.
  *
- * At rest the middle is large and the rim small. Moving inverts the surface,
- * and this inverts with it — the rim swells and the middle shrinks — so the
- * size follows the shape rather than fighting it. */
-export function sizeFalloffAt(radius: number, span: number, curvature: number) {
-  if (span <= 0) return 1;
+ * There is no third size and no falloff amount: a card is large or it is
+ * small, and where it sits between them is the only thing that varies. At rest
+ * the middle of the field is LARGE and the rim is SMALL. At full speed the two
+ * swap outright — the middle shrinks to exactly the size the rim cards had at
+ * rest, and the rim grows to the size the middle one had. */
+export const SIZE_LARGE = 1;
+export const SIZE_SMALL = 0.5;
+
+/** How far along from resting to full speed, from the curvature actually being
+ *  drawn rather than from the raw velocity.
+ *
+ * The curvature is eased, so reading the speed directly would let the sizes run
+ * ahead of the shape and arrive before it. Taken from the curvature they cannot
+ * disagree. */
+export function reachFromCurvature(curvature: number) {
+  const span = MOVING_CURVATURE - REST_CURVATURE;
+  if (span === 0) return 0;
+  return Math.max(0, Math.min(1, (curvature - REST_CURVATURE) / span));
+}
+
+/** A card's size, given how far out it sits and how far the field has turned
+ *  itself inside out. */
+export function sizeAt(radius: number, span: number, reach: number) {
+  if (span <= 0) return SIZE_LARGE;
   const radial = Math.min(1, radius / span);
-  // Against the resting curvature, so it is 1 at a standstill and goes
-  // negative as the surface turns itself inside out.
-  const direction = Math.max(-1.5, Math.min(1.5, curvature / REST_CURVATURE));
-  return 1 - direction * MAX_SIZE_FALLOFF * radial;
+  const centre = SIZE_LARGE + (SIZE_SMALL - SIZE_LARGE) * reach;
+  const rim = SIZE_SMALL + (SIZE_LARGE - SIZE_SMALL) * reach;
+  return centre + (rim - centre) * radial;
 }
 
 /** Where a cell sits on the flat surface, in pixels from the focus. */

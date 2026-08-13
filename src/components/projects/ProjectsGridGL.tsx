@@ -18,7 +18,8 @@ import {
   domeHeight,
   leanFor,
   radiusLimitFor,
-  sizeFalloffAt,
+  reachFromCurvature,
+  sizeAt,
   surfacePoint,
 } from "./grid-sphere";
 import { CARD_SHAPES, drawCard, textureSizeFor } from "./stack-card";
@@ -406,6 +407,7 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
         const radiusLimit = radiusLimitFor(curvature, camera.position.z);
         // The rim of the field, for grading the card sizes across it.
         const falloffSpan = Math.hypot(stage.clientWidth, stage.clientHeight) / 2;
+        const reach = reachFromCurvature(curvature);
         const halfWidth = stage.clientWidth / 2 + planeWidth * CULL_SLACK;
         const halfHeight = stage.clientHeight / 2 + planeHeight * CULL_SLACK;
 
@@ -440,11 +442,7 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
               flat.y,
               domeHeight(centreX, centreY, curvature, radiusLimit),
             );
-            const size = sizeFalloffAt(
-              Math.hypot(centreX, centreY),
-              falloffSpan,
-              curvature,
-            );
+            const size = sizeAt(Math.hypot(centreX, centreY), falloffSpan, reach);
             slot.mesh.scale.set(planeWidth * size, planeHeight * size, 1);
 
             const uniforms = slot.program.uniforms;
