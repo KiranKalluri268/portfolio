@@ -62,6 +62,9 @@ const WINDOW_MARGIN = 1;
  *  1 because the dome moves a card after its flat position is known. */
 const CULL_SLACK = 1.4;
 
+/** How long after a drag a click is treated as that drag's own leftover. */
+const CLICK_AFTER_DRAG_MS = 400;
+
 /** How wide a card is, against the viewport. A phone gets proportionally more
  *  of the screen than a desktop does but not as much as it once did — at 0.52
  *  two cards filled a phone and the field stopped reading as a field. */
@@ -586,6 +589,7 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
 
   const press = useRef<{ id: number; x: number; y: number; moved: boolean } | null>(null);
   const lastMove = useRef<{ x: number; y: number; time: number } | null>(null);
+  const suppressClickUntil = useRef(0);
 
   const cellsPerPixel = () => {
     const stage = stageRef.current;
@@ -638,13 +642,30 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
     if (!held || held.id !== event.pointerId) return;
     press.current = null;
     lastMove.current = null;
-    if (held.moved) {
-      dragging.current = false;
-      target.current = null;
-      if (reduceMotion) velocity.current = { x: 0, y: 0 };
+    if (!held.moved) return;
+    dragging.current = false;
+    target.current = null;
+    // A click follows a drag; it is that drag's leftover rather than a choice.
+    suppressClickUntil.current = performance.now() + CLICK_AFTER_DRAG_MS;
+    if (reduceMotion) velocity.current = { x: 0, y: 0 };
+  };
+
+  /** Opening a project is a click, not a pointerup.
+   *
+   * It used to be the pointerup, which opened projects nobody asked for: the
+   * view toggle sits over this but is not inside it, so a press that began on
+   * the field and ended on the toggle never delivered its release here. The
+   * press stayed on the books, unmoved, and the next release anywhere counted
+   * as a tap on whatever was in the middle. A click only fires when the press
+   * and the release land on the same element, which is the browser's own
+   * definition of the gesture this wants. */
+  const onClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (performance.now() < suppressClickUntil.current) {
+      suppressClickUntil.current = 0;
       return;
     }
-    // A press that never moved is a choice: open whatever is under the middle.
+    // The visually hidden list underneath carries real links; let them be.
+    if ((event.target as HTMLElement).closest("a, button")) return;
     const entry = entries[projectIndexFor(focusedCellRef.current, entries.length)];
     if (entry) router.push(`/projects/${entry.project.slug}`);
   };
@@ -713,6 +734,7 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
         onPointerMove={onPointerMove}
         onPointerUp={endPress}
         onPointerCancel={endPress}
+        onClick={onClick}
         onKeyDown={onKeyDown}
         tabIndex={0}
         role="group"

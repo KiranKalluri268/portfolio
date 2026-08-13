@@ -19,6 +19,13 @@ import {
 
 const VIEWS = ["grid", "list"] as const;
 
+/** Movement, in px, before a press on the bar counts as a drag rather than a
+ *  tap. Below it nothing moves and the button's own click still fires. */
+const DRAG_THRESHOLD = 5;
+
+/** How long after a drag a click is treated as that drag's own leftover. */
+const CLICK_AFTER_DRAG_MS = 400;
+
 const STORAGE_KEY = "projects-view";
 type View = "grid" | "list";
 
@@ -66,6 +73,18 @@ export default function ProjectsView({ grid, list }: { grid: ReactNode; list: Re
   /** True while the pill is travelling, which is what makes it grow. */
   const [travelling, setTravelling] = useState(false);
   const settled = useRef<View>("grid");
+
+  /** Where the pill sits while a finger is carrying it, and which view it would
+   *  land on if released now. The dots are dragged the same way: on a bar this
+   *  small, asking for a precise grab on the pill itself would mostly produce
+   *  taps, so the whole row is the handle. */
+  const [drag, setDrag] = useState<{ x: number; index: number } | null>(null);
+  const pressRef = useRef<{ startX: number; pointerId: number } | null>(null);
+  const draggedRef = useRef(false);
+  /** When a drag finished, so the click it ends with can be refused — letting
+   *  it through would choose whichever label the finger happened to stop over,
+   *  as well as the one it was released on. */
+  const dragEndedAt = useRef(0);
 
   useLayoutEffect(() => {
     const row = rowRef.current;
@@ -121,6 +140,54 @@ export default function ProjectsView({ grid, list }: { grid: ReactNode; list: Re
     if (stored === "list" || stored === "grid") setView(stored);
   }, []);
 
+  const nearestIndex = (x: number) => {
+    let best = 0;
+    let bestDistance = Infinity;
+    centers.forEach((center, index) => {
+      const distance = Math.abs(center - x);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        best = index;
+      }
+    });
+    return best;
+  };
+
+  const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (centers.length === 0 || event.button !== 0) return;
+    pressRef.current = { startX: event.clientX, pointerId: event.pointerId };
+    draggedRef.current = false;
+  };
+
+  const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const press = pressRef.current;
+    const row = rowRef.current;
+    if (!press || !row || press.pointerId !== event.pointerId) return;
+
+    if (!draggedRef.current) {
+      if (Math.abs(event.clientX - press.startX) < DRAG_THRESHOLD) return;
+      draggedRef.current = true;
+      // Keep receiving moves even when the finger leaves the little bar.
+      row.setPointerCapture(event.pointerId);
+    }
+
+    const x = event.clientX - row.getBoundingClientRect().left;
+    const clamped = Math.min(Math.max(x, centers[0]), centers[centers.length - 1]);
+    setDrag({ x: clamped, index: nearestIndex(clamped) });
+  };
+
+  const endDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    const press = pressRef.current;
+    if (!press || press.pointerId !== event.pointerId) return;
+    pressRef.current = null;
+    rowRef.current?.releasePointerCapture?.(event.pointerId);
+    if (!drag) return;
+    dragEndedAt.current = event.timeStamp;
+    // Snap to whichever view it was left over.
+    choose(VIEWS[drag.index]);
+    setDrag(null);
+  };
+
   const choose = (next: View) => {
     setView(next);
     try {
@@ -130,11 +197,22 @@ export default function ProjectsView({ grid, list }: { grid: ReactNode; list: Re
     }
   };
 
+  const pillCenter = drag ? drag.x : (centers[VIEWS.indexOf(view)] ?? 0);
+  const moving = drag !== null || travelling;
+
   return (
     <>
       {/* Below the site header, which owns the top-right corner on every route
           — at top-4 the toggle sat under the audio bars and the menu button. */}
       <div className="pointer-events-none fixed top-16 right-4 z-[900] flex sm:top-24 sm:right-6">
+        <div className="relative">
+          {/* A moat around the bar, catching presses that miss it narrowly.
+              The field behind this is a drag surface that opens whatever is
+              under the middle when tapped, and it reaches right up to the bar's
+              edge — so a thumb aiming for the toggle and landing just outside
+              it used to open a project instead. Wide enough for a near-miss,
+              small enough that the field is still draggable around it. */}
+          <span aria-hidden="true" className="pointer-events-auto absolute -inset-2 rounded-full" />
         <div
           ref={barRef}
           role="group"
@@ -143,8 +221,27 @@ export default function ProjectsView({ grid, list }: { grid: ReactNode; list: Re
           // the grid rather than something floating over it.
           className="pointer-events-auto isolate flex items-center rounded-full border border-white/20 bg-black/70 shadow-[0_0_0_1px_rgba(255,255,255,0.22),0_0_2.5rem_rgba(255,255,255,0.3)] backdrop-blur-md"
           style={{ paddingLeft: pill.trackPadding, paddingRight: pill.trackPadding }}
+          // A click that ended a drag would choose a second time, on whichever
+          // label the finger happened to finish over.
+          onClickCapture={(event) => {
+            // Both timestamps come from events, so they share a clock.
+            if (event.timeStamp - dragEndedAt.current > CLICK_AFTER_DRAG_MS) return;
+            dragEndedAt.current = 0;
+            event.preventDefault();
+            event.stopPropagation();
+          }}
         >
-          <div ref={rowRef} className="relative flex items-center">
+          <div
+            ref={rowRef}
+            className="relative flex items-center"
+            // pan-y so a vertical swipe over the bar still reaches the page;
+            // horizontal movement is the pill's.
+            style={{ touchAction: "pan-y" }}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={endDrag}
+            onPointerCancel={endDrag}
+          >
             {/* The highlight, and the only thing marking the current view —
                 which is why the labels below stay uniform. */}
             {centers.length > 0 && (
@@ -152,13 +249,13 @@ export default function ProjectsView({ grid, list }: { grid: ReactNode; list: Re
                 aria-hidden="true"
                 className={PILL_CLASS}
                 style={{
-                  width: travelling ? pill.moveWidth : pill.idleWidth,
-                  height: travelling ? pill.moveHeight : pill.idleHeight,
+                  width: moving ? pill.moveWidth : pill.idleWidth,
+                  height: moving ? pill.moveHeight : pill.idleHeight,
                   transform: `translate3d(${
-                    (centers[VIEWS.indexOf(view)] ?? 0) -
-                    (travelling ? pill.moveWidth : pill.idleWidth) / 2
+                    pillCenter - (moving ? pill.moveWidth : pill.idleWidth) / 2
                   }px, -50%, 0)`,
-                  transition: pillTransition(reduceMotion),
+                  // A drag follows the finger, so its position must not be eased.
+                  transition: pillTransition(reduceMotion, !drag),
                 }}
               />
             )}
@@ -180,6 +277,7 @@ export default function ProjectsView({ grid, list }: { grid: ReactNode; list: Re
               </button>
             ))}
           </div>
+        </div>
         </div>
       </div>
 
