@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import ProjectsGrid from "@/components/projects/ProjectsGrid";
+import ProjectsGridGL from "@/components/projects/ProjectsGridGL";
 import ProjectsStack from "@/components/projects/ProjectsStack";
 import ProjectsView from "@/components/projects/ProjectsView";
 import { getAllProjects } from "@/lib/content/projects";
@@ -26,7 +26,7 @@ export default function ProjectsPage() {
   const origins = Object.fromEntries(
     projects.map((project) => [project.slug, getProjectOrigin(project)]),
   ) as Record<string, ProjectOrigin>;
-  const stackEntries = projects.map((project) => ({
+  const entries = projects.map((project) => ({
     project,
     skills: getSkillsForProject(project),
     origin: origins[project.slug],
@@ -34,8 +34,8 @@ export default function ProjectsPage() {
 
   return (
     <ProjectsView
-      grid={<ProjectsGrid projects={projects} origins={origins} />}
-      list={<ProjectsStack entries={stackEntries} />}
+      grid={<ProjectsGridGL entries={entries} />}
+      list={<ProjectsStack entries={entries} />}
     />
   );
 }
