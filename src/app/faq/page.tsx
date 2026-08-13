@@ -33,7 +33,7 @@ export default function FaqPage() {
 
         <FaqAccordion items={faq} />
 
-        <section className="mt-12 rounded-3xl border border-white/10 bg-black/60 px-6 py-10 text-center backdrop-blur-md sm:px-10 sm:py-14">
+        <section className="mt-12 rounded-b-3xl border border-white/10 bg-black/60 px-6 py-10 text-center backdrop-blur-md sm:px-10 sm:py-14">
           <h2 className="text-2xl font-bold sm:text-3xl">Still have a question?</h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-gray-300 sm:text-base">
             Ask it directly and I&apos;ll get back to you, or take a look at my résumé and projects for more detail.
