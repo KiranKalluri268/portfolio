@@ -6,9 +6,12 @@
 /** Two shapes, because one aspect cannot serve both. A phone held upright can
  *  only give a landscape card about a third of its height, which leaves three
  *  cramped cards on screen instead of one to look at. */
+/** The height of each is the header, the image panel and the skills strip
+ *  added up — so halving the image panel is what makes these shorter than a
+ *  card's contents would otherwise ask for. */
 export const CARD_SHAPES = {
-  wide: { width: 1200, height: 1040 },
-  portrait: { width: 900, height: 1280 },
+  wide: { width: 1200, height: 690 },
+  portrait: { width: 900, height: 768 },
 } as const;
 
 export type CardShape = keyof typeof CARD_SHAPES;
