@@ -16,6 +16,7 @@ const DESTINATIONS = [
   { href: "/", label: "Home" },
   { href: "/projects", label: "Projects" },
   { href: "/skills", label: "Skills" },
+  { href: "/faq", label: "FAQ" },
   { href: "/resume", label: "Résumé" },
   { href: "/cv", label: "CV" },
 ];

@@ -38,6 +38,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
             changeFrequency: "monthly",
             priority: 0.8,
         },
+        {
+            url: `${SITE_URL}/faq`,
+            lastModified,
+            changeFrequency: "monthly",
+            priority: 0.6,
+        },
         ...getAllProjects().map((project) => ({
             url: `${SITE_URL}/projects/${project.slug}`,
             lastModified,
