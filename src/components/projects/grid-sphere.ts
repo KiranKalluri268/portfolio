@@ -21,10 +21,17 @@ import { ROW_STAGGER, type Cell, type Vec, latticePoint } from "./grid-math";
  *  them rather than touching. */
 export const PITCH = 1.22;
 
-/** The dome's curvature at full speed, as 1/px. The surface is a paraboloid,
- *  which is a sphere to well past the angles reached here and costs two
- *  multiplies rather than a trig call per card per frame. */
-export const MAX_CURVATURE = 0.0013;
+/** The curvature the surface holds when nothing is moving, as 1/px.
+ *
+ *  The grid was flat at rest at first, and the swell was too easy to miss —
+ *  it only existed while you were already busy dragging. The dome is the
+ *  resting shape now, and moving tightens it. */
+export const REST_CURVATURE = 0.0013;
+
+/** The dome's curvature at full speed. The surface is a paraboloid, which is a
+ *  sphere well past the angles reached here and costs two multiplies rather
+ *  than a trig call per card per frame. */
+export const MAX_CURVATURE = 0.0034;
 
 /** Speed, in cells per second, at which the dome reaches full curvature. The
  *  grid's own physics is already in cells per second and framerate-independent,
@@ -36,10 +43,12 @@ export const FULL_CURVATURE_SPEED = 6;
  *  being pulled rather than simply inflating. */
 export const MAX_LEAN = 1.15;
 
-/** Curvature for a given speed: nothing at rest, and never past the ceiling
- *  however hard the grid is thrown. */
+/** Curvature for a given speed: the resting dome at a standstill, tightening
+ *  towards the ceiling as the grid moves and never past it however hard it is
+ *  thrown. */
 export function curvatureFor(speed: number) {
-  return MAX_CURVATURE * Math.min(1, speed / FULL_CURVATURE_SPEED);
+  const reach = Math.min(1, speed / FULL_CURVATURE_SPEED);
+  return REST_CURVATURE + (MAX_CURVATURE - REST_CURVATURE) * reach;
 }
 
 /** Where the dome's peak sits, in cells, given the velocity that is moving the

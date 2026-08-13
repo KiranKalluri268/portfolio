@@ -11,13 +11,7 @@ import { useMediaQuery, useReducedMotion } from "@/hooks/useMediaQuery";
 import type { ProjectOrigin } from "@/lib/content/relationships";
 import type { ProjectContent, SkillContent } from "@/lib/content/types";
 import { type Cell, type Vec, cellFocus, nearestCell, projectIndexFor } from "./grid-math";
-import {
-  PITCH,
-  curvatureFor,
-  domeAt,
-  leanFor,
-  surfacePoint,
-} from "./grid-sphere";
+import { PITCH, REST_CURVATURE, curvatureFor, domeAt, leanFor, surfacePoint } from "./grid-sphere";
 import { CARD_SHAPES, drawCard, textureSizeFor } from "./stack-card";
 import styles from "./projects-grid.module.css";
 
@@ -53,6 +47,13 @@ const WINDOW_MARGIN = 1;
 /** How much of a card may hang off the edge before it stops being drawn. Above
  *  1 because the dome moves a card after its flat position is known. */
 const CULL_SLACK = 1.4;
+
+/** How wide a card is, against the viewport. A phone gets proportionally more
+ *  of the screen than a desktop does but not as much as it once did — at 0.52
+ *  two cards filled a phone and the field stopped reading as a field. */
+function cardWidthFor(viewportWidth: number, narrow: boolean) {
+  return Math.min(viewportWidth * (narrow ? 0.4 : 0.26), 360);
+}
 
 /** Pixels drawn per layout unit in the card textures. A grid card is about a
  *  third of the width the layout is written against, so drawing them at full
@@ -295,7 +296,7 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
 
         const card = CARD_SHAPES[shape];
         const aspect = card.height / card.width;
-        cardWidth = Math.min(width * (narrow ? 0.52 : 0.26), 360);
+        cardWidth = cardWidthFor(width, narrow);
         cardHeight = cardWidth * aspect;
         pitch = { x: cardWidth * PITCH, y: cardHeight * PITCH };
 
@@ -319,7 +320,7 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
 
       /** How curved the surface is being drawn right now, eased towards what
        *  the current speed asks for. */
-      let curvature = 0;
+      let curvature = REST_CURVATURE;
       let lean: Vec = { x: 0, y: 0 };
       /** Frames drawn since the scene last changed. The old grid's loop
        *  returned early when idle; without this the GPU redraws a still field
@@ -336,7 +337,7 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
 
         const ease = 1 - CURVATURE_SETTLE_PER_SECOND ** elapsed;
         const speed = Math.hypot(velocity.current.x, velocity.current.y);
-        const wanted = reduceMotion ? 0 : curvatureFor(speed);
+        const wanted = reduceMotion ? REST_CURVATURE : curvatureFor(speed);
         curvature += (wanted - curvature) * ease;
         const wantedLean = reduceMotion ? { x: 0, y: 0 } : leanFor(velocity.current);
         lean = {
@@ -497,9 +498,13 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
   const cellsPerPixel = () => {
     const stage = stageRef.current;
     if (!stage) return { x: 0, y: 0 };
-    // One card width of finger travel moves the grid by about one cell.
-    const width = Math.min(stage.clientWidth * 0.26, 360);
-    return { x: 1 / (width * PITCH), y: 1 / (width * 0.575 * PITCH) };
+    // One card width of finger travel moves the grid by about one cell, so
+    // this has to be worked out the same way the cards themselves are. It was
+    // using the desktop width on a phone, which made a drag there move the
+    // grid further than the finger did.
+    const width = cardWidthFor(stage.clientWidth, narrow);
+    const height = width * (CARD_SHAPES[shape].height / CARD_SHAPES[shape].width);
+    return { x: 1 / (width * PITCH), y: 1 / (height * PITCH) };
   };
 
   const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
