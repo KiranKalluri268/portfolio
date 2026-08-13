@@ -61,6 +61,15 @@ site that does **not** scroll the document.
   - Only z and the tilt come from the curve. `y` stays linear, so spacing never
     changes, cards cannot pile up at the far end, and the tap hit-test still
     resolves against a card's real position.
+  - The whole sheet is also pushed along z, not just bent. The cylinder is
+    rolled about the centre of the screen, so the tilt and the z displacement
+    are both zero exactly there — without the push, the card in the middle is
+    the one thing that never changes size, and the cards around it only appear
+    to widen because they moved relative to it.
+  - A card is never turned past just under 90°. Beyond that it faces away and
+    is culled, so it would blink out while still well inside the screen. The
+    bound is applied by shortening the distance the bend is measured over, so z
+    and the tilt cannot disagree about where a card is.
   - The bend stops growing past a screen's worth of distance. Unbounded, a card
     far enough up the stack swings round the cylinder and comes back towards
     the camera, in front of the cards being read.

@@ -66,6 +66,17 @@ const MAX_CURVE_NARROW = 0.0055;
  *  the steepest card edge-on rather than gone. */
 const MAX_TILT = 1.45;
 
+/** How far the sheet as a whole is pushed towards or away from the camera at
+ *  full speed, as a fraction of the camera's distance.
+ *
+ *  Without this the card at the centre of the screen never changes size: the
+ *  cylinder is rolled about that point, so its tilt and its z displacement are
+ *  both zero there by definition, and the cards around it only appear to widen
+ *  because they moved relative to it. Pushing the whole sheet as well means the
+ *  middle widens and narrows with everything else — forward as the stack runs
+ *  convex, back as it runs concave. */
+const MAX_CENTRE_PUSH = 0.1;
+
 const VERTEX_SHADER = /* glsl */ `
   attribute vec3 position;
   attribute vec2 uv;
@@ -374,6 +385,9 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
         // taken from the same bounded distance so they cannot disagree.
         const band =
           curve === 0 ? bendBand : Math.min(bendBand, MAX_TILT / Math.abs(curve));
+        // Moves the whole sheet, the middle card included, rather than only
+        // bending it about a centre that then never changes.
+        const centrePush = (curve / curveCeiling) * MAX_CENTRE_PUSH * camera.position.z;
 
         meshes.forEach((mesh, index) => {
           // Laid out downwards: the first project sits above the second, so
@@ -391,7 +405,7 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
           // z and the tilt come from the curve — y stays as it was, so the
           // spacing never changes and cards cannot pile up at the far end.
           mesh.position.y = flat;
-          mesh.position.z = (-bent * bent * curve) / 2;
+          mesh.position.z = (-bent * bent * curve) / 2 + centrePush;
           mesh.rotation.x = -bent * curve;
           (mesh.program.uniforms.uBulge as { value: number }).value = localBulge;
         });
