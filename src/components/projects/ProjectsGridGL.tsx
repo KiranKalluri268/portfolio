@@ -13,13 +13,13 @@ import type { ProjectContent, SkillContent } from "@/lib/content/types";
 import {
   type Cell,
   type Vec,
-  PITCH,
   REST_CURVATURE,
   cellFocus,
   curvatureFor,
   domeHeight,
   leanFor,
   nearestCell,
+  pitchFor,
   projectIndexFor,
   radiusLimitFor,
   reachFromCurvature,
@@ -349,7 +349,8 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
         const aspect = card.height / card.width;
         cardWidth = cardWidthFor(width, narrow);
         cardHeight = cardWidth * aspect;
-        pitch = { x: cardWidth * PITCH, y: cardHeight * PITCH };
+        const spacing = pitchFor(narrow);
+        pitch = { x: cardWidth * spacing, y: cardHeight * spacing };
 
         // The plane carries the glow's margin as well as the card.
         const texture = textureSizeFor(shape);
@@ -596,7 +597,8 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
     // grid further than the finger did.
     const width = cardWidthFor(stage.clientWidth, narrow);
     const height = width * (CARD_SHAPES[shape].height / CARD_SHAPES[shape].width);
-    return { x: 1 / (width * PITCH), y: 1 / (height * PITCH) };
+    const spacing = pitchFor(narrow);
+    return { x: 1 / (width * spacing), y: 1 / (height * spacing) };
   };
 
   const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {

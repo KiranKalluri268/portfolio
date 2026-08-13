@@ -63,8 +63,20 @@ export function cellFocus(cell: Cell): Vec {
 }
 
 /** Centre-to-centre spacing, in card widths. Above 1 so cards have air around
- *  them rather than touching. */
+ *  them rather than touching.
+ *
+ *  A phone is tighter. Its cards are already small enough to stand back from
+ *  the sphere, and the same proportional gap between them left the field more
+ *  space than cards. */
 export const PITCH = 1.22;
+export const PITCH_NARROW = 1.08;
+
+/** The spacing in use, so the layout and the drag mapping cannot pick
+ *  different ones — reading it twice from two constants is what once made a
+ *  phone's cards move at a different rate from the finger dragging them. */
+export function pitchFor(narrow: boolean) {
+  return narrow ? PITCH_NARROW : PITCH;
+}
 
 /** The curvature at a standstill, as 1/px. Positive is convex: the middle of
  *  the field nearest, its edges falling away — a globe seen from outside. */
