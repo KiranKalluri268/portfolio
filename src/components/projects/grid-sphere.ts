@@ -14,28 +14,48 @@
  * side into the view from inside the sphere, where the edges wrap towards you.
  * The inversion is the thing you feel when the grid starts moving.
  *
- * The lattice helpers themselves are shared with `grid-math.ts`, which still
- * owns what a cell is and which project sits in it.
+ * This module replaced `grid-math.ts`, which held the lens: ring ratios, a
+ * fall-off function, and the warp integral that made an endless field converge
+ * onto a horizon. None of that has anything to describe once the depth is
+ * real, so it went with the DOM grid it was written for.
  */
 
-import type { Cell, Vec } from "./grid-math";
+export interface Cell {
+  col: number;
+  row: number;
+}
+
+export interface Vec {
+  x: number;
+  y: number;
+}
 
 /** Where a cell sits in lattice space.
  *
- * Squarely on the grid: no half-cell offset on odd rows. `grid-math` staggers
- * them, which reads as brickwork — rows that never line up into columns. The
- * sphere wants a true grid, so that its rows and columns each bend into one
- * continuous curve rather than into a zigzag, and it keeps its own lattice
- * rather than changing the one the old grid still depends on. */
+ * Squarely on the grid: no half-cell offset on odd rows. The old lattice
+ * staggered them, which reads as brickwork — rows that never line up into
+ * columns. A sphere wants a true grid, so that its rows and its columns each
+ * bend into one continuous curve rather than into a zigzag. */
 export function latticePoint({ col, row }: Cell): Vec {
   return { x: col, y: row };
 }
 
 /** The cell nearest a point. With no stagger the row's parity no longer shifts
  *  the lattice sideways, so this is a plain rounding — the four-candidate
- *  search `grid-math` needs has nothing left to disambiguate. */
+ *  search the staggered lattice needed has nothing left to disambiguate. */
 export function nearestCell(focus: Vec): Cell {
   return { col: Math.round(focus.x), row: Math.round(focus.y) };
+}
+
+/** Which project a cell shows.
+ *
+ * The lattice is endless and the projects are not, so it tiles. Offsetting each
+ * row by a stride that shares no factor with the count keeps a project from
+ * sitting directly above itself, which is what would make the repeat obvious. */
+export function projectIndexFor({ col, row }: Cell, count: number, stride = 3) {
+  if (count <= 0) return 0;
+  const raw = col + row * stride;
+  return ((raw % count) + count) % count;
 }
 
 export function cellFocus(cell: Cell): Vec {
