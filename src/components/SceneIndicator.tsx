@@ -6,6 +6,12 @@ import { useActiveSection, useScrollActions, type SectionId } from "@/context/Sm
 import { useAudio } from "@/context/AudioContextProvider";
 import { useCoarsePointer, useReducedMotion } from "@/hooks/useMediaQuery";
 import { useHoverLabel } from "@/hooks/useHoverLabel";
+import {
+  PILL_TRAVEL_MS,
+  PILL_CLASS,
+  pillMetrics,
+  pillTransition,
+} from "./nav/sliding-pill";
 import type { SceneIndex } from "@/types";
 
 interface SceneInfo {
@@ -29,13 +35,6 @@ const TOOLTIP_GAP = 20;
  *  tap. Below it nothing moves and the button's own click still fires. */
 const DRAG_THRESHOLD = 5;
 
-/** How long the pill takes to travel to a dot, and so how long it stays at its
- *  larger size after a tap. Matches the transform transition below.
- *
- *  Only the handle: the page's own scroll is Lenis's, and the active dot
- *  changes colour on its own transition, so neither follows this. */
-const PILL_TRAVEL_MS = 250;
-
 /** How long after a drag a click is treated as that drag's own leftover. */
 const CLICK_AFTER_DRAG_MS = 400;
 
@@ -44,13 +43,6 @@ const CLICK_AFTER_DRAG_MS = 400;
  *  a pick the page never reaches — because the visitor scrolled off somewhere
  *  else meanwhile — does not strand it there for the rest of the visit. */
 const SELECTION_HOLD_MS = 2500;
-
-/** The pill's clearance from the bar, measured against the bar's outer edge.
- *  Idle it sits this far inside on every side; moving it stands this far
- *  outside on every side. Driving the track's padding and the pill's moving
- *  width from the same number is what keeps both gaps even at the ends, where
- *  the geometry is otherwise set by the run from the end dot to the edge. */
-const PILL_GAP = 5;
 
 interface DragState {
   /** Where the pill currently sits, in px from the left of the dot row. */
@@ -135,21 +127,7 @@ export default function SceneIndicator() {
       const border = parseFloat(getComputedStyle(nav).borderLeftWidth) || 0;
       const firstCenter = centersNow[0] ?? 0;
 
-      const idleHeight = Math.max(18, navHeight - PILL_GAP * 2);
-      const idleWidth = Math.round(idleHeight * 1.6);
-      // Padding that puts the pill exactly PILL_GAP inside the bar's end when
-      // it rests on the first or last dot.
-      const trackPadding = Math.max(0, PILL_GAP + idleWidth / 2 - firstCenter - border);
-      setPill({
-        idleWidth,
-        idleHeight,
-        // Standing PILL_GAP outside the bar on every side. Solving the same
-        // geometry the other way gives the width: the extra needed at the ends
-        // is the idle gap plus the outer one, twice over.
-        moveWidth: idleWidth + PILL_GAP * 4,
-        moveHeight: navHeight + PILL_GAP * 2,
-        trackPadding,
-      });
+      setPill(pillMetrics(navHeight, border, firstCenter));
     };
 
     measure();
@@ -359,19 +337,13 @@ export default function SceneIndicator() {
           {centers.length > 0 && (
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute top-1/2 left-0 rounded-full border border-accent-soft/50 bg-accent/25 shadow-[0_0_18px_rgba(224,69,10,0.45)]"
+              className={PILL_CLASS}
               style={{
                 width: moving ? pill.moveWidth : pill.idleWidth,
                 height: moving ? pill.moveHeight : pill.idleHeight,
                 transform: `translate3d(${pillCenter - (moving ? pill.moveWidth : pill.idleWidth) / 2}px, -50%, 0)`,
-                // Size settles faster than the pill travels, so it is already
-                // at its larger size for most of the journey. A drag follows
-                // the finger, so its position must not be eased at all.
-                transition: reduceMotion
-                  ? "none"
-                  : drag
-                    ? "width 200ms ease-out, height 200ms ease-out"
-                    : `transform ${PILL_TRAVEL_MS}ms ease-out, width 200ms ease-out, height 200ms ease-out`,
+                // A drag follows the finger, so its position must not be eased.
+                transition: pillTransition(reduceMotion, !drag),
               }}
             />
           )}

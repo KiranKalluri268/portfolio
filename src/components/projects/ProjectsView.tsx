@@ -1,6 +1,23 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import { useReducedMotion } from "@/hooks/useMediaQuery";
+import {
+  PILL_CLASS,
+  PILL_TRAVEL_MS,
+  pillMetrics,
+  pillTransition,
+} from "../nav/sliding-pill";
+
+const VIEWS = ["grid", "list"] as const;
 
 const STORAGE_KEY = "projects-view";
 type View = "grid" | "list";
@@ -30,6 +47,71 @@ export function useActiveProjectsView() {
  */
 export default function ProjectsView({ grid, list }: { grid: ReactNode; list: ReactNode }) {
   const [view, setView] = useState<View>("grid");
+  const reduceMotion = useReducedMotion();
+
+  const barRef = useRef<HTMLDivElement>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  /** Centre of each choice, in px from the left of the row, measured rather
+   *  than computed — the labels are padded differently at each breakpoint. */
+  const [centers, setCenters] = useState<number[]>([]);
+  const [pill, setPill] = useState({
+    idleWidth: 0,
+    idleHeight: 0,
+    moveWidth: 0,
+    moveHeight: 0,
+    trackPadding: 0,
+  });
+  /** True while the pill is travelling, which is what makes it grow. */
+  const [travelling, setTravelling] = useState(false);
+  const settled = useRef<View>("grid");
+
+  useLayoutEffect(() => {
+    const row = rowRef.current;
+    const bar = barRef.current;
+    if (!row || !bar) return;
+
+    const measure = () => {
+      const rowLeft = row.getBoundingClientRect().left;
+      const buttons = buttonRefs.current.filter(Boolean) as HTMLButtonElement[];
+      if (buttons.length === 0) return;
+      const rects = buttons.map((button) => button.getBoundingClientRect());
+      setCenters(rects.map((rect) => rect.left - rowLeft + rect.width / 2));
+      const border = parseFloat(getComputedStyle(bar).borderLeftWidth) || 0;
+      // One width for both choices, so the pill is a constant shape that only
+      // travels — the dots' pill does the same, and a pill that resized as it
+      // moved would read as two different highlights.
+      const widest = Math.max(...rects.map((rect) => rect.width));
+      setPill(
+        pillMetrics(
+          bar.getBoundingClientRect().height,
+          border,
+          rects[0].left - rowLeft + rects[0].width / 2,
+          widest,
+        ),
+      );
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(row);
+    window.addEventListener("resize", measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
+
+  // Growing is tied to the pill moving rather than to what moved it, exactly
+  // as the scene dots do it.
+  useEffect(() => {
+    if (settled.current === view) return;
+    settled.current = view;
+    setTravelling(true);
+    const timer = window.setTimeout(() => setTravelling(false), PILL_TRAVEL_MS);
+    return () => window.clearTimeout(timer);
+  }, [view]);
 
   useEffect(() => {
     // Remembered per browser, so someone who prefers the list is not put back
@@ -54,27 +136,50 @@ export default function ProjectsView({ grid, list }: { grid: ReactNode; list: Re
           — at top-4 the toggle sat under the audio bars and the menu button. */}
       <div className="pointer-events-none fixed top-16 right-4 z-[900] flex sm:top-24 sm:right-6">
         <div
+          ref={barRef}
           role="group"
           aria-label="Projects view"
           // The same white glow the cards carry, so the toggle reads as part of
           // the grid rather than something floating over it.
-          className="pointer-events-auto flex items-center gap-1 rounded-full border border-white/20 bg-black/70 p-1 shadow-[0_0_0_1px_rgba(255,255,255,0.22),0_0_2.5rem_rgba(255,255,255,0.3)] backdrop-blur-md"
+          className="pointer-events-auto isolate flex items-center rounded-full border border-white/20 bg-black/70 shadow-[0_0_0_1px_rgba(255,255,255,0.22),0_0_2.5rem_rgba(255,255,255,0.3)] backdrop-blur-md"
+          style={{ paddingLeft: pill.trackPadding, paddingRight: pill.trackPadding }}
         >
-          {(["grid", "list"] as const).map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => choose(option)}
-              aria-pressed={view === option}
-              className={`rounded-full px-3 py-1.5 text-xs font-semibold capitalize transition-colors sm:text-sm ${
-                view === option
-                  ? "bg-accent/30 text-white"
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              {option}
-            </button>
-          ))}
+          <div ref={rowRef} className="relative flex items-center">
+            {/* The highlight, and the only thing marking the current view —
+                which is why the labels below stay uniform. */}
+            {centers.length > 0 && (
+              <span
+                aria-hidden="true"
+                className={PILL_CLASS}
+                style={{
+                  width: travelling ? pill.moveWidth : pill.idleWidth,
+                  height: travelling ? pill.moveHeight : pill.idleHeight,
+                  transform: `translate3d(${
+                    (centers[VIEWS.indexOf(view)] ?? 0) -
+                    (travelling ? pill.moveWidth : pill.idleWidth) / 2
+                  }px, -50%, 0)`,
+                  transition: pillTransition(reduceMotion),
+                }}
+              />
+            )}
+
+            {VIEWS.map((option, index) => (
+              <button
+                key={option}
+                ref={(element) => {
+                  buttonRefs.current[index] = element;
+                }}
+                type="button"
+                onClick={() => choose(option)}
+                aria-pressed={view === option}
+                className={`relative z-10 rounded-full px-3 py-1.5 text-xs font-semibold capitalize transition-colors sm:text-sm ${
+                  view === option ? "text-white" : "text-gray-400 hover:text-white"
+                }`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
