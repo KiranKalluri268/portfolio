@@ -22,7 +22,7 @@ export interface StackEntry {
 }
 
 /** How much further the stack travels than the gesture that drove it. */
-const SCROLL_MULTIPLIER = 2;
+const SCROLL_MULTIPLIER = 3;
 
 /** How much of the remaining distance is covered per 60Hz frame. Lower is
  *  smoother and heavier; this is what makes a flick glide rather than snap. */

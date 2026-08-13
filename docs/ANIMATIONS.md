@@ -48,7 +48,7 @@ site that does **not** scroll the document.
 - **Scroll is hijacked, deliberately.** A GSAP `Observer` takes wheel, touch and
   pointer on the container and moves the stack itself; the page is held still
   through the counted `lockPageScroll` the entry screen and the menu share, so
-  Lenis is stopped exactly once. The stack travels 2× the gesture and wraps
+  Lenis is stopped exactly once. The stack travels 3× the gesture and wraps
   with `gsap.utils.wrap`, which is what makes it endless — the document is not
   infinitely tall and never scrolls at all.
 - **The bulge is the whole stack bending, not each card curving.** The run of
