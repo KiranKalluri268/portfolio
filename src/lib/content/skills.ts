@@ -24,7 +24,7 @@ const DETAIL_ARRAY_FIELDS = [
   "lessonsLearned",
 ] as const;
 
-function validateSkill(value: unknown, source: string): SkillContent {
+export function validateSkill(value: unknown, source: string): SkillContent {
   assertRecord(value, source);
   for (const field of ["slug", "name", "shortDescription", "status", "category", "webCategory"]) {
     assertString(value[field], field, source);
@@ -70,7 +70,7 @@ function validateSkill(value: unknown, source: string): SkillContent {
   };
 }
 
-function validateCategory(value: unknown, source: string): SkillCategoryContent {
+export function validateCategory(value: unknown, source: string): SkillCategoryContent {
   assertRecord(value, source);
   assertString(value.slug, "slug", source);
   assertString(value.label, "label", source);
@@ -132,7 +132,7 @@ export function getSkillsByCategory(): Array<{
   }));
 }
 
-function validateWebDomain(value: unknown, source: string): SkillWebDomainContent {
+export function validateWebDomain(value: unknown, source: string): SkillWebDomainContent {
   assertRecord(value, source);
   for (const field of ["slug", "label", "description", "accent"]) {
     assertString(value[field], field, source);

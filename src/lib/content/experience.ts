@@ -61,7 +61,7 @@ function validateRecommendation(value: unknown, source: string): ExperienceRecom
   return value as unknown as ExperienceRecommendation;
 }
 
-function validateExperience(value: unknown, source: string): ExperienceContent {
+export function validateExperience(value: unknown, source: string): ExperienceContent {
   assertRecord(value, source);
 
   for (const field of ["slug", "role", "company", "status", "summary", "resumePeriod"]) {
