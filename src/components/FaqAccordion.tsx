@@ -1,0 +1,61 @@
+"use client";
+
+import { useState } from "react";
+
+interface FaqItem {
+  question: string;
+  answer: string;
+}
+
+export default function FaqAccordion({ items }: { items: FaqItem[] }) {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  return (
+    <section className="space-y-4 sm:space-y-5" aria-label="Frequently asked questions">
+      {items.map((item, index) => {
+        const isOpen = openIndex === index;
+        const panelId = `faq-answer-${index}`;
+        const buttonId = `faq-question-${index}`;
+
+        return (
+          <article
+            key={item.question}
+            className="rounded-3xl border border-white/10 bg-black/60 backdrop-blur-md transition-colors duration-300 hover:border-accent-soft/25"
+          >
+            <h2 className="m-0">
+              <button
+                type="button"
+                id={buttonId}
+                aria-expanded={isOpen}
+                aria-controls={panelId}
+                onClick={() => setOpenIndex(isOpen ? null : index)}
+                className="flex w-full items-center justify-between gap-4 p-6 text-left text-lg font-bold leading-snug focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft sm:p-8 sm:text-xl"
+              >
+                <span>{item.question}</span>
+                <span
+                  aria-hidden="true"
+                  className={`shrink-0 text-2xl text-accent-soft transition-transform duration-300 ${isOpen ? "rotate-45" : ""}`}
+                >
+                  +
+                </span>
+              </button>
+            </h2>
+            <div
+              id={panelId}
+              role="region"
+              aria-labelledby={buttonId}
+              className="grid transition-[grid-template-rows] duration-300 ease-out"
+              style={{ gridTemplateRows: isOpen ? "1fr" : "0fr" }}
+            >
+              <div className="overflow-hidden">
+                <p className="px-6 pb-6 leading-relaxed text-gray-300 sm:px-8 sm:pb-8 sm:text-base">
+                  {item.answer}
+                </p>
+              </div>
+            </div>
+          </article>
+        );
+      })}
+    </section>
+  );
+}

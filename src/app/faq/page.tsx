@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import faq from "@/data/faq.json";
+import FaqAccordion from "@/components/FaqAccordion";
 import FaqQuestionForm from "@/components/FaqQuestionForm";
 
 export const metadata: Metadata = {
@@ -31,17 +31,7 @@ export default function FaqPage() {
           </p>
         </header>
 
-        <section className="space-y-4 sm:space-y-5" aria-label="Frequently asked questions">
-          {faq.map((item) => (
-            <article
-              key={item.question}
-              className="rounded-3xl border border-white/10 bg-black/60 p-6 backdrop-blur-md sm:p-8"
-            >
-              <h2 className="text-lg font-bold leading-snug sm:text-xl">{item.question}</h2>
-              <p className="mt-4 leading-relaxed text-gray-300 sm:text-base">{item.answer}</p>
-            </article>
-          ))}
-        </section>
+        <FaqAccordion items={faq} />
 
         <section className="mt-12 rounded-3xl border border-white/10 bg-black/60 px-6 py-10 text-center backdrop-blur-md sm:px-10 sm:py-14">
           <h2 className="text-2xl font-bold sm:text-3xl">Still have a question?</h2>
@@ -51,15 +41,6 @@ export default function FaqPage() {
 
           <div className="mt-8">
             <FaqQuestionForm />
-          </div>
-
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link href="/#contact" className="rounded-full border border-white/20 bg-black/45 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:border-accent-soft/60 hover:text-accent-soft focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft">
-              Contact me
-            </Link>
-            <Link href="/resume" className="rounded-full border border-white/20 bg-black/45 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:border-accent-soft/60 hover:text-accent-soft focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft">
-              View résumé
-            </Link>
           </div>
         </section>
       </div>
