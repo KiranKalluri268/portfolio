@@ -1,16 +1,32 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
 const STORAGE_KEY = "projects-view";
 type View = "grid" | "list";
+
+/** Which view is showing, published to whatever is inside them.
+ *
+ * Neither view is unmounted, so anything with a running cost has to be told
+ * when to stand down: the stack holds the page still and drives a WebGL loop,
+ * and both must stop while the grid is the one on screen. Inferring that from
+ * a measurement means every such thing re-deriving the state this component
+ * already knows. */
+const ActiveViewContext = createContext<View>("grid");
+
+export function useActiveProjectsView() {
+  return useContext(ActiveViewContext);
+}
 
 /** Holds the two ways of looking at the projects and the switch between them.
  *
  * Both are rendered by the server and only hidden with CSS, never unmounted.
  * The list is where the written descriptions and links live, so it has to stay
  * in the HTML whichever view is showing — a search engine, or anyone who cannot
- * drag a spatial grid, still gets the whole page.
+ * drag a spatial grid, still gets the whole page. The list now draws itself on
+ * the GPU, so that text is the visually-hidden layer inside ProjectsStack
+ * rather than the cards themselves; the requirement is the same, only what
+ * satisfies it moved.
  */
 export default function ProjectsView({ grid, list }: { grid: ReactNode; list: ReactNode }) {
   const [view, setView] = useState<View>("grid");
@@ -63,8 +79,10 @@ export default function ProjectsView({ grid, list }: { grid: ReactNode; list: Re
       </div>
 
       {/* hidden rather than unmounted: the list carries the page's text. */}
-      <div hidden={view !== "grid"}>{grid}</div>
-      <div hidden={view !== "list"}>{list}</div>
+      <ActiveViewContext.Provider value={view}>
+        <div hidden={view !== "grid"}>{grid}</div>
+        <div hidden={view !== "list"}>{list}</div>
+      </ActiveViewContext.Provider>
     </>
   );
 }
