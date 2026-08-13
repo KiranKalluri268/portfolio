@@ -11,6 +11,7 @@ import SceneIndicator from '@/components/SceneIndicator';
 import NavigationControls from '@/components/NavigationControls';
 import NavigationHint from '@/components/NavigationHint';
 import SceneWrapper from '@/components/SceneWrapper';
+import SectionLink from '@/components/SectionLink';
 import { getHomepageProjects } from '@/lib/content/projects';
 import { getSkillsByCategory } from '@/lib/content/skills';
 import { getAllRecommendations, getTimelineExperiences } from '@/lib/content/experience';
@@ -34,6 +35,9 @@ export default function Home() {
         <SkipLink href="#projects">Skip to projects</SkipLink>
         <SkipLink href="#skills">Skip to skills</SkipLink>
         <SkipLink href="#contact">Skip to contact</SkipLink>
+
+        {/* Honours ?section= on arrival, once the entry screen has let go. */}
+        <SectionLink />
 
         <ErrorBoundary>
           <SceneIndicator />

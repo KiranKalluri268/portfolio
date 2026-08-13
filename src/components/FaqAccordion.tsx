@@ -1,9 +1,14 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useScrollActions } from "@/context/SmoothScrollContext";
+import { readParam, writeParam } from "@/lib/deep-link";
 
 interface FaqItem {
+  /** Stable across edits and reordering, which a position in the list is not:
+   *  a shared link to an answer should survive another question being added
+   *  above it, or this one being reworded. */
+  id: string;
   question: string;
   answer: string;
 }
@@ -22,9 +27,54 @@ export default function FaqAccordion({ items }: { items: FaqItem[] }) {
   const buttonRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const { lenis } = useScrollActions();
 
+  /** Brings a question to the same place under the header that opening one
+   *  does, whether it was opened by hand or arrived at through a link. */
+  const revealAt = (index: number, force: boolean) => {
+    const button = buttonRefs.current[index];
+    if (!button) return;
+    const { top, bottom } = button.getBoundingClientRect();
+    const isOutOfView = top < HEADER_CLEARANCE_PX || bottom > window.innerHeight;
+    if (!force && !isOutOfView) return;
+    if (lenis) lenis.scrollTo(button, { offset: -HEADER_CLEARANCE_PX, duration: 0.4 });
+    else button.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  /** A question a link asked for, waiting to be scrolled to. */
+  const pending = useRef<number | null>(null);
+
+  // A link to a single answer opens it and goes to it. Anything the link names
+  // that no longer exists is ignored rather than leaving the page half-obeying
+  // an instruction it cannot follow. Read once, on arrival: afterwards the
+  // visitor is driving, not the URL.
+  useEffect(() => {
+    const asked = readParam("q");
+    if (!asked) return;
+    const index = items.findIndex((item) => item.id === asked);
+    if (index === -1) return;
+    pending.current = index;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setOpenIndex(index);
+  }, [items]);
+
+  // Going to it waits for Lenis, which the layout publishes a render after it
+  // is built. Scrolling before then falls back to scrollIntoView, which knows
+  // nothing about the fixed header and leaves the question underneath it.
+  useEffect(() => {
+    const index = pending.current;
+    if (index === null || !lenis) return;
+    pending.current = null;
+    const timer = window.setTimeout(() => revealAt(index, true), COLLAPSE_MS);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lenis]);
+
   const handleToggle = (index: number) => {
     const wasOpen = openIndex === index;
     setOpenIndex(wasOpen ? null : index);
+    // The open question names itself in the address bar, so the URL is already
+    // the shareable one by the time anyone thinks to copy it. Closing clears
+    // it — a page with nothing open should not claim otherwise.
+    writeParam("q", wasOpen ? null : items[index].id);
     if (wasOpen) return;
 
     // Closing whichever answer was open can shrink the page above this
@@ -32,15 +82,7 @@ export default function FaqAccordion({ items }: { items: FaqItem[] }) {
     // opening. Wait for that reflow to settle, then check: if the question
     // is still on screen, leave it alone — only a question actually pushed
     // out from under the header or off the bottom gets scrolled back.
-    window.setTimeout(() => {
-      const button = buttonRefs.current[index];
-      if (!button) return;
-      const { top, bottom } = button.getBoundingClientRect();
-      const isOutOfView = top < HEADER_CLEARANCE_PX || bottom > window.innerHeight;
-      if (!isOutOfView) return;
-      if (lenis) lenis.scrollTo(button, { offset: -HEADER_CLEARANCE_PX, duration: 0.4 });
-      else button.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, COLLAPSE_MS);
+    window.setTimeout(() => revealAt(index, false), COLLAPSE_MS);
   };
 
   return (

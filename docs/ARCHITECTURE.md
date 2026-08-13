@@ -111,6 +111,52 @@ the homepage timeline without appearing in the résumé.
 
 The `/resume` route renders accessible HTML and reads its Internships section from the same experience data, so role wording lives in one place. Because `@react-pdf/renderer` runs on the client, the résumé page passes a serializable `ResumeInternship[]` projection down to `DownloadResumeButton` and `ResumePdfDocument` rather than importing the server-only loader. `DownloadResumeButton` dynamically imports `@react-pdf/renderer`, keeping PDF generation code out of the initial homepage bundle.
 
+## Deep linking
+
+Most of the site is shareable because most of it is routes: a project, a skill,
+a role, the résumé, the CV and the FAQ are all pages. What needed plumbing was
+the state *inside* a page. `src/lib/deep-link.ts` owns it.
+
+| URL | Restores |
+| --- | --- |
+| `/projects?view=grid\|list` | Which of the two project views is showing |
+| `/skills?view=list` | The skill directory dialog, open over the web |
+| `/faq?q=<id>` | One answer, open and scrolled to |
+| `/?section=<id>` | A home page section, scrolled to on arrival |
+
+Four rules hold across all of them:
+
+- **Query parameters, not path segments.** `/projects/[slug]` and
+  `/skills/[slug]` already own everything after their own name, so
+  `/projects/list` would work only by shadowing a project slugged `list` —
+  quietly, and for as long as that slug existed.
+- **A link outranks a remembered preference.** `/projects` also stores the last
+  view in `localStorage`. If storage won, sending someone the grid would open
+  the list for anyone who had ever chosen it, which is the thing the link was
+  sent to prevent.
+- **Written with `history.replaceState`, never the router.** The router
+  re-renders the route, which on these pages means tearing through a WebGL
+  scene's React tree for a change the scene does not care about. Replacing
+  rather than pushing keeps the back button leaving the page instead of walking
+  back through every view the visitor tried.
+- **A value the screen cannot render is ignored.** Stale and hand-edited links
+  fall back to the default rather than putting a page into a state it has no
+  rendering for.
+
+Two of these need to wait rather than act on arrival, and both were wrong first:
+
+- **The home page cannot use a `#fragment`.** The browser acts on one as soon as
+  the document is ready, which here is while the entry screen is up and the page
+  is held still — the scroll is swallowed and never retried. A parameter is
+  inert, which lets the wait be deliberate. `SectionLink` then waits for the
+  lock itself to lift rather than for `hasEntered`, because entering and being
+  released are not the same moment: the entry screen flips the flag first and
+  holds the page until its exit animation ends, and a stopped Lenis ignores
+  `scrollTo` outright.
+- **The FAQ waits for Lenis.** It is published a render after it is built, and
+  scrolling before then falls back to `scrollIntoView`, which knows nothing
+  about the fixed header and leaves the question underneath it.
+
 ## Contact flow
 
 The Contact component validates required fields in the browser, then posts JSON to `/api/contact`. The Node.js route handler:

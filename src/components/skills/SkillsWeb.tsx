@@ -10,6 +10,7 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
+import { readOneOf, writeParam } from "@/lib/deep-link";
 import type { SkillWebData } from "@/lib/content/types";
 import {
   CENTER_X,
@@ -160,6 +161,19 @@ export default function SkillsWeb({
   const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [directoryOpen, setDirectoryOpen] = useState(false);
+
+  /** The two ways of reading this page, so a link can say which one it meant.
+   *  The web is the default and leaves the address bar alone; the directory
+   *  names itself, and clears the parameter again when it closes. */
+  const showDirectory = useCallback((open: boolean) => {
+    setDirectoryOpen(open);
+    writeParam("view", open ? "list" : null);
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (readOneOf("view", ["web", "list"] as const) === "list") setDirectoryOpen(true);
+  }, []);
   /** "waiting" until anything covering the page has gone, "building" while it
    *  assembles, "done" once it is an ordinary web again — at which point every
    *  inline style the intro used is dropped so nothing it did survives. */
@@ -683,7 +697,7 @@ export default function SkillsWeb({
         <button type="button" onClick={() => zoomAtCenter(1.22)} className="flex h-10 w-10 items-center justify-center rounded-full text-xl hover:bg-white/10" aria-label="Zoom in">+</button>
         <button type="button" onClick={() => zoomAtCenter(0.82)} className="flex h-10 w-10 items-center justify-center rounded-full text-xl hover:bg-white/10" aria-label="Zoom out">−</button>
         <button type="button" onClick={() => fitWeb()} className="h-10 rounded-full px-3 text-xs font-semibold uppercase tracking-wider hover:bg-white/10" aria-label="Fit entire skill universe">Fit</button>
-        <button type="button" onClick={() => setDirectoryOpen(true)} className="h-10 rounded-full px-3 text-xs font-semibold uppercase tracking-wider hover:bg-white/10" aria-label="Open accessible skill directory">List</button>
+        <button type="button" onClick={() => showDirectory(true)} className="h-10 rounded-full px-3 text-xs font-semibold uppercase tracking-wider hover:bg-white/10" aria-label="Open accessible skill directory">List</button>
       </div>
 
       {/* Same hint system as the homepage: it waits until someone has stalled
@@ -729,7 +743,7 @@ export default function SkillsWeb({
               </div>
               <button
                 type="button"
-                onClick={() => setDirectoryOpen(false)}
+                onClick={() => showDirectory(false)}
                 className="rounded-full border border-white/15 px-4 py-2 text-sm hover:border-accent-soft/50"
                 aria-label="Close skill directory"
               >
