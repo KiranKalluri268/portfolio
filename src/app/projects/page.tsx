@@ -29,6 +29,7 @@ export default function ProjectsPage() {
   const stackEntries = projects.map((project) => ({
     project,
     skills: getSkillsForProject(project),
+    origin: origins[project.slug],
   }));
 
   return (

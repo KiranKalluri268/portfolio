@@ -10,12 +10,15 @@ import { useMediaQuery, useReducedMotion } from "@/hooks/useMediaQuery";
 import { lockPageScroll } from "../page-scroll-lock";
 import { SkillMark } from "../skills/skill-icons";
 import { useActiveProjectsView } from "./ProjectsView";
-import { CARD_SHAPES, drawCard } from "./stack-card";
+import gridStyles from "./projects-grid.module.css";
+import { CARD_SHAPES, drawCard, textureSizeFor } from "./stack-card";
 import type { ProjectContent, SkillContent } from "@/lib/content/types";
 
 export interface StackEntry {
   project: ProjectContent;
   skills: SkillContent[];
+  /** Work, selected or personal — the same key the grid colours its cards by. */
+  origin: string;
 }
 
 /** How much further the stack travels than the gesture that drove it. */
@@ -155,8 +158,19 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
         getComputedStyle(document.body).getPropertyValue("--font-tektur").trim() ||
         "system-ui, sans-serif";
 
+      // The grid's stylesheet owns what each origin's colour is. Reading it
+      // back from a hidden swatch means the two views cannot drift apart the
+      // way the skill marks once did.
+      const originColour = (origin: string) => {
+        const swatch = iconSource.querySelector<HTMLElement>(
+          `[data-stack-origin="${origin}"]`,
+        );
+        if (!swatch) return "#ffffff";
+        return getComputedStyle(swatch).getPropertyValue("--origin-colour").trim() || "#ffffff";
+      };
+
       const textures = await Promise.all(
-        entries.map(async ({ project }) => {
+        entries.map(async ({ project, origin }) => {
           const image = project.image ? await loadImage(project.image) : null;
           const marks = iconSource.querySelectorAll<SVGElement>(
             `[data-stack-icons="${project.slug}"] svg`,
@@ -174,6 +188,7 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
             // default rather than reporting the error.
             fontFamily: `${fontFamily}, system-ui, sans-serif`,
             shape,
+            originColour: originColour(origin),
           });
         }),
       );
@@ -214,6 +229,8 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
 
       let cardWidth = 0;
       let cardHeight = 0;
+      let planeWidth = 0;
+      let planeHeight = 0;
       let spacing = 0;
       let total = 0;
       let bendBand = 0;
@@ -229,7 +246,8 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
         camera.perspective({ aspect: width / height });
         camera.position.z = height / (2 * Math.tan((45 * Math.PI) / 360));
 
-        const aspect = CARD_SHAPES[shape].height / CARD_SHAPES[shape].width;
+        const card = CARD_SHAPES[shape];
+        const aspect = card.height / card.width;
         // Fit to whichever axis runs out first, so a card is never taller than
         // the screen it has to be read on.
         bendBand = height;
@@ -238,8 +256,15 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
         spacing = cardHeight + Math.max(28, height * 0.05);
         total = spacing * meshes.length;
 
+        // The plane carries the glow's margin as well as the card, so it is
+        // larger than the card by exactly the ratio the texture is. Layout,
+        // spacing and the tap hit-test all stay in the card's own size.
+        const texture = textureSizeFor(shape);
+        planeWidth = (cardWidth * texture.width) / card.width;
+        planeHeight = (cardHeight * texture.height) / card.height;
+
         for (const mesh of meshes) {
-          mesh.scale.set(cardWidth, cardHeight, 1);
+          mesh.scale.set(planeWidth, planeHeight, 1);
         }
         return true;
       };
@@ -324,7 +349,7 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
         );
         // The shader displaces in the plane's own units, where 1 is the card's
         // height, so a width-relative bow is converted on the way in.
-        const localBulge = (bulge * cardWidth) / cardHeight;
+        const localBulge = (bulge * planeWidth) / planeHeight;
 
         const curve = gsap.utils.clamp(
           -MAX_CURVE,
@@ -400,6 +425,15 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
           real markup. Visually hidden, never display:none — the brand marks
           above are read back out of this subtree to build the textures. */}
       <div ref={iconSourceRef} className="sr-only">
+        {(["work", "selected", "personal"] as const).map((origin) => (
+          <span
+            key={origin}
+            data-stack-origin={origin}
+            data-origin={origin}
+            className={gridStyles.legendSwatch}
+            aria-hidden="true"
+          />
+        ))}
         <h2>Projects</h2>
         <ul>
           {entries.map(({ project, skills }) => (

@@ -8,13 +8,30 @@
  *  cramped cards on screen instead of one to look at. */
 /** The height of each is the header, the image panel and the skills strip
  *  added up — so halving the image panel is what makes these shorter than a
- *  card's contents would otherwise ask for. */
+ *  card's contents would otherwise ask for.
+ *
+ *  This is the card itself. The texture is larger, because the glow has to
+ *  have somewhere to fall — see GLOW_PAD. */
 export const CARD_SHAPES = {
   wide: { width: 1200, height: 690 },
   portrait: { width: 900, height: 768 },
 } as const;
 
 export type CardShape = keyof typeof CARD_SHAPES;
+
+/** Margin left around the card for its glow to fall into, in the wide card's
+ *  units. A texture is clipped at its own edge, so without this the glow would
+ *  be cut off square exactly where it should be softest. */
+const GLOW_PAD = 96;
+
+/** The full texture for a shape: the card plus the margin on all four sides.
+ *  The plane is scaled to this, and the card is what a visitor sees inside it. */
+export function textureSizeFor(shape: CardShape) {
+  const card = CARD_SHAPES[shape];
+  const scale = card.width / CARD_SHAPES.wide.width;
+  const pad = Math.round(GLOW_PAD * scale);
+  return { width: card.width + pad * 2, height: card.height + pad * 2, pad };
+}
 
 /** Derives a short monogram from the title, matching ProjectThumbnail's own
  *  fallback so a project without a screenshot reads the same in both views. */
@@ -26,6 +43,25 @@ export function monogram(title: string) {
   if (words.length === 0) return "··";
   if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
   return (words[0][0] + words[1][0]).toUpperCase();
+}
+
+/** Canvas has no `color-mix`, so a colour taken from the stylesheet is given
+ *  its alpha here. Handles the hex forms the grid actually uses. */
+function withAlpha(colour: string, alpha: number) {
+  const hex = colour.trim();
+  const short = /^#([0-9a-f])([0-9a-f])([0-9a-f])$/i.exec(hex);
+  const long = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
+  if (long) {
+    const [, r, g, b] = long;
+    return `rgba(${parseInt(r, 16)}, ${parseInt(g, 16)}, ${parseInt(b, 16)}, ${alpha})`;
+  }
+  if (short) {
+    const [, r, g, b] = short;
+    return `rgba(${parseInt(r + r, 16)}, ${parseInt(g + g, 16)}, ${parseInt(b + b, 16)}, ${alpha})`;
+  }
+  // Already a functional colour, or something unexpected: let canvas try it,
+  // and fall back to a neutral glow rather than drawing nothing.
+  return hex || `rgba(255, 255, 255, ${alpha})`;
 }
 
 function roundedRect(
@@ -113,14 +149,28 @@ export interface CardDrawing {
   icons: HTMLImageElement[];
   fontFamily: string;
   shape: CardShape;
+  /** Where the project came from, as a CSS colour. Read off the projects grid
+   *  so the two views cannot disagree about what a colour means. */
+  originColour: string;
 }
 
-export function drawCard({ title, role, image, icons, fontFamily, shape }: CardDrawing) {
-  const { width: textureWidth, height: textureHeight } = CARD_SHAPES[shape];
+export function drawCard({
+  title,
+  role,
+  image,
+  icons,
+  fontFamily,
+  shape,
+  originColour,
+}: CardDrawing) {
+  const card = CARD_SHAPES[shape];
+  const texture = textureSizeFor(shape);
+  const textureWidth = card.width;
+  const textureHeight = card.height;
 
   const canvas = document.createElement("canvas");
-  canvas.width = textureWidth;
-  canvas.height = textureHeight;
+  canvas.width = texture.width;
+  canvas.height = texture.height;
   const context = canvas.getContext("2d");
   if (!context) return canvas;
 
@@ -128,12 +178,30 @@ export function drawCard({ title, role, image, icons, fontFamily, shape }: CardD
   // scales them by its own width rather than repeating the layout.
   const scale = textureWidth / CARD_SHAPES.wide.width;
 
+  // The card is drawn inset by the glow's margin; everything below is written
+  // in the card's own coordinates, so the origin moves once here.
+  context.translate(texture.pad, texture.pad);
+
   const pad = Math.round(44 * scale);
   const headerHeight = Math.round(150 * scale);
   const stripHeight = Math.round(190 * scale);
   const iconSize = Math.round(54 * scale);
   const imageTop = headerHeight;
   const imageHeight = textureHeight - headerHeight - stripHeight;
+
+  // The projects grid carries the same two: a wide soft glow in the origin's
+  // colour, and a tight ring that still reads as an edge when the card is
+  // small. Painted before anything else so they sit under the card.
+  context.save();
+  context.shadowColor = withAlpha(originColour, 0.3);
+  context.shadowBlur = 40 * scale * 1.46;
+  context.fillStyle = "#050505";
+  roundedRect(context, 0, 0, textureWidth, textureHeight, 28 * scale);
+  context.fill();
+  context.shadowColor = withAlpha(originColour, 0.22);
+  context.shadowBlur = 2 * scale;
+  context.fill();
+  context.restore();
 
   context.fillStyle = "#050505";
   roundedRect(context, 0, 0, textureWidth, textureHeight, 28 * scale);
@@ -184,7 +252,9 @@ export function drawCard({ title, role, image, icons, fontFamily, shape }: CardD
     iconX += iconSize + Math.round(26 * scale);
   }
 
-  context.strokeStyle = "rgba(255,255,255,0.14)";
+  // The grid borders its cards in the origin's colour too, so a white edge
+  // against a green or orange glow would read as two different systems.
+  context.strokeStyle = withAlpha(originColour, 0.35);
   roundedRect(context, 0.5, 0.5, textureWidth - 1, textureHeight - 1, 28 * scale);
   context.stroke();
 
