@@ -51,10 +51,23 @@ site that does **not** scroll the document.
   Lenis is stopped exactly once. The stack travels 1.5× the gesture and wraps
   with `gsap.utils.wrap`, which is what makes it endless — the document is not
   infinitely tall and never scrolls at all.
-- **The bow is velocity, not scroll position.** The vertex shader displaces each
-  vertex by `sin(uv.x · π) × uBulge`, so the centre leads and the edges trail.
-  `uBulge` is the travel, clamped — at rest it is zero and the cards are flat.
-  Two things about it are easy to get wrong and were both wrong once:
+- **The bulge is the whole stack bending, not each card curving.** The run of
+  cards is rolled onto a cylinder whose curvature comes from the velocity: a
+  card away from the centre of the screen is pushed along z and tilted to sit
+  on that cylinder, so it is seen at an angle and reads as a trapezoid, while
+  the card nearest the middle stays square on. The sign follows the direction
+  of travel — convex as the cards run up, concave as they run down. At rest the
+  curvature is zero and the stack is flat.
+  - Only z and the tilt come from the curve. `y` stays linear, so spacing never
+    changes, cards cannot pile up at the far end, and the tap hit-test still
+    resolves against a card's real position.
+  - The bend stops growing past a screen's worth of distance. Unbounded, a card
+    far enough up the stack swings round the cylinder and comes back towards
+    the camera, in front of the cards being read.
+- **A smaller per-card bow rides on top of it.** The vertex shader displaces
+  each vertex by `sin(uv.x · π) × uBulge`, so a card's own centre leads and its
+  edges trail. Two things about it are easy to get wrong and were both wrong
+  once:
   - It is travel per **60Hz frame**, corrected by `gsap.ticker.deltaRatio(60)`,
     not per raw frame. Uncorrected, a 120Hz display moves half as far each
     frame and bows half as hard, which on most current phones reads as no bow

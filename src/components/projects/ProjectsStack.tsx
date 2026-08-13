@@ -37,8 +37,19 @@ const SCROLL_EASE = 0.085;
  *  the frame's own delta, because neither is a per-frame quantity in truth: a
  *  120Hz display moves half as far each frame and used to bow half as hard,
  *  which on most current phones read as no bow at all. */
-const BULGE_PER_PIXEL = 0.0026;
-const MAX_BULGE = 0.16;
+const BULGE_PER_PIXEL = 0.0018;
+const MAX_BULGE = 0.10;
+
+/** Curvature of the whole stack, per pixel of travel per 60Hz frame.
+ *
+ *  The stack is bent around a horizontal axis rather than each card being
+ *  curved on its own: a card away from the centre of the screen is rotated to
+ *  sit on that cylinder and pushed along z, so it is seen at an angle and
+ *  reads as a trapezoid. The card nearest the middle stays square on, which is
+ *  what the layout sketches show. The sign follows the direction of travel, so
+ *  the sheet is concave one way and convex the other. */
+const CURVE_PER_PIXEL = 0.000026;
+const MAX_CURVE = 0.0016;
 
 const VERTEX_SHADER = /* glsl */ `
   attribute vec3 position;
@@ -205,6 +216,7 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
       let cardHeight = 0;
       let spacing = 0;
       let total = 0;
+      let bendBand = 0;
 
       const resize = () => {
         const width = container.clientWidth;
@@ -220,6 +232,7 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
         const aspect = CARD_SHAPES[shape].height / CARD_SHAPES[shape].width;
         // Fit to whichever axis runs out first, so a card is never taller than
         // the screen it has to be read on.
+        bendBand = height;
         cardWidth = Math.min(width * 0.88, 820, (height * 0.78) / aspect);
         cardHeight = cardWidth * aspect;
         spacing = cardHeight + Math.max(28, height * 0.05);
@@ -313,12 +326,26 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
         // height, so a width-relative bow is converted on the way in.
         const localBulge = (bulge * cardWidth) / cardHeight;
 
+        const curve = gsap.utils.clamp(
+          -MAX_CURVE,
+          MAX_CURVE,
+          reduceMotion ? 0 : velocity * CURVE_PER_PIXEL,
+        );
+
         meshes.forEach((mesh, index) => {
-          mesh.position.y = gsap.utils.wrap(
-            -total / 2,
-            total / 2,
-            index * spacing + current,
-          );
+          const flat = gsap.utils.wrap(-total / 2, total / 2, index * spacing + current);
+          // The bend stops growing beyond a screen's worth of distance. Left
+          // unbounded, a card far enough up the stack swings so far around the
+          // cylinder that it comes back towards the camera and appears in
+          // front of the cards actually being read.
+          const bent = gsap.utils.clamp(-bendBand, bendBand, flat);
+
+          // Rolling the run of cards onto a cylinder of radius 1/curve. Only
+          // z and the tilt come from the curve — y stays as it was, so the
+          // spacing never changes and cards cannot pile up at the far end.
+          mesh.position.y = flat;
+          mesh.position.z = (-bent * bent * curve) / 2;
+          mesh.rotation.x = -bent * curve;
           (mesh.program.uniforms.uBulge as { value: number }).value = localBulge;
         });
 
