@@ -54,6 +54,18 @@ const MAX_BULGE = 0.10;
 const CURVE_PER_PIXEL = 0.000026;
 const MAX_CURVE = 0.00315;
 
+/** A phone bends further. The tilt is the curvature times the distance from
+ *  the centre of the screen, and a phone's card is less than half the width of
+ *  a desktop's, so the same angle reads as far less of a turn across it. */
+const MAX_CURVE_NARROW = 0.0055;
+
+/** How far a card is ever turned, in radians. Past a quarter turn a card is
+ *  facing away and the renderer culls it, so it would blink out while still
+ *  well inside the screen — on a phone, where the bend is tightest, that
+ *  happens to cards a visitor is still looking at. Just under 90 degrees keeps
+ *  the steepest card edge-on rather than gone. */
+const MAX_TILT = 1.45;
+
 const VERTEX_SHADER = /* glsl */ `
   attribute vec3 position;
   attribute vec2 uv;
@@ -351,11 +363,17 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
         // height, so a width-relative bow is converted on the way in.
         const localBulge = (bulge * planeWidth) / planeHeight;
 
+        const curveCeiling = narrow ? MAX_CURVE_NARROW : MAX_CURVE;
         const curve = gsap.utils.clamp(
-          -MAX_CURVE,
-          MAX_CURVE,
+          -curveCeiling,
+          curveCeiling,
           reduceMotion ? 0 : velocity * CURVE_PER_PIXEL,
         );
+        // Whichever runs out first: a screen's worth of distance, or the turn
+        // at which a card would start facing away. Both z and the tilt are
+        // taken from the same bounded distance so they cannot disagree.
+        const band =
+          curve === 0 ? bendBand : Math.min(bendBand, MAX_TILT / Math.abs(curve));
 
         meshes.forEach((mesh, index) => {
           // Laid out downwards: the first project sits above the second, so
@@ -367,7 +385,7 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
           // unbounded, a card far enough up the stack swings so far around the
           // cylinder that it comes back towards the camera and appears in
           // front of the cards actually being read.
-          const bent = gsap.utils.clamp(-bendBand, bendBand, flat);
+          const bent = gsap.utils.clamp(-band, band, flat);
 
           // Rolling the run of cards onto a cylinder of radius 1/curve. Only
           // z and the tilt come from the curve — y stays as it was, so the
@@ -403,7 +421,7 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
       disposed = true;
       for (const cleanup of cleanups) cleanup();
     };
-  }, [entries, everActive, reduceMotion, router, shape]);
+  }, [entries, everActive, narrow, reduceMotion, router, shape]);
 
   // The document must not scroll behind a view that has taken the gesture over.
   // This is the counted lock the entry screen and the menu already share, so
