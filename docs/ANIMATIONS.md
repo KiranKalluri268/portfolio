@@ -53,8 +53,16 @@ site that does **not** scroll the document.
   infinitely tall and never scrolls at all.
 - **The bow is velocity, not scroll position.** The vertex shader displaces each
   vertex by `sin(uv.x · π) × uBulge`, so the centre leads and the edges trail.
-  `uBulge` is the per-frame travel, clamped — at rest it is zero and the cards
-  are flat.
+  `uBulge` is the travel, clamped — at rest it is zero and the cards are flat.
+  Two things about it are easy to get wrong and were both wrong once:
+  - It is travel per **60Hz frame**, corrected by `gsap.ticker.deltaRatio(60)`,
+    not per raw frame. Uncorrected, a 120Hz display moves half as far each
+    frame and bows half as hard, which on most current phones reads as no bow
+    at all. The easing is corrected the same way.
+  - It is a fraction of the card's **width**, not its height, because the arc
+    spans the card side to side. Tied to the height, shortening the card
+    flattens the curve — halving the image panel cost a third of the bow with
+    nothing about the motion having changed.
 - **The cards are textures, not markup.** Name, image and skill marks are
   composed into a 2D canvas per card. Two shapes exist because one aspect
   cannot serve both a phone and a desktop; crossing 640px rebuilds them.

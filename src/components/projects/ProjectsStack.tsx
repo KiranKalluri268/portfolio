@@ -21,14 +21,24 @@ export interface StackEntry {
 /** How much further the stack travels than the gesture that drove it. */
 const SCROLL_MULTIPLIER = 1.5;
 
-/** How quickly the rendered position chases the target. Lower is smoother and
- *  heavier; this is what makes a flick glide rather than snap. */
+/** How much of the remaining distance is covered per 60Hz frame. Lower is
+ *  smoother and heavier; this is what makes a flick glide rather than snap. */
 const SCROLL_EASE = 0.085;
 
-/** Pixels of travel per frame, converted to a fraction of the card's height.
- *  The bow is proportional to speed, so a stack at rest is perfectly flat. */
-const BULGE_PER_PIXEL = 0.0022;
-const MAX_BULGE = 0.22;
+/** Travel per 60Hz frame, as a fraction of the card's *width*. The bow is
+ *  proportional to speed, so a stack at rest is perfectly flat.
+ *
+ *  Measured against the width, not the height, because the arc spans the card
+ *  from side to side: tying it to the height meant that shortening the card
+ *  flattened the curve, and halving the image panel cost a third of the bow
+ *  without anything about the motion changing.
+ *
+ *  Both this and the easing above are defined against 60Hz and corrected by
+ *  the frame's own delta, because neither is a per-frame quantity in truth: a
+ *  120Hz display moves half as far each frame and used to bow half as hard,
+ *  which on most current phones read as no bow at all. */
+const BULGE_PER_PIXEL = 0.0026;
+const MAX_BULGE = 0.16;
 
 const VERTEX_SHADER = /* glsl */ `
   attribute vec3 position;
@@ -284,22 +294,32 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
           if (!ready) return;
         }
 
+        // 1 at 60Hz, 0.5 at 120Hz — how much of a 60Hz frame this one was.
+        const deltaRatio = gsap.ticker.deltaRatio(60);
+        const ease = reduceMotion ? 1 : 1 - Math.pow(1 - SCROLL_EASE, deltaRatio);
+
         const previous = current;
-        current += (target - current) * (reduceMotion ? 1 : SCROLL_EASE);
-        const velocity = current - previous;
+        current += (target - current) * ease;
+        // Restated as travel per 60Hz frame, so the bow is the same size on
+        // any refresh rate rather than shrinking as the display gets faster.
+        const velocity = (current - previous) / deltaRatio;
 
         const bulge = gsap.utils.clamp(
           -MAX_BULGE,
           MAX_BULGE,
           reduceMotion ? 0 : velocity * BULGE_PER_PIXEL,
         );
+        // The shader displaces in the plane's own units, where 1 is the card's
+        // height, so a width-relative bow is converted on the way in.
+        const localBulge = (bulge * cardWidth) / cardHeight;
+
         meshes.forEach((mesh, index) => {
           mesh.position.y = gsap.utils.wrap(
             -total / 2,
             total / 2,
             index * spacing + current,
           );
-          (mesh.program.uniforms.uBulge as { value: number }).value = bulge;
+          (mesh.program.uniforms.uBulge as { value: number }).value = localBulge;
         });
 
         renderer.render({ scene, camera });
