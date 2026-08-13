@@ -26,7 +26,7 @@ export const PITCH = 1.22;
 
 /** The curvature at a standstill, as 1/px. Positive is convex: the middle of
  *  the field nearest, its edges falling away — a globe seen from outside. */
-export const REST_CURVATURE = 0.0013;
+export const REST_CURVATURE = 0.0026;
 
 /** The curvature at full speed. Negative is concave: the edges wrap towards
  *  you and the middle is furthest — the sphere seen from inside.
@@ -34,7 +34,7 @@ export const REST_CURVATURE = 0.0013;
  *  Smaller in magnitude than the resting one on purpose. Concave brings cards
  *  towards the camera, and unlike falling away that has somewhere it cannot go
  *  past; see `zLimitFor`. */
-export const MOVING_CURVATURE = -0.0009;
+export const MOVING_CURVATURE = -0.0018;
 
 /** Speed, in cells per second, at which the dome reaches full curvature. The
  *  grid's own physics is already in cells per second and framerate-independent,
@@ -62,7 +62,7 @@ export function curvatureFor(speed: number) {
  * turn inside out. So the concave side is held to about a third of the way to
  * the lens and the convex side is left alone. */
 export function zLimitFor(curvature: number, cameraDistance: number) {
-  return cameraDistance * (curvature < 0 ? 0.35 : 2.5);
+  return cameraDistance * (curvature < 0 ? 0.45 : 2.5);
 }
 
 /** The radius past which the surface stops curving, so `zLimitFor` is never
@@ -138,6 +138,27 @@ export function visibleCells(focus: Vec, halfCols: number, halfRows: number): Ce
     }
   }
   return cells;
+}
+
+/** How much smaller a card at the rim is than the one in the middle, at the
+ *  resting curvature. Perspective alone gives some of this — a card further
+ *  away is smaller — but not enough to read as a lens, so the size is graded
+ *  by hand on top of it. */
+export const MAX_SIZE_FALLOFF = 0.35;
+
+/** A card's size against the one at the centre, given how far out it is and
+ *  which way the surface is curved.
+ *
+ * At rest the middle is large and the rim small. Moving inverts the surface,
+ * and this inverts with it — the rim swells and the middle shrinks — so the
+ * size follows the shape rather than fighting it. */
+export function sizeFalloffAt(radius: number, span: number, curvature: number) {
+  if (span <= 0) return 1;
+  const radial = Math.min(1, radius / span);
+  // Against the resting curvature, so it is 1 at a standstill and goes
+  // negative as the surface turns itself inside out.
+  const direction = Math.max(-1.5, Math.min(1.5, curvature / REST_CURVATURE));
+  return 1 - direction * MAX_SIZE_FALLOFF * radial;
 }
 
 /** Where a cell sits on the flat surface, in pixels from the focus. */

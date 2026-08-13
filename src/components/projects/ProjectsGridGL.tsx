@@ -18,6 +18,7 @@ import {
   domeHeight,
   leanFor,
   radiusLimitFor,
+  sizeFalloffAt,
   surfacePoint,
 } from "./grid-sphere";
 import { CARD_SHAPES, drawCard, textureSizeFor } from "./stack-card";
@@ -60,7 +61,11 @@ const CULL_SLACK = 1.4;
  *  of the screen than a desktop does but not as much as it once did — at 0.52
  *  two cards filled a phone and the field stopped reading as a field. */
 function cardWidthFor(viewportWidth: number, narrow: boolean) {
-  return Math.min(viewportWidth * (narrow ? 0.4 : 0.26), 360);
+  // A phone sees the sphere by standing further back rather than by the camera
+  // moving, which amounts to the same thing: smaller cards, more of them, and
+  // enough of the field on screen for the curve to be a shape rather than a
+  // slight tilt on the three cards that fit.
+  return Math.min(viewportWidth * (narrow ? 0.3 : 0.26), 360);
 }
 
 /** Pixels drawn per layout unit in the card textures. A grid card is about a
@@ -351,9 +356,6 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
         const needed = (halfCols * 2 + 1) * (halfRows * 2 + 1);
         if (needed !== slots.length) buildSlots(needed);
 
-        for (const slot of slots) {
-          slot.mesh.scale.set(planeWidth, planeHeight, 1);
-        }
         return true;
       };
 
@@ -402,6 +404,8 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
         }
 
         const radiusLimit = radiusLimitFor(curvature, camera.position.z);
+        // The rim of the field, for grading the card sizes across it.
+        const falloffSpan = Math.hypot(stage.clientWidth, stage.clientHeight) / 2;
         const halfWidth = stage.clientWidth / 2 + planeWidth * CULL_SLACK;
         const halfHeight = stage.clientHeight / 2 + planeHeight * CULL_SLACK;
 
@@ -436,9 +440,19 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
               flat.y,
               domeHeight(centreX, centreY, curvature, radiusLimit),
             );
+            const size = sizeFalloffAt(
+              Math.hypot(centreX, centreY),
+              falloffSpan,
+              curvature,
+            );
+            slot.mesh.scale.set(planeWidth * size, planeHeight * size, 1);
+
             const uniforms = slot.program.uniforms;
             (uniforms.uCardCentre.value as Float32Array).set([centreX, centreY]);
-            (uniforms.uSize.value as Float32Array).set([planeWidth, planeHeight]);
+            (uniforms.uSize.value as Float32Array).set([
+              planeWidth * size,
+              planeHeight * size,
+            ]);
             uniforms.uCurvature.value = curvature;
             uniforms.uRadiusLimit.value = radiusLimit;
             uniforms.tMap.value = textures[projectIndexFor(cell, entries.length)];
