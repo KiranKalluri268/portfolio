@@ -333,7 +333,11 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
         );
 
         meshes.forEach((mesh, index) => {
-          const flat = gsap.utils.wrap(-total / 2, total / 2, index * spacing + current);
+          // Laid out downwards: the first project sits above the second, so
+          // scrolling down walks forwards through the list. Stacking these the
+          // other way up reads as an inverted scroll — the page appeared to
+          // run backwards through the projects.
+          const flat = gsap.utils.wrap(-total / 2, total / 2, current - index * spacing);
           // The bend stops growing beyond a screen's worth of distance. Left
           // unbounded, a card far enough up the stack swings so far around the
           // cylinder that it comes back towards the camera and appears in
