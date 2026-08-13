@@ -62,20 +62,29 @@ export function cellFocus(cell: Cell): Vec {
   return latticePoint(cell);
 }
 
-/** Centre-to-centre spacing, in card widths. Above 1 so cards have air around
- *  them rather than touching.
+/** The gap between cards, as a fraction of a card's *height*.
  *
  *  A phone is tighter. Its cards are already small enough to stand back from
  *  the sphere, and the same proportional gap between them left the field more
  *  space than cards. */
-export const PITCH = 1.22;
-export const PITCH_NARROW = 1.08;
+export const GAP_RATIO = 0.22;
+export const GAP_RATIO_NARROW = 0.08;
 
-/** The spacing in use, so the layout and the drag mapping cannot pick
- *  different ones — reading it twice from two constants is what once made a
- *  phone's cards move at a different rate from the finger dragging them. */
-export function pitchFor(narrow: boolean) {
-  return narrow ? PITCH_NARROW : PITCH;
+/** Centre-to-centre spacing, in pixels, on each axis.
+ *
+ * One gap, used both ways. Taking it as a fraction of each axis separately —
+ * a share of the width between columns and of the height between rows — opens
+ * a much wider channel between the columns than between the rows, because the
+ * cards are far wider than they are tall. The height is what the gap is
+ * measured against, so the rows keep the spacing they had and the columns come
+ * in to meet them.
+ *
+ * Returned from one function because the layout and the drag mapping both need
+ * it and both need the same answer; reading a size from two places is what once
+ * made a phone's cards travel at a different rate from the finger. */
+export function pitchFor(cardWidth: number, cardHeight: number, narrow: boolean) {
+  const gap = cardHeight * (narrow ? GAP_RATIO_NARROW : GAP_RATIO);
+  return { x: cardWidth + gap, y: cardHeight + gap, gap };
 }
 
 /** The curvature at a standstill, as 1/px. Positive is convex: the middle of

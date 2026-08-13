@@ -10,6 +10,7 @@ import {
   domeHeight,
   latticePoint,
   nearestCell,
+  pitchFor,
   projectIndexFor,
   radiusLimitFor,
   reachFromCurvature,
@@ -42,6 +43,27 @@ describe("nearestCell", () => {
     ]) {
       expect(nearestCell(cellFocus(cell))).toEqual(cell);
     }
+  });
+});
+
+describe("pitchFor", () => {
+  it("leaves the same gap between columns as between rows", () => {
+    // Taken as a share of each axis instead, the gap between columns came out
+    // far wider than the one between rows, the cards being wider than tall.
+    const { x, y } = pitchFor(360, 207, false);
+    expect(x - 360).toBeCloseTo(y - 207);
+  });
+
+  it("keeps the rows spaced as they were and brings the columns in", () => {
+    const card = { width: 360, height: 207 };
+    const { x, y, gap } = pitchFor(card.width, card.height, false);
+    expect(gap).toBeCloseTo(card.height * 0.22);
+    expect(y).toBeCloseTo(card.height * 1.22);
+    expect(x).toBeLessThan(card.width * 1.22);
+  });
+
+  it("is tighter on a phone", () => {
+    expect(pitchFor(120, 69, true).gap).toBeLessThan(pitchFor(120, 69, false).gap);
   });
 });
 
