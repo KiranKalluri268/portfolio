@@ -43,9 +43,21 @@ const STILL = 0.05;
  *  been asked for a particular cell — an arrow key. */
 const TRAVEL_PER_SECOND = 0.0002;
 
-/** Cells kept beyond the edge of the screen. The dome pushes cards around as it
- *  swells, so the window has to be wider than the viewport strictly needs. */
-const WINDOW_MARGIN = 2;
+/** Cells kept beyond the edge of the screen. One ring, not two: every card is
+ *  blended with no depth test, so a card drawn off screen is overdraw paid for
+ *  nothing — and overdraw is the one cost that still bites a weak GPU. Cards
+ *  outside the viewport are skipped individually as well; this is only the
+ *  window that gets considered at all. */
+const WINDOW_MARGIN = 1;
+
+/** How much of a card may hang off the edge before it stops being drawn. Above
+ *  1 because the dome moves a card after its flat position is known. */
+const CULL_SLACK = 1.4;
+
+/** Pixels drawn per layout unit in the card textures. A grid card is about a
+ *  third of the width the layout is written against, so drawing them at full
+ *  size cost roughly 54MB across eleven projects for detail never sampled. */
+const TEXTURE_RESOLUTION = 0.5;
 
 /** What a second of easing leaves of the gap between the curvature being drawn
  *  and the one the current speed asks for.
@@ -213,6 +225,7 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
             fontFamily: `${fontFamily}, system-ui, sans-serif`,
             shape,
             originColour: originColour(origin),
+            resolution: TEXTURE_RESOLUTION,
           });
         }),
       );
@@ -308,6 +321,12 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
        *  the current speed asks for. */
       let curvature = 0;
       let lean: Vec = { x: 0, y: 0 };
+      /** Frames drawn since the scene last changed. The old grid's loop
+       *  returned early when idle; without this the GPU redraws a still field
+       *  sixty times a second for the rest of the visit, which on the phone
+       *  this was rebuilt for is heat for nothing. One frame is still drawn
+       *  after everything settles, so the resting state is the one on screen. */
+      let settledFrames = 0;
 
       const paint = (elapsed: number) => {
         if (!ready) {
@@ -325,6 +344,24 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
           y: lean.y + (wantedLean.y - lean.y) * ease,
         };
 
+        const moving =
+          dragging.current || speed > STILL || target.current !== null;
+        const settling =
+          Math.abs(curvature - wanted) > 1e-7 ||
+          Math.abs(lean.x - wantedLean.x) > 1e-4 ||
+          Math.abs(lean.y - wantedLean.y) > 1e-4;
+        if (moving || settling) {
+          settledFrames = 0;
+        } else {
+          // The frame everything comes to rest on still has to be drawn — it is
+          // the one left on screen. Only the ones after it are skipped.
+          if (settledFrames > 0) return;
+          settledFrames = 1;
+        }
+
+        const halfWidth = stage.clientWidth / 2 + planeWidth * CULL_SLACK;
+        const halfHeight = stage.clientHeight / 2 + planeHeight * CULL_SLACK;
+
         const centre = nearestCell(focus.current);
         // The dome's peak, in pixels from the middle of the screen.
         const peak = { x: lean.x * pitch.x, y: -lean.y * pitch.y };
@@ -337,6 +374,15 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
             if (!slot) continue;
             const cell = { col: centre.col + dCol, row: centre.row + dRow };
             const flat = surfacePoint(cell, focus.current, pitch);
+
+            // Off the screen entirely: not drawn at all rather than drawn and
+            // blended into nothing.
+            if (Math.abs(flat.x) > halfWidth || Math.abs(flat.y) > halfHeight) {
+              slot.mesh.visible = false;
+              continue;
+            }
+            slot.mesh.visible = true;
+
             const dome = domeAt(flat.x - peak.x, flat.y - peak.y, curvature);
 
             slot.mesh.position.set(flat.x, flat.y, dome.z);
@@ -408,6 +454,7 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
 
       const resizeObserver = new ResizeObserver(() => {
         ready = resize();
+        settledFrames = 0;
       });
       resizeObserver.observe(stage);
       cleanups.push(() => resizeObserver.disconnect());

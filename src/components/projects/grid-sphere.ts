@@ -24,12 +24,12 @@ export const PITCH = 1.22;
 /** The dome's curvature at full speed, as 1/px. The surface is a paraboloid,
  *  which is a sphere to well past the angles reached here and costs two
  *  multiplies rather than a trig call per card per frame. */
-export const MAX_CURVATURE = 0.00055;
+export const MAX_CURVATURE = 0.0013;
 
 /** Speed, in cells per second, at which the dome reaches full curvature. The
  *  grid's own physics is already in cells per second and framerate-independent,
  *  so nothing has to be corrected for refresh rate here. */
-export const FULL_CURVATURE_SPEED = 9;
+export const FULL_CURVATURE_SPEED = 6;
 
 /** How far the dome's peak trails behind the drag at full speed, in cells.
  *  Leaning it away from the direction of travel is what makes the field read as
