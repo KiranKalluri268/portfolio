@@ -18,7 +18,29 @@
  * owns what a cell is and which project sits in it.
  */
 
-import { ROW_STAGGER, type Cell, type Vec, latticePoint } from "./grid-math";
+import type { Cell, Vec } from "./grid-math";
+
+/** Where a cell sits in lattice space.
+ *
+ * Squarely on the grid: no half-cell offset on odd rows. `grid-math` staggers
+ * them, which reads as brickwork — rows that never line up into columns. The
+ * sphere wants a true grid, so that its rows and columns each bend into one
+ * continuous curve rather than into a zigzag, and it keeps its own lattice
+ * rather than changing the one the old grid still depends on. */
+export function latticePoint({ col, row }: Cell): Vec {
+  return { x: col, y: row };
+}
+
+/** The cell nearest a point. With no stagger the row's parity no longer shifts
+ *  the lattice sideways, so this is a plain rounding — the four-candidate
+ *  search `grid-math` needs has nothing left to disambiguate. */
+export function nearestCell(focus: Vec): Cell {
+  return { col: Math.round(focus.x), row: Math.round(focus.y) };
+}
+
+export function cellFocus(cell: Cell): Vec {
+  return latticePoint(cell);
+}
 
 /** Centre-to-centre spacing, in card widths. Above 1 so cards have air around
  *  them rather than touching. */
@@ -128,11 +150,9 @@ export function visibleCells(focus: Vec, halfCols: number, halfRows: number): Ce
   const cells: Cell[] = [];
   const rowFrom = Math.floor(focus.y - halfRows);
   const rowTo = Math.ceil(focus.y + halfRows);
+  const colFrom = Math.floor(focus.x - halfCols);
+  const colTo = Math.ceil(focus.x + halfCols);
   for (let row = rowFrom; row <= rowTo; row++) {
-    // Odd rows are shifted half a cell, so the column window shifts with them.
-    const shift = Math.abs(row % 2) === 1 ? ROW_STAGGER : 0;
-    const colFrom = Math.floor(focus.x - halfCols - shift);
-    const colTo = Math.ceil(focus.x + halfCols - shift);
     for (let col = colFrom; col <= colTo; col++) {
       cells.push({ col, row });
     }

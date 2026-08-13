@@ -10,13 +10,15 @@ import { SkillMark } from "@/components/skills/skill-icons";
 import { useMediaQuery, useReducedMotion } from "@/hooks/useMediaQuery";
 import type { ProjectOrigin } from "@/lib/content/relationships";
 import type { ProjectContent, SkillContent } from "@/lib/content/types";
-import { type Cell, type Vec, cellFocus, nearestCell, projectIndexFor } from "./grid-math";
+import { type Cell, type Vec, projectIndexFor } from "./grid-math";
 import {
   PITCH,
   REST_CURVATURE,
+  cellFocus,
   curvatureFor,
   domeHeight,
   leanFor,
+  nearestCell,
   radiusLimitFor,
   reachFromCurvature,
   sizeAt,
