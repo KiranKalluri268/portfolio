@@ -9,7 +9,7 @@ import {
 } from "./read-content";
 import type { ProjectContent } from "./types";
 
-function validateProject(value: unknown, source: string): ProjectContent {
+export function validateProject(value: unknown, source: string): ProjectContent {
   assertRecord(value, source);
 
   for (const field of ["slug", "title", "summary", "status", "role"]) {

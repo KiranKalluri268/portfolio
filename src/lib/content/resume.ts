@@ -3,8 +3,48 @@ import "server-only";
 import resume from "@/data/resume.json";
 import { getResumeInternships } from "./experience";
 import { getAllProjects } from "./projects";
+import { assertRecord, assertString, assertStringArray } from "./read-content";
 import { getAllSkills } from "./skills";
-import type { ResumeInternship } from "./types";
+import type { ResumeInternship, ResumeJson } from "./types";
+
+/** resume.json is read everywhere else as a plain typed JSON import, with no
+ *  runtime check that it actually matches ResumeJson - TypeScript's JSON
+ *  module inference is a build-time convenience, not a runtime guarantee.
+ *  This exists so the /admin tool can reject a malformed edit before it
+ *  becomes a commit, the same way validateProject/validateSkill/
+ *  validateExperience already do for their own files. */
+export function validateResumeJson(value: unknown, source: string): ResumeJson {
+  assertRecord(value, source);
+
+  assertRecord(value.basics, `${source}.basics`);
+  const basics = value.basics;
+  for (const field of ["name", "headline", "location", "phone", "email"]) {
+    assertString(basics[field], field, `${source}.basics`);
+  }
+  if (!Array.isArray(basics.links)) {
+    throw new Error(`${source}.basics: "links" must be an array`);
+  }
+  basics.links.forEach((link, index) => {
+    const linkSource = `${source}.basics.links[${index}]`;
+    assertRecord(link, linkSource);
+    assertString(link.label, "label", linkSource);
+    assertString(link.url, "url", linkSource);
+  });
+
+  assertString(value.objective, "objective", source);
+  assertStringArray(value.skillGroupOrder, "skillGroupOrder", source);
+
+  assertRecord(value.education, `${source}.education`);
+  for (const field of ["degree", "institution", "period", "cgpa"]) {
+    assertString(value.education[field], field, `${source}.education`);
+  }
+
+  assertStringArray(value.certifications, "certifications", source);
+  assertStringArray(value.languages, "languages", source);
+  assertStringArray(value.strengths, "strengths", source);
+
+  return value as unknown as ResumeJson;
+}
 
 export interface ResumeProject {
   slug: string;

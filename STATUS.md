@@ -13,7 +13,7 @@ reasoning lives in `docs/`, and the rules for changing things live in
 | | | |
 |---|---|---|
 | Build | ✅ | clean |
-| Unit tests | ✅ | 229 passing, 18 files |
+| Unit tests | ✅ | 241 passing, 20 files |
 | Browser tests | ✅ | 39 passing, 5 files, Chromium in CI |
 | Lint / types | ✅ | clean |
 | Vulnerabilities | ✅ | 0 (Dependabot watches weekly) |
@@ -73,4 +73,6 @@ Ordered. Detail and reasoning in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 ## Recently shipped
 
 Site menu · entry animation · projects grid + its intro · skills web intro ·
-résumé and CV reveal · 404 and error pages · analytics · browser tests in CI.
+résumé and CV reveal · 404 and error pages · analytics · browser tests in CI ·
+content admin (`/admin`) for editing `src/data/**` into a real commit + PR
+without a local checkout.

@@ -104,11 +104,61 @@ The server loaders in `src/lib/content` validate required fields, duplicate
 slugs, unknown categories, and project references to unknown skills during the
 build.
 
-Experience content currently lives in:
+Each experience/internship entry is one JSON file in:
 
-- `src/components/ExperienceTimeline.tsx`
+- `src/data/experience/`
+
+Filenames are for organization; the `slug` field controls the URL and receives
+`/experience/[slug]`. `showInTimeline` and `showInResume` are independent —
+a role can appear on the homepage timeline, the résumé, both, or neither.
 
 Use optimized images from `public/images` and provide specific repository/demo URLs where available.
+
+## Content admin
+
+`/admin` is a small internal tool for editing `src/data/**` without a local
+checkout: log in, pick a file, edit its JSON, name the change, and it becomes
+a real commit on a new branch with a pull request opened automatically — the
+base branch is never written to directly.
+
+It needs four environment variables, none of which have a default that makes
+sense to ship:
+
+### `ADMIN_PASSWORD`
+
+The password for `/admin/login`. Pick something you wouldn't mind typing on a
+phone keyboard; there's no rate limiting on attempts beyond what the platform
+provides.
+
+### `ADMIN_SESSION_SECRET`
+
+A random string used to sign the login session cookie. Generate one and never
+reuse it elsewhere:
+
+```bash
+openssl rand -hex 32
+```
+
+### `GITHUB_ADMIN_TOKEN`
+
+A GitHub personal access token scoped to this repository only, with **Contents:
+Read and write** and **Pull requests: Read and write** permissions (a
+fine-grained token, not a classic one with broader `repo` scope). The admin
+tool commits through GitHub's API with it, since the deployed app has no local
+git checkout to run `git commit` against.
+
+### `GITHUB_REPO_OWNER` / `GITHUB_REPO_NAME`
+
+Optional — default to `KiranKalluri268` and `portfolio`. Only needed if the
+repository is ever renamed or forked under a different owner.
+
+Every edit is checked against the same validators `npm run build` uses before
+it's allowed to become a commit, so a malformed edit is caught at `/admin`
+rather than after — including `resume.json` and `about.json`, which have no
+validator of their own elsewhere in the site (they're read as plain typed
+JSON imports); `validateResumeJson` and `validateAboutJson` in
+`src/lib/content/resume.ts` and `about.ts` exist specifically to give
+`/admin` something to check them against.
 
 ## Site identity and SEO
 

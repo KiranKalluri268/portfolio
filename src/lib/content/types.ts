@@ -291,3 +291,49 @@ export interface SkillWebData {
   center: SkillWebConfig["center"];
   domains: SkillWebDomain[];
 }
+
+export interface ResumeLink {
+  label: string;
+  url: string;
+}
+
+export interface ResumeBasics {
+  name: string;
+  headline: string;
+  location: string;
+  phone: string;
+  email: string;
+  links: ResumeLink[];
+}
+
+export interface ResumeEducation {
+  degree: string;
+  institution: string;
+  period: string;
+  cgpa: string;
+}
+
+/** The shape of resume.json itself, read as plain typed JSON everywhere else
+ *  in the app - this is only used to give validateResumeJson (in resume.ts)
+ *  something to assert against and return. */
+export interface ResumeJson {
+  basics: ResumeBasics;
+  objective: string;
+  skillGroupOrder: string[];
+  education: ResumeEducation;
+  certifications: string[];
+  languages: string[];
+  strengths: string[];
+}
+
+export interface AboutSegment {
+  text: string;
+  accent: boolean;
+}
+
+/** The shape of about.json - see the ResumeJson comment above, same reason. */
+export interface AboutJson {
+  eyebrow: string;
+  ariaLabel: string;
+  segments: AboutSegment[];
+}
