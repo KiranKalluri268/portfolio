@@ -152,12 +152,13 @@ git checkout to run `git commit` against.
 Optional — default to `KiranKalluri268` and `portfolio`. Only needed if the
 repository is ever renamed or forked under a different owner.
 
-Every edit is still checked against the same validators `npm run build` uses
-before it's allowed to become a commit, so a malformed edit is caught at
-`/admin` rather than after. `resume.json` and `about.json` are the exception:
-neither has a dedicated runtime validator yet (see the comment in
-`src/lib/admin/validate-content.ts`), so a mistake there is only caught when
-CI runs on the resulting pull request, not before the commit itself.
+Every edit is checked against the same validators `npm run build` uses before
+it's allowed to become a commit, so a malformed edit is caught at `/admin`
+rather than after — including `resume.json` and `about.json`, which have no
+validator of their own elsewhere in the site (they're read as plain typed
+JSON imports); `validateResumeJson` and `validateAboutJson` in
+`src/lib/content/resume.ts` and `about.ts` exist specifically to give
+`/admin` something to check them against.
 
 ## Site identity and SEO
 

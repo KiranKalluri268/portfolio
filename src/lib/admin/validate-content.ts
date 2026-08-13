@@ -1,19 +1,14 @@
 import "server-only";
 
 import { assertRecord, assertString, assertUniqueSlugs } from "@/lib/content/read-content";
+import { validateAboutJson } from "@/lib/content/about";
 import { validateExperience } from "@/lib/content/experience";
 import { validateProject } from "@/lib/content/projects";
+import { validateResumeJson } from "@/lib/content/resume";
 import { validateCategory, validateSkill, validateWebDomain } from "@/lib/content/skills";
 
 /** Same shape checks the site itself runs at build time, reused here so a
- *  bad edit can be caught before it becomes a commit rather than after.
- *
- *  `resume.json` and `about.json` have no runtime validator of their own -
- *  they're read as plain typed JSON imports, so TypeScript only checks their
- *  shape at build time, not at runtime. This function can only confirm they
- *  parse as an object for those two; a genuinely malformed edit there would
- *  still be caught by CI on the resulting PR, just not here.
- */
+ *  bad edit can be caught before it becomes a commit rather than after. */
 export function validateContentForPath(relativePath: string, value: unknown): void {
   if (relativePath.startsWith("projects/")) {
     validateProject(value, relativePath);
@@ -54,7 +49,15 @@ export function validateContentForPath(relativePath: string, value: unknown): vo
     return;
   }
 
-  // resume.json, about.json: no dedicated validator exists yet (see the
-  // module comment above) - an object is all that can be confirmed here.
+  if (relativePath === "resume.json") {
+    validateResumeJson(value, relativePath);
+    return;
+  }
+
+  if (relativePath === "about.json") {
+    validateAboutJson(value, relativePath);
+    return;
+  }
+
   assertRecord(value, relativePath);
 }

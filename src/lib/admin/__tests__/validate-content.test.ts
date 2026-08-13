@@ -51,10 +51,27 @@ describe("validateContentForPath", () => {
     expect(() => validateContentForPath("skill-web.json", broken)).toThrow(/domains/);
   });
 
-  it("only requires resume.json and about.json to be objects", () => {
+  it("accepts the real résumé and rejects one missing an education field", () => {
     expect(() => validateContentForPath("resume.json", realResume)).not.toThrow();
-    expect(() => validateContentForPath("about.json", realAbout)).not.toThrow();
     expect(() => validateContentForPath("resume.json", "not an object")).toThrow();
-    expect(() => validateContentForPath("resume.json", ["also", "not", "an", "object"])).toThrow();
+
+    const broken = structuredClone(realResume) as Record<string, unknown>;
+    delete (broken.education as Record<string, unknown>).cgpa;
+    expect(() => validateContentForPath("resume.json", broken)).toThrow(/cgpa/);
+  });
+
+  it("accepts the real résumé and rejects a link missing its url", () => {
+    const broken = structuredClone(realResume) as { basics: { links: Array<Record<string, unknown>> } };
+    delete broken.basics.links[0].url;
+    expect(() => validateContentForPath("resume.json", broken)).toThrow(/url/);
+  });
+
+  it("accepts the real about content and rejects a segment with a non-boolean accent", () => {
+    expect(() => validateContentForPath("about.json", realAbout)).not.toThrow();
+    expect(() => validateContentForPath("about.json", "not an object")).toThrow();
+
+    const broken = structuredClone(realAbout) as { segments: Array<Record<string, unknown>> };
+    broken.segments[0].accent = "true";
+    expect(() => validateContentForPath("about.json", broken)).toThrow(/accent/);
   });
 });

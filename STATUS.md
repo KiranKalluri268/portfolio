@@ -53,7 +53,6 @@ Ordered. Detail and reasoning in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 | Contact rate limit is per-instance | In-memory `Map` in the route; each serverless instance has its own and a cold start resets it. A speed bump, not a limit. |
 | `react-icons` is pinned at 5.5.x | 5.7 removed the marks for AWS, DynamoDB, Canva, GPT-4 and Tableau. Unpinning costs five logos; putting them back as local assets is a trademark question. Reasoning is in `skill-icons.tsx`. |
 | `resume.json` publishes phone, email, home address | A decision to make deliberately, not by default. |
-| `/admin` can't validate `resume.json` or `about.json` before commit | Neither has a runtime validator like projects/skills/experience do - a bad edit there is only caught by CI on the resulting PR, not before the commit itself. |
 
 ---
 
