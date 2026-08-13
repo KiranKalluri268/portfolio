@@ -39,6 +39,34 @@ One pinned ScrollTrigger maps scroll progress to word readability. Previously re
 
 One scrubbed GSAP timeline translates the project track while pinning the section. Lenis keeps the underlying vertical scroll smooth without forcing the viewport to a panel after input settles. Do not add custom or CSS scroll snapping, or a second transform owner to the track.
 
+### Projects — list view (the card stack)
+
+`/projects` has two views. The grid is DOM; the list is a single WebGL canvas
+(OGL) drawing every card as a textured plane, and it is the one place on the
+site that does **not** scroll the document.
+
+- **Scroll is hijacked, deliberately.** A GSAP `Observer` takes wheel, touch and
+  pointer on the container and moves the stack itself; the page is held still
+  through the counted `lockPageScroll` the entry screen and the menu share, so
+  Lenis is stopped exactly once. The stack travels 1.5× the gesture and wraps
+  with `gsap.utils.wrap`, which is what makes it endless — the document is not
+  infinitely tall and never scrolls at all.
+- **The bow is velocity, not scroll position.** The vertex shader displaces each
+  vertex by `sin(uv.x · π) × uBulge`, so the centre leads and the edges trail.
+  `uBulge` is the per-frame travel, clamped — at rest it is zero and the cards
+  are flat.
+- **The cards are textures, not markup.** Name, image and skill marks are
+  composed into a 2D canvas per card. Two shapes exist because one aspect
+  cannot serve both a phone and a desktop; crossing 640px rebuilds them.
+- **It must stand down when hidden.** Neither view is unmounted, so the stack
+  reads `useActiveProjectsView()` and skips both the render loop and the scroll
+  lock while the grid is showing. Do not infer this from a measurement.
+- **The cards cannot be links.** A tap is resolved against the meshes' own
+  positions, and a pointer that moved more than 8px is treated as a flick.
+
+Under reduced motion the easing resolves immediately and the bow is pinned to
+zero; the cards still move and are still tappable.
+
 ### Experience
 
 Each experience row scales toward `1` near viewport focus, then returns to its resting scale. Desktop and mobile use separate media-query configurations because desktop cards share a row while mobile cards stack vertically.
