@@ -49,7 +49,7 @@ const MAX_BULGE = 0.10;
  *  what the layout sketches show. The sign follows the direction of travel, so
  *  the sheet is concave one way and convex the other. */
 const CURVE_PER_PIXEL = 0.000026;
-const MAX_CURVE = 0.0016;
+const MAX_CURVE = 0.0021;
 
 const VERTEX_SHADER = /* glsl */ `
   attribute vec3 position;
