@@ -152,6 +152,11 @@ export interface CardDrawing {
   /** Where the project came from, as a CSS colour. Read off the projects grid
    *  so the two views cannot disagree about what a colour means. */
   originColour: string;
+  /** Pixels drawn per layout unit. The layout below is written against a card
+   *  filling the screen; the grid draws the same card a third of that size, and
+   *  a texture four times the resolution it is ever sampled at is memory an old
+   *  phone has to find for detail nobody can see. Defaults to full size. */
+  resolution?: number;
 }
 
 export function drawCard({
@@ -162,6 +167,7 @@ export function drawCard({
   fontFamily,
   shape,
   originColour,
+  resolution = 1,
 }: CardDrawing) {
   const card = CARD_SHAPES[shape];
   const texture = textureSizeFor(shape);
@@ -169,10 +175,14 @@ export function drawCard({
   const textureHeight = card.height;
 
   const canvas = document.createElement("canvas");
-  canvas.width = texture.width;
-  canvas.height = texture.height;
+  canvas.width = Math.round(texture.width * resolution);
+  canvas.height = Math.round(texture.height * resolution);
   const context = canvas.getContext("2d");
   if (!context) return canvas;
+
+  // Everything below is written in layout units; this is the only place the
+  // drawn resolution enters, so the layout never has to know about it.
+  context.scale(resolution, resolution);
 
   // Every size below was chosen against the wide card, so the portrait one
   // scales them by its own width rather than repeating the layout.
