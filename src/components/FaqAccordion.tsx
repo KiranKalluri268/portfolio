@@ -29,11 +29,15 @@ export default function FaqAccordion({ items }: { items: FaqItem[] }) {
 
     // Closing whichever answer was open can shrink the page above this
     // question and carry it out of view before its own answer has finished
-    // opening. Wait for that reflow to settle, then bring the question back
-    // to a fixed spot under the header instead of wherever it landed.
+    // opening. Wait for that reflow to settle, then check: if the question
+    // is still on screen, leave it alone — only a question actually pushed
+    // out from under the header or off the bottom gets scrolled back.
     window.setTimeout(() => {
       const button = buttonRefs.current[index];
       if (!button) return;
+      const { top, bottom } = button.getBoundingClientRect();
+      const isOutOfView = top < HEADER_CLEARANCE_PX || bottom > window.innerHeight;
+      if (!isOutOfView) return;
       if (lenis) lenis.scrollTo(button, { offset: -HEADER_CLEARANCE_PX, duration: 0.4 });
       else button.scrollIntoView({ behavior: "smooth", block: "start" });
     }, COLLAPSE_MS);
