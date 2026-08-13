@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 interface FaqForm {
@@ -135,14 +136,20 @@ export default function FaqQuestionForm() {
         )}
       </div>
 
-      <div className="flex items-center justify-center pt-1">
+      <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
         <button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-full bg-white px-6 py-3 font-semibold text-black transition-[background-color,transform] hover:scale-105 hover:bg-accent-soft focus:outline-none focus:ring-2 focus:ring-accent disabled:cursor-wait disabled:opacity-60 disabled:hover:scale-100"
+          className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition-[background-color,transform] hover:scale-105 hover:bg-accent-soft focus:outline-none focus:ring-2 focus:ring-accent disabled:cursor-wait disabled:opacity-60 disabled:hover:scale-100"
         >
-          {isSubmitting ? "Sending..." : "Ask"}
+          {isSubmitting ? "Sending..." : "Submit question"}
         </button>
+        <Link
+          href="/resume"
+          className="rounded-full border border-white/20 bg-black/45 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:border-accent-soft/60 hover:text-accent-soft focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft"
+        >
+          View résumé
+        </Link>
       </div>
       {submitError && (
         <p className="text-center text-sm text-red-500" role="alert" aria-live="assertive">
