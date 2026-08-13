@@ -368,6 +368,13 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
        *  the current speed asks for. */
       let curvature = REST_CURVATURE;
       let lean: Vec = { x: 0, y: 0 };
+      /** The shape a finger still on the screen is holding. A drag that pauses
+       *  is still a drag — the field should stay where it has been pulled to
+       *  rather than relaxing back out from under a stationary fingertip — so
+       *  while the pointer is down these only ever move further from rest, and
+       *  are let go of on release. */
+      let heldCurvature = REST_CURVATURE;
+      let heldLean: Vec = { x: 0, y: 0 };
       /** Frames drawn since the scene last changed. The old grid's loop
        *  returned early when idle; without this the GPU redraws a still field
        *  sixty times a second for the rest of the visit, which on the phone
@@ -383,9 +390,25 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
 
         const ease = 1 - CURVATURE_SETTLE_PER_SECOND ** elapsed;
         const speed = Math.hypot(velocity.current.x, velocity.current.y);
-        const wanted = reduceMotion ? REST_CURVATURE : curvatureFor(speed);
+        const fromSpeed = reduceMotion ? REST_CURVATURE : curvatureFor(speed);
+        const leanFromSpeed = reduceMotion ? { x: 0, y: 0 } : leanFor(velocity.current);
+
+        if (dragging.current) {
+          // Further from rest is a smaller number, the resting shape being the
+          // most positive curvature there is, so the held shape is the minimum.
+          if (fromSpeed < heldCurvature) heldCurvature = fromSpeed;
+          // The lean is only taken while there is a direction to take it from;
+          // a paused finger would otherwise slide the peak back to the middle
+          // and move the field it is holding still.
+          if (speed > STILL) heldLean = leanFromSpeed;
+        } else {
+          heldCurvature = fromSpeed;
+          heldLean = leanFromSpeed;
+        }
+
+        const wanted = heldCurvature;
+        const wantedLean = heldLean;
         curvature += (wanted - curvature) * ease;
-        const wantedLean = reduceMotion ? { x: 0, y: 0 } : leanFor(velocity.current);
         lean = {
           x: lean.x + (wantedLean.x - lean.x) * ease,
           y: lean.y + (wantedLean.y - lean.y) * ease,
