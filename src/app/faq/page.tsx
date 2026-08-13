@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import faq from "@/data/faq.json";
+import FaqQuestionForm from "@/components/FaqQuestionForm";
 
 export const metadata: Metadata = {
   title: "FAQ",
@@ -45,10 +46,15 @@ export default function FaqPage() {
         <section className="mt-12 rounded-3xl border border-white/10 bg-black/60 px-6 py-10 text-center backdrop-blur-md sm:px-10 sm:py-14">
           <h2 className="text-2xl font-bold sm:text-3xl">Still have a question?</h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-gray-300 sm:text-base">
-            Reach out directly, or take a look at my résumé and projects for more detail.
+            Ask it directly and I&apos;ll get back to you, or take a look at my résumé and projects for more detail.
           </p>
-          <div className="mt-7 flex flex-wrap justify-center gap-3">
-            <Link href="/#contact" className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-accent-tint focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft">
+
+          <div className="mt-8">
+            <FaqQuestionForm />
+          </div>
+
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Link href="/#contact" className="rounded-full border border-white/20 bg-black/45 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:border-accent-soft/60 hover:text-accent-soft focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft">
               Contact me
             </Link>
             <Link href="/resume" className="rounded-full border border-white/20 bg-black/45 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:border-accent-soft/60 hover:text-accent-soft focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-soft">

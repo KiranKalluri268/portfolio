@@ -98,4 +98,25 @@ describe("POST /api/contact", () => {
     const response = await POST(makeRequest(validPayload, "8.8.8.8"));
     expect(response.status).toBe(200);
   });
+
+  it("accepts an FAQ question with no name and marks it distinctly", async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 200 }));
+    const faqPayload = { email: "asker@example.com", message: "Do you know DSA?", source: "faq" };
+
+    const response = await POST(makeRequest(faqPayload, "9.9.9.9"));
+
+    expect(response.status).toBe(200);
+    const [, init] = vi.mocked(fetch).mock.calls[0];
+    const sentBody = JSON.parse(init!.body as string);
+    expect(sentBody.subject).toContain("FAQ");
+    expect(sentBody.text).toContain("Source: FAQ page");
+    expect(sentBody.reply_to).toBe(faqPayload.email);
+  });
+
+  it("rejects an FAQ question with no email", async () => {
+    const response = await POST(
+      makeRequest({ message: "Do you know DSA?", source: "faq" }, "10.10.10.10"),
+    );
+    expect(response.status).toBe(400);
+  });
 });
