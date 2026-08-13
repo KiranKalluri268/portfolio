@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { useReducedMotion } from "@/hooks/useMediaQuery";
+import { readOneOf, writeParam } from "@/lib/deep-link";
 import {
   PILL_CLASS,
   PILL_TRAVEL_MS,
@@ -133,11 +134,17 @@ export default function ProjectsView({ grid, list }: { grid: ReactNode; list: Re
   }, [view]);
 
   useEffect(() => {
-    // Remembered per browser, so someone who prefers the list is not put back
-    // in the grid on every visit.
+    // A shared link outranks the remembered preference. The other way round,
+    // sending someone the grid would open the list for anyone who had ever
+    // chosen it — which is the thing the link was sent to prevent.
+    const shared = readOneOf("view", VIEWS);
+    // Otherwise remembered per browser, so someone who prefers the list is not
+    // put back in the grid on every visit.
     const stored = window.localStorage.getItem(STORAGE_KEY);
+    const remembered = stored === "list" || stored === "grid" ? stored : null;
+    const initial = shared ?? remembered;
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (stored === "list" || stored === "grid") setView(stored);
+    if (initial) setView(initial);
   }, []);
 
   const nearestIndex = (x: number) => {
@@ -190,6 +197,9 @@ export default function ProjectsView({ grid, list }: { grid: ReactNode; list: Re
 
   const choose = (next: View) => {
     setView(next);
+    // Named in the address bar as soon as it is chosen, so the URL is already
+    // the right one whenever the visitor thinks to copy it.
+    writeParam("view", next);
     try {
       window.localStorage.setItem(STORAGE_KEY, next);
     } catch {

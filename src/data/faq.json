@@ -1,33 +1,41 @@
 [
   {
+    "id": "dsa-and-open-source",
     "question": "You don't have LeetCode, competitive programming, or open-source contributions listed — why not?",
     "answer": "I was into building things, and DSA was always second on my priority list — I didn't spend much time on it. I didn't realize until later how much weight it carries for landing a high-paying role, and I've started practicing it seriously now. As for open source, I'm new to it — nothing of mine has been merged yet, so I didn't list it. Both are things I'm actively working on, not things I'm ignoring."
   },
   {
+    "id": "internship-overlap",
     "question": "Your two internships are back to back — was there any overlap?",
     "answer": "No overlap. I gave AarogyalinQ two weeks' notice ahead of time, and the transition into Aude.ai was seamless."
   },
   {
+    "id": "availability",
     "question": "Are you actively looking for a job right now?",
     "answer": "Yes — I'm actively interviewing for full-time roles."
   },
   {
+    "id": "breadth-vs-depth",
     "question": "At AarogyalinQ you worked across four different products and stacks in one internship — doesn't that mean shallow exposure to each?",
     "answer": "It reads that way from a list of names, but the work built on itself. I started with ownership of a single feature on Digichikitsak, and from there was trusted to deploy the entire project, not just my piece of it. From there I moved into real FDE work — directly connected to a client, customizing an existing project (Axion) to what they needed end to end, managing everything until it was live for them. I was then handed an incomplete version of Axion and finished and deployed it myself. After that I was given ownership of a new project, HealthyMitra, and built it from scratch through to production. It was a high-velocity startup, and each step was more ownership than the last, not less depth."
   },
   {
+    "id": "working-with-the-team",
     "question": "Did you work closely with the team at Aude.ai, or independently?",
     "answer": "Both. I synced with the team when it was needed for the work, but not on a daily schedule — the rest of the time I worked on my own hours."
   },
   {
+    "id": "student-or-new-grad",
     "question": "Your résumé shows you're finishing your degree in 2026, but you've already done two internships — are you a student or a new grad?",
     "answer": "I've just finished my final semester exams and haven't received my degree yet, so I'd call myself a new grad at this point. Both internships were remote, which is what made it possible to manage college and work at the same time."
   },
   {
+    "id": "college-and-work",
     "question": "How did you manage college and a full internship at the same time?",
     "answer": "I split the day strictly: mornings before college were for college work, and evenings and nights after college were for the internship. Keeping the two separated rather than mixing them is what made it sustainable."
   },
   {
+    "id": "missing-demos",
     "question": "Some of your projects have no live demo, no screenshots, or no repository link — why?",
     "answer": "Mostly I just haven't had the spare time yet to take screenshots, record demos, and add or update links across every project. It's coming soon. For the work I built inside a role, the code and live links usually can't be shared publicly regardless — I'm happy to walk through any of that in an interview instead."
   }
