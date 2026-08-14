@@ -4,6 +4,7 @@ import { useEffect, useRef, type RefObject } from "react";
 import { useRouter } from "next/navigation";
 import { Camera, Mesh, Plane, Program, Renderer, Texture, Transform } from "ogl";
 import gsap from "gsap";
+import { useGlRecovery } from "@/hooks/useGlRecovery";
 import { useMediaQuery, useReducedMotion } from "@/hooks/useMediaQuery";
 import { SkillMark } from "@/components/skills/skill-icons";
 import type { ProjectContent, SkillContent } from "@/lib/content/types";
@@ -198,6 +199,7 @@ export default function HomeProjectsRow({
   // anything wider the landscape one. Crossing it redraws the textures.
   const narrow = useMediaQuery("(max-width: 639px)");
   const shape = narrow ? "portrait" : "wide";
+  const { generation, watchContext, releaseContext } = useGlRecovery();
 
   // Held in a ref so a new callback identity does not tear down the scene and
   // rebuild every texture in it.
@@ -215,7 +217,15 @@ export default function HomeProjectsRow({
     if (!container || !canvas || !iconSource) return;
 
     let disposed = false;
-    const cleanups: Array<() => void> = [];
+    // Attached before anything is built: setting the scene up means decoding
+    // every project image and rasterising every brand mark, and a context lost
+    // during that is still lost.
+    let contextLost = false;
+    const cleanups: Array<() => void> = [
+      watchContext(canvas, () => {
+        contextLost = true;
+      }),
+    ];
 
     const start = async () => {
       // The brand marks are rendered as real SkillMark elements below and read
@@ -452,7 +462,10 @@ export default function HomeProjectsRow({
       });
 
       const frame = () => {
-        if (!visible) return;
+        // Every GL call into a lost context is ignored, so this is about not
+        // spending a frame's work to be ignored — and about not reading back
+        // sizes from a renderer whose context is gone.
+        if (contextLost || !visible) return;
         if (!ready) {
           ready = resize();
           if (!ready) return;
@@ -561,9 +574,7 @@ export default function HomeProjectsRow({
 
       // A browser only allows a handful of live WebGL contexts, and leaving to
       // a case study and coming back would take a new one each time.
-      cleanups.push(() => {
-        gl.getExtension("WEBGL_lose_context")?.loseContext();
-      });
+      cleanups.push(() => releaseContext(gl));
     };
 
     void start();
@@ -572,7 +583,10 @@ export default function HomeProjectsRow({
       disposed = true;
       for (const cleanup of cleanups) cleanup();
     };
-  }, [entries, lastPanelIndex, narrow, overlayRef, progressRef, reduceMotion, router, shape, travelRef]);
+    // `generation` is what rebuilds the scene after a lost context is given
+    // back: everything below is gone with it, so it is built again rather than
+    // patched.
+  }, [entries, generation, lastPanelIndex, narrow, overlayRef, progressRef, reduceMotion, releaseContext, router, shape, travelRef, watchContext]);
 
   return (
     <div ref={containerRef} className="absolute inset-0 z-10 cursor-pointer">

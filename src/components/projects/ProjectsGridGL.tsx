@@ -7,6 +7,7 @@ import HintPill from "@/components/hints/HintPill";
 import { hintText } from "@/components/hints/hint-copy";
 import { useInputMode } from "@/components/hints/useIdleHint";
 import { SkillMark } from "@/components/skills/skill-icons";
+import { useGlRecovery } from "@/hooks/useGlRecovery";
 import { useMediaQuery, useReducedMotion } from "@/hooks/useMediaQuery";
 import type { ProjectOrigin } from "@/lib/content/relationships";
 import type { ProjectContent, SkillContent } from "@/lib/content/types";
@@ -184,6 +185,7 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
   const narrow = useMediaQuery("(max-width: 639px)");
   const shape = narrow ? "portrait" : "wide";
   const inputMode = useInputMode();
+  const { generation, watchContext, releaseContext } = useGlRecovery();
 
   const focus = useRef<Vec>({ x: 0, y: 0 });
   const velocity = useRef<Vec>({ x: 0, y: 0 });
@@ -232,7 +234,15 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
     if (!stage || !canvas || !iconSource) return;
 
     let disposed = false;
-    const cleanups: Array<() => void> = [];
+    // Attached before anything is built: setting the scene up means decoding
+    // every project image and rasterising every brand mark, and a context lost
+    // during that is still lost.
+    let contextLost = false;
+    const cleanups: Array<() => void> = [
+      watchContext(canvas, () => {
+        contextLost = true;
+      }),
+    ];
 
     const start = async () => {
       await document.fonts.ready;
@@ -501,6 +511,9 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
         const elapsed = Math.min(0.05, Math.max(0, (now - previous) / 1000));
         previous = now;
         if (elapsed === 0) return;
+        // Every GL call into a lost context is ignored, so this is about not
+        // spending the frame's work to be ignored.
+        if (contextLost) return;
 
         if (!dragging.current) {
           const speed = Math.hypot(velocity.current.x, velocity.current.y);
@@ -557,9 +570,7 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
 
       // A browser only allows a handful of live WebGL contexts, and leaving to
       // a case study and coming back would take a new one each time.
-      cleanups.push(() => {
-        gl.getExtension("WEBGL_lose_context")?.loseContext();
-      });
+      cleanups.push(() => releaseContext(gl));
     };
 
     void start();
@@ -568,7 +579,10 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
       disposed = true;
       for (const cleanup of cleanups) cleanup();
     };
-  }, [entries, narrow, reduceMotion, shape]);
+    // `generation` is what rebuilds the scene after a lost context is given
+    // back: everything below is gone with it, so it is built again rather than
+    // patched.
+  }, [entries, generation, narrow, reduceMotion, releaseContext, shape, watchContext]);
 
   // Lenis owns touch on the window and stops animations on every touch event.
   // The grid is a drag surface, so it claims the ones it is using; without this
