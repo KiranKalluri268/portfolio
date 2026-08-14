@@ -13,11 +13,19 @@ import NavigationHint from '@/components/NavigationHint';
 import SceneWrapper from '@/components/SceneWrapper';
 import SectionLink from '@/components/SectionLink';
 import { getHomepageProjects } from '@/lib/content/projects';
+import { getProjectOrigin, getSkillsForProject } from '@/lib/content/relationships';
 import { getSkillsByCategory } from '@/lib/content/skills';
 import { getAllRecommendations, getTimelineExperiences } from '@/lib/content/experience';
 
 export default function Home() {
   const projects = getHomepageProjects();
+  // The carousel draws the same card the projects page does, so it needs the
+  // same three things: the project, its skill marks and where it came from.
+  const projectEntries = projects.map((project) => ({
+    project,
+    skills: getSkillsForProject(project),
+    origin: getProjectOrigin(project) as string,
+  }));
   const skillGroups = getSkillsByCategory();
   const experiences = getTimelineExperiences();
   const recommendations = getAllRecommendations();
@@ -69,7 +77,7 @@ export default function Home() {
           </SceneWrapper>
           <SceneWrapper index={3}>
             <ErrorBoundary>
-              <ProjectsSection projects={projects} />
+              <ProjectsSection entries={projectEntries} />
             </ErrorBoundary>
           </SceneWrapper>
           <SceneWrapper index={4}>

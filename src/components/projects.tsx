@@ -4,8 +4,10 @@ import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import Link from "next/link";
-import type { ProjectContent } from "@/lib/content/types";
-import ProjectThumbnail from "@/components/content/ProjectThumbnail";
+import HomeProjectsRow, {
+  SCROLL_MULTIPLIER,
+  type HomeRowEntry,
+} from "@/components/projects/HomeProjectsRow";
 import { useActiveSection, useScrollActions } from "@/context/SmoothScrollContext";
 import {
   VelocityTracker,
@@ -17,26 +19,34 @@ import {
   type SwipeAxis,
 } from "./projects-swipe";
 
-// Resting values for the focus animation below. Panel geometry (count, step)
-// depends on the `projects` prop, so those live inside the component instead.
-const RESTING_SCALE = 0.82;
-const RESTING_OPACITY = 0.35;
-const RESTING_LIFT = 16;
-
-export default function ProjectsSection({ projects }: { projects: ProjectContent[] }) {
+export default function ProjectsSection({ entries }: { entries: HomeRowEntry[] }) {
   const { lenis } = useScrollActions();
   const sectionRef = useRef<HTMLElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  // Written by the pin, read by the row's render loop. Scroll position is
+  // still the only source of truth for where the row is; this is just the
+  // cheapest way to hand it over, without a React render per frame.
+  const progressRef = useRef(0);
+  // Written by the row once it knows its card geometry, read by the swipe
+  // handler below, which has to turn finger pixels into scroll pixels.
+  const travelRef = useRef(0);
   const [activePanel, setActivePanel] = useState(0);
   // Driven by the active scene rather than the trigger's own isActive, which
   // reports false at exactly progress 1 — the position the Projects dot lands on.
   const isInCarousel = useActiveSection() === "projects";
 
   // Panel 0 is the empty lead-in spacer, the last panel is "See all projects".
-  const panelCount = projects.length + 2;
+  const panelCount = entries.length + 2;
   const lastPanelIndex = panelCount - 1;
   const panelStep = 1 / lastPanelIndex;
+
+  // The pin's length is the row's, and the row is measured after the trigger is
+  // built. Re-measuring is a whole-page refresh because a pin changes the
+  // height of everything below it.
+  const onTravelChange = useCallback(() => {
+    ScrollTrigger.refresh();
+  }, []);
 
   const goToPanel = useCallback((panelIndex: number) => {
     const trigger = ScrollTrigger.getById("projects-horizontal-pin");
@@ -49,15 +59,12 @@ export default function ProjectsSection({ projects }: { projects: ProjectContent
 
   useLayoutEffect(() => {
     const section = sectionRef.current;
-    const track = trackRef.current;
     const title = titleRef.current;
-    if (!section || !track || !title) return;
+    if (!section || !title) return;
 
     gsap.registerPlugin(ScrollTrigger);
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const context = gsap.context(() => {
-      gsap.set(track, { x: 0, force3D: true, willChange: "transform" });
       gsap.set(title, {
         xPercent: -50,
         yPercent: -50,
@@ -65,33 +72,39 @@ export default function ProjectsSection({ projects }: { projects: ProjectContent
         willChange: "transform,opacity",
       });
 
-      let reportedPanel = -1;
-
       const timeline = gsap.timeline({
         defaults: { ease: "none" },
         scrollTrigger: {
           id: "projects-horizontal-pin",
           trigger: section,
           start: "top top",
-          end: () => `+=${window.innerHeight * lastPanelIndex}`,
+          // Measured from the row rather than from the viewport, so the cards
+          // travel a fixed multiple of the scroll: the run is as long as the
+          // row is, divided by how much faster than the gesture it should move.
+          // Until the renderer has published its geometry there is nothing to
+          // measure, so the old viewport-per-panel length stands in and the
+          // trigger is refreshed the moment the real number arrives.
+          end: () => {
+            const travel = travelRef.current;
+            return `+=${travel > 0 ? travel / SCROLL_MULTIPLIER : window.innerHeight * lastPanelIndex}`;
+          },
           pin: true,
           scrub: true,
           invalidateOnRefresh: true,
           onUpdate: ({ progress }) => {
-            // Only cross a React render when the centred panel actually changes.
-            const index = Math.round(gsap.utils.clamp(0, 1, progress) * lastPanelIndex);
-            if (index === reportedPanel) return;
-            reportedPanel = index;
-            setActivePanel(index);
+            progressRef.current = progress;
           },
         },
       });
 
+      // The row used to be a DOM track tweened across the whole timeline, which
+      // is what made the timeline one unit long. It is drawn on the GPU now, so
+      // that length has to be stated rather than implied: the title's cues below
+      // are fractions of it, and they would otherwise move every time a project
+      // was added.
+      timeline.to({}, { duration: 1 }, 0);
+
       timeline
-        .to(track, {
-          x: () => -(track.scrollWidth - section.clientWidth),
-          duration: 1,
-        }, 0)
         .to(title, {
           x: () => window.innerWidth < 640 ? "-20vw" : "-40vw",
           // On a phone the title parks on the same line as the 02/05 counter.
@@ -116,60 +129,18 @@ export default function ProjectsSection({ projects }: { projects: ProjectContent
           duration: 0.12,
           ease: "sine.inOut",
         }, 0.84);
-
-      // Each panel grows into focus and falls back as it leaves. Paired
-      // power2.out / power2.in curves meet with zero slope at the centre, so
-      // there is no visible kink at the peak.
-      if (!reduceMotion) {
-        const panels = gsap.utils.toArray<HTMLElement>(".project-panel");
-
-        panels.forEach((panel, arrayIndex) => {
-          // Index 0 of the track is the empty lead-in spacer.
-          const panelIndex = arrayIndex + 1;
-          const centeredAt = panelIndex * panelStep;
-
-          timeline.fromTo(panel, {
-            scale: RESTING_SCALE,
-            opacity: RESTING_OPACITY,
-            y: RESTING_LIFT,
-          }, {
-            scale: 1,
-            opacity: 1,
-            y: 0,
-            duration: panelStep,
-            ease: "power2.out",
-            force3D: true,
-          }, centeredAt - panelStep);
-
-          // The final panel gets no exit tween: it would end at 1 + panelStep,
-          // stretching the timeline past a duration of 1, which would rescale
-          // the track tween so the last panel never fully arrives.
-          if (panelIndex < lastPanelIndex) {
-            timeline.to(panel, {
-              scale: RESTING_SCALE,
-              opacity: RESTING_OPACITY,
-              y: RESTING_LIFT,
-              duration: panelStep,
-              ease: "power2.in",
-              force3D: true,
-            }, centeredAt);
-          }
-        });
-      }
     }, section);
 
     return () => context.revert();
-  }, [lastPanelIndex, panelStep]);
+  }, [lastPanelIndex]);
 
   // Horizontal swiping on touch devices. The section declares
   // `touch-action: pan-y pinch-zoom`, so the browser keeps vertical panning and
   // pinch-zoom while horizontal movement is left to us — there is nothing to
-  // pan horizontally natively, since the track is transformed rather than
-  // scrolled.
+  // pan horizontally natively, since the row is drawn rather than scrolled.
   useLayoutEffect(() => {
     const section = sectionRef.current;
-    const track = trackRef.current;
-    if (!section || !track) return;
+    if (!section) return;
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const velocity = new VelocityTracker();
@@ -185,8 +156,9 @@ export default function ProjectsSection({ projects }: { projects: ProjectContent
       const trigger = ScrollTrigger.getById("projects-horizontal-pin");
       if (!trigger) return null;
       // Measured per gesture: `end` is recalculated on resize, and 100dvh
-      // changes as mobile browser chrome hides.
-      const horizontalTravel = track.scrollWidth - section.clientWidth;
+      // changes as mobile browser chrome hides. The travel is the row's own,
+      // published by the renderer that decided how big a card is.
+      const horizontalTravel = travelRef.current;
       if (horizontalTravel <= 0) return null;
       return {
         min: trigger.start,
@@ -300,12 +272,19 @@ export default function ProjectsSection({ projects }: { projects: ProjectContent
     };
   }, [lenis]);
 
+  const centred = entries[activePanel - 1];
+  const onSeeAll = activePanel === lastPanelIndex;
+
   return (
     <section
       ref={sectionRef}
       id="projects"
       className="relative h-[100dvh] min-h-[100svh] overflow-hidden text-white"
       aria-label="Projects section"
+      // The arrow controls step through the carousel a panel at a time, and
+      // used to work that out by dividing the pinned range by the viewport.
+      // The range is the row's length now, so the count has to be stated.
+      data-projects-panels={lastPanelIndex}
       // pan-y keeps vertical scrolling native; pinch-zoom is listed explicitly
       // so declaring this does not cost the ability to zoom the page.
       style={{ zIndex: 10, touchAction: "pan-y pinch-zoom" }}
@@ -317,79 +296,94 @@ export default function ProjectsSection({ projects }: { projects: ProjectContent
         Projects
       </h2>
 
-      {/* Horizontal padding is exactly half the off-panel width, so panel 0
-          starts centred and panel N ends centred without touching the
-          travel calculation above. */}
-      <div ref={trackRef} className="flex h-full w-max px-[11vw] sm:px-[19vw]">
-        <div className="h-[100dvh] min-h-[100svh] w-[78vw] shrink-0 sm:w-[62vw]" aria-hidden="true" />
+      <HomeProjectsRow
+        entries={entries}
+        lastPanelIndex={lastPanelIndex}
+        progressRef={progressRef}
+        travelRef={travelRef}
+        overlayRef={overlayRef}
+        onCentre={setActivePanel}
+        onTravelChange={onTravelChange}
+      />
 
-        {projects.map((project) => (
-          <article
-            key={project.id}
-            className="project-panel flex h-[100dvh] min-h-[100svh] w-[78vw] shrink-0 flex-col items-center justify-center px-4 py-16 text-center will-change-[transform,opacity] sm:w-[62vw] sm:px-8 lg:p-12"
+      {/* What a card cannot carry: the summary a recruiter reads, and the links
+          out to the source and the live site. Real markup over the middle card,
+          which is the one card the bend always leaves square on — so this never
+          has to pretend to be on the cylinder with the rest of them.
+
+          The container spans the section so its children can be placed against
+          the same two bands the renderer sized the card into. It is never
+          clickable itself: the links opt in through the settled flag, and
+          everything else stays a tap on the card behind. */}
+      <div
+        ref={overlayRef}
+        data-settled="false"
+        className="group pointer-events-none absolute inset-0 z-20"
+        style={{ opacity: 0 }}
+      >
+        {centred && (
+          <div
+            className="absolute inset-x-0 flex flex-col items-center px-6 text-center"
+            style={{ bottom: "var(--rail-band, 0px)", height: "var(--overlay-band, 0px)" }}
           >
-            <h3 className="mb-[clamp(0.5rem,2dvh,1rem)] max-w-3xl text-base font-semibold sm:text-2xl lg:text-3xl">
-              <Link href={`/projects/${project.slug}`} className="rounded hover:text-accent-soft">
-                {project.title}
-              </Link>
-            </h3>
-            <Link
-              href={`/projects/${project.slug}`}
-              className="relative mb-[clamp(0.5rem,2dvh,1rem)] block h-[clamp(6rem,22dvh,14rem)] w-full max-w-3xl rounded-xl"
-              aria-label={`Read the ${project.title} case study`}
+            {/* The renderer measures this to decide how far the text may follow
+                its card sideways before it would run off the screen. */}
+            <div data-overlay-content className="flex w-full max-w-xl flex-col items-center">
+            <p className="line-clamp-3 text-sm leading-relaxed text-white/80 sm:text-base">
+              {centred.project.summary}
+            </p>
+            {/* Only when there is something to put in it. Two of the projects
+                shown here have neither a repository nor a live site, and with
+                the case study now reached by the card itself their row would be
+                an empty landmark carrying a label about links it has none of. */}
+            {(centred.project.repositoryUrl || centred.project.liveUrl) && (
+            <nav
+              className="mt-4 flex flex-wrap justify-center gap-3 group-data-[settled=true]:pointer-events-auto"
+              aria-label={`Links for ${centred.project.title}`}
             >
-              <ProjectThumbnail
-                project={project}
-                className="rounded-xl object-cover shadow-lg"
-                sizes="(max-width: 640px) 74vw, (max-width: 1400px) 56vw, 768px"
-              />
-            </Link>
-            <p className="mb-[clamp(0.75rem,2.5dvh,1.5rem)] max-w-xl text-sm leading-relaxed sm:text-base lg:text-lg">{project.summary}</p>
-
-            <nav className="flex flex-wrap justify-center gap-3" aria-label={`Links for ${project.title}`}>
-              <Link
-                href={`/projects/${project.slug}`}
-                className="rounded-full border border-white/20 bg-black/45 px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:border-accent/60 hover:text-accent-soft sm:text-sm"
-              >
-                Read case study <span aria-hidden="true">→</span>
-              </Link>
-              {project.repositoryUrl && (
+              {centred.project.repositoryUrl && (
                 <a
-                  href={project.repositoryUrl}
+                  href={centred.project.repositoryUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="rounded-full border border-white/20 bg-black/45 px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:border-accent/60 hover:text-accent-soft sm:text-sm"
-                  aria-label={`Visit ${project.title} on GitHub (opens in new tab)`}
+                  aria-label={`Visit ${centred.project.title} on GitHub (opens in new tab)`}
                 >
                   View source <span aria-hidden="true">↗</span>
                 </a>
               )}
-              {project.liveUrl && (
+              {centred.project.liveUrl && (
                 <a
-                  href={project.liveUrl}
+                  href={centred.project.liveUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="rounded-full border border-white/20 bg-white px-5 py-2.5 text-xs font-semibold text-black transition-colors hover:bg-accent-soft sm:text-sm"
-                  aria-label={`Visit ${project.title} live demo (opens in new tab)`}
+                  aria-label={`Visit ${centred.project.title} live demo (opens in new tab)`}
                 >
                   Live project <span aria-hidden="true">↗</span>
                 </a>
               )}
             </nav>
-          </article>
-        ))}
+            )}
+            </div>
+          </div>
+        )}
 
-        <div className="project-panel flex h-[100dvh] min-h-[100svh] w-[78vw] shrink-0 items-center justify-center px-4 will-change-[transform,opacity] sm:w-[62vw]">
-          <h2 className="whitespace-nowrap text-center text-4xl font-bold tracking-tight sm:text-5xl">
-            <Link href="/projects" className="rounded-control underline underline-offset-8">
-              See all projects
-            </Link>
-          </h2>
-        </div>
+        {/* The last panel has no card, so its heading takes the card's place
+            rather than sitting in the strip underneath one. */}
+        {onSeeAll && (
+          <div className="absolute inset-0 flex items-center justify-center px-4">
+            <h2 className="whitespace-nowrap text-center text-4xl font-bold tracking-tight group-data-[settled=true]:pointer-events-auto sm:text-5xl">
+              <Link href="/projects" className="rounded-control underline underline-offset-8">
+                See all projects
+              </Link>
+            </h2>
+          </div>
+        )}
       </div>
 
       <CarouselProgress
-        projects={projects}
+        entries={entries}
         lastPanelIndex={lastPanelIndex}
         activePanel={activePanel}
         isInCarousel={isInCarousel}
@@ -400,17 +394,17 @@ export default function ProjectsSection({ projects }: { projects: ProjectContent
 }
 
 interface CarouselProgressProps {
-  projects: ProjectContent[];
+  entries: HomeRowEntry[];
   lastPanelIndex: number;
   activePanel: number;
   isInCarousel: boolean;
   onSelect: (panelIndex: number) => void;
 }
 
-function CarouselProgress({ projects, lastPanelIndex, activePanel, isInCarousel, onSelect }: CarouselProgressProps) {
+function CarouselProgress({ entries, lastPanelIndex, activePanel, isInCarousel, onSelect }: CarouselProgressProps) {
   // Panel 0 is the empty lead-in, so the destinations are 1..lastPanelIndex.
   const destinations = Array.from({ length: lastPanelIndex }, (_, index) => index + 1);
-  const isOnProject = activePanel >= 1 && activePanel <= projects.length;
+  const isOnProject = activePanel >= 1 && activePanel <= entries.length;
   const visibility = isInCarousel ? "opacity-100" : "pointer-events-none opacity-0";
 
   return (
@@ -425,7 +419,7 @@ function CarouselProgress({ projects, lastPanelIndex, activePanel, isInCarousel,
         <span className="rounded-full border border-white/10 bg-black/65 px-3 py-1 text-xs font-semibold tabular-nums tracking-widest text-white/80 backdrop-blur-md">
           {String(Math.max(activePanel, 1)).padStart(2, "0")}
           <span className="mx-1 text-white/35">/</span>
-          {String(projects.length).padStart(2, "0")}
+          {String(entries.length).padStart(2, "0")}
         </span>
       </div>
 
@@ -439,7 +433,7 @@ function CarouselProgress({ projects, lastPanelIndex, activePanel, isInCarousel,
             const isFinal = panelIndex === lastPanelIndex;
             const label = isFinal
               ? "All projects"
-              : projects[panelIndex - 1].title;
+              : entries[panelIndex - 1].project.title;
 
             return (
               <button
@@ -448,12 +442,12 @@ function CarouselProgress({ projects, lastPanelIndex, activePanel, isInCarousel,
                 onClick={() => onSelect(panelIndex)}
                 aria-label={`Go to ${label}`}
                 aria-current={isActive ? "true" : undefined}
-                className="group cursor-pointer px-0.5 py-3"
+                className="group/dot cursor-pointer px-0.5 py-3"
               >
                 <span
                   className={`block h-[3px] rounded-full transition-all duration-300 ${isActive
                     ? "w-11 bg-accent"
-                    : "w-7 bg-white/25 group-hover:bg-white/60"
+                    : "w-7 bg-white/25 group-hover/dot:bg-white/60"
                     }`}
                 />
               </button>

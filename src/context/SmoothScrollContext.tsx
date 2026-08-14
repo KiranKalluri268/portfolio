@@ -28,6 +28,20 @@ interface ScrollActionsContextValue {
 const ScrollActionsContext = createContext<ScrollActionsContextValue | undefined>(undefined);
 const ActiveSectionContext = createContext<SectionId | undefined>(undefined);
 
+/** How many panels the projects carousel steps through, so the arrow controls
+ *  can advance one at a time.
+ *
+ *  It used to be inferred by dividing the pinned range by the viewport height,
+ *  which held only while the carousel was one screen of scrolling per panel.
+ *  Its range is now measured from the row of cards itself, so the section
+ *  publishes the count rather than leaving it to be derived from something that
+ *  no longer implies it. */
+function carouselPanels() {
+  const section = document.getElementById("projects");
+  const declared = Number(section?.dataset.projectsPanels);
+  return Number.isFinite(declared) && declared > 0 ? declared : 1;
+}
+
 export function SmoothScrollProvider({ children }: { children: ReactNode }) {
   const [activeSection, setActiveSection] = useState<SectionId>("hero");
   const activeSectionRef = useRef<SectionId>("hero");
@@ -47,7 +61,10 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
       duration: reduceMotion ? undefined : 0.8,
       easing: (progress: number) => 1 - Math.pow(1 - progress, 4),
       syncTouch: false,
-      wheelMultiplier: 0.9,
+      // Above 1 so the page travels further than the gesture asks, which is
+      // what reads as lightness. It was 0.9 — below 1, so the page moved *less*
+      // than the wheel, the opposite of the projects list view's feel.
+      wheelMultiplier: 1.3,
     });
     lenisRef.current = instance;
     // The browser-only Lenis instance must be published after it is created.
@@ -134,7 +151,7 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
     const projectsTrigger = ScrollTrigger.getById("projects-horizontal-pin");
     if (activeSectionRef.current === "projects" && projectsTrigger) {
       const range = projectsTrigger.end - projectsTrigger.start;
-      const steps = Math.max(1, Math.round(range / window.innerHeight));
+      const steps = carouselPanels();
       const currentStep = Math.round(projectsTrigger.progress * steps);
 
       if (currentStep < steps) {
@@ -153,7 +170,7 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
     const projectsTrigger = ScrollTrigger.getById("projects-horizontal-pin");
     if (activeSectionRef.current === "projects" && projectsTrigger) {
       const range = projectsTrigger.end - projectsTrigger.start;
-      const steps = Math.max(1, Math.round(range / window.innerHeight));
+      const steps = carouselPanels();
       const currentStep = Math.round(projectsTrigger.progress * steps);
 
       if (currentStep > 0) {
