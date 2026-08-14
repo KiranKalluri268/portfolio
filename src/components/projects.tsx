@@ -329,19 +329,18 @@ export default function ProjectsSection({ entries }: { entries: HomeRowEntry[] }
             {/* The renderer measures this to decide how far the text may follow
                 its card sideways before it would run off the screen. */}
             <div data-overlay-content className="flex w-full max-w-xl flex-col items-center">
-            <p className="mb-4 line-clamp-3 text-sm leading-relaxed text-white/80 sm:text-base">
+            <p className="line-clamp-3 text-sm leading-relaxed text-white/80 sm:text-base">
               {centred.project.summary}
             </p>
+            {/* Only when there is something to put in it. Two of the projects
+                shown here have neither a repository nor a live site, and with
+                the case study now reached by the card itself their row would be
+                an empty landmark carrying a label about links it has none of. */}
+            {(centred.project.repositoryUrl || centred.project.liveUrl) && (
             <nav
-              className="flex flex-wrap justify-center gap-3 group-data-[settled=true]:pointer-events-auto"
+              className="mt-4 flex flex-wrap justify-center gap-3 group-data-[settled=true]:pointer-events-auto"
               aria-label={`Links for ${centred.project.title}`}
             >
-              <Link
-                href={`/projects/${centred.project.slug}`}
-                className="rounded-full border border-white/20 bg-black/45 px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:border-accent/60 hover:text-accent-soft sm:text-sm"
-              >
-                Read case study <span aria-hidden="true">→</span>
-              </Link>
               {centred.project.repositoryUrl && (
                 <a
                   href={centred.project.repositoryUrl}
@@ -365,6 +364,7 @@ export default function ProjectsSection({ entries }: { entries: HomeRowEntry[] }
                 </a>
               )}
             </nav>
+            )}
             </div>
           </div>
         )}
