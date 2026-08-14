@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useHoverLabel } from "@/hooks/useHoverLabel";
 import type { ContactForm, FormErrors, SocialLink } from "@/types";
 
+import SkewOnScroll from "./SkewOnScroll";
 import Tooltip from "./Tooltip";
 import RecommendationCard from "./content/RecommendationCard";
 import type { RecommendationEntry } from "@/lib/content/experience";
@@ -163,6 +164,10 @@ export default function ContactSection({
         data-scroll-target="contact"
         className="relative flex w-full max-w-md scroll-mt-24 flex-col items-center sm:max-w-lg"
       >
+        {/* Inside the scroll target rather than around it: the dots scroll to
+            that element by its measured position, and a lean on it would move
+            the very thing being measured. */}
+        <SkewOnScroll className="flex w-full flex-col items-center">
         <div>
           <h2 className="text-3xl font-bold sm:mb-4 mb-2">Contact Me</h2>
           <p className="text-gray-400 mb-8">Feel free to reach out!</p>
@@ -270,6 +275,7 @@ export default function ContactSection({
             </a>
           ))}
         </div>
+        </SkewOnScroll>
       </div>
       <Tooltip text={hoveredLink || ""} isVisible={!!hoveredLink} />
 

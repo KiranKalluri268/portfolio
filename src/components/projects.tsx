@@ -2,6 +2,7 @@
 
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
+import SkewOnScroll from "./SkewOnScroll";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import Link from "next/link";
 import type { ProjectContent } from "@/lib/content/types";
@@ -328,6 +329,7 @@ export default function ProjectsSection({ projects }: { projects: ProjectContent
             key={project.id}
             className="project-panel flex h-[100dvh] min-h-[100svh] w-[78vw] shrink-0 flex-col items-center justify-center px-4 py-16 text-center will-change-[transform,opacity] sm:w-[62vw] sm:px-8 lg:p-12"
           >
+            <SkewOnScroll className="flex w-full flex-col items-center justify-center">
             <h3 className="mb-[clamp(0.5rem,2dvh,1rem)] max-w-3xl text-base font-semibold sm:text-2xl lg:text-3xl">
               <Link href={`/projects/${project.slug}`} className="rounded hover:text-accent-soft">
                 {project.title}
@@ -376,6 +378,7 @@ export default function ProjectsSection({ projects }: { projects: ProjectContent
                 </a>
               )}
             </nav>
+            </SkewOnScroll>
           </article>
         ))}
 
