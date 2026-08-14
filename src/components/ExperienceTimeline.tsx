@@ -3,7 +3,6 @@
 import { useLayoutEffect, useRef } from "react";
 import Link from "next/link";
 import gsap from "gsap";
-import SkewOnScroll from "./SkewOnScroll";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import type { ExperienceContent } from "@/lib/content/types";
 import { useAudio } from "@/context/AudioContextProvider";
@@ -174,7 +173,7 @@ export default function ExperienceTimeline({
       className="relative z-10 min-h-[100svh] overflow-hidden px-4 py-20 text-white sm:px-6 sm:py-24 lg:px-8"
       aria-label="Experience timeline section"
     >
-      <SkewOnScroll className="relative mx-auto w-full max-w-[1080px] lg:-left-[6vw]">
+      <div className="relative mx-auto w-full max-w-[1080px] lg:-left-[6vw]">
         <h2 className="mb-14 text-center text-3xl font-bold sm:text-4xl">
           Experience Timeline
         </h2>
@@ -225,7 +224,7 @@ export default function ExperienceTimeline({
             />
           ))}
         </div>
-      </SkewOnScroll>
+      </div>
     </section>
   );
 }

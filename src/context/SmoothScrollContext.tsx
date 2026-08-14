@@ -191,14 +191,6 @@ export function useScrollActions() {
   return context;
 }
 
-/** The same actions, for callers that only decorate the scroll rather than
- *  depend on it. A section rendered on its own — in a test, or one day on a
- *  page with no smooth scrolling — should still render; it just does not
- *  lean. */
-export function useOptionalScrollActions() {
-  return useContext(ScrollActionsContext);
-}
-
 export function useActiveSection() {
   const context = useContext(ActiveSectionContext);
   if (!context) throw new Error("useActiveSection must be used within SmoothScrollProvider");

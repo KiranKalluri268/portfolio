@@ -3,7 +3,6 @@
 import { useLayoutEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import gsap from "gsap";
-import SkewOnScroll from "./SkewOnScroll";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import about from "@/data/about.json";
 import { useAudio } from "@/context/AudioContextProvider";
@@ -180,9 +179,6 @@ export default function AboutSection() {
     >
       <div className="h-[30svh]" aria-hidden="true" />
       <div className="sticky top-0 flex h-[100svh] items-center px-5 py-20 sm:px-10 lg:px-20">
-        {/* Inside the sticky element, never around it: a transform on an
-            ancestor would re-anchor the sticky to this wrapper. */}
-        <SkewOnScroll className="w-full">
         <div ref={copyRef} className="relative mx-auto w-full max-w-6xl sm:-left-[3vw] lg:-left-[5vw]">
           <h2 className="mb-5 text-sm font-semibold uppercase tracking-[0.24em] text-white/55 sm:mb-8 sm:text-base">
             {about.eyebrow}
@@ -213,7 +209,6 @@ export default function AboutSection() {
             View my resume →
           </Link>
         </div>
-        </SkewOnScroll>
       </div>
     </section>
   );
