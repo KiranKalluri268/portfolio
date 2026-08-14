@@ -6,6 +6,7 @@ import { Camera, Mesh, Plane, Program, Renderer, Texture, Transform } from "ogl"
 import gsap from "gsap";
 import { Observer } from "gsap/dist/Observer";
 import { useScrollActions } from "@/context/SmoothScrollContext";
+import { useGlRecovery } from "@/hooks/useGlRecovery";
 import { useMediaQuery, useReducedMotion } from "@/hooks/useMediaQuery";
 import { lockPageScroll } from "../page-scroll-lock";
 import { SkillMark } from "../skills/skill-icons";
@@ -146,6 +147,7 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
   // textures are drawn per shape, so crossing this rebuilds them.
   const narrow = useMediaQuery("(max-width: 639px)");
   const shape = narrow ? "portrait" : "wide";
+  const { generation, watchContext, releaseContext } = useGlRecovery();
   // Building the textures means eleven full-size canvases, every project image
   // decoded and every brand mark rasterised. The grid is the default view, so
   // none of that is paid for until the list is actually asked for once.
@@ -168,7 +170,15 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
     gsap.registerPlugin(Observer);
 
     let disposed = false;
-    const cleanups: Array<() => void> = [];
+    // Attached before anything is built: setting the scene up means decoding
+    // every project image and rasterising every brand mark, and a context lost
+    // during that is still lost.
+    let contextLost = false;
+    const cleanups: Array<() => void> = [
+      watchContext(canvas, () => {
+        contextLost = true;
+      }),
+    ];
 
     const start = async () => {
       // The brand marks are rendered as real SkillMark elements below and read
@@ -349,7 +359,9 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
       const frame = () => {
         // Standing down while the grid is showing: there is nothing on screen
         // to draw, and the stack should not keep a GPU loop alive behind it.
-        if (!activeRef.current) return;
+        // A lost context stands down too — every call into one is ignored, so
+        // this is about not spending the frame to be ignored.
+        if (contextLost || !activeRef.current) return;
         if (!ready) {
           ready = resize();
           if (!ready) return;
@@ -424,9 +436,7 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
 
       // A browser only allows a handful of live WebGL contexts, and leaving to
       // a case study and coming back would take a new one each time.
-      cleanups.push(() => {
-        gl.getExtension("WEBGL_lose_context")?.loseContext();
-      });
+      cleanups.push(() => releaseContext(gl));
     };
 
     void start();
@@ -435,7 +445,10 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
       disposed = true;
       for (const cleanup of cleanups) cleanup();
     };
-  }, [entries, everActive, narrow, reduceMotion, router, shape]);
+    // `generation` is what rebuilds the scene after a lost context is given
+    // back: everything below is gone with it, so it is built again rather than
+    // patched.
+  }, [entries, everActive, generation, narrow, reduceMotion, releaseContext, router, shape, watchContext]);
 
   // The document must not scroll behind a view that has taken the gesture over.
   // This is the counted lock the entry screen and the menu already share, so

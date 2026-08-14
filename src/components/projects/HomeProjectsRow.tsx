@@ -4,6 +4,7 @@ import { useEffect, useRef, type RefObject } from "react";
 import { useRouter } from "next/navigation";
 import { Camera, Mesh, Plane, Program, Renderer, Texture, Transform } from "ogl";
 import gsap from "gsap";
+import { useGlRecovery } from "@/hooks/useGlRecovery";
 import { useMediaQuery, useReducedMotion } from "@/hooks/useMediaQuery";
 import { SkillMark } from "@/components/skills/skill-icons";
 import type { ProjectContent, SkillContent } from "@/lib/content/types";
@@ -198,6 +199,7 @@ export default function HomeProjectsRow({
   // anything wider the landscape one. Crossing it redraws the textures.
   const narrow = useMediaQuery("(max-width: 639px)");
   const shape = narrow ? "portrait" : "wide";
+  const { generation, watchContext, releaseContext } = useGlRecovery();
 
   // Held in a ref so a new callback identity does not tear down the scene and
   // rebuild every texture in it.
@@ -215,7 +217,15 @@ export default function HomeProjectsRow({
     if (!container || !canvas || !iconSource) return;
 
     let disposed = false;
-    const cleanups: Array<() => void> = [];
+    // Attached before anything is built: setting the scene up means decoding
+    // every project image and rasterising every brand mark, and a context lost
+    // during that is still lost.
+    let contextLost = false;
+    const cleanups: Array<() => void> = [
+      watchContext(canvas, () => {
+        contextLost = true;
+      }),
+    ];
 
     const start = async () => {
       // The brand marks are rendered as real SkillMark elements below and read
@@ -300,7 +310,27 @@ export default function HomeProjectsRow({
       let spacing = 0;
       let rowCentreY = 0;
       let bendBand = 0;
+      let viewWidth = 0;
+
+      /** How far the text may follow its card before falling off the screen.
+       *
+       *  Measured from the text rather than assumed, so changing how wide it is
+       *  cannot quietly start clipping it — but it can only be measured once
+       *  the text exists, and at the first resize it does not: the row opens on
+       *  the empty lead-in panel, which has no summary and no links. Taken then
+       *  and never again, the limit stayed at zero for the life of the page and
+       *  the text never followed anything. So it is taken lazily, and the frame
+       *  loop keeps asking until there is something to ask about. */
       let overlayShiftLimit = 0;
+      let overlayShiftMeasured = false;
+
+      const measureOverlayShift = () => {
+        const overlay = overlayRef.current;
+        const content = overlay?.querySelector<HTMLElement>("[data-overlay-content]");
+        if (!content || viewWidth === 0) return;
+        overlayShiftLimit = Math.max(0, (viewWidth - content.getBoundingClientRect().width) / 2);
+        overlayShiftMeasured = true;
+      };
 
       const resize = () => {
         const width = container.clientWidth;
@@ -362,16 +392,15 @@ export default function HomeProjectsRow({
         if (overlay) {
           overlay.style.setProperty("--rail-band", `${railBand}px`);
           overlay.style.setProperty("--overlay-band", `${overlayBand}px`);
-          // How far the text may follow its card before falling off the screen.
-          // Measured from the text rather than assumed, so changing how wide it
-          // is cannot quietly start clipping it. On a wide screen this is most
-          // of a card's travel; on a phone the text nearly fills the width, so
-          // it comes out near zero and the text stays put while the card slides
-          // behind it — which is the only thing that fits.
-          const content = overlay.querySelector<HTMLElement>("[data-overlay-content]");
-          const contentWidth = content?.getBoundingClientRect().width ?? width;
-          overlayShiftLimit = Math.max(0, (width - contentWidth) / 2);
         }
+        // The screen changed size, so whatever was measured against the old one
+        // has to be taken again. On a wide screen the limit comes out at most
+        // of a card's travel; on a phone the text nearly fills the width, so it
+        // comes out near zero and the text stays put while the card slides
+        // behind it — which is the only thing that fits there.
+        viewWidth = width;
+        overlayShiftMeasured = false;
+        measureOverlayShift();
         return true;
       };
 
@@ -433,7 +462,10 @@ export default function HomeProjectsRow({
       });
 
       const frame = () => {
-        if (!visible) return;
+        // Every GL call into a lost context is ignored, so this is about not
+        // spending a frame's work to be ignored — and about not reading back
+        // sizes from a renderer whose context is gone.
+        if (contextLost || !visible) return;
         if (!ready) {
           ready = resize();
           if (!ready) return;
@@ -499,6 +531,10 @@ export default function HomeProjectsRow({
           onCentreRef.current(centred);
         }
 
+        // Costs a layout read, but only until the text first exists — which is
+        // the frame after the row leaves the lead-in panel, and never again.
+        if (!overlayShiftMeasured) measureOverlayShift();
+
         const overlay = overlayRef.current;
         if (overlay) {
           // The text rides with the card it belongs to rather than sitting at
@@ -538,9 +574,7 @@ export default function HomeProjectsRow({
 
       // A browser only allows a handful of live WebGL contexts, and leaving to
       // a case study and coming back would take a new one each time.
-      cleanups.push(() => {
-        gl.getExtension("WEBGL_lose_context")?.loseContext();
-      });
+      cleanups.push(() => releaseContext(gl));
     };
 
     void start();
@@ -549,7 +583,10 @@ export default function HomeProjectsRow({
       disposed = true;
       for (const cleanup of cleanups) cleanup();
     };
-  }, [entries, lastPanelIndex, narrow, overlayRef, progressRef, reduceMotion, router, shape, travelRef]);
+    // `generation` is what rebuilds the scene after a lost context is given
+    // back: everything below is gone with it, so it is built again rather than
+    // patched.
+  }, [entries, generation, lastPanelIndex, narrow, overlayRef, progressRef, reduceMotion, releaseContext, router, shape, travelRef, watchContext]);
 
   return (
     <div ref={containerRef} className="absolute inset-0 z-10 cursor-pointer">
