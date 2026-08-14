@@ -300,7 +300,27 @@ export default function HomeProjectsRow({
       let spacing = 0;
       let rowCentreY = 0;
       let bendBand = 0;
+      let viewWidth = 0;
+
+      /** How far the text may follow its card before falling off the screen.
+       *
+       *  Measured from the text rather than assumed, so changing how wide it is
+       *  cannot quietly start clipping it — but it can only be measured once
+       *  the text exists, and at the first resize it does not: the row opens on
+       *  the empty lead-in panel, which has no summary and no links. Taken then
+       *  and never again, the limit stayed at zero for the life of the page and
+       *  the text never followed anything. So it is taken lazily, and the frame
+       *  loop keeps asking until there is something to ask about. */
       let overlayShiftLimit = 0;
+      let overlayShiftMeasured = false;
+
+      const measureOverlayShift = () => {
+        const overlay = overlayRef.current;
+        const content = overlay?.querySelector<HTMLElement>("[data-overlay-content]");
+        if (!content || viewWidth === 0) return;
+        overlayShiftLimit = Math.max(0, (viewWidth - content.getBoundingClientRect().width) / 2);
+        overlayShiftMeasured = true;
+      };
 
       const resize = () => {
         const width = container.clientWidth;
@@ -362,16 +382,15 @@ export default function HomeProjectsRow({
         if (overlay) {
           overlay.style.setProperty("--rail-band", `${railBand}px`);
           overlay.style.setProperty("--overlay-band", `${overlayBand}px`);
-          // How far the text may follow its card before falling off the screen.
-          // Measured from the text rather than assumed, so changing how wide it
-          // is cannot quietly start clipping it. On a wide screen this is most
-          // of a card's travel; on a phone the text nearly fills the width, so
-          // it comes out near zero and the text stays put while the card slides
-          // behind it — which is the only thing that fits.
-          const content = overlay.querySelector<HTMLElement>("[data-overlay-content]");
-          const contentWidth = content?.getBoundingClientRect().width ?? width;
-          overlayShiftLimit = Math.max(0, (width - contentWidth) / 2);
         }
+        // The screen changed size, so whatever was measured against the old one
+        // has to be taken again. On a wide screen the limit comes out at most
+        // of a card's travel; on a phone the text nearly fills the width, so it
+        // comes out near zero and the text stays put while the card slides
+        // behind it — which is the only thing that fits there.
+        viewWidth = width;
+        overlayShiftMeasured = false;
+        measureOverlayShift();
         return true;
       };
 
@@ -498,6 +517,10 @@ export default function HomeProjectsRow({
           reportedPanel = centred;
           onCentreRef.current(centred);
         }
+
+        // Costs a layout read, but only until the text first exists — which is
+        // the frame after the row leaves the lead-in panel, and never again.
+        if (!overlayShiftMeasured) measureOverlayShift();
 
         const overlay = overlayRef.current;
         if (overlay) {
