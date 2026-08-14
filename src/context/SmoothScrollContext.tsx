@@ -47,7 +47,10 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
       duration: reduceMotion ? undefined : 0.8,
       easing: (progress: number) => 1 - Math.pow(1 - progress, 4),
       syncTouch: false,
-      wheelMultiplier: 0.9,
+      // Above 1 so the page travels further than the gesture asks, which is
+      // what reads as lightness. It was 0.9 — below 1, so the page moved *less*
+      // than the wheel, the opposite of the projects list view's feel.
+      wheelMultiplier: 1.3,
     });
     lenisRef.current = instance;
     // The browser-only Lenis instance must be published after it is created.
