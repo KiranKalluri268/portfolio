@@ -32,6 +32,15 @@ export interface HomeRowEntry {
   origin: string;
 }
 
+/** How far the row travels for each pixel of scroll.
+ *
+ *  The row's length is fixed — it has to walk through every panel exactly once
+ *  — so this is applied by shortening the pin rather than by moving the cards
+ *  further: the whole carousel is crossed in half the scrolling. The pin's end
+ *  is derived from the row's own travel, which is why the renderer publishes
+ *  it rather than the section assuming a viewport per panel. */
+export const SCROLL_MULTIPLIER = 2;
+
 /** How much of the gap to the target is closed per 60Hz frame.
  *
  *  Lower is heavier. This is the whole trick: with the row pinned exactly to
@@ -40,7 +49,7 @@ const ROW_EASE = 0.12;
 
 /** Travel per 60Hz frame, as a fraction of the card's *height* — the axis the
  *  bow spans, now that the row runs sideways. */
-const BULGE_PER_PIXEL = 0.0016;
+const BULGE_PER_PIXEL = 0.00071;
 const MAX_BULGE = 0.09;
 
 /** Curvature of the row, per pixel of travel per 60Hz frame. The row is rolled
@@ -49,13 +58,19 @@ const MAX_BULGE = 0.09;
  *  square on. The sign follows the direction of travel.
  *
  *  Calibrated against measured travel rather than borrowed from the list view.
- *  In this section one wheel tick moves the row about 11.5 px per 60Hz frame,
- *  an ordinary scroll 27, and a hard flick 98. The list view's own numbers put
- *  a flick past a 77 degree turn here, which is a sliver rather than a card:
- *  its cards travel up the short axis of the screen, so far fewer of them are
- *  on it at once and the steep ones are already gone. Sideways, the same
- *  curvature is applied across nearly twice the distance. */
-const CURVE_PER_PIXEL = 0.000016;
+ *  With the row moving at the scroll's own pace, one wheel tick moved it about
+ *  11.5 px per 60Hz frame, an ordinary scroll 27, and a hard flick 98. The list
+ *  view's own numbers put a flick past a 77 degree turn here, which is a sliver
+ *  rather than a card: its cards travel up the short axis of the screen, so far
+ *  fewer of them are on it at once and the steep ones are already gone.
+ *  Sideways, the same curvature is applied across nearly twice the distance.
+ *
+ *  This and the bulge above were then divided by the multiplier's own effect on
+ *  speed, so the same gesture still draws the same bend. The row moves faster
+ *  now, but a bend that grew with it would have put an ordinary scroll at 90
+ *  per cent of the ceiling and everything quicker at exactly the ceiling —
+ *  which is the failure this was tuned away from in the first place. */
+const CURVE_PER_PIXEL = 0.0000071;
 const MAX_CURVE = 0.0011;
 
 /** A phone bends further. What reads as the bend is the turn across one card,
@@ -79,8 +94,10 @@ const MAX_CENTRE_PUSH = 0.09;
 /** How much travel per 60Hz frame counts as fully moving, for the overlay's
  *  fade. Reading a paragraph mid-flick is not possible anyway, and text held
  *  flat while its card bends away reads as two unrelated layers. About two
- *  thirds of an ordinary scroll, so it is gone well before the row is. */
-const OVERLAY_FADE_SPEED = 18;
+ *  thirds of an ordinary scroll, so it is gone well before the row is. Scaled
+ *  with the multiplier for the same reason the bend was: it is the gesture that
+ *  should decide when the text goes, not the pace the row happens to run at. */
+const OVERLAY_FADE_SPEED = 41;
 
 /** Room left at the bottom for the progress rail, and above that for the
  *  overlay carrying the centred project's summary and links. The card is sized
@@ -151,9 +168,13 @@ interface HomeProjectsRowProps {
   /** Written by the pin each frame: 0 to 1 through the carousel. Read here
    *  rather than passed as state, so nothing re-renders per frame. */
   progressRef: RefObject<number>;
-  /** Written here for the swipe handler: the row's travel, in pixels. It comes
-   *  out of the card geometry, which only this component knows. */
+  /** Written here for the swipe handler and for the pin's own length: the row's
+   *  travel, in pixels. It comes out of the card geometry, which only this
+   *  component knows. */
   travelRef: RefObject<number>;
+  /** Called when that travel first becomes known, or changes. The pin's end is
+   *  measured from it, so the trigger has to be re-measured when it moves. */
+  onTravelChange: () => void;
   /** Styled here each frame, and told which panel to show. */
   overlayRef: RefObject<HTMLDivElement | null>;
   onCentre: (panelIndex: number) => void;
@@ -166,6 +187,7 @@ export default function HomeProjectsRow({
   travelRef,
   overlayRef,
   onCentre,
+  onTravelChange,
 }: HomeProjectsRowProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -180,9 +202,11 @@ export default function HomeProjectsRow({
   // Held in a ref so a new callback identity does not tear down the scene and
   // rebuild every texture in it.
   const onCentreRef = useRef(onCentre);
+  const onTravelChangeRef = useRef(onTravelChange);
   useEffect(() => {
     onCentreRef.current = onCentre;
-  }, [onCentre]);
+    onTravelChangeRef.current = onTravelChange;
+  }, [onCentre, onTravelChange]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -308,7 +332,15 @@ export default function HomeProjectsRow({
         // Panel 0 is empty and the last is the "See all" markup, so the row
         // travels the full run of panels even though only the middle ones
         // carry a card.
-        travelRef.current = spacing * lastPanelIndex;
+        const travel = spacing * lastPanelIndex;
+        if (travel !== travelRef.current) {
+          travelRef.current = travel;
+          // Off this frame: the pin's length comes from this number, and
+          // re-measuring every trigger from inside a render loop or a resize
+          // observer is how ScrollTrigger ends up measuring a layout that is
+          // still half-applied.
+          requestAnimationFrame(() => onTravelChangeRef.current());
+        }
 
         // World y is positive upwards from the middle of the section. The card
         // sits centred in what is left above the two bottom bands.
@@ -418,10 +450,14 @@ export default function HomeProjectsRow({
         current += (target - current) * ease;
         const velocity = (current - previous) / deltaRatio;
 
+        // Negated against the direction of travel: the card's middle trails and
+        // its ends lead, rather than the other way about. Bowed the way the
+        // maths first put it, the row read as leaning into the scroll instead
+        // of being dragged along by it.
         const bulge = gsap.utils.clamp(
           -MAX_BULGE,
           MAX_BULGE,
-          reduceMotion ? 0 : velocity * BULGE_PER_PIXEL,
+          reduceMotion ? 0 : -velocity * BULGE_PER_PIXEL,
         );
         // The shader displaces in the plane's own units, where 1 is the plane's
         // width, so a height-relative bow is converted on the way in.

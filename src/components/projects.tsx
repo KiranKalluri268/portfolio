@@ -4,7 +4,10 @@ import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import Link from "next/link";
-import HomeProjectsRow, { type HomeRowEntry } from "@/components/projects/HomeProjectsRow";
+import HomeProjectsRow, {
+  SCROLL_MULTIPLIER,
+  type HomeRowEntry,
+} from "@/components/projects/HomeProjectsRow";
 import { useActiveSection, useScrollActions } from "@/context/SmoothScrollContext";
 import {
   VelocityTracker,
@@ -38,6 +41,13 @@ export default function ProjectsSection({ entries }: { entries: HomeRowEntry[] }
   const lastPanelIndex = panelCount - 1;
   const panelStep = 1 / lastPanelIndex;
 
+  // The pin's length is the row's, and the row is measured after the trigger is
+  // built. Re-measuring is a whole-page refresh because a pin changes the
+  // height of everything below it.
+  const onTravelChange = useCallback(() => {
+    ScrollTrigger.refresh();
+  }, []);
+
   const goToPanel = useCallback((panelIndex: number) => {
     const trigger = ScrollTrigger.getById("projects-horizontal-pin");
     if (!trigger) return;
@@ -68,7 +78,16 @@ export default function ProjectsSection({ entries }: { entries: HomeRowEntry[] }
           id: "projects-horizontal-pin",
           trigger: section,
           start: "top top",
-          end: () => `+=${window.innerHeight * lastPanelIndex}`,
+          // Measured from the row rather than from the viewport, so the cards
+          // travel a fixed multiple of the scroll: the run is as long as the
+          // row is, divided by how much faster than the gesture it should move.
+          // Until the renderer has published its geometry there is nothing to
+          // measure, so the old viewport-per-panel length stands in and the
+          // trigger is refreshed the moment the real number arrives.
+          end: () => {
+            const travel = travelRef.current;
+            return `+=${travel > 0 ? travel / SCROLL_MULTIPLIER : window.innerHeight * lastPanelIndex}`;
+          },
           pin: true,
           scrub: true,
           invalidateOnRefresh: true,
@@ -262,6 +281,10 @@ export default function ProjectsSection({ entries }: { entries: HomeRowEntry[] }
       id="projects"
       className="relative h-[100dvh] min-h-[100svh] overflow-hidden text-white"
       aria-label="Projects section"
+      // The arrow controls step through the carousel a panel at a time, and
+      // used to work that out by dividing the pinned range by the viewport.
+      // The range is the row's length now, so the count has to be stated.
+      data-projects-panels={lastPanelIndex}
       // pan-y keeps vertical scrolling native; pinch-zoom is listed explicitly
       // so declaring this does not cost the ability to zoom the page.
       style={{ zIndex: 10, touchAction: "pan-y pinch-zoom" }}
@@ -280,6 +303,7 @@ export default function ProjectsSection({ entries }: { entries: HomeRowEntry[] }
         travelRef={travelRef}
         overlayRef={overlayRef}
         onCentre={setActivePanel}
+        onTravelChange={onTravelChange}
       />
 
       {/* What a card cannot carry: the summary a recruiter reads, and the links
