@@ -144,11 +144,12 @@ export default function Hero() {
     >
       <div className="relative w-full h-full text-white">
         <div
+          data-settled={visibleH1State === "done"}
           className={`hero-copy absolute left-1/2 w-full max-w-5xl -translate-x-1/2 px-[clamp(1.25rem,7vw,4.5rem)] pt-8 text-left transition-all duration-1000 ease-in-out sm:px-8 sm:pt-0 lg:px-0 ${visibleH1State === 'done' ? 'top-[20dvh] translate-y-0' : 'top-1/2 -translate-y-1/2'
             }`}
         >
           <h1
-            className="font-bold font-[family-name:var(--font-tektur)] whitespace-pre-line leading-none md:font-[family-name:var(--font-foldit)]"
+            className="font-bold font-[family-name:var(--font-tektur)] whitespace-pre-line leading-none"
             style={{
               textShadow:
                 "0.1rem 0 0.3rem rgba(255, 255, 255, 0.8), 0 0 0.6rem rgba(224, 69, 10, 0.5)",
@@ -183,7 +184,7 @@ export default function Hero() {
           {/* The typed roles wrap between one and two lines as they cycle.
               Reserving two lines keeps the CTA row below from bouncing. */}
           <h2
-            className="hero-role mt-4 min-h-[calc(2*clamp(2.15rem,10vw,7.5rem))] max-w-full break-words text-[clamp(2.15rem,10vw,7.5rem)] font-bold font-[family-name:var(--font-tektur)] leading-none md:font-[family-name:var(--font-foldit)]"
+            className="hero-role mt-4 min-h-[calc(2*clamp(2.15rem,10vw,7.5rem))] max-w-full break-words text-[clamp(2.15rem,10vw,7.5rem)] font-bold font-[family-name:var(--font-tektur)] leading-none"
             style={{
               // The name above can carry a white halo because white has 21:1 of
               // contrast to spend. The role line is coloured and has far less,

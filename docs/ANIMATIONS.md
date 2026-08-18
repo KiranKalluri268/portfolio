@@ -29,7 +29,7 @@ The hero uses React timers for a controlled typing lifecycle:
 type greeting → delete greeting → type name → cycle roles
 ```
 
-Tektur is used below the medium breakpoint; Foldit is used on larger screens. Cursor color follows the active text color.
+Tektur is used at every breakpoint. Cursor color follows the active text color.
 
 ### About
 

@@ -82,7 +82,7 @@ canvas {
 .scroll-hint { opacity: 1; }
 
 @media (max-height: 600px) and (orientation: landscape) {
-  .hero-copy {
+  .hero-copy[data-settled="true"] {
     top: 14dvh !important;
   }
 
@@ -120,6 +120,27 @@ canvas {
      of the screen. Restates the horizontal half because it is one property. */
   .entry-lines {
     translate: -50% 6.25rem;
+  }
+}
+
+/* A scaled 1080p laptop commonly exposes only 720-768 CSS pixels of height.
+   Preserve the hero's hierarchy there, but let the role line yield enough
+   vertical room for the calls to action instead of pushing them off-screen.
+   The top override only belongs to the completed layout: during typing the
+   copy is centred with a negative translate, which needs its original 50% top. */
+@media (min-width: 640px) and (min-height: 601px) and (max-height: 800px) {
+  .hero-copy[data-settled="true"] {
+    top: max(7rem, 14dvh) !important;
+  }
+
+  .hero-role {
+    margin-top: 0.75rem;
+    min-height: calc(2 * clamp(2.15rem, 7dvh, 4.5rem));
+    font-size: clamp(2.15rem, 7dvh, 4.5rem);
+  }
+
+  .hero-cta {
+    margin-top: 1rem;
   }
 }
 

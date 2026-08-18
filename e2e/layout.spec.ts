@@ -11,6 +11,14 @@ import { PAGES, enterSite, horizontalOverflow } from "./helpers";
 
 const PHONE = { width: 390, height: 844 };
 
+const DESKTOP_VIEWPORTS = [
+  { width: 1920, height: 1080 },
+  { width: 1536, height: 864 },
+  { width: 1366, height: 768 },
+  { width: 1280, height: 720 },
+  { width: 2560, height: 1440 },
+] as const;
+
 test.describe("nothing drags sideways", () => {
   for (const path of PAGES) {
     test(`${path} on a phone`, async ({ page }) => {
@@ -98,4 +106,71 @@ test.describe("the header does not sit on top of the page's own controls", () =>
       await expect(page.getByRole("banner")).toBeVisible();
     });
   }
+});
+
+test.describe("the Projects heading stays clear of the fixed header", () => {
+  for (const viewport of DESKTOP_VIEWPORTS) {
+    test(`${viewport.width}x${viewport.height}`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await page.goto("/");
+      await enterSite(page);
+
+      const heroActions = page.locator(".hero-cta");
+      const heroActionsBox = await heroActions.boundingBox();
+      expect(heroActionsBox).not.toBeNull();
+      expect(heroActionsBox!.y + heroActionsBox!.height).toBeLessThanOrEqual(viewport.height);
+
+      // Put the scrubbed timeline just past the heading's first movement. The
+      // pin spacer contains the full ScrollTrigger range, so this follows the
+      // real browser geometry instead of duplicating the animation's scroll
+      // distance in the test.
+      await page.evaluate(() => {
+        const section = document.querySelector<HTMLElement>("#projects");
+        const spacer = section?.parentElement;
+        if (!section || !spacer) throw new Error("Projects pin was not created");
+        const start = spacer.getBoundingClientRect().top + window.scrollY;
+        const range = spacer.offsetHeight - window.innerHeight;
+        window.scrollTo(0, start + range * 0.18);
+      });
+
+      const title = page.locator("#projects > h2");
+      await expect(title).toBeVisible();
+      await expect.poll(async () => {
+        const titleBox = await title.boundingBox();
+        const headerBox = await page.getByRole("banner").boundingBox();
+        if (!titleBox || !headerBox) return Number.NEGATIVE_INFINITY;
+        return titleBox.y - (headerBox.y + headerBox.height);
+      }).toBeGreaterThanOrEqual(15);
+
+      const projectsGeometry = await page.locator("[data-home-projects-row]").evaluate((row) => ({
+        cardTop: Number((row as HTMLElement).dataset.cardTop),
+        cardBottom: Number((row as HTMLElement).dataset.cardBottom),
+        overlayTop: Number((row as HTMLElement).dataset.overlayTop),
+        railTop: Number((row as HTMLElement).dataset.railTop),
+      }));
+      const titleBox = await title.boundingBox();
+      expect(titleBox).not.toBeNull();
+      expect(projectsGeometry.cardTop).toBeGreaterThanOrEqual(
+        titleBox!.y + titleBox!.height + 15,
+      );
+      expect(projectsGeometry.cardBottom).toBeLessThan(projectsGeometry.overlayTop);
+      expect(projectsGeometry.overlayTop).toBeLessThan(projectsGeometry.railTop);
+    });
+  }
+});
+
+test("the compact scene controls stay beside Experience at 1280x720", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto("/?section=experience");
+  await enterSite(page);
+
+  const controls = (await page.locator("[data-navigation-controls]").boundingBox())!;
+  const highlight = (await page
+    .locator("#experience .experience-row")
+    .first()
+    .locator(".experience-card-scale")
+    .last()
+    .boundingBox())!;
+
+  expect(controls.x).toBeGreaterThanOrEqual(highlight.x + highlight.width);
 });

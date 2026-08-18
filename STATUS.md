@@ -4,7 +4,7 @@ The one page to read before picking work up again. Brief on purpose — the
 reasoning lives in `docs/`, and the rules for changing things live in
 `CLAUDE.md`.
 
-**Last verified:** 2026-08-06 · Next 16 · Node 20 · deployed on Vercel
+**Last verified:** 2026-08-17 · Next 16 · Node 20 · deployed on Vercel
 
 ---
 
@@ -13,8 +13,8 @@ reasoning lives in `docs/`, and the rules for changing things live in
 | | | |
 |---|---|---|
 | Build | ✅ | clean |
-| Unit tests | ✅ | 241 passing, 20 files |
-| Browser tests | ✅ | 39 passing, 5 files, Chromium in CI |
+| Unit tests | ✅ | 264 passing, 22 files |
+| Browser tests | ✅ | 45 passing, 5 files, Chromium in CI |
 | Lint / types | ✅ | clean |
 | Vulnerabilities | ✅ | 0 (Dependabot watches weekly) |
 | Unit coverage | ⚠️ | 21% of statements. Low by design — the big components are covered by browser tests, which this number cannot see. |
@@ -75,4 +75,5 @@ Ordered. Detail and reasoning in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 Site menu · entry animation · projects grid + its intro · skills web intro ·
 résumé and CV reveal · 404 and error pages · analytics · browser tests in CI ·
 content admin (`/admin`) for editing `src/data/**` into a real commit + PR
-without a local checkout.
+without a local checkout · responsive desktop composition across scaled and
+short laptop viewports.

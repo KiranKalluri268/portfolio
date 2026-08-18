@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Foldit, Tektur } from "next/font/google";
+import { Tektur } from "next/font/google";
 import "./globals.css";
 import "lenis/dist/lenis.css";
 import BlackholeEffect from '@/background/BlackholeEffect';
@@ -15,13 +15,6 @@ const SITE_URL = "https://saikirankalluri.dev";
 const SITE_NAME = "Saikiran Kalluri";
 const SITE_DESCRIPTION =
   "Portfolio of Saikiran Kalluri, a software engineer building full-stack, AI-assisted, cloud, and developer-focused products.";
-
-const foldit = Foldit({
-  variable: "--font-foldit",
-  subsets: ["latin"],
-  display: "swap",
-  weight: ["400", "700"],
-});
 
 const tektur = Tektur({
   variable: "--font-tektur",
@@ -125,7 +118,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${foldit.variable} ${tektur.variable}`}>
+    <html lang="en" className={tektur.variable}>
       <body className="relative bg-black">
         <script
           type="application/ld+json"

@@ -184,4 +184,4 @@ Project images use the configured Next.js quality value `90`; the default `75` r
 
 ## Fonts
 
-The application uses `next/font/google` for Foldit and Tektur. The social image renderer cannot consume those generated WOFF2 URLs directly, so it embeds the committed static Tektur TTF files in `public/fonts`.
+The application uses `next/font/google` for Tektur. The social image renderer cannot consume the generated WOFF2 URLs directly, so it embeds the committed static Tektur TTF files in `public/fonts`.

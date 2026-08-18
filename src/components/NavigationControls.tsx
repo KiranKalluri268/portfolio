@@ -78,7 +78,8 @@ export default function NavigationControls() {
     return (
         <>
             <div
-                className="fixed bottom-8 right-8 w-[180px] h-[90px] z-50 hidden sm:block"
+                data-navigation-controls
+                className={`fixed bottom-8 right-8 h-[90px] z-50 hidden sm:block ${activeSection === "projects" ? "w-[180px]" : "w-14"}`}
             >
                 {/* Up */}
                 <ArrowButton
@@ -93,16 +94,18 @@ export default function NavigationControls() {
                 />
 
                 {/* Left */}
-                <ArrowButton
-                    direction="ArrowLeft"
-                    enabled={isLeftEnabled}
-                    iconPath="M10 19l-7-7m0 0l7-7m-7 7h18"
-                    className="bottom-0 left-0" // Bottom left
-                    isPressed={pressedKeys.has("ArrowLeft")}
-                    onPress={handlePress}
-                    onMouseEnter={() => setHoveredButton("Left/Previous")}
-                    onMouseLeave={() => setHoveredButton(null)}
-                />
+                {activeSection === "projects" && (
+                    <ArrowButton
+                        direction="ArrowLeft"
+                        enabled={isLeftEnabled}
+                        iconPath="M10 19l-7-7m0 0l7-7m-7 7h18"
+                        className="bottom-0 left-0" // Bottom left
+                        isPressed={pressedKeys.has("ArrowLeft")}
+                        onPress={handlePress}
+                        onMouseEnter={() => setHoveredButton("Left/Previous")}
+                        onMouseLeave={() => setHoveredButton(null)}
+                    />
+                )}
 
                 {/* Down */}
                 <ArrowButton
@@ -117,16 +120,18 @@ export default function NavigationControls() {
                 />
 
                 {/* Right */}
-                <ArrowButton
-                    direction="ArrowRight"
-                    enabled={isRightEnabled}
-                    iconPath="M14 5l7 7m0 0l-7 7m7-7H3"
-                    className="bottom-0 right-0" // Bottom right
-                    isPressed={pressedKeys.has("ArrowRight")}
-                    onPress={handlePress}
-                    onMouseEnter={() => setHoveredButton("Right/Next")}
-                    onMouseLeave={() => setHoveredButton(null)}
-                />
+                {activeSection === "projects" && (
+                    <ArrowButton
+                        direction="ArrowRight"
+                        enabled={isRightEnabled}
+                        iconPath="M14 5l7 7m0 0l-7 7m7-7H3"
+                        className="bottom-0 right-0" // Bottom right
+                        isPressed={pressedKeys.has("ArrowRight")}
+                        onPress={handlePress}
+                        onMouseEnter={() => setHoveredButton("Right/Next")}
+                        onMouseLeave={() => setHoveredButton(null)}
+                    />
+                )}
             </div>
             <Tooltip text={hoveredButton || ""} isVisible={!!hoveredButton} />
         </>

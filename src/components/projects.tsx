@@ -18,6 +18,7 @@ import {
   settleSeconds,
   type SwipeAxis,
 } from "./projects-swipe";
+import { desktopProjectsTitleCentre } from "./projects/home-projects-layout";
 
 export default function ProjectsSection({ entries }: { entries: HomeRowEntry[] }) {
   const { lenis } = useScrollActions();
@@ -108,14 +109,26 @@ export default function ProjectsSection({ entries }: { entries: HomeRowEntry[] }
         .to(title, {
           x: () => window.innerWidth < 640 ? "-20vw" : "-40vw",
           // On a phone the title parks on the same line as the 02/05 counter.
-          // A share of the viewport height put it wherever that worked out to —
-          // on a short screen, up under the logo — so it is measured from the
-          // counter itself, which is the thing it has to line up with.
+          // Desktop keeps its proportional destination unless the fixed header
+          // needs more room; that boundary is measured below rather than tied
+          // to a particular screen size or Windows display scale.
           y: () => {
-            if (window.innerWidth >= 640) return window.innerHeight * -0.24;
-            const counter = section.querySelector<HTMLElement>("[data-projects-counter]");
             // The title's resting centre; top-3/8 with a -50% translate.
             const restingCentre = section.clientHeight * 0.375;
+            if (window.innerWidth >= 640) {
+              // Preserve the proportional composition when there is room, but
+              // never let Windows scaling, browser zoom, or a short viewport
+              // move the title through the independently fixed site header.
+              const headerBottom = document
+                .querySelector<HTMLElement>('header[role="banner"]')
+                ?.getBoundingClientRect().bottom ?? 0;
+              return desktopProjectsTitleCentre({
+                sectionHeight: section.clientHeight,
+                headerBottom,
+                titleHeight: title.offsetHeight,
+              }) - restingCentre;
+            }
+            const counter = section.querySelector<HTMLElement>("[data-projects-counter]");
             const counterCentre = counter
               ? counter.offsetTop + counter.offsetHeight / 2
               : restingCentre;
@@ -291,6 +304,7 @@ export default function ProjectsSection({ entries }: { entries: HomeRowEntry[] }
     >
       <h2
         ref={titleRef}
+        data-projects-title
         className="absolute top-3/8 left-1/2 z-20 whitespace-nowrap text-center text-5xl font-bold tracking-tight sm:text-6xl"
       >
         Projects
