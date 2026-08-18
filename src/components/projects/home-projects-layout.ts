@@ -39,6 +39,7 @@ export function desktopProjectsTitleCentre({
 export interface HomeProjectsLayout {
   railBand: number;
   overlayBand: number;
+  contentOffset: number;
   topBand: number;
   cardWidth: number;
   cardHeight: number;
@@ -69,11 +70,16 @@ export function homeProjectsLayout({
   headerBottom?: number;
 }): HomeProjectsLayout {
   const railBand = narrow ? RAIL_BAND.narrow : RAIL_BAND.wide;
-  const overlayBand = clamp(
+  const reservedOverlayBand = clamp(
     OVERLAY_BAND.min,
     OVERLAY_BAND.max,
     height * OVERLAY_BAND.ratio,
   );
+  // Move the desktop cards and their fixed details down as one composition.
+  // The rail remains fixed, so the detail band yields the same amount of
+  // height instead of crossing into the navigation area.
+  const contentOffset = narrow ? 0 : clamp(12, 24, height * 0.02);
+  const overlayBand = reservedOverlayBand - contentOffset;
 
   const titleBottom = narrow
     ? 0
@@ -82,14 +88,14 @@ export function homeProjectsLayout({
   const topBand = narrow
     ? height * 0.16
     : Math.max(height * 0.24, titleBottom + PROJECTS_CONTENT_GAP);
-  const availableHeight = Math.max(120, height - topBand - overlayBand - railBand);
+  const availableHeight = Math.max(120, height - topBand - reservedOverlayBand - railBand);
   const cardWidth = Math.min(
     width * (narrow ? 0.86 : 0.62),
     680,
     (availableHeight * 0.98) / cardAspect,
   );
   const cardHeight = cardWidth * cardAspect;
-  const cardTop = topBand + (availableHeight - cardHeight) / 2;
+  const cardTop = topBand + (availableHeight - cardHeight) / 2 + contentOffset;
   const cardBottom = cardTop + cardHeight;
   const overlayTop = height - railBand - overlayBand;
   const railTop = height - railBand;
@@ -97,6 +103,7 @@ export function homeProjectsLayout({
   return {
     railBand,
     overlayBand,
+    contentOffset,
     topBand,
     cardWidth,
     cardHeight,

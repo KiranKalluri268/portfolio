@@ -41,6 +41,8 @@ One scrubbed GSAP timeline translates the project track while pinning the sectio
 
 On desktop, the focused project's summary and actions stay in one centred DOM
 region below the WebGL carousel and switch when focus moves to another card.
+The cards and this region share a small height-responsive downward offset; the
+progress rail stays fixed and the detail region yields that height.
 On mobile, that region may follow its card horizontally because there is no
 progress rail to settle on and a swipe may stop between panels.
 

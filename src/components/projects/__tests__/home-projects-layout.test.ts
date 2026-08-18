@@ -35,6 +35,8 @@ describe("home Projects desktop layout", () => {
       expect(layout.cardBottom).toBeLessThan(layout.overlayTop);
       expect(layout.overlayTop).toBeLessThan(layout.railTop);
       expect(layout.railTop).toBeLessThan(viewport.height);
+      expect(layout.contentOffset).toBeGreaterThanOrEqual(12);
+      expect(layout.contentOffset).toBeLessThanOrEqual(24);
     });
   }
 
@@ -49,6 +51,17 @@ describe("home Projects desktop layout", () => {
     });
 
     expect(layout.cardWidth).toBe(680);
+  });
+
+  it("does not offset the mobile card and details", () => {
+    const layout = homeProjectsLayout({
+      width: 390,
+      height: 844,
+      narrow: true,
+      cardAspect: 768 / 900,
+    });
+
+    expect(layout.contentOffset).toBe(0);
   });
 });
 
