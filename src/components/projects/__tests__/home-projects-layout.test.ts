@@ -37,6 +37,8 @@ describe("home Projects desktop layout", () => {
       expect(layout.railTop).toBeLessThan(viewport.height);
       expect(layout.contentOffset).toBeGreaterThanOrEqual(12);
       expect(layout.contentOffset).toBeLessThanOrEqual(24);
+      expect(layout.detailsOffset - layout.contentOffset).toBeGreaterThanOrEqual(28);
+      expect(layout.detailsOffset - layout.contentOffset).toBeLessThanOrEqual(48);
     });
   }
 
@@ -62,6 +64,7 @@ describe("home Projects desktop layout", () => {
     });
 
     expect(layout.contentOffset).toBe(0);
+    expect(layout.detailsOffset).toBe(0);
   });
 });
 

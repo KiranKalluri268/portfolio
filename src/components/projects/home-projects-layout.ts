@@ -40,6 +40,7 @@ export interface HomeProjectsLayout {
   railBand: number;
   overlayBand: number;
   contentOffset: number;
+  detailsOffset: number;
   topBand: number;
   cardWidth: number;
   cardHeight: number;
@@ -75,11 +76,14 @@ export function homeProjectsLayout({
     OVERLAY_BAND.max,
     height * OVERLAY_BAND.ratio,
   );
-  // Move the desktop cards and their fixed details down as one composition.
-  // The rail remains fixed, so the detail band yields the same amount of
-  // height instead of crossing into the navigation area.
+  // Keep the cards slightly lowered, then give the fixed desktop details
+  // additional separation beneath them. The rail remains fixed, so the detail
+  // band yields the combined offset instead of crossing the navigation area.
   const contentOffset = narrow ? 0 : clamp(12, 24, height * 0.02);
-  const overlayBand = reservedOverlayBand - contentOffset;
+  const detailsOffset = narrow
+    ? 0
+    : contentOffset + clamp(28, 48, height * 0.045);
+  const overlayBand = reservedOverlayBand - detailsOffset;
 
   const titleBottom = narrow
     ? 0
@@ -104,6 +108,7 @@ export function homeProjectsLayout({
     railBand,
     overlayBand,
     contentOffset,
+    detailsOffset,
     topBand,
     cardWidth,
     cardHeight,
