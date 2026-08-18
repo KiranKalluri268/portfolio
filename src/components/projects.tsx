@@ -326,9 +326,11 @@ export default function ProjectsSection({ entries }: { entries: HomeRowEntry[] }
           has to pretend to be on the cylinder with the rest of them.
 
           The container spans the section so its children can be placed against
-          the same two bands the renderer sized the card into. It is never
-          clickable itself: the links opt in through the settled flag, and
-          everything else stays a tap on the card behind. */}
+          the same two bands the renderer sized the card into. On desktop the
+          details stay centred and their content switches with the focused
+          card; on a phone they may follow that card within the available width.
+          It is never clickable itself: the links opt in through the settled
+          flag, and everything else stays a tap on the card behind. */}
       <div
         ref={overlayRef}
         data-settled="false"
@@ -340,8 +342,8 @@ export default function ProjectsSection({ entries }: { entries: HomeRowEntry[] }
             className="absolute inset-x-0 flex flex-col items-center px-6 text-center"
             style={{ bottom: "var(--rail-band, 0px)", height: "var(--overlay-band, 0px)" }}
           >
-            {/* The renderer measures this to decide how far the text may follow
-                its card sideways before it would run off the screen. */}
+            {/* On mobile the renderer measures this to limit how far the text
+                may follow its card before it would run off the screen. */}
             <div data-overlay-content className="flex w-full max-w-xl flex-col items-center">
             <p className="line-clamp-3 text-sm leading-relaxed text-white/80 sm:text-base">
               {centred.project.summary}

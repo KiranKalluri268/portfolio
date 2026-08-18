@@ -39,6 +39,11 @@ One pinned ScrollTrigger maps scroll progress to word readability. Previously re
 
 One scrubbed GSAP timeline translates the project track while pinning the section. Lenis keeps the underlying vertical scroll smooth without forcing the viewport to a panel after input settles. Do not add custom or CSS scroll snapping, or a second transform owner to the track.
 
+On desktop, the focused project's summary and actions stay in one centred DOM
+region below the WebGL carousel and switch when focus moves to another card.
+On mobile, that region may follow its card horizontally because there is no
+progress rail to settle on and a swipe may stop between panels.
+
 ### Projects — list view (the card stack)
 
 `/projects` has two views. The grid is DOM; the list is a single WebGL canvas

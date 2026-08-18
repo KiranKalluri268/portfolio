@@ -3,6 +3,7 @@ import {
   PROJECTS_CONTENT_GAP,
   desktopProjectsTitleCentre,
   homeProjectsLayout,
+  homeProjectsOverlayOffset,
 } from "../home-projects-layout";
 
 const DESKTOPS = [
@@ -48,5 +49,23 @@ describe("home Projects desktop layout", () => {
     });
 
     expect(layout.cardWidth).toBe(680);
+  });
+});
+
+describe("home Projects detail position", () => {
+  it("stays centred on desktop while the focused card changes", () => {
+    expect(homeProjectsOverlayOffset({
+      narrow: false,
+      shiftLimit: 400,
+      focusedOffset: 260,
+    })).toBe(0);
+  });
+
+  it("continues to follow a card within the mobile viewport", () => {
+    expect(homeProjectsOverlayOffset({
+      narrow: true,
+      shiftLimit: 120,
+      focusedOffset: 260,
+    })).toBe(120);
   });
 });

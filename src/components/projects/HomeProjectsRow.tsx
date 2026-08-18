@@ -10,7 +10,7 @@ import { SkillMark } from "@/components/skills/skill-icons";
 import type { ProjectContent, SkillContent } from "@/lib/content/types";
 import gridStyles from "./projects-grid.module.css";
 import { CARD_SHAPES, drawCard, textureSizeFor } from "./stack-card";
-import { homeProjectsLayout } from "./home-projects-layout";
+import { homeProjectsLayout, homeProjectsOverlayOffset } from "./home-projects-layout";
 
 /** The home page's projects carousel, drawn on the GPU.
  *
@@ -540,18 +540,15 @@ export default function HomeProjectsRow({
 
         const overlay = overlayRef.current;
         if (overlay) {
-          // The text rides with the card it belongs to rather than sitting at
-          // the middle of the screen waiting for one to arrive. Nothing makes
-          // the row stop on a card — there is no snap, and on a phone there is
-          // no rail to jump with — so resting halfway between two is the
-          // ordinary case, and text pinned to the centre simply vanished for
-          // it. Following the card also means the pairing survives the whole
-          // gesture instead of only its endpoints.
-          const centredX = gsap.utils.clamp(
-            -overlayShiftLimit,
-            overlayShiftLimit,
-            centred * spacing - current,
-          );
+          // Desktop details stay in one fixed place below the carousel and
+          // switch when the focused card changes. A phone has no progress rail
+          // to settle with and can naturally stop between panels, so there the
+          // details continue to follow their card within the available width.
+          const centredX = homeProjectsOverlayOffset({
+            narrow,
+            shiftLimit: overlayShiftLimit,
+            focusedOffset: centred * spacing - current,
+          });
           overlay.style.transform = `translate3d(${centredX.toFixed(2)}px, 0, 0)`;
           const speed = gsap.utils.clamp(0, 1, Math.abs(velocity) / OVERLAY_FADE_SPEED);
           const opacity = gsap.utils.clamp(0, 1, 1 - speed);

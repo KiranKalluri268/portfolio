@@ -7,6 +7,21 @@ const OVERLAY_BAND = { min: 132, ratio: 0.26, max: 230 } as const;
 const clamp = (minimum: number, maximum: number, value: number) =>
   Math.min(maximum, Math.max(minimum, value));
 
+/** Desktop project details occupy one fixed position below the carousel.
+ * Mobile keeps following the focused card because it has no progress rail to
+ * settle with and may naturally stop between panels. */
+export function homeProjectsOverlayOffset({
+  narrow,
+  shiftLimit,
+  focusedOffset,
+}: {
+  narrow: boolean;
+  shiftLimit: number;
+  focusedOffset: number;
+}) {
+  return narrow ? clamp(-shiftLimit, shiftLimit, focusedOffset) : 0;
+}
+
 export function desktopProjectsTitleCentre({
   sectionHeight,
   headerBottom,
