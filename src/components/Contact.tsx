@@ -131,7 +131,7 @@ export default function ContactSection({
   return (
     <section
       id="contact"
-      className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-4 py-24 text-center text-white sm:px-6 sm:py-28 lg:px-8"
+      className="contact-section relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-4 py-24 text-center text-white sm:px-6 sm:py-28 lg:px-8"
       style={{ zIndex: 10 }}
     >
       {recommendations.length > 0 && (
@@ -161,11 +161,11 @@ export default function ContactSection({
 
       <div
         data-scroll-target="contact"
-        className="relative flex w-full max-w-md scroll-mt-24 flex-col items-center sm:max-w-lg"
+        className="contact-panel relative flex w-full max-w-md scroll-mt-24 flex-col items-center sm:max-w-lg"
       >
         <div>
-          <h2 className="text-3xl font-bold sm:mb-4 mb-2">Contact Me</h2>
-          <p className="text-gray-400 mb-8">Feel free to reach out!</p>
+          <h2 className="contact-heading text-3xl font-bold sm:mb-4 mb-2">Contact Me</h2>
+          <p className="contact-intro text-gray-400 mb-8">Feel free to reach out!</p>
         </div>
 
         {submitted ? (
@@ -182,7 +182,7 @@ export default function ContactSection({
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} noValidate className="w-full space-y-4 text-left sm:space-y-6" aria-label="Contact form">
+          <form onSubmit={handleSubmit} noValidate className="contact-form flex w-full flex-col gap-4 text-left sm:gap-6" aria-label="Contact form">
             <div>
               <label htmlFor="name" className="block text-sm font-medium mb-1">
                 Name <span className="text-red-500">*</span>
@@ -229,7 +229,7 @@ export default function ContactSection({
                 rows={4}
                 value={form.message}
                 onChange={handleChange}
-                className={fieldClasses(Boolean(errors.message))}
+                className={`${fieldClasses(Boolean(errors.message))} contact-message`}
                 aria-invalid={errors.message ? true : undefined}
                 aria-describedby={errors.message ? "message-error" : undefined}
                 required
@@ -241,7 +241,7 @@ export default function ContactSection({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="rounded-full bg-white px-6 py-3 font-semibold text-black transition-[background-color,transform] hover:scale-105 hover:bg-accent-soft focus:outline-none focus:ring-2 focus:ring-accent disabled:cursor-wait disabled:opacity-60 disabled:hover:scale-100"
+                className="contact-submit rounded-full bg-white px-6 py-3 font-semibold text-black transition-[background-color,transform] hover:scale-105 hover:bg-accent-soft focus:outline-none focus:ring-2 focus:ring-accent disabled:cursor-wait disabled:opacity-60 disabled:hover:scale-100"
               >
                 {isSubmitting ? "Sending..." : "Send Message"}
               </button>
@@ -254,7 +254,7 @@ export default function ContactSection({
           </form>
         )}
 
-        <div className="mt-8 flex w-full justify-center gap-8 text-gray-200 sm:mt-20 sm:gap-16">
+        <div className="contact-socials mt-8 flex w-full justify-center gap-8 text-gray-200 sm:mt-20 sm:gap-16">
           {socialLinks.map(({ name, url, svg }) => (
             <a
               key={name}
