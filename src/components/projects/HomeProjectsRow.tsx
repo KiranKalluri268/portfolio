@@ -10,6 +10,7 @@ import { SkillMark } from "@/components/skills/skill-icons";
 import type { ProjectContent, SkillContent } from "@/lib/content/types";
 import gridStyles from "./projects-grid.module.css";
 import { CARD_SHAPES, drawCard, textureSizeFor } from "./stack-card";
+import { homeProjectsLayout, homeProjectsOverlayOffset } from "./home-projects-layout";
 
 /** The home page's projects carousel, drawn on the GPU.
  *
@@ -99,12 +100,6 @@ const MAX_CENTRE_PUSH = 0.09;
  *  with the multiplier for the same reason the bend was: it is the gesture that
  *  should decide when the text goes, not the pace the row happens to run at. */
 const OVERLAY_FADE_SPEED = 41;
-
-/** Room left at the bottom for the progress rail, and above that for the
- *  overlay carrying the centred project's summary and links. The card is sized
- *  into whatever is left, so the overlay never lands on top of it. */
-const RAIL_BAND = { wide: 92, narrow: 28 };
-const OVERLAY_BAND = { min: 132, ratio: 0.26, max: 230 };
 
 const VERTEX_SHADER = /* glsl */ `
   attribute vec3 position;
@@ -341,23 +336,24 @@ export default function HomeProjectsRow({
         camera.perspective({ aspect: width / height });
         camera.position.z = height / (2 * Math.tan((45 * Math.PI) / 360));
 
-        // The bands the card may not grow into: the rail along the bottom, the
-        // overlay above it, and the room the travelling section title needs.
-        const railBand = narrow ? RAIL_BAND.narrow : RAIL_BAND.wide;
-        const overlayBand = gsap.utils.clamp(
-          OVERLAY_BAND.min,
-          OVERLAY_BAND.max,
-          height * OVERLAY_BAND.ratio,
-        );
-        // Room for the section title, which parks at the top of a phone and
-        // up to the left on anything wider.
-        const topBand = height * (narrow ? 0.16 : 0.14);
-
         const card = CARD_SHAPES[shape];
         const aspect = card.height / card.width;
-        const region = Math.max(120, height - topBand - overlayBand - railBand);
-        cardWidth = Math.min(width * (narrow ? 0.86 : 0.62), 680, (region * 0.98) / aspect);
-        cardHeight = cardWidth * aspect;
+        const title = container.closest("#projects")
+          ?.querySelector<HTMLElement>("[data-projects-title]");
+        const headerBottom = document
+          .querySelector<HTMLElement>('header[role="banner"]')
+          ?.getBoundingClientRect().bottom ?? 0;
+        const layout = homeProjectsLayout({
+          width,
+          height,
+          narrow,
+          cardAspect: aspect,
+          titleHeight: title?.offsetHeight ?? 0,
+          headerBottom,
+        });
+        const { railBand, overlayBand } = layout;
+        cardWidth = layout.cardWidth;
+        cardHeight = layout.cardHeight;
         spacing = cardWidth + Math.max(28, width * 0.08);
         // Panel 0 is empty and the last is the "See all" markup, so the row
         // travels the full run of panels even though only the middle ones
@@ -372,10 +368,17 @@ export default function HomeProjectsRow({
           requestAnimationFrame(() => onTravelChangeRef.current());
         }
 
-        // World y is positive upwards from the middle of the section. The card
-        // sits centred in what is left above the two bottom bands.
-        rowCentreY = (railBand + overlayBand - topBand) / 2;
+        // World y is positive upwards from the middle of the section.
+        rowCentreY = height / 2 - (layout.cardTop + cardHeight / 2);
         bendBand = width;
+
+        // The browser tests cannot inspect pixels inside WebGL. Publish the
+        // calculated card bounds so they can verify the same geometry the
+        // renderer and pointer hit-test use.
+        container.dataset.cardTop = layout.cardTop.toFixed(2);
+        container.dataset.cardBottom = layout.cardBottom.toFixed(2);
+        container.dataset.overlayTop = layout.overlayTop.toFixed(2);
+        container.dataset.railTop = layout.railTop.toFixed(2);
 
         // The plane carries the glow's margin as well as the card, so it is
         // larger by exactly the ratio the texture is. Layout, spacing and the
@@ -537,18 +540,15 @@ export default function HomeProjectsRow({
 
         const overlay = overlayRef.current;
         if (overlay) {
-          // The text rides with the card it belongs to rather than sitting at
-          // the middle of the screen waiting for one to arrive. Nothing makes
-          // the row stop on a card — there is no snap, and on a phone there is
-          // no rail to jump with — so resting halfway between two is the
-          // ordinary case, and text pinned to the centre simply vanished for
-          // it. Following the card also means the pairing survives the whole
-          // gesture instead of only its endpoints.
-          const centredX = gsap.utils.clamp(
-            -overlayShiftLimit,
-            overlayShiftLimit,
-            centred * spacing - current,
-          );
+          // Desktop details stay in one fixed place below the carousel and
+          // switch when the focused card changes. A phone has no progress rail
+          // to settle with and can naturally stop between panels, so there the
+          // details continue to follow their card within the available width.
+          const centredX = homeProjectsOverlayOffset({
+            narrow,
+            shiftLimit: overlayShiftLimit,
+            focusedOffset: centred * spacing - current,
+          });
           overlay.style.transform = `translate3d(${centredX.toFixed(2)}px, 0, 0)`;
           const speed = gsap.utils.clamp(0, 1, Math.abs(velocity) / OVERLAY_FADE_SPEED);
           const opacity = gsap.utils.clamp(0, 1, 1 - speed);
@@ -589,7 +589,11 @@ export default function HomeProjectsRow({
   }, [entries, generation, lastPanelIndex, narrow, overlayRef, progressRef, reduceMotion, releaseContext, router, shape, travelRef, watchContext]);
 
   return (
-    <div ref={containerRef} className="absolute inset-0 z-10 cursor-pointer">
+    <div
+      ref={containerRef}
+      data-home-projects-row
+      className="absolute inset-0 z-10 cursor-pointer"
+    >
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
 
       {/* The cards are pixels on the GPU and carry no text a crawler or a

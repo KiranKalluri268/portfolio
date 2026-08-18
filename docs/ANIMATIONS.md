@@ -29,7 +29,7 @@ The hero uses React timers for a controlled typing lifecycle:
 type greeting → delete greeting → type name → cycle roles
 ```
 
-Tektur is used below the medium breakpoint; Foldit is used on larger screens. Cursor color follows the active text color.
+Tektur is used at every breakpoint. Cursor color follows the active text color.
 
 ### About
 
@@ -38,6 +38,14 @@ One pinned ScrollTrigger maps scroll progress to word readability. Previously re
 ### Projects
 
 One scrubbed GSAP timeline translates the project track while pinning the section. Lenis keeps the underlying vertical scroll smooth without forcing the viewport to a panel after input settles. Do not add custom or CSS scroll snapping, or a second transform owner to the track.
+
+On desktop, the focused project's summary and actions stay in one centred DOM
+region below the WebGL carousel and switch when focus moves to another card.
+The cards retain a small height-responsive downward offset. The detail region
+adds another height-responsive offset beneath them, while the progress rail
+stays fixed and the detail region yields that combined height.
+On mobile, that region may follow its card horizontally because there is no
+progress rail to settle on and a swipe may stop between panels.
 
 ### Projects — list view (the card stack)
 

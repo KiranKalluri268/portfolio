@@ -86,7 +86,10 @@ export default function AboutSection() {
       }
 
       gsap.fromTo(copy, { y: 0 }, {
-        y: () => -window.innerHeight * 0.05,
+        // The copy is already placed slightly lower in normal layout. A
+        // shorter upward finish reveals the last line without making the
+        // pinned paragraph climb back toward the fixed header.
+        y: () => -window.innerHeight * 0.03,
         ease: "none",
         force3D: true,
         scrollTrigger: {
@@ -179,12 +182,15 @@ export default function AboutSection() {
     >
       <div className="h-[30svh]" aria-hidden="true" />
       <div className="sticky top-0 flex h-[100svh] items-center px-5 py-20 sm:px-10 lg:px-20">
-        <div ref={copyRef} className="relative mx-auto w-full max-w-6xl sm:-left-[3vw] lg:-left-[5vw]">
+        <div
+          ref={copyRef}
+          className="relative top-[clamp(1.5rem,4svh,3rem)] mx-auto w-full max-w-5xl sm:-left-[3vw] lg:-left-[5vw]"
+        >
           <h2 className="mb-5 text-sm font-semibold uppercase tracking-[0.24em] text-white/55 sm:mb-8 sm:text-base">
             {about.eyebrow}
           </h2>
           <p
-            className="text-[clamp(1.15rem,4.2vw,2.75rem)] font-semibold leading-[1.18] tracking-[-0.015em]"
+            className="text-[clamp(1.1rem,3.4vw,2.4rem)] font-semibold leading-[1.18] tracking-[-0.015em]"
             aria-label={fullDescription}
           >
             {descriptionWords.map(({ word, accent, key, needsSpace }, index) => (
