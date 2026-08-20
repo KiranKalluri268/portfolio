@@ -12,25 +12,30 @@
  *
  *  This is the card itself. The texture is larger, because the glow has to
  *  have somewhere to fall — see GLOW_PAD. */
+/** `pad` is the margin left around the card for its glow to fall into. A
+ *  texture is clipped at its own edge, so without it the glow would be cut off
+ *  square exactly where it should be softest.
+ *
+ *  `cell` is the projects grid's own shape, and it has no pad because it has no
+ *  glow: there a card is not an object lying on a background but one cell of a
+ *  continuous surface, so it has to reach its neighbour. It is square because
+ *  the surface bends the same amount in both directions, and a landscape cell
+ *  made the columns read as stripes rather than as a lattice. The other two
+ *  shapes belong to the list view and the home row, where a card really is a
+ *  single object with room around it. */
 export const CARD_SHAPES = {
-  wide: { width: 1200, height: 690 },
-  portrait: { width: 900, height: 768 },
+  wide: { width: 1200, height: 690, pad: 96 },
+  portrait: { width: 900, height: 768, pad: 72 },
+  cell: { width: 1000, height: 1000, pad: 0 },
 } as const;
 
 export type CardShape = keyof typeof CARD_SHAPES;
 
-/** Margin left around the card for its glow to fall into, in the wide card's
- *  units. A texture is clipped at its own edge, so without this the glow would
- *  be cut off square exactly where it should be softest. */
-const GLOW_PAD = 96;
-
-/** The full texture for a shape: the card plus the margin on all four sides.
- *  The plane is scaled to this, and the card is what a visitor sees inside it. */
+/** The full texture for a shape: the card plus its margin on all four sides.
+ *  For a grid cell the two are the same rectangle. */
 export function textureSizeFor(shape: CardShape) {
-  const card = CARD_SHAPES[shape];
-  const scale = card.width / CARD_SHAPES.wide.width;
-  const pad = Math.round(GLOW_PAD * scale);
-  return { width: card.width + pad * 2, height: card.height + pad * 2, pad };
+  const { width, height, pad } = CARD_SHAPES[shape];
+  return { width: width + pad * 2, height: height + pad * 2, pad };
 }
 
 /** Derives a short monogram from the title, matching ProjectThumbnail's own
@@ -192,6 +197,13 @@ export function drawCard({
   // in the card's own coordinates, so the origin moves once here.
   context.translate(texture.pad, texture.pad);
 
+  /** A cell of the grid's surface, rather than a card lying on top of one.
+   *  It has no glow to bleed and no rounding, because its edges are the
+   *  lattice's own lines and a rounded corner would leave four holes wherever
+   *  four cells meet. */
+  const membrane = texture.pad === 0;
+  const radius = membrane ? 0 : 28 * scale;
+
   const pad = Math.round(44 * scale);
   const headerHeight = Math.round(150 * scale);
   const stripHeight = Math.round(190 * scale);
@@ -199,22 +211,25 @@ export function drawCard({
   const imageTop = headerHeight;
   const imageHeight = textureHeight - headerHeight - stripHeight;
 
-  // The projects grid carries the same two: a wide soft glow in the origin's
-  // colour, and a tight ring that still reads as an edge when the card is
-  // small. Painted before anything else so they sit under the card.
-  context.save();
-  context.shadowColor = withAlpha(originColour, 0.3);
-  context.shadowBlur = 40 * scale * 1.46;
-  context.fillStyle = "#050505";
-  roundedRect(context, 0, 0, textureWidth, textureHeight, 28 * scale);
-  context.fill();
-  context.shadowColor = withAlpha(originColour, 0.22);
-  context.shadowBlur = 2 * scale;
-  context.fill();
-  context.restore();
+  // A wide soft glow in the origin's colour and a tight ring that still reads
+  // as an edge when the card is small. Painted before anything else so they sit
+  // under the card. A cell has neither: there is no margin for a glow to fall
+  // into, and its neighbour is where the glow would have gone.
+  if (!membrane) {
+    context.save();
+    context.shadowColor = withAlpha(originColour, 0.3);
+    context.shadowBlur = 40 * scale * 1.46;
+    context.fillStyle = "#050505";
+    roundedRect(context, 0, 0, textureWidth, textureHeight, radius);
+    context.fill();
+    context.shadowColor = withAlpha(originColour, 0.22);
+    context.shadowBlur = 2 * scale;
+    context.fill();
+    context.restore();
+  }
 
   context.fillStyle = "#050505";
-  roundedRect(context, 0, 0, textureWidth, textureHeight, 28 * scale);
+  roundedRect(context, 0, 0, textureWidth, textureHeight, radius);
   context.fill();
 
   // Project name, top-left, as drawn in the layout sketch.
@@ -262,10 +277,24 @@ export function drawCard({
     iconX += iconSize + Math.round(26 * scale);
   }
 
-  // The grid borders its cards in the origin's colour too, so a white edge
-  // against a green or orange glow would read as two different systems.
-  context.strokeStyle = withAlpha(originColour, 0.35);
-  roundedRect(context, 0.5, 0.5, textureWidth - 1, textureHeight - 1, 28 * scale);
+  // The edge, in the origin's colour, so a white border against a green or
+  // orange glow does not read as two different systems.
+  //
+  // On a cell this line is doing a second job: it is the lattice itself, the
+  // only thing drawing the grid's shape as the surface bends. That is why it is
+  // heavier and brighter here than on a card, where a glow is already marking
+  // the edge and the line only has to be the last of it.
+  const edge = membrane ? 3 * scale : 1;
+  context.lineWidth = edge;
+  context.strokeStyle = withAlpha(originColour, membrane ? 0.55 : 0.35);
+  roundedRect(
+    context,
+    edge / 2,
+    edge / 2,
+    textureWidth - edge,
+    textureHeight - edge,
+    radius,
+  );
   context.stroke();
 
   return canvas;
