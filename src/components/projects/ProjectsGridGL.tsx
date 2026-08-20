@@ -17,14 +17,13 @@ import {
   REST_CURVATURE,
   cellFocus,
   curvatureFor,
+  curvatureUnit,
   domeHeight,
   leanFor,
   nearestCell,
   pitchFor,
   projectIndexFor,
   radiusLimitFor,
-  reachFromCurvature,
-  sizeAt,
   surfacePoint,
 } from "./grid-sphere";
 import { CARD_SHAPES, drawCard, textureSizeFor } from "./stack-card";
@@ -66,21 +65,28 @@ const CULL_SLACK = 1.4;
 /** How long after a drag a click is treated as that drag's own leftover. */
 const CLICK_AFTER_DRAG_MS = 400;
 
-/** How wide a card is, against the viewport. A phone gets proportionally more
- *  of the screen than a desktop does but not as much as it once did — at 0.52
- *  two cards filled a phone and the field stopped reading as a field. */
+/** How wide a cell is, against the viewport.
+ *
+ *  Small enough that the field is something you stand back from: six or so
+ *  across a desktop, five across a phone, with more of the surface's shape on
+ *  screen than any one cell. A phone gives each cell proportionally more of its
+ *  width, since a desktop's share of 390px would not carry a title.
+ *
+ *  Measured on the flat lattice, before the surface has done anything to it.
+ *  The field is concave, so the cells that reach the edges of the screen are
+ *  the ones wrapped towards the camera, and they are drawn larger than this. */
 function cardWidthFor(viewportWidth: number, narrow: boolean) {
-  // A phone sees the sphere by standing further back rather than by the camera
-  // moving, which amounts to the same thing: smaller cards, more of them, and
-  // enough of the field on screen for the curve to be a shape rather than a
-  // slight tilt on the three cards that fit.
-  return Math.min(viewportWidth * (narrow ? 0.3 : 0.26), 360);
+  return Math.min(viewportWidth * (narrow ? 0.2 : 0.14), 280);
 }
 
-/** Pixels drawn per layout unit in the card textures. A grid card is about a
- *  third of the width the layout is written against, so drawing them at full
- *  size cost roughly 54MB across eleven projects for detail never sampled. */
-const TEXTURE_RESOLUTION = 0.5;
+/** Pixels drawn per layout unit in the card textures. Drawing them at full size
+ *  cost roughly 54MB across eleven projects for detail never sampled.
+ *
+ *  It was 0.5 while a cell was a quarter of the screen and half of them were
+ *  scaled down again on top of that. A cell is now up to 560px wide and never
+ *  shrunk by anything but distance, so at 0.5 the titles went soft on a retina
+ *  screen. 0.7 is 700px of texture for 560 of card, which covers it. */
+const TEXTURE_RESOLUTION = 0.7;
 
 /** What a second of easing leaves of the gap between the curvature being drawn
  *  and the one the current speed asks for.
@@ -165,13 +171,6 @@ function svgToImage(svg: SVGElement) {
   return loadImage(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(markup)}`);
 }
 
-/** What each outline colour means, in the order the legend reads. */
-const ORIGINS: { origin: ProjectOrigin; label: string }[] = [
-  { origin: "work", label: "Built in a role" },
-  { origin: "selected", label: "Built for myself" },
-  { origin: "personal", label: "Built for myself, not listed" },
-];
-
 const HINT_STORAGE_KEY = "projects-grid-hint";
 const HINT_DELAY_MS = 900;
 const HINT_DURATION_MS = 9000;
@@ -183,7 +182,9 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
   const router = useRouter();
   const reduceMotion = useReducedMotion();
   const narrow = useMediaQuery("(max-width: 639px)");
-  const shape = narrow ? "portrait" : "wide";
+  // One shape at both breakpoints: the cells are square, so a phone and a
+  // desktop differ only in how much of the screen one of them takes.
+  const shape = "cell" as const;
   const inputMode = useInputMode();
   const { generation, watchContext, releaseContext } = useGlRecovery();
 
@@ -322,6 +323,9 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
       let planeWidth = 0;
       let planeHeight = 0;
       let pitch = { x: 0, y: 0 };
+      /** What one unit of sag is worth as a curvature on this screen. Depends
+       *  on the viewport, so it is worked out wherever the viewport is. */
+      let curvatureScale = 0;
 
       const buildSlots = (count: number) => {
         for (const slot of slots) {
@@ -357,6 +361,9 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
         renderer.setSize(width, height);
         camera.perspective({ aspect: width / height });
         camera.position.z = height / (2 * Math.tan((45 * Math.PI) / 360));
+        // The bow is written as a share of the screen, so it is re-derived
+        // whenever the screen changes rather than being a fixed 1/px.
+        curvatureScale = curvatureUnit(camera.position.z, Math.hypot(width, height) / 2);
 
         const card = CARD_SHAPES[shape];
         const aspect = card.height / card.width;
@@ -381,14 +388,14 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
 
       /** How curved the surface is being drawn right now, eased towards what
        *  the current speed asks for. */
-      let curvature = REST_CURVATURE;
+      let curvature = REST_CURVATURE(curvatureScale);
       let lean: Vec = { x: 0, y: 0 };
       /** The shape a finger still on the screen is holding. A drag that pauses
        *  is still a drag — the field should stay where it has been pulled to
        *  rather than relaxing back out from under a stationary fingertip — so
        *  while the pointer is down these only ever move further from rest, and
        *  are let go of on release. */
-      let heldCurvature = REST_CURVATURE;
+      let heldCurvature = REST_CURVATURE(curvatureScale);
       let heldLean: Vec = { x: 0, y: 0 };
       /** Frames drawn since the scene last changed. The old grid's loop
        *  returned early when idle; without this the GPU redraws a still field
@@ -405,13 +412,17 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
 
         const ease = 1 - CURVATURE_SETTLE_PER_SECOND ** elapsed;
         const speed = Math.hypot(velocity.current.x, velocity.current.y);
-        const fromSpeed = reduceMotion ? REST_CURVATURE : curvatureFor(speed);
+        const fromSpeed = reduceMotion
+            ? REST_CURVATURE(curvatureScale)
+            : curvatureFor(speed, curvatureScale);
         const leanFromSpeed = reduceMotion ? { x: 0, y: 0 } : leanFor(velocity.current);
 
         if (dragging.current) {
-          // Further from rest is a smaller number, the resting shape being the
-          // most positive curvature there is, so the held shape is the minimum.
-          if (fromSpeed < heldCurvature) heldCurvature = fromSpeed;
+          // Further from rest is a larger number, the resting shape being the
+          // most negative curvature there is — the field is concave throughout
+          // and moving only ever flattens it towards zero. So the held shape is
+          // the maximum. This was the minimum while the surface rested convex.
+          if (fromSpeed > heldCurvature) heldCurvature = fromSpeed;
           // The lean is only taken while there is a direction to take it from;
           // a paused finger would otherwise slide the peak back to the middle
           // and move the field it is holding still.
@@ -446,8 +457,6 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
 
         const radiusLimit = radiusLimitFor(curvature, camera.position.z);
         // The rim of the field, for grading the card sizes across it.
-        const falloffSpan = Math.hypot(stage.clientWidth, stage.clientHeight) / 2;
-        const reach = reachFromCurvature(curvature);
         const halfWidth = stage.clientWidth / 2 + planeWidth * CULL_SLACK;
         const halfHeight = stage.clientHeight / 2 + planeHeight * CULL_SLACK;
 
@@ -482,15 +491,14 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
               flat.y,
               domeHeight(centreX, centreY, curvature, radiusLimit),
             );
-            const size = sizeAt(Math.hypot(centreX, centreY), falloffSpan, reach);
-            slot.mesh.scale.set(planeWidth * size, planeHeight * size, 1);
+            // Full size, always. A cell shares its edges with its neighbours,
+            // so scaling one and not the other would tear the surface open
+            // along every seam. Distance does the shrinking.
+            slot.mesh.scale.set(planeWidth, planeHeight, 1);
 
             const uniforms = slot.program.uniforms;
             (uniforms.uCardCentre.value as Float32Array).set([centreX, centreY]);
-            (uniforms.uSize.value as Float32Array).set([
-              planeWidth * size,
-              planeHeight * size,
-            ]);
+            (uniforms.uSize.value as Float32Array).set([planeWidth, planeHeight]);
             uniforms.uCurvature.value = curvature;
             uniforms.uRadiusLimit.value = radiusLimit;
             uniforms.tMap.value = textures[projectIndexFor(cell, entries.length)];
@@ -720,27 +728,8 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
 
   const focused = entries[projectIndexFor(focusedCell, entries.length)];
 
-  // Only key what is actually on the grid. Every project today is either work
-  // or selected, and a key entry for a colour nobody can find is a puzzle
-  // rather than an explanation.
-  const present = new Set(entries.map((entry) => entry.origin));
-  const shownOrigins = ORIGINS.filter((entry) => present.has(entry.origin));
-
   return (
     <>
-      <h1 className={styles.heading}>Projects</h1>
-
-      <div className={styles.legend}>
-        <ul className={styles.legendList}>
-          {shownOrigins.map((entry) => (
-            <li key={entry.origin} className={styles.legendItem}>
-              <span className={styles.legendSwatch} data-origin={entry.origin} aria-hidden="true" />
-              {entry.label}
-            </li>
-          ))}
-        </ul>
-      </div>
-
       <div
         ref={stageRef}
         className={styles.stage}
@@ -761,6 +750,11 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
             real markup. The brand marks and the origin colours above are read
             back out of this subtree to build the textures. */}
         <div ref={iconSourceRef} className="sr-only">
+          {/* The page's heading. It is not drawn: the surface reaches every
+              edge of the screen, and a fixed title sitting on top of it was
+              one more thing between the visitor and the field. Anyone reading
+              the page rather than looking at it still gets it. */}
+          <h1>Projects</h1>
           {(["work", "selected", "personal"] as const).map((origin) => (
             <span
               key={origin}
