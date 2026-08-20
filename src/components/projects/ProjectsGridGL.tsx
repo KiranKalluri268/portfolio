@@ -16,6 +16,7 @@ import type { ProjectContent, SkillContent } from "@/lib/content/types";
 import {
   type Cell,
   type Vec,
+  FULL_CURVATURE_SPEED,
   REST_CURVATURE,
   cellFocus,
   curvatureFor,
@@ -67,18 +68,35 @@ const CULL_SLACK = 1.4;
 /** How long after a drag a click is treated as that drag's own leftover. */
 const CLICK_AFTER_DRAG_MS = 400;
 
+/** How much further a scroll carries the field than the gesture itself. The
+ *  list view multiplies its own gesture the same way and for the same reason:
+ *  the field is the only thing moving on this view, so a scroll may as well
+ *  cover ground rather than being spent one screen at a time. The drag is left
+ *  alone — a finger on the glass is holding the surface, and a surface that
+ *  travelled twice as far as the finger would not be held at all. */
+const WHEEL_MULTIPLIER = 2;
+
+/** How far the middle of a cell leads its edges at full speed, as a fraction of
+ *  the cell. The list view's cards bow by the same amount as they travel; this
+ *  is that bow, turned so it follows a field that can move in any direction.
+ *
+ *  Proportional to speed, so a field at rest is perfectly flat and the bow is
+ *  something the motion does rather than something the cells are. */
+const MAX_BULGE = 0.1;
+
 /** How wide a cell is, against the viewport.
  *
  *  Small enough that the field is something you stand back from: six or so
- *  across a desktop, five across a phone, with more of the surface's shape on
- *  screen than any one cell. A phone gives each cell proportionally more of its
- *  width, since a desktop's share of 390px would not carry a title.
+ *  across a desktop, with more of the surface's shape on screen than any one
+ *  cell. A phone takes a much larger share — three across rather than six —
+ *  because a desktop's 14% of 390px is a chip rather than a card, and the
+ *  screen is tall enough to show the surface bending down it regardless.
  *
  *  Measured on the flat lattice, before the surface has done anything to it.
  *  The field is concave, so the cells that reach the edges of the screen are
  *  the ones wrapped towards the camera, and they are drawn larger than this. */
 function cardWidthFor(viewportWidth: number, narrow: boolean) {
-  return Math.min(viewportWidth * (narrow ? 0.2 : 0.14), 280);
+  return Math.min(viewportWidth * (narrow ? 0.3 : 0.14), 280);
 }
 
 /** Pixels drawn per layout unit in the card textures. Drawing them at full size
@@ -118,6 +136,10 @@ const VERTEX_SHADER = /* glsl */ `
   uniform vec2 uSize;
   uniform float uCurvature;
   uniform float uRadiusLimit;
+  /** Which way the field is travelling across the screen and how hard, as one
+   *  vector: its direction is the travel, its length is how far the middle of a
+   *  cell leads its edges, in fractions of a cell. */
+  uniform vec2 uBulge;
 
   varying vec2 vUv;
 
@@ -130,11 +152,33 @@ const VERTEX_SHADER = /* glsl */ `
 
   void main() {
     vUv = uv;
-    vec2 field = uCardCentre + position.xy * uSize;
+
+    vec2 local = position.xy;
+    float amount = length(uBulge);
+    if (amount > 0.0001) {
+      vec2 dir = uBulge / amount;
+      // Across the travel rather than along it, so the bow spans the cell from
+      // one side to the other whichever way the field happens to be moving.
+      vec2 across = vec2(-dir.y, dir.x);
+      // Clamped because a square measured along a diagonal axis runs past its
+      // own width at the corners, and an unclamped sine would turn back on
+      // itself there and pull the corner the wrong way.
+      float t = clamp(dot(position.xy, across) + 0.5, 0.0, 1.0);
+      // Zero at the two edges parallel to the travel, greatest down the middle:
+      // the cell's centre leads and its sides trail.
+      //
+      // This is what keeps the surface sealed while it bows. Both cells either
+      // side of a seam evaluate the same function of the same across-coordinate
+      // with the same direction and the same amount, so a shared edge is
+      // displaced by one vector rather than two, and the cells stay welded.
+      local += dir * sin(t * 3.14159265) * amount;
+    }
+
+    vec2 field = uCardCentre + local * uSize;
     // Relative to the card's own centre, which the model matrix has already
     // placed along z so the renderer can still sort the cards by depth.
     float z = domeHeight(field) - domeHeight(uCardCentre);
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position.x, position.y, z, 1.0);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(local.x, local.y, z, 1.0);
   }
 `;
 
@@ -328,10 +372,16 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
       const textures = canvases.map(
         (image) => new Texture(gl, { image, generateMipmaps: false }),
       );
-      // Enough segments for the card to bend with the surface rather than
-      // facet it. The grid draws far more cards than the list view, so this is
-      // the one number to reach for first if an old phone struggles.
-      const geometry = new Plane(gl, { widthSegments: 8, heightSegments: 8 });
+      // Enough segments for the cell to bend with the surface rather than facet
+      // it, and for its own bow to read as a curve rather than a crease. Square
+      // because the bow follows the travel, which can lie along either axis or
+      // anywhere between — the list view can afford 48 segments one way and 8
+      // the other only because its cards move in one direction.
+      //
+      // The grid draws far more cards than the list view, so this is still the
+      // one number to reach for first if an old phone struggles. It was 8 while
+      // nothing displaced a cell in its own plane.
+      const geometry = new Plane(gl, { widthSegments: 16, heightSegments: 16 });
 
       /** A mesh per slot in the window, reused as the window moves — the cell a
        *  slot shows changes, the mesh does not. */
@@ -367,6 +417,7 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
               uSize: { value: new Float32Array(2) },
               uCurvature: { value: 0 },
               uRadiusLimit: { value: Number.MAX_VALUE },
+              uBulge: { value: new Float32Array(2) },
             },
             transparent: true,
             depthTest: false,
@@ -414,6 +465,11 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
        *  the current speed asks for. */
       let curvature = REST_CURVATURE(curvatureScale);
       let lean: Vec = { x: 0, y: 0 };
+      /** The bow being drawn right now, as one vector rather than a direction
+       *  and a strength kept apart — eased as a vector, the two can never
+       *  disagree, and a field that turns a corner swings its bow round with it
+       *  instead of collapsing through flat on the way. */
+      let bulge: Vec = { x: 0, y: 0 };
       /** The shape a finger still on the screen is holding. A drag that pauses
        *  is still a drag — the field should stay where it has been pulled to
        *  rather than relaxing back out from under a stationary fingertip — so
@@ -464,8 +520,27 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
           heldLean = leanFromSpeed;
         }
 
+        // Which way the cells are travelling across the screen, which is not
+        // the way the focus is moving: dragging the field left walks the focus
+        // right. The y axis already carries that inversion in `surfacePoint`,
+        // so only x is turned around here.
+        const onScreen = { x: -drift.x, y: drift.y };
+        const travel = Math.hypot(onScreen.x, onScreen.y);
+        const bowing = reduceMotion || travel <= STILL ? 0 : Math.min(1, travel / FULL_CURVATURE_SPEED);
+        const wantedBulge =
+          bowing === 0
+            ? { x: 0, y: 0 }
+            : {
+                x: (onScreen.x / travel) * bowing * MAX_BULGE,
+                y: (onScreen.y / travel) * bowing * MAX_BULGE,
+              };
+
         const wanted = heldCurvature;
         const wantedLean = heldLean;
+        bulge = {
+          x: bulge.x + (wantedBulge.x - bulge.x) * ease,
+          y: bulge.y + (wantedBulge.y - bulge.y) * ease,
+        };
         curvature += (wanted - curvature) * ease;
         lean = {
           x: lean.x + (wantedLean.x - lean.x) * ease,
@@ -478,7 +553,11 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
         const settling =
           Math.abs(curvature - wanted) > 1e-7 ||
           Math.abs(lean.x - wantedLean.x) > 1e-4 ||
-          Math.abs(lean.y - wantedLean.y) > 1e-4;
+          Math.abs(lean.y - wantedLean.y) > 1e-4 ||
+          // The bow has to be allowed to relax on screen as well; without this
+          // the loop would stop drawing while the cells were still bent.
+          Math.abs(bulge.x - wantedBulge.x) > 1e-5 ||
+          Math.abs(bulge.y - wantedBulge.y) > 1e-5;
         if (moving || settling) {
           settledFrames = 0;
         } else {
@@ -534,6 +613,7 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
             (uniforms.uSize.value as Float32Array).set([planeWidth, planeHeight]);
             uniforms.uCurvature.value = curvature;
             uniforms.uRadiusLimit.value = radiusLimit;
+            (uniforms.uBulge.value as Float32Array).set([bulge.x, bulge.y]);
             uniforms.tMap.value = textures[projectIndexFor(cell, entries.length)];
           }
         }
@@ -704,8 +784,8 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
         // Unlike a drag, a scroll is not carrying the field around under a
         // fingertip: scrolling down goes down the field, the way the down arrow
         // does, so the delta is taken as it comes rather than inverted.
-        const dx = self.deltaX * perPixel.x;
-        const dy = self.deltaY * perPixel.y;
+        const dx = self.deltaX * perPixel.x * WHEEL_MULTIPLIER;
+        const dy = self.deltaY * perPixel.y * WHEEL_MULTIPLIER;
         focus.current = { x: focus.current.x + dx, y: focus.current.y + dy };
         // An arrow key's journey is abandoned the moment a scroll starts, the
         // same as a drag abandons it.
