@@ -1,5 +1,7 @@
 "use client";
 
+import gsap from "gsap";
+import { Observer } from "gsap/dist/Observer";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Camera, Mesh, Plane, Program, Renderer, Texture, Transform } from "ogl";
@@ -190,6 +192,28 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
 
   const focus = useRef<Vec>({ x: 0, y: 0 });
   const velocity = useRef<Vec>({ x: 0, y: 0 });
+  /** How fast the wheel is turning the field, in cells per second.
+   *
+   * Held apart from the drag's velocity because the two are spent differently.
+   * A flick's velocity is handed to the coasting integrator and carries the
+   * field on after the finger lifts. A wheel's is not: a precision trackpad
+   * keeps sending its own decaying deltas once the fingers leave the glass, so
+   * coasting on top of that would drift further than anyone asked for, and a
+   * mouse wheel should stop when it stops.
+   *
+   * It exists only so the surface flexes while a scroll is happening. The
+   * curvature is read from speed, and without this the field would sit at its
+   * full resting wrap through an entire trackpad swipe while a drag of the same
+   * distance eased it out. */
+  const wheelVelocity = useRef<Vec>({ x: 0, y: 0 });
+  /** When the last wheel event arrived, for turning its delta into a speed. */
+  const wheelAt = useRef(0);
+  /** Set when something has moved the field outside the animation loop, so the
+   *  loop knows one more frame is owed even if nothing is in motion. A slow
+   *  scroll moves the focus by less per event than `STILL` reads as movement,
+   *  and without this the frame showing where it moved to would be skipped as
+   *  an idle redraw. */
+  const dirty = useRef(false);
   const dragging = useRef(false);
   const target = useRef<Vec | null>(null);
   /** The cell under the middle of the screen, for the live region and for what
@@ -411,11 +435,19 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
         }
 
         const ease = 1 - CURVATURE_SETTLE_PER_SECOND ** elapsed;
-        const speed = Math.hypot(velocity.current.x, velocity.current.y);
+        // What the shape is made of: the drag's velocity and the wheel's added
+        // together. Only one of the two is ever non-zero in practice, but they
+        // are summed rather than chosen between so that a wheel arriving during
+        // a coast is not silently ignored.
+        const drift = {
+          x: velocity.current.x + wheelVelocity.current.x,
+          y: velocity.current.y + wheelVelocity.current.y,
+        };
+        const speed = Math.hypot(drift.x, drift.y);
         const fromSpeed = reduceMotion
             ? REST_CURVATURE(curvatureScale)
             : curvatureFor(speed, curvatureScale);
-        const leanFromSpeed = reduceMotion ? { x: 0, y: 0 } : leanFor(velocity.current);
+        const leanFromSpeed = reduceMotion ? { x: 0, y: 0 } : leanFor(drift);
 
         if (dragging.current) {
           // Further from rest is a larger number, the resting shape being the
@@ -441,7 +473,8 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
         };
 
         const moving =
-          dragging.current || speed > STILL || target.current !== null;
+          dragging.current || speed > STILL || target.current !== null || dirty.current;
+        dirty.current = false;
         const settling =
           Math.abs(curvature - wanted) > 1e-7 ||
           Math.abs(lean.x - wantedLean.x) > 1e-4 ||
@@ -522,6 +555,22 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
         // Every GL call into a lost context is ignored, so this is about not
         // spending the frame's work to be ignored.
         if (contextLost) return;
+
+        // The wheel's speed decays but never moves anything: the field has
+        // already been moved, event by event, by however far the wheel turned.
+        // This is only the surface relaxing once a scroll stops.
+        const wheelSpeed = Math.hypot(wheelVelocity.current.x, wheelVelocity.current.y);
+        if (wheelSpeed > 0) {
+          if (wheelSpeed <= STILL) {
+            wheelVelocity.current = { x: 0, y: 0 };
+          } else {
+            const decay = FRICTION_PER_SECOND ** elapsed;
+            wheelVelocity.current = {
+              x: wheelVelocity.current.x * decay,
+              y: wheelVelocity.current.y * decay,
+            };
+          }
+        }
 
         if (!dragging.current) {
           const speed = Math.hypot(velocity.current.x, velocity.current.y);
@@ -613,7 +662,7 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
   const lastMove = useRef<{ x: number; y: number; time: number } | null>(null);
   const suppressClickUntil = useRef(0);
 
-  const cellsPerPixel = () => {
+  const cellsPerPixel = useCallback(() => {
     const stage = stageRef.current;
     if (!stage) return { x: 0, y: 0 };
     // One card width of finger travel moves the grid by about one cell, so
@@ -624,7 +673,58 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
     const height = width * (CARD_SHAPES[shape].height / CARD_SHAPES[shape].width);
     const spacing = pitchFor(width, height, narrow);
     return { x: 1 / spacing.x, y: 1 / spacing.y };
-  };
+  }, [narrow, shape]);
+
+  // Scrolling moves the field, in whatever direction the scroll went. A
+  // trackpad reports both axes, so a two-finger swipe wanders the grid the same
+  // way a finger does on glass; a mouse wheel reports only the vertical one,
+  // which is what a mouse wheel means anyway.
+  //
+  // Wheel only. The drag, the tap and the flick are handled by the pointer
+  // events below and Observer must not have a second opinion about any of them.
+  //
+  // Observer rather than a plain listener for the delta normalisation: a wheel
+  // event can be measured in pixels, in lines or in pages, and Firefox reports
+  // a mouse wheel in lines. Read raw, the field would move about a fortieth as
+  // far there as everywhere else.
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    gsap.registerPlugin(Observer);
+    const observer = Observer.create({
+      target: stage,
+      type: "wheel",
+      // The page does not scroll under this view, and the field owns every
+      // direction — the same reason the stage sets `touch-action: none`.
+      preventDefault: true,
+      onChange: (self) => {
+        const perPixel = cellsPerPixel();
+        if (perPixel.x === 0) return;
+        dismissHint();
+        // Unlike a drag, a scroll is not carrying the field around under a
+        // fingertip: scrolling down goes down the field, the way the down arrow
+        // does, so the delta is taken as it comes rather than inverted.
+        const dx = self.deltaX * perPixel.x;
+        const dy = self.deltaY * perPixel.y;
+        focus.current = { x: focus.current.x + dx, y: focus.current.y + dy };
+        // An arrow key's journey is abandoned the moment a scroll starts, the
+        // same as a drag abandons it.
+        target.current = null;
+        dirty.current = true;
+
+        const now = performance.now();
+        // Clamped: the gap before the first event of a gesture is however long
+        // the visitor was reading the page for, and dividing by it would report
+        // a speed of nothing at all.
+        const elapsed = Math.min(120, Math.max(8, now - wheelAt.current));
+        wheelAt.current = now;
+        wheelVelocity.current = reduceMotion
+          ? { x: 0, y: 0 }
+          : { x: (dx / elapsed) * 1000, y: (dy / elapsed) * 1000 };
+      },
+    });
+    return () => observer.kill();
+  }, [cellsPerPixel, dismissHint, reduceMotion]);
 
   const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return;
