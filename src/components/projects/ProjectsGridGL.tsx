@@ -76,13 +76,17 @@ const CLICK_AFTER_DRAG_MS = 400;
  *  travelled twice as far as the finger would not be held at all. */
 const WHEEL_MULTIPLIER = 2;
 
-/** How far the middle of a cell leads its edges at full speed, as a fraction of
- *  the cell. The list view's cards bow by the same amount as they travel; this
- *  is that bow, turned so it follows a field that can move in any direction.
+/** How far the middle of the screen lags the edges at full speed, in cells.
  *
- *  Proportional to speed, so a field at rest is perfectly flat and the bow is
- *  something the motion does rather than something the cells are. */
-const MAX_BULGE = 0.1;
+ *  The lattice stretches like a sheet held at its edges: pulled from one side,
+ *  the middle trails and the seams crossing the direction of travel bow. This
+ *  is the whole field flexing as one elastic thing rather than each cell
+ *  bending inside its own borders — the seams have to curve, or it reads as a
+ *  mosaic rippling rather than a sheet stretching.
+ *
+ *  Proportional to speed, so a field at rest is perfectly square and the bend
+ *  is something the motion does rather than something the lattice is. */
+const MAX_DRAG_CELLS = 0.55;
 
 /** How wide a cell is, against the viewport.
  *
@@ -136,10 +140,16 @@ const VERTEX_SHADER = /* glsl */ `
   uniform vec2 uSize;
   uniform float uCurvature;
   uniform float uRadiusLimit;
-  /** Which way the field is travelling across the screen and how hard, as one
-   *  vector: its direction is the travel, its length is how far the middle of a
-   *  cell leads its edges, in fractions of a cell. */
-  uniform vec2 uBulge;
+  /** Which way the sheet is being dragged and how far, in pixels: the direction
+   *  is where the middle of the screen is pulled, the length is how far. */
+  uniform vec2 uDrag;
+  /** Half the screen, measured across the drag, so the pull can fall to nothing
+   *  exactly at the edges rather than at some arbitrary distance. */
+  uniform float uDragSpan;
+  /** Where the middle of the screen sits in field coordinates. The field is
+   *  measured from the dome's peak, and the peak leans away from the travel, so
+   *  the two are not the same point. */
+  uniform vec2 uPeak;
 
   varying vec2 vUv;
 
@@ -150,31 +160,42 @@ const VERTEX_SHADER = /* glsl */ `
     return -dot(c, c) * uCurvature * 0.5;
   }
 
+  /** How far the sheet has been pulled at a point, in pixels.
+   *
+   * This is the whole lattice stretching, not each cell bending inside its own
+   * borders: the pull is a function of where a vertex lands on the *screen*,
+   * so the seams themselves curve and a cell is only ever carried along by the
+   * sheet it belongs to. Written per cell instead, the seams would stay
+   * straight and the cells would ripple between them, which is a mosaic
+   * flexing rather than a sheet stretching.
+   *
+   * It is also what keeps the surface sealed. Two cells meeting at a seam
+   * evaluate this at the same screen position and get the same answer, so the
+   * shared edge is pulled by one vector rather than two. */
+  vec2 dragAt(vec2 field) {
+    float amount = length(uDrag);
+    if (amount < 0.0001 || uDragSpan <= 0.0) return vec2(0.0);
+    vec2 dir = uDrag / amount;
+    // Across the drag: the axis the pull fades along. Along the drag itself the
+    // whole sheet moves together, which is what keeps the seams running that
+    // way straight while the ones crossing them bow.
+    vec2 across = vec2(-dir.y, dir.x);
+    float t = clamp(dot(field + uPeak, across) / uDragSpan, -1.0, 1.0);
+    // Full in the middle of the screen and nothing at either edge, so the sheet
+    // reads as held at its edges and lagging in the middle.
+    return dir * cos(t * 1.5707963) * amount;
+  }
+
   void main() {
     vUv = uv;
 
-    vec2 local = position.xy;
-    float amount = length(uBulge);
-    if (amount > 0.0001) {
-      vec2 dir = uBulge / amount;
-      // Across the travel rather than along it, so the bow spans the cell from
-      // one side to the other whichever way the field happens to be moving.
-      vec2 across = vec2(-dir.y, dir.x);
-      // Clamped because a square measured along a diagonal axis runs past its
-      // own width at the corners, and an unclamped sine would turn back on
-      // itself there and pull the corner the wrong way.
-      float t = clamp(dot(position.xy, across) + 0.5, 0.0, 1.0);
-      // Zero at the two edges parallel to the travel, greatest down the middle:
-      // the cell's centre leads and its sides trail.
-      //
-      // This is what keeps the surface sealed while it bows. Both cells either
-      // side of a seam evaluate the same function of the same across-coordinate
-      // with the same direction and the same amount, so a shared edge is
-      // displaced by one vector rather than two, and the cells stay welded.
-      local += dir * sin(t * 3.14159265) * amount;
-    }
+    // Where this vertex would sit with the sheet at rest.
+    vec2 rest = uCardCentre + position.xy * uSize;
+    vec2 pulled = dragAt(rest);
+    vec2 field = rest + pulled;
+    // Back into the cell's own units, which is what the model matrix expects.
+    vec2 local = position.xy + pulled / uSize;
 
-    vec2 field = uCardCentre + local * uSize;
     // Relative to the card's own centre, which the model matrix has already
     // placed along z so the renderer can still sort the cards by depth.
     float z = domeHeight(field) - domeHeight(uCardCentre);
@@ -373,15 +394,14 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
         (image) => new Texture(gl, { image, generateMipmaps: false }),
       );
       // Enough segments for the cell to bend with the surface rather than facet
-      // it, and for its own bow to read as a curve rather than a crease. Square
-      // because the bow follows the travel, which can lie along either axis or
-      // anywhere between — the list view can afford 48 segments one way and 8
-      // the other only because its cards move in one direction.
+      // it, and for a seam crossing the pull to read as a curve rather than a
+      // crease. Eight is enough for both because neither shape is a per-cell
+      // one: the dome and the pull are broad functions of the whole screen, so
+      // what any one cell sees of them is close to a straight line.
       //
-      // The grid draws far more cards than the list view, so this is still the
-      // one number to reach for first if an old phone struggles. It was 8 while
-      // nothing displaced a cell in its own plane.
-      const geometry = new Plane(gl, { widthSegments: 16, heightSegments: 16 });
+      // The grid draws far more cards than the list view, so this is the one
+      // number to reach for first if an old phone struggles.
+      const geometry = new Plane(gl, { widthSegments: 8, heightSegments: 8 });
 
       /** A mesh per slot in the window, reused as the window moves — the cell a
        *  slot shows changes, the mesh does not. */
@@ -417,7 +437,9 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
               uSize: { value: new Float32Array(2) },
               uCurvature: { value: 0 },
               uRadiusLimit: { value: Number.MAX_VALUE },
-              uBulge: { value: new Float32Array(2) },
+              uDrag: { value: new Float32Array(2) },
+              uDragSpan: { value: 0 },
+              uPeak: { value: new Float32Array(2) },
             },
             transparent: true,
             depthTest: false,
@@ -465,11 +487,11 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
        *  the current speed asks for. */
       let curvature = REST_CURVATURE(curvatureScale);
       let lean: Vec = { x: 0, y: 0 };
-      /** The bow being drawn right now, as one vector rather than a direction
-       *  and a strength kept apart — eased as a vector, the two can never
-       *  disagree, and a field that turns a corner swings its bow round with it
-       *  instead of collapsing through flat on the way. */
-      let bulge: Vec = { x: 0, y: 0 };
+      /** How far the sheet is pulled right now, in pixels, as one vector rather
+       *  than a direction and a strength kept apart — eased as a vector, the
+       *  two can never disagree, and a field that turns a corner swings the
+       *  pull round with it instead of collapsing through nothing on the way. */
+      let drag: Vec = { x: 0, y: 0 };
       /** The shape a finger still on the screen is holding. A drag that pauses
        *  is still a drag — the field should stay where it has been pulled to
        *  rather than relaxing back out from under a stationary fingertip — so
@@ -526,20 +548,25 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
         // so only x is turned around here.
         const onScreen = { x: -drift.x, y: drift.y };
         const travel = Math.hypot(onScreen.x, onScreen.y);
-        const bowing = reduceMotion || travel <= STILL ? 0 : Math.min(1, travel / FULL_CURVATURE_SPEED);
-        const wantedBulge =
-          bowing === 0
+        const pulling =
+          reduceMotion || travel <= STILL ? 0 : Math.min(1, travel / FULL_CURVATURE_SPEED);
+        // Against the travel, not with it. The sheet is held at the edges of
+        // the screen and the middle is what gives, so the middle falls behind
+        // — which is the direction a piece of elastic sags when it is dragged.
+        const reach = pulling * MAX_DRAG_CELLS * pitch.x;
+        const wantedDrag =
+          pulling === 0
             ? { x: 0, y: 0 }
             : {
-                x: (onScreen.x / travel) * bowing * MAX_BULGE,
-                y: (onScreen.y / travel) * bowing * MAX_BULGE,
+                x: (-onScreen.x / travel) * reach,
+                y: (-onScreen.y / travel) * reach,
               };
 
         const wanted = heldCurvature;
         const wantedLean = heldLean;
-        bulge = {
-          x: bulge.x + (wantedBulge.x - bulge.x) * ease,
-          y: bulge.y + (wantedBulge.y - bulge.y) * ease,
+        drag = {
+          x: drag.x + (wantedDrag.x - drag.x) * ease,
+          y: drag.y + (wantedDrag.y - drag.y) * ease,
         };
         curvature += (wanted - curvature) * ease;
         lean = {
@@ -554,10 +581,10 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
           Math.abs(curvature - wanted) > 1e-7 ||
           Math.abs(lean.x - wantedLean.x) > 1e-4 ||
           Math.abs(lean.y - wantedLean.y) > 1e-4 ||
-          // The bow has to be allowed to relax on screen as well; without this
-          // the loop would stop drawing while the cells were still bent.
-          Math.abs(bulge.x - wantedBulge.x) > 1e-5 ||
-          Math.abs(bulge.y - wantedBulge.y) > 1e-5;
+          // The pull has to be allowed to relax on screen as well; without this
+          // the loop would stop drawing while the sheet was still stretched.
+          Math.abs(drag.x - wantedDrag.x) > 0.01 ||
+          Math.abs(drag.y - wantedDrag.y) > 0.01;
         if (moving || settling) {
           settledFrames = 0;
         } else {
@@ -575,6 +602,18 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
         const centre = nearestCell(focus.current);
         // The dome's peak, in pixels from the middle of the screen.
         const peak = { x: lean.x * pitch.x, y: -lean.y * pitch.y };
+
+        // How far it is to the edge of the screen along the axis the pull fades
+        // across — the half-extent of the viewport rectangle in that direction.
+        // Taken from the screen rather than fixed, so the pull reaches nothing
+        // exactly at the edges whichever way the sheet is being dragged.
+        const pull = Math.hypot(drag.x, drag.y);
+        const dragSpan =
+          pull < 0.0001
+            ? 0
+            : (Math.abs(-drag.y / pull) * stage.clientWidth +
+                Math.abs(drag.x / pull) * stage.clientHeight) /
+              2;
 
         let index = 0;
         for (let dRow = -halfRows; dRow <= halfRows; dRow += 1) {
@@ -613,7 +652,9 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
             (uniforms.uSize.value as Float32Array).set([planeWidth, planeHeight]);
             uniforms.uCurvature.value = curvature;
             uniforms.uRadiusLimit.value = radiusLimit;
-            (uniforms.uBulge.value as Float32Array).set([bulge.x, bulge.y]);
+            (uniforms.uDrag.value as Float32Array).set([drag.x, drag.y]);
+            uniforms.uDragSpan.value = dragSpan;
+            (uniforms.uPeak.value as Float32Array).set([peak.x, peak.y]);
             uniforms.tMap.value = textures[projectIndexFor(cell, entries.length)];
           }
         }
