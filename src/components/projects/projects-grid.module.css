@@ -152,50 +152,10 @@
   color: #fff;
 }
 
-.heading {
-  position: fixed;
-  top: 4rem;
-  left: 1rem;
-  z-index: 900;
-  pointer-events: none;
-  font-size: 2rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1;
-  color: #fff;
-  /* The grid runs under it, so the type needs its own separation from whatever
-     card happens to be behind it. */
-  text-shadow: 0 2px 18px rgb(0 0 0 / 85%);
-}
-
-.legend {
-  position: fixed;
-  bottom: 1rem;
-  left: 1rem;
-  z-index: 900;
-  /* Reference only: it must never eat a drag that starts over it. */
-  pointer-events: none;
-  border-radius: 1rem;
-  border: 1px solid rgb(255 255 255 / 10%);
-  background: rgb(0 0 0 / 65%);
-  padding: 0.6rem 0.8rem;
-  backdrop-filter: blur(12px);
-}
-
-.legendList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-.legendItem {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  font-size: 0.75rem;
-  color: rgb(255 255 255 / 80%);
-}
-
+/* The one thing left of the legend. Nothing shows it any more — the swatches
+   are rendered off screen purely so the card textures can read an origin's
+   colour back out of the stylesheet, which is what keeps this file the only
+   place that decides what the colours mean. */
 .legendSwatch {
   height: 0.6rem;
   width: 0.6rem;
@@ -211,16 +171,6 @@
     left: 1.5rem;
   }
 
-  .heading {
-    top: 5rem;
-    left: 1.5rem;
-    font-size: 2.75rem;
-  }
-
-  .legend {
-    bottom: 1.5rem;
-    left: 1.5rem;
-  }
 }
 
 .liveRegion {
