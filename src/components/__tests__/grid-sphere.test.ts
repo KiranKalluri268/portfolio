@@ -3,18 +3,16 @@ import { describe, expect, it } from "vitest";
 import {
   MOVING_CURVATURE,
   REST_CURVATURE,
-  SIZE_LARGE,
-  SIZE_SMALL,
+  REST_SAG,
   cellFocus,
   curvatureFor,
+  curvatureUnit,
   domeHeight,
   latticePoint,
   nearestCell,
   pitchFor,
   projectIndexFor,
   radiusLimitFor,
-  reachFromCurvature,
-  sizeAt,
   visibleCells,
   zLimitFor,
 } from "../projects/grid-sphere";
@@ -54,108 +52,120 @@ describe("pitchFor", () => {
     expect(x - 360).toBeCloseTo(y - 207);
   });
 
-  it("keeps the rows spaced as they were and brings the columns in", () => {
-    const card = { width: 360, height: 207 };
-    const { x, y, gap } = pitchFor(card.width, card.height, false);
-    expect(gap).toBeCloseTo(card.height * 0.22);
-    expect(y).toBeCloseTo(card.height * 1.22);
-    expect(x).toBeLessThan(card.width * 1.22);
+  it("leaves a hairline between cells rather than a gutter", () => {
+    // The cells are the surface, not cards lying on it, so the gap is the width
+    // of the cut between them and nothing more. Anything wider and each cell
+    // reads as its own object floating on black, which is what this grid looked
+    // like before it was drawn as one membrane.
+    const { gap } = pitchFor(400, 400, false);
+    expect(gap).toBeGreaterThan(0);
+    expect(gap / 400).toBeLessThan(0.05);
   });
 
-  it("is tighter on a phone", () => {
-    expect(pitchFor(120, 69, true).gap).toBeLessThan(pitchFor(120, 69, false).gap);
+  it("spaces a phone the same way, only the cells being larger", () => {
+    // The gap used to be tighter on a phone to claw back space between cards.
+    // At a hairline there is nothing left to claw back.
+    expect(pitchFor(400, 400, true).gap).toBeCloseTo(pitchFor(400, 400, false).gap);
+  });
+
+  it("squares the lattice, so it bends the same across a row as down a column", () => {
+    const { x, y } = pitchFor(400, 400, false);
+    expect(x).toBeCloseTo(y);
+  });
+});
+
+describe("curvatureUnit", () => {
+  // A desktop and a phone, as the grid actually meets them: the camera stands
+  // back by half the viewport's height over the tangent of half its field of
+  // view, which is what ProjectsGridGL sets.
+  const cameraFor = (height: number) => height / (2 * Math.tan((45 * Math.PI) / 360));
+  const screens = [
+    { width: 1440, height: 900 },
+    { width: 390, height: 844 },
+  ];
+
+  it("bows every screen by the same share of its own depth", () => {
+    // The point of saying the shape as a sag rather than as a 1/px curvature.
+    // With a fixed curvature the same number wrapped a phone almost flat and
+    // curled a desktop into a ball.
+    for (const { width, height } of screens) {
+      const camera = cameraFor(height);
+      const halfDiagonal = Math.hypot(width, height) / 2;
+      const curvature = REST_CURVATURE(curvatureUnit(camera, halfDiagonal));
+      const sag = -domeHeight(halfDiagonal, 0, curvature, Number.MAX_VALUE);
+      expect(sag / camera).toBeCloseTo(REST_SAG, 6);
+      // Concave: the rim stands in front of the middle, not behind it.
+      expect(sag).toBeLessThan(0);
+    }
+  });
+
+  it("keeps the rim of the screen well inside the radius the surface stops curving at", () => {
+    // Past that radius the surface goes flat, and a flat annulus behind a
+    // curled ball is what the field looked like when the bow was too strong.
+    for (const { width, height } of screens) {
+      const camera = cameraFor(height);
+      const halfDiagonal = Math.hypot(width, height) / 2;
+      const unit = curvatureUnit(camera, halfDiagonal);
+      for (const curvature of [REST_CURVATURE(unit), MOVING_CURVATURE(unit)]) {
+        expect(radiusLimitFor(curvature, camera)).toBeGreaterThan(halfDiagonal);
+      }
+    }
   });
 });
 
 describe("curvatureFor", () => {
-  it("rests convex and turns concave at speed", () => {
-    expect(curvatureFor(0)).toBeCloseTo(REST_CURVATURE, 10);
-    expect(curvatureFor(1000)).toBeCloseTo(MOVING_CURVATURE, 10);
+  const unit = curvatureUnit(1086, 849);
+
+  it("rests at the full wrap and eases out at speed", () => {
+    expect(curvatureFor(0, unit)).toBeCloseTo(REST_CURVATURE(unit), 10);
+    expect(curvatureFor(1000, unit)).toBeCloseTo(MOVING_CURVATURE(unit), 10);
+    // Flatter at speed, which for a concave field means nearer zero.
+    expect(Math.abs(MOVING_CURVATURE(unit))).toBeLessThan(Math.abs(REST_CURVATURE(unit)));
   });
 
-  it("passes through flat rather than jumping between the two", () => {
-    // Somewhere in the middle the surface is momentarily a plane, which is what
-    // makes the inversion read as one movement.
+  it("stays concave at every speed rather than turning inside out", () => {
+    // The field used to rest convex and pass through flat into concave at
+    // speed, and the moment of inversion was a bigger event than a grid being
+    // dragged should produce. Nothing here may reach zero, let alone cross it.
     const speeds = Array.from({ length: 60 }, (_, i) => i * 0.2);
-    const curvatures = speeds.map(curvatureFor);
-    expect(Math.min(...curvatures.map(Math.abs))).toBeLessThan(REST_CURVATURE / 8);
-    expect(curvatures.some((c) => c > 0)).toBe(true);
-    expect(curvatures.some((c) => c < 0)).toBe(true);
+    for (const speed of speeds) {
+      expect(curvatureFor(speed, unit)).toBeLessThan(0);
+    }
   });
 
   it("never goes past the ceiling however hard it is thrown", () => {
-    expect(curvatureFor(1e6)).toBeCloseTo(MOVING_CURVATURE, 10);
-  });
-});
-
-describe("sizeAt", () => {
-  const span = 800;
-
-  it("puts the large card in the middle and the small one at the rim, at rest", () => {
-    expect(sizeAt(0, span, 0)).toBeCloseTo(SIZE_LARGE);
-    expect(sizeAt(span, span, 0)).toBeCloseTo(SIZE_SMALL);
-  });
-
-  it("swaps them outright at full speed", () => {
-    expect(sizeAt(0, span, 1)).toBeCloseTo(SIZE_SMALL);
-    expect(sizeAt(span, span, 1)).toBeCloseTo(SIZE_LARGE);
-  });
-
-  it("holds the two sizes as the only ones, whatever the reach", () => {
-    for (const reach of [0, 0.25, 0.5, 0.75, 1]) {
-      for (const radius of [0, 200, 500, span, span * 3]) {
-        const size = sizeAt(radius, span, reach);
-        expect(size).toBeGreaterThanOrEqual(SIZE_SMALL - 1e-9);
-        expect(size).toBeLessThanOrEqual(SIZE_LARGE + 1e-9);
-      }
-    }
-  });
-
-  it("stops growing past the rim rather than running away", () => {
-    expect(sizeAt(span * 5, span, 1)).toBeCloseTo(sizeAt(span, span, 1));
-  });
-});
-
-describe("reachFromCurvature", () => {
-  it("reads nothing at rest and everything at the moving curvature", () => {
-    expect(reachFromCurvature(REST_CURVATURE)).toBeCloseTo(0);
-    expect(reachFromCurvature(MOVING_CURVATURE)).toBeCloseTo(1);
-  });
-
-  it("is the inverse of curvatureFor, so the sizes cannot lead the shape", () => {
-    for (const speed of [0, 1, 2.5, 4, 6]) {
-      const expected = Math.min(1, speed / 6);
-      expect(reachFromCurvature(curvatureFor(speed))).toBeCloseTo(expected, 5);
-    }
+    expect(curvatureFor(1e6, unit)).toBeCloseTo(MOVING_CURVATURE(unit), 10);
   });
 });
 
 describe("domeHeight", () => {
   const limit = Number.MAX_VALUE;
+  const unit = curvatureUnit(1086, 849);
+  const rest = REST_CURVATURE(unit);
+  const moving = MOVING_CURVATURE(unit);
 
-  it("is zero at the peak and falls away when convex", () => {
-    expect(domeHeight(0, 0, REST_CURVATURE, limit)).toBeCloseTo(0, 10);
-    expect(domeHeight(300, 0, REST_CURVATURE, limit)).toBeLessThan(0);
+  it("is zero in the middle and wraps towards the camera from there", () => {
+    expect(domeHeight(0, 0, rest, limit)).toBeCloseTo(0, 10);
+    expect(domeHeight(300, 0, rest, limit)).toBeGreaterThan(0);
   });
 
-  it("comes towards the camera when concave", () => {
-    expect(domeHeight(300, 0, MOVING_CURVATURE, limit)).toBeGreaterThan(0);
+  it("wraps at the moving shape too, only less far", () => {
+    // Concave at both ends, so the surface never falls away from the camera.
+    expect(domeHeight(300, 0, moving, limit)).toBeGreaterThan(0);
+    expect(domeHeight(300, 0, moving, limit)).toBeLessThan(domeHeight(300, 0, rest, limit));
   });
 
   it("is flat when there is no curvature at all", () => {
     expect(domeHeight(900, 400, 0, limit)).toBeCloseTo(0, 10);
   });
 
-  it("stops curving past the radius limit rather than reaching the camera", () => {
-    // Left unbounded, a card at the corner of the screen would pass the lens
-    // and turn inside out.
+  it("stops curving past the radius limit rather than running away", () => {
     const camera = 1086;
-    const radius = radiusLimitFor(MOVING_CURVATURE, camera);
-    const atLimit = domeHeight(radius, 0, MOVING_CURVATURE, radius);
-    const wellPast = domeHeight(radius * 4, 0, MOVING_CURVATURE, radius);
+    const radius = radiusLimitFor(rest, camera);
+    const atLimit = domeHeight(radius, 0, rest, radius);
+    const wellPast = domeHeight(radius * 4, 0, rest, radius);
     expect(wellPast).toBeCloseTo(atLimit);
-    expect(Math.abs(atLimit)).toBeLessThanOrEqual(zLimitFor(MOVING_CURVATURE, camera) + 1e-6);
-    expect(Math.abs(atLimit)).toBeLessThan(camera);
+    expect(Math.abs(atLimit)).toBeLessThanOrEqual(zLimitFor(camera) + 1e-6);
   });
 });
 

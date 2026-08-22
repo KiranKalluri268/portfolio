@@ -50,3 +50,7 @@ ANIMATION_IMPLEMENTATION.md
 /playwright-report
 /blob-report
 /playwright/.cache
+
+# Design references — sketches and screenshots the work is checked against,
+# kept locally rather than shipped in the bundle.
+public/reference/
