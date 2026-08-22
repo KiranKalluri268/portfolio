@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import {
   useCallback,
@@ -21,6 +20,7 @@ import {
   type GraphEdge,
   type GraphNode,
 } from "./skill-web-layout";
+import { SkillMark } from "./skill-icons";
 import HintPill from "../hints/HintPill";
 import { useReducedMotion } from "@/hooks/useMediaQuery";
 import { useIdleHint, useInputMode } from "../hints/useIdleHint";
@@ -633,16 +633,16 @@ export default function SkillsWeb({
                 onBlur={() => setActiveNodeId(null)}
                 aria-label={`${node.label}: ${node.description}`}
               >
+                {/* The same mark the marquee, the project cards and the
+                    skill's own page render. Rendering the icon field directly
+                    here meant every node fell through to initials, because the
+                    brand marks are components and no content file names one. */}
                 <span
                   className="flex h-7 min-w-7 items-center justify-center overflow-hidden rounded-full text-[0.65rem] font-bold"
                   style={{ color: node.accent, backgroundColor: `${node.accent}18` }}
                   aria-hidden="true"
                 >
-                  {node.skill.icon ? (
-                    <Image src={node.skill.icon} alt="" width={24} height={24} className="h-6 w-6 object-contain" />
-                  ) : (
-                    node.skill.iconText ?? node.label.slice(0, 2)
-                  )}
+                  <SkillMark skill={node.skill} className="h-4 w-4" imageSize={24} />
                 </span>
                 <span className="truncate font-medium">{node.label}</span>
               </Link>
