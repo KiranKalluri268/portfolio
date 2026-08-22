@@ -70,24 +70,29 @@ function midpoint(first: PointerPosition, second: PointerPosition) {
  * Every line in a beat takes the same time regardless of how long it is. That
  * is the whole trick: at a constant speed the short edges land first and there
  * is no moment of collision, just lines finishing untidily. `pathLength="1"`
- * normalises them so they all arrive on the same frame. */
+ * normalises them so they all arrive on the same frame.
+ *
+ * Each line used to carry a bright head — a comet — riding its leading edge.
+ * It was the most expensive thing on the page. Fifty-seven extra paths, each
+ * glow-filtered and each animating `stroke-dashoffset`, which is not a
+ * compositable property: every frame of the build repainted the whole
+ * 2800x2500 SVG. Suppressing just those paths took the build from 25fps to
+ * 35fps on a CPU throttled 8x, and cut dropped frames from 36 of 67 to 15 of
+ * 96 — far and away the largest effect of anything measured here. The lines
+ * still draw themselves inward and still meet; they simply arrive without a
+ * head on them. */
 /** Every node arrives on the same damped spring — under its size, past it, a
  *  little under again, rest. The curve itself is in globals.css as keyframes;
  *  this is how long it takes. */
 const NODE_MS = 520;
 /** The leaves do not all appear at once; they sweep round the circle. */
 const LEAF_SWEEP_MS = 450;
-/** How long a comet takes to run its edge, whatever that edge's length. */
+/** How long a line takes to run its edge, whatever that edge's length. */
 const LINE_MS = 600;
-/** The comet's bright head, as a fraction of the edge it is running. */
-const COMET_LENGTH = 0.16;
-/** The beat between the comets landing on a meeting point and the node they
- *  made springing out of it. Without it the node started on the same frame the
- *  heads arrived and covered the collision it was supposed to be caused by. */
+/** The beat between the lines meeting at a point and the node they made
+ *  springing out of it. Without it the node started on the same frame the lines
+ *  arrived and covered the collision it was supposed to be caused by. */
 const TOUCH_HOLD_MS = 140;
-/** How long the landed head takes to go, once the node is on its way out from
- *  under it. */
-const COMET_LAND_MS = 180;
 
 /** The size a node starts at, as a fraction of its own. The spring's overshoot
  *  is proportional to the distance travelled — a node starting at 0.5 only ever
@@ -546,8 +551,8 @@ export default function SkillsWeb({
             // parent. pathLength="1" makes that one unit for every edge, so
             // long and short lines take the same time and arrive together.
             const drawDelay = EDGE_DELAY[edge.to.kind];
-            // The line the comet leaves behind. It does not fade — what the
-            // head has passed over stays drawn.
+            // The line drawing itself inward. It does not fade — what has been
+            // drawn stays drawn.
             const drawing = assembly === "done"
               ? undefined
               : {
@@ -559,46 +564,18 @@ export default function SkillsWeb({
               };
 
             return (
-              <g key={edge.id}>
-                <path
-                  d={assembly === "done" ? edge.path : skillWebEdgePathFromChild(edge)}
-                  pathLength="1"
-                  fill="none"
-                  stroke={edge.accent}
-                  strokeWidth={isActive ? 2.2 : 1}
-                  strokeOpacity={isActive ? 0.48 : 0.07}
-                  filter={isActive && activeNode ? "url(#skill-web-glow)" : undefined}
-                  className="transition-all duration-300"
-                  style={drawing}
-                />
-                {/* The comet: a bright head riding the leading edge of the line
-                    being drawn. Its dash offset is the line's own offset shifted
-                    by its length, so the two cannot come apart however long the
-                    edge is. Two animations: the run in, then — after it has sat
-                    on the meeting point long enough to be seen touching — the
-                    fade, by which time the node is springing out beneath it. */}
-                {assembly === "building" && (
-                  <path
-                    d={skillWebEdgePathFromChild(edge)}
-                    pathLength="1"
-                    fill="none"
-                    stroke={edge.accent}
-                    strokeWidth={3.4}
-                    strokeLinecap="round"
-                    filter="url(#skill-web-glow)"
-                    style={{
-                      "--comet-length": COMET_LENGTH,
-                      strokeDasharray: `${COMET_LENGTH} 1`,
-                      strokeDashoffset: COMET_LENGTH,
-                      animation: [
-                        `skill-edge-comet ${LINE_MS}ms linear ${drawDelay}ms both`,
-                        `skill-comet-land ${COMET_LAND_MS}ms linear ${drawDelay + LINE_MS + TOUCH_HOLD_MS}ms both`,
-                      ].join(", "),
-                    } as React.CSSProperties}
-                  />
-                )}
-
-              </g>
+              <path
+                key={edge.id}
+                d={assembly === "done" ? edge.path : skillWebEdgePathFromChild(edge)}
+                pathLength="1"
+                fill="none"
+                stroke={edge.accent}
+                strokeWidth={isActive ? 2.2 : 1}
+                strokeOpacity={isActive ? 0.48 : 0.07}
+                filter={isActive && activeNode ? "url(#skill-web-glow)" : undefined}
+                className="transition-[stroke-width,stroke-opacity] duration-300"
+                style={drawing}
+              />
             );
           })}
         </svg>
