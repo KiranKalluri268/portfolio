@@ -156,13 +156,25 @@ export default function SkillsWeb({
   graph: { nodes: GraphNode[]; edges: GraphEdge[] };
 }) {
   const viewportRef = useRef<HTMLDivElement>(null);
+  const worldRef = useRef<HTMLDivElement>(null);
   const pointersRef = useRef(new Map<number, PointerPosition>());
   const dragOriginRef = useRef<{ pointer: PointerPosition; view: ViewState } | null>(null);
   const pinchOriginRef = useRef<GestureSnapshot | null>(null);
   const transitionTimerRef = useRef(0);
-  const [view, setView] = useState<ViewState>({ x: 0, y: 0, scale: 0.5 });
+  const settleTimerRef = useRef(0);
+  /** The live view. Panning used to run through React state, so every pointer
+   *  move re-rendered all fifty-eight nodes and both paths of every edge —
+   *  a hundred and seventy elements rebuilt per frame to move one transform.
+   *  The transform is written straight to the world element instead, and this
+   *  ref is what renders read, so a render landing mid-gesture (a hover, say)
+   *  paints the position the element is already at rather than snapping back
+   *  to a stale one. */
+  const viewRef = useRef<ViewState>({ x: 0, y: 0, scale: 0.5 });
   const [dragging, setDragging] = useState(false);
-  const [transitioning, setTransitioning] = useState(false);
+  /** True while the view is changing at all — dragging, pinching, wheeling, or
+   *  running one of the animated moves. Two renders per gesture, not per
+   *  frame. */
+  const [moving, setMoving] = useState(false);
   const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [directoryOpen, setDirectoryOpen] = useState(false);
@@ -288,11 +300,42 @@ export default function SkillsWeb({
     return counts;
   }, [graph.nodes]);
 
-  const enableViewTransition = useCallback(() => {
-    setTransitioning(true);
-    window.clearTimeout(transitionTimerRef.current);
-    transitionTimerRef.current = window.setTimeout(() => setTransitioning(false), 720);
+  const attachWorld = useCallback((element: HTMLDivElement | null) => {
+    worldRef.current = element;
+    if (!element) return;
+    const { x, y, scale } = viewRef.current;
+    element.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale})`;
   }, []);
+
+  /** Marks the view as moving and arms the wind-down. Every path into
+   *  `applyView` calls it, so the blur comes back once — and only once —
+   *  everything has stopped. */
+  const keepMoving = useCallback((holdMs: number) => {
+    setMoving(true);
+    window.clearTimeout(settleTimerRef.current);
+    settleTimerRef.current = window.setTimeout(() => setMoving(false), holdMs);
+  }, []);
+
+  /** The one place the world transform is written. `animate` puts the eased
+   *  transition on the element itself rather than through a class, so the
+   *  transition is in place on the same frame as the transform it has to
+   *  ease — a class arriving in a later React commit would let the move
+   *  happen first and animate nothing. */
+  const applyView = useCallback((next: ViewState, animate = false) => {
+    viewRef.current = next;
+    const world = worldRef.current;
+    if (!world) return;
+    window.clearTimeout(transitionTimerRef.current);
+    world.style.transition = animate ? "transform 700ms cubic-bezier(0, 0, 0.2, 1)" : "none";
+    world.style.transform =
+      `translate3d(${next.x}px, ${next.y}px, 0) scale(${next.scale})`;
+    if (animate) {
+      transitionTimerRef.current = window.setTimeout(() => {
+        if (worldRef.current) worldRef.current.style.transition = "none";
+      }, 720);
+    }
+    keepMoving(animate ? 780 : 220);
+  }, [keepMoving]);
 
   const fitWeb = useCallback((animate = true) => {
     const viewport = viewportRef.current;
@@ -303,13 +346,12 @@ export default function SkillsWeb({
       (bounds.height - 40) / (WORLD_HEIGHT - 240),
       0.72,
     ));
-    if (animate) enableViewTransition();
-    setView({
+    applyView({
       x: bounds.width / 2 - CENTER_X * scale,
       y: bounds.height / 2 - CENTER_Y * scale,
       scale,
-    });
-  }, [enableViewTransition]);
+    }, animate);
+  }, [applyView]);
 
   useEffect(() => {
     const viewport = viewportRef.current;
@@ -321,6 +363,7 @@ export default function SkillsWeb({
       window.cancelAnimationFrame(initialFrame);
       observer.disconnect();
       window.clearTimeout(transitionTimerRef.current);
+      window.clearTimeout(settleTimerRef.current);
     };
   }, [fitWeb]);
 
@@ -335,73 +378,67 @@ export default function SkillsWeb({
         x: event.clientX - bounds.left,
         y: event.clientY - bounds.top,
       };
-      setTransitioning(false);
       setHasInteracted(true);
-      setView((current) => {
-        const nextScale = clampScale(current.scale * Math.exp(-event.deltaY * 0.00125));
-        const ratio = nextScale / current.scale;
-        return {
-          x: point.x - (point.x - current.x) * ratio,
-          y: point.y - (point.y - current.y) * ratio,
-          scale: nextScale,
-        };
+      const current = viewRef.current;
+      const nextScale = clampScale(current.scale * Math.exp(-event.deltaY * 0.00125));
+      const ratio = nextScale / current.scale;
+      applyView({
+        x: point.x - (point.x - current.x) * ratio,
+        y: point.y - (point.y - current.y) * ratio,
+        scale: nextScale,
       });
     };
 
     viewport.addEventListener("wheel", handleWheel, { passive: false });
     return () => viewport.removeEventListener("wheel", handleWheel);
-  }, []);
+  }, [applyView]);
 
   const focusNode = useCallback((node: GraphNode, scale: number) => {
     const viewport = viewportRef.current;
     if (!viewport) return;
     const bounds = viewport.getBoundingClientRect();
     const nextScale = clampScale(scale);
-    enableViewTransition();
     setHasInteracted(true);
-    setView({
+    applyView({
       x: bounds.width / 2 - node.x * nextScale,
       y: bounds.height / 2 - node.y * nextScale,
       scale: nextScale,
-    });
-  }, [enableViewTransition]);
+    }, true);
+  }, [applyView]);
 
   const zoomAtCenter = useCallback((factor: number) => {
     const viewport = viewportRef.current;
     if (!viewport) return;
     const bounds = viewport.getBoundingClientRect();
     const point = { x: bounds.width / 2, y: bounds.height / 2 };
-    enableViewTransition();
     setHasInteracted(true);
-    setView((current) => {
-      const nextScale = clampScale(current.scale * factor);
-      const ratio = nextScale / current.scale;
-      return {
-        x: point.x - (point.x - current.x) * ratio,
-        y: point.y - (point.y - current.y) * ratio,
-        scale: nextScale,
-      };
-    });
-  }, [enableViewTransition]);
+    const current = viewRef.current;
+    const nextScale = clampScale(current.scale * factor);
+    const ratio = nextScale / current.scale;
+    applyView({
+      x: point.x - (point.x - current.x) * ratio,
+      y: point.y - (point.y - current.y) * ratio,
+      scale: nextScale,
+    }, true);
+  }, [applyView]);
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if ((event.target as HTMLElement).closest("[data-web-node], [data-web-control]")) return;
     event.currentTarget.setPointerCapture(event.pointerId);
     const position = { x: event.clientX, y: event.clientY };
     pointersRef.current.set(event.pointerId, position);
-    setTransitioning(false);
     setDragging(true);
     setHasInteracted(true);
 
     if (pointersRef.current.size === 1) {
-      dragOriginRef.current = { pointer: position, view };
+      dragOriginRef.current = { pointer: position, view: viewRef.current };
       pinchOriginRef.current = null;
     } else if (pointersRef.current.size === 2) {
       const [first, second] = [...pointersRef.current.values()];
       pinchOriginRef.current = {
         distance: distanceBetween(first, second),
         midpoint: midpoint(first, second),
-        view,
+        view: viewRef.current,
       };
       dragOriginRef.current = null;
     }
@@ -420,7 +457,7 @@ export default function SkillsWeb({
       );
       const worldX = (origin.midpoint.x - origin.view.x) / origin.view.scale;
       const worldY = (origin.midpoint.y - origin.view.y) / origin.view.scale;
-      setView({
+      applyView({
         x: currentMidpoint.x - worldX * nextScale,
         y: currentMidpoint.y - worldY * nextScale,
         scale: nextScale,
@@ -430,7 +467,7 @@ export default function SkillsWeb({
 
     if (pointersRef.current.size === 1 && dragOriginRef.current) {
       const origin = dragOriginRef.current;
-      setView({
+      applyView({
         ...origin.view,
         x: origin.view.x + event.clientX - origin.pointer.x,
         y: origin.view.y + event.clientY - origin.pointer.y,
@@ -442,7 +479,7 @@ export default function SkillsWeb({
     pointersRef.current.delete(event.pointerId);
     if (pointersRef.current.size === 1) {
       const [position] = pointersRef.current.values();
-      dragOriginRef.current = { pointer: position, view };
+      dragOriginRef.current = { pointer: position, view: viewRef.current };
       pinchOriginRef.current = null;
     } else if (pointersRef.current.size === 0) {
       dragOriginRef.current = null;
@@ -477,10 +514,11 @@ export default function SkillsWeb({
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if ((event.target as HTMLElement).closest("[data-web-node], [data-web-control]")) return;
     const distance = event.shiftKey ? 140 : 70;
-    if (event.key === "ArrowLeft") setView((current) => ({ ...current, x: current.x + distance }));
-    else if (event.key === "ArrowRight") setView((current) => ({ ...current, x: current.x - distance }));
-    else if (event.key === "ArrowUp") setView((current) => ({ ...current, y: current.y + distance }));
-    else if (event.key === "ArrowDown") setView((current) => ({ ...current, y: current.y - distance }));
+    const current = viewRef.current;
+    if (event.key === "ArrowLeft") applyView({ ...current, x: current.x + distance });
+    else if (event.key === "ArrowRight") applyView({ ...current, x: current.x - distance });
+    else if (event.key === "ArrowUp") applyView({ ...current, y: current.y + distance });
+    else if (event.key === "ArrowDown") applyView({ ...current, y: current.y - distance });
     else if (event.key === "+" || event.key === "=") zoomAtCenter(1.22);
     else if (event.key === "-") zoomAtCenter(0.82);
     else if (event.key === "0" || event.key === "Home") fitWeb();
@@ -509,13 +547,20 @@ export default function SkillsWeb({
       tabIndex={0}
       aria-label="Interactive skill universe. Drag to pan and scroll or pinch to zoom."
     >
+      {/* The transform is not a React style. It is owned by `applyView` and
+          written straight to this element, so a gesture does not re-render the
+          hundred and seventy elements inside it to move them as one. The
+          callback ref writes the current view the moment the element exists,
+          before the first paint, so React never paints an untransformed
+          world. */}
       <div
-        className={`absolute left-0 top-0 ${transitioning && !dragging ? "transition-transform duration-700 ease-out" : ""}`}
+        ref={attachWorld}
+        className="absolute left-0 top-0"
         style={{
           width: WORLD_WIDTH,
           height: WORLD_HEIGHT,
-          transform: `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale})`,
           transformOrigin: "0 0",
+          willChange: "transform",
         }}
       >
         <svg
@@ -612,8 +657,13 @@ export default function SkillsWeb({
              halves the frame rate for the whole build, 33.3ms a frame against
              16.7ms without it. The utility is left off while it arrives rather
              than overridden: a rule setting backdrop-filter:none is minified
-             down to the -webkit- form alone and Chrome then ignores it. */
-          const blur = assembly === "building"
+             down to the -webkit- form alone and Chrome then ignores it.
+
+             The same cost lands on every pan and zoom, for the same reason:
+             moving the world moves what is behind all fifty-eight blurs, so
+             all fifty-eight are re-sampled every frame. It is dropped while
+             the view is in motion too, and comes back when it stops. */
+          const blur = assembly === "building" || moving
             ? ""
             : node.kind === "skill" ? "backdrop-blur-md" : "backdrop-blur-xl";
 
@@ -631,7 +681,7 @@ export default function SkillsWeb({
                 key={node.id}
                 data-web-node
                 href={`/skills/${node.skill.slug}`}
-                className={`absolute z-20 flex min-h-12 w-36 -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border bg-black/80 px-3 py-2 text-left text-sm text-white shadow-xl transition-all hover:z-40 hover:scale-110 hover:bg-black focus-visible:z-40 focus-visible:scale-110 ${blur} ${dimmed ? "opacity-20" : "opacity-100"}`}
+                className={`absolute z-20 flex min-h-12 w-36 -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border bg-black/80 px-3 py-2 text-left text-sm text-white shadow-xl transition-[opacity,scale] hover:z-40 hover:scale-110 hover:bg-black focus-visible:z-40 focus-visible:scale-110 ${blur} ${dimmed ? "opacity-20" : "opacity-100"}`}
                 style={sharedStyle}
                 onPointerEnter={() => setActiveNodeId(node.id)}
                 onPointerLeave={() => setActiveNodeId(null)}
@@ -665,7 +715,7 @@ export default function SkillsWeb({
               key={node.id}
               type="button"
               data-web-node
-              className={`absolute z-30 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center border bg-black/80 text-center text-white transition-all hover:z-40 hover:scale-105 focus-visible:z-40 focus-visible:scale-105 ${blur} ${sizeClasses} ${dimmed ? "opacity-25" : "opacity-100"}`}
+              className={`absolute z-30 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center border bg-black/80 text-center text-white transition-[opacity,scale] hover:z-40 hover:scale-105 focus-visible:z-40 focus-visible:scale-105 ${blur} ${sizeClasses} ${dimmed ? "opacity-25" : "opacity-100"}`}
               style={sharedStyle}
               onClick={() => node.kind === "center" ? fitWeb() : focusNode(node, node.kind === "domain" ? 0.82 : 1.02)}
               onPointerEnter={() => setActiveNodeId(node.id)}
