@@ -50,3 +50,10 @@ ANIMATION_IMPLEMENTATION.md
 /playwright-report
 /blob-report
 /playwright/.cache
+
+# Scratch space for profiling and benchmark runs. These hold whole copies of
+# .next for before/after comparison, so they run to tens of thousands of files.
+/.perf-tmp
+/*.profile
+/*.cpuprofile
+/*.heapsnapshot
