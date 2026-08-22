@@ -178,12 +178,21 @@ export default function SkillsWeb({
    *  assembles, "done" once it is an ordinary web again — at which point every
    *  inline style the intro used is dropped so nothing it did survives. */
   const reduceMotion = useReducedMotion();
-  // Reduced motion never assembles; it is done before the first paint rather
-  // than switched to done by an effect afterwards.
-  const [assembly, setAssembly] = useState<"waiting" | "building" | "done">(
-    () => (typeof window !== "undefined"
-      && window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "done" : "waiting"),
-  );
+  // Always "waiting" to begin with, on the server and on the client alike.
+  //
+  // This used to read the media query here and start at "done" under reduced
+  // motion, which left the whole page invisible for anyone who asks for it.
+  // The server cannot see the query, so it rendered "waiting" and shipped every
+  // node with an inline opacity:0; the client's first render then said "done"
+  // and dropped that style. React does not patch attribute mismatches while
+  // hydrating — and afterwards it diffs against its own previous props, which
+  // never carried an opacity — so the server's opacity:0 stayed on all
+  // fifty-eight nodes for good. Nothing later cleared it: the web was there,
+  // laid out and interactive, and completely transparent.
+  //
+  // Agreeing with the server and moving to "done" from the effect below keeps
+  // hydration honest, at the cost of one frame at opacity 0.
+  const [assembly, setAssembly] = useState<"waiting" | "building" | "done">("waiting");
   const inputMode = useInputMode();
   const webHint = useIdleHint(hasInteracted || assembly !== "done" ? null : "skill-web");
 
@@ -221,7 +230,16 @@ export default function SkillsWeb({
   }, [assembly]);
 
   useEffect(() => {
-    if (reduceMotion) return;
+    // Reduced motion never assembles. It still has to be told it is finished,
+    // though — "waiting" is what holds every node at opacity 0. The server
+    // cannot read the media query, so after mount is the earliest this can be
+    // known, the same reason the deep-link and input-mode effects below and
+    // above set state directly.
+    if (reduceMotion) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setAssembly("done");
+      return;
+    }
     let finish = 0;
     // Reached through the site menu, this page mounts behind its cover; without
     // waiting the web would build itself on a hidden screen.
