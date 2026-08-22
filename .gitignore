@@ -54,3 +54,10 @@ ANIMATION_IMPLEMENTATION.md
 # Design references — sketches and screenshots the work is checked against,
 # kept locally rather than shipped in the bundle.
 public/reference/
+
+# Scratch space for profiling and benchmark runs. These hold whole copies of
+# .next for before/after comparison, so they run to tens of thousands of files.
+/.perf-tmp
+/*.profile
+/*.cpuprofile
+/*.heapsnapshot

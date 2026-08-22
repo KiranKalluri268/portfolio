@@ -317,28 +317,16 @@ body[data-modal-open] header[role="banner"] {
   100% { opacity: 1; scale: 1; }
 }
 
-/* The line left behind the comet. It does not fade: what the head has passed
-   over stays drawn, which is the whole point of it. */
+/* The branch drawing itself inward. It does not fade: what has been drawn
+   stays drawn, which is the whole point of it.
+
+   This animates stroke-dashoffset, which no browser can composite — every
+   frame of it repaints the SVG. One per edge is affordable; there used to be
+   a second animated path per edge on top of it, a glowing comet head, and the
+   pair together were what made the build stutter. The comet is gone. */
 @keyframes skill-edge-draw {
   from { stroke-dashoffset: 1; }
   to { stroke-dashoffset: 0; }
-}
-
-/* The head itself, riding the leading edge of that line. Its offset is the
-   line's offset shifted by its own length, so the two cannot come apart. It
-   holds full brightness all the way in — it used to fade over its last 15%,
-   which meant it vanished short of the node and the arrival was never seen. */
-@keyframes skill-edge-comet {
-  from { stroke-dashoffset: var(--comet-length); }
-  to { stroke-dashoffset: calc(var(--comet-length) - 1); }
-}
-
-/* Once it has landed the head sits on the meeting point for a beat, so the
-   touch registers, and only then goes — by which time the node it made is
-   already springing out from underneath it. */
-@keyframes skill-comet-land {
-  from { opacity: 1; }
-  to { opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

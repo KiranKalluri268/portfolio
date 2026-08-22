@@ -61,7 +61,8 @@ test.describe("the skill web assembles itself", () => {
   test("it builds and then settles into an ordinary web", async ({ page }) => {
     await page.goto("/skills");
 
-    // While building, the comets and the node springs are real animations.
+    // While building, the drawing branches and the node springs are real
+    // animations.
     await page.waitForFunction(
       () => document.getAnimations()
         .some((a) => String((a as CSSAnimation).animationName).startsWith("skill-")),

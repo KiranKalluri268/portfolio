@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import {
   useCallback,
@@ -21,6 +20,7 @@ import {
   type GraphEdge,
   type GraphNode,
 } from "./skill-web-layout";
+import { SkillMark } from "./skill-icons";
 import HintPill from "../hints/HintPill";
 import { useReducedMotion } from "@/hooks/useMediaQuery";
 import { useIdleHint, useInputMode } from "../hints/useIdleHint";
@@ -70,24 +70,29 @@ function midpoint(first: PointerPosition, second: PointerPosition) {
  * Every line in a beat takes the same time regardless of how long it is. That
  * is the whole trick: at a constant speed the short edges land first and there
  * is no moment of collision, just lines finishing untidily. `pathLength="1"`
- * normalises them so they all arrive on the same frame. */
+ * normalises them so they all arrive on the same frame.
+ *
+ * Each line used to carry a bright head — a comet — riding its leading edge.
+ * It was the most expensive thing on the page. Fifty-seven extra paths, each
+ * glow-filtered and each animating `stroke-dashoffset`, which is not a
+ * compositable property: every frame of the build repainted the whole
+ * 2800x2500 SVG. Suppressing just those paths took the build from 25fps to
+ * 35fps on a CPU throttled 8x, and cut dropped frames from 36 of 67 to 15 of
+ * 96 — far and away the largest effect of anything measured here. The lines
+ * still draw themselves inward and still meet; they simply arrive without a
+ * head on them. */
 /** Every node arrives on the same damped spring — under its size, past it, a
  *  little under again, rest. The curve itself is in globals.css as keyframes;
  *  this is how long it takes. */
 const NODE_MS = 520;
 /** The leaves do not all appear at once; they sweep round the circle. */
 const LEAF_SWEEP_MS = 450;
-/** How long a comet takes to run its edge, whatever that edge's length. */
+/** How long a line takes to run its edge, whatever that edge's length. */
 const LINE_MS = 600;
-/** The comet's bright head, as a fraction of the edge it is running. */
-const COMET_LENGTH = 0.16;
-/** The beat between the comets landing on a meeting point and the node they
- *  made springing out of it. Without it the node started on the same frame the
- *  heads arrived and covered the collision it was supposed to be caused by. */
+/** The beat between the lines meeting at a point and the node they made
+ *  springing out of it. Without it the node started on the same frame the lines
+ *  arrived and covered the collision it was supposed to be caused by. */
 const TOUCH_HOLD_MS = 140;
-/** How long the landed head takes to go, once the node is on its way out from
- *  under it. */
-const COMET_LAND_MS = 180;
 
 /** The size a node starts at, as a fraction of its own. The spring's overshoot
  *  is proportional to the distance travelled — a node starting at 0.5 only ever
@@ -151,13 +156,25 @@ export default function SkillsWeb({
   graph: { nodes: GraphNode[]; edges: GraphEdge[] };
 }) {
   const viewportRef = useRef<HTMLDivElement>(null);
+  const worldRef = useRef<HTMLDivElement>(null);
   const pointersRef = useRef(new Map<number, PointerPosition>());
   const dragOriginRef = useRef<{ pointer: PointerPosition; view: ViewState } | null>(null);
   const pinchOriginRef = useRef<GestureSnapshot | null>(null);
   const transitionTimerRef = useRef(0);
-  const [view, setView] = useState<ViewState>({ x: 0, y: 0, scale: 0.5 });
+  const settleTimerRef = useRef(0);
+  /** The live view. Panning used to run through React state, so every pointer
+   *  move re-rendered all fifty-eight nodes and both paths of every edge —
+   *  a hundred and seventy elements rebuilt per frame to move one transform.
+   *  The transform is written straight to the world element instead, and this
+   *  ref is what renders read, so a render landing mid-gesture (a hover, say)
+   *  paints the position the element is already at rather than snapping back
+   *  to a stale one. */
+  const viewRef = useRef<ViewState>({ x: 0, y: 0, scale: 0.5 });
   const [dragging, setDragging] = useState(false);
-  const [transitioning, setTransitioning] = useState(false);
+  /** True while the view is changing at all — dragging, pinching, wheeling, or
+   *  running one of the animated moves. Two renders per gesture, not per
+   *  frame. */
+  const [moving, setMoving] = useState(false);
   const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [directoryOpen, setDirectoryOpen] = useState(false);
@@ -178,12 +195,21 @@ export default function SkillsWeb({
    *  assembles, "done" once it is an ordinary web again — at which point every
    *  inline style the intro used is dropped so nothing it did survives. */
   const reduceMotion = useReducedMotion();
-  // Reduced motion never assembles; it is done before the first paint rather
-  // than switched to done by an effect afterwards.
-  const [assembly, setAssembly] = useState<"waiting" | "building" | "done">(
-    () => (typeof window !== "undefined"
-      && window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "done" : "waiting"),
-  );
+  // Always "waiting" to begin with, on the server and on the client alike.
+  //
+  // This used to read the media query here and start at "done" under reduced
+  // motion, which left the whole page invisible for anyone who asks for it.
+  // The server cannot see the query, so it rendered "waiting" and shipped every
+  // node with an inline opacity:0; the client's first render then said "done"
+  // and dropped that style. React does not patch attribute mismatches while
+  // hydrating — and afterwards it diffs against its own previous props, which
+  // never carried an opacity — so the server's opacity:0 stayed on all
+  // fifty-eight nodes for good. Nothing later cleared it: the web was there,
+  // laid out and interactive, and completely transparent.
+  //
+  // Agreeing with the server and moving to "done" from the effect below keeps
+  // hydration honest, at the cost of one frame at opacity 0.
+  const [assembly, setAssembly] = useState<"waiting" | "building" | "done">("waiting");
   const inputMode = useInputMode();
   const webHint = useIdleHint(hasInteracted || assembly !== "done" ? null : "skill-web");
 
@@ -221,7 +247,16 @@ export default function SkillsWeb({
   }, [assembly]);
 
   useEffect(() => {
-    if (reduceMotion) return;
+    // Reduced motion never assembles. It still has to be told it is finished,
+    // though — "waiting" is what holds every node at opacity 0. The server
+    // cannot read the media query, so after mount is the earliest this can be
+    // known, the same reason the deep-link and input-mode effects below and
+    // above set state directly.
+    if (reduceMotion) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setAssembly("done");
+      return;
+    }
     let finish = 0;
     // Reached through the site menu, this page mounts behind its cover; without
     // waiting the web would build itself on a hidden screen.
@@ -254,11 +289,53 @@ export default function SkillsWeb({
     [graph.nodes],
   );
 
-  const enableViewTransition = useCallback(() => {
-    setTransitioning(true);
-    window.clearTimeout(transitionTimerRef.current);
-    transitionTimerRef.current = window.setTimeout(() => setTransitioning(false), 720);
+  /** How many skills hang off each category, counted once rather than by
+   *  scanning all fifty-eight nodes again inside every category's render. */
+  const childCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const node of graph.nodes) {
+      if (!node.parentId) continue;
+      counts.set(node.parentId, (counts.get(node.parentId) ?? 0) + 1);
+    }
+    return counts;
+  }, [graph.nodes]);
+
+  const attachWorld = useCallback((element: HTMLDivElement | null) => {
+    worldRef.current = element;
+    if (!element) return;
+    const { x, y, scale } = viewRef.current;
+    element.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale})`;
   }, []);
+
+  /** Marks the view as moving and arms the wind-down. Every path into
+   *  `applyView` calls it, so the blur comes back once — and only once —
+   *  everything has stopped. */
+  const keepMoving = useCallback((holdMs: number) => {
+    setMoving(true);
+    window.clearTimeout(settleTimerRef.current);
+    settleTimerRef.current = window.setTimeout(() => setMoving(false), holdMs);
+  }, []);
+
+  /** The one place the world transform is written. `animate` puts the eased
+   *  transition on the element itself rather than through a class, so the
+   *  transition is in place on the same frame as the transform it has to
+   *  ease — a class arriving in a later React commit would let the move
+   *  happen first and animate nothing. */
+  const applyView = useCallback((next: ViewState, animate = false) => {
+    viewRef.current = next;
+    const world = worldRef.current;
+    if (!world) return;
+    window.clearTimeout(transitionTimerRef.current);
+    world.style.transition = animate ? "transform 700ms cubic-bezier(0, 0, 0.2, 1)" : "none";
+    world.style.transform =
+      `translate3d(${next.x}px, ${next.y}px, 0) scale(${next.scale})`;
+    if (animate) {
+      transitionTimerRef.current = window.setTimeout(() => {
+        if (worldRef.current) worldRef.current.style.transition = "none";
+      }, 720);
+    }
+    keepMoving(animate ? 780 : 220);
+  }, [keepMoving]);
 
   const fitWeb = useCallback((animate = true) => {
     const viewport = viewportRef.current;
@@ -269,13 +346,12 @@ export default function SkillsWeb({
       (bounds.height - 40) / (WORLD_HEIGHT - 240),
       0.72,
     ));
-    if (animate) enableViewTransition();
-    setView({
+    applyView({
       x: bounds.width / 2 - CENTER_X * scale,
       y: bounds.height / 2 - CENTER_Y * scale,
       scale,
-    });
-  }, [enableViewTransition]);
+    }, animate);
+  }, [applyView]);
 
   useEffect(() => {
     const viewport = viewportRef.current;
@@ -287,6 +363,7 @@ export default function SkillsWeb({
       window.cancelAnimationFrame(initialFrame);
       observer.disconnect();
       window.clearTimeout(transitionTimerRef.current);
+      window.clearTimeout(settleTimerRef.current);
     };
   }, [fitWeb]);
 
@@ -301,73 +378,67 @@ export default function SkillsWeb({
         x: event.clientX - bounds.left,
         y: event.clientY - bounds.top,
       };
-      setTransitioning(false);
       setHasInteracted(true);
-      setView((current) => {
-        const nextScale = clampScale(current.scale * Math.exp(-event.deltaY * 0.00125));
-        const ratio = nextScale / current.scale;
-        return {
-          x: point.x - (point.x - current.x) * ratio,
-          y: point.y - (point.y - current.y) * ratio,
-          scale: nextScale,
-        };
+      const current = viewRef.current;
+      const nextScale = clampScale(current.scale * Math.exp(-event.deltaY * 0.00125));
+      const ratio = nextScale / current.scale;
+      applyView({
+        x: point.x - (point.x - current.x) * ratio,
+        y: point.y - (point.y - current.y) * ratio,
+        scale: nextScale,
       });
     };
 
     viewport.addEventListener("wheel", handleWheel, { passive: false });
     return () => viewport.removeEventListener("wheel", handleWheel);
-  }, []);
+  }, [applyView]);
 
   const focusNode = useCallback((node: GraphNode, scale: number) => {
     const viewport = viewportRef.current;
     if (!viewport) return;
     const bounds = viewport.getBoundingClientRect();
     const nextScale = clampScale(scale);
-    enableViewTransition();
     setHasInteracted(true);
-    setView({
+    applyView({
       x: bounds.width / 2 - node.x * nextScale,
       y: bounds.height / 2 - node.y * nextScale,
       scale: nextScale,
-    });
-  }, [enableViewTransition]);
+    }, true);
+  }, [applyView]);
 
   const zoomAtCenter = useCallback((factor: number) => {
     const viewport = viewportRef.current;
     if (!viewport) return;
     const bounds = viewport.getBoundingClientRect();
     const point = { x: bounds.width / 2, y: bounds.height / 2 };
-    enableViewTransition();
     setHasInteracted(true);
-    setView((current) => {
-      const nextScale = clampScale(current.scale * factor);
-      const ratio = nextScale / current.scale;
-      return {
-        x: point.x - (point.x - current.x) * ratio,
-        y: point.y - (point.y - current.y) * ratio,
-        scale: nextScale,
-      };
-    });
-  }, [enableViewTransition]);
+    const current = viewRef.current;
+    const nextScale = clampScale(current.scale * factor);
+    const ratio = nextScale / current.scale;
+    applyView({
+      x: point.x - (point.x - current.x) * ratio,
+      y: point.y - (point.y - current.y) * ratio,
+      scale: nextScale,
+    }, true);
+  }, [applyView]);
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if ((event.target as HTMLElement).closest("[data-web-node], [data-web-control]")) return;
     event.currentTarget.setPointerCapture(event.pointerId);
     const position = { x: event.clientX, y: event.clientY };
     pointersRef.current.set(event.pointerId, position);
-    setTransitioning(false);
     setDragging(true);
     setHasInteracted(true);
 
     if (pointersRef.current.size === 1) {
-      dragOriginRef.current = { pointer: position, view };
+      dragOriginRef.current = { pointer: position, view: viewRef.current };
       pinchOriginRef.current = null;
     } else if (pointersRef.current.size === 2) {
       const [first, second] = [...pointersRef.current.values()];
       pinchOriginRef.current = {
         distance: distanceBetween(first, second),
         midpoint: midpoint(first, second),
-        view,
+        view: viewRef.current,
       };
       dragOriginRef.current = null;
     }
@@ -386,7 +457,7 @@ export default function SkillsWeb({
       );
       const worldX = (origin.midpoint.x - origin.view.x) / origin.view.scale;
       const worldY = (origin.midpoint.y - origin.view.y) / origin.view.scale;
-      setView({
+      applyView({
         x: currentMidpoint.x - worldX * nextScale,
         y: currentMidpoint.y - worldY * nextScale,
         scale: nextScale,
@@ -396,7 +467,7 @@ export default function SkillsWeb({
 
     if (pointersRef.current.size === 1 && dragOriginRef.current) {
       const origin = dragOriginRef.current;
-      setView({
+      applyView({
         ...origin.view,
         x: origin.view.x + event.clientX - origin.pointer.x,
         y: origin.view.y + event.clientY - origin.pointer.y,
@@ -408,7 +479,7 @@ export default function SkillsWeb({
     pointersRef.current.delete(event.pointerId);
     if (pointersRef.current.size === 1) {
       const [position] = pointersRef.current.values();
-      dragOriginRef.current = { pointer: position, view };
+      dragOriginRef.current = { pointer: position, view: viewRef.current };
       pinchOriginRef.current = null;
     } else if (pointersRef.current.size === 0) {
       dragOriginRef.current = null;
@@ -443,10 +514,11 @@ export default function SkillsWeb({
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if ((event.target as HTMLElement).closest("[data-web-node], [data-web-control]")) return;
     const distance = event.shiftKey ? 140 : 70;
-    if (event.key === "ArrowLeft") setView((current) => ({ ...current, x: current.x + distance }));
-    else if (event.key === "ArrowRight") setView((current) => ({ ...current, x: current.x - distance }));
-    else if (event.key === "ArrowUp") setView((current) => ({ ...current, y: current.y + distance }));
-    else if (event.key === "ArrowDown") setView((current) => ({ ...current, y: current.y - distance }));
+    const current = viewRef.current;
+    if (event.key === "ArrowLeft") applyView({ ...current, x: current.x + distance });
+    else if (event.key === "ArrowRight") applyView({ ...current, x: current.x - distance });
+    else if (event.key === "ArrowUp") applyView({ ...current, y: current.y + distance });
+    else if (event.key === "ArrowDown") applyView({ ...current, y: current.y - distance });
     else if (event.key === "+" || event.key === "=") zoomAtCenter(1.22);
     else if (event.key === "-") zoomAtCenter(0.82);
     else if (event.key === "0" || event.key === "Home") fitWeb();
@@ -475,13 +547,20 @@ export default function SkillsWeb({
       tabIndex={0}
       aria-label="Interactive skill universe. Drag to pan and scroll or pinch to zoom."
     >
+      {/* The transform is not a React style. It is owned by `applyView` and
+          written straight to this element, so a gesture does not re-render the
+          hundred and seventy elements inside it to move them as one. The
+          callback ref writes the current view the moment the element exists,
+          before the first paint, so React never paints an untransformed
+          world. */}
       <div
-        className={`absolute left-0 top-0 ${transitioning && !dragging ? "transition-transform duration-700 ease-out" : ""}`}
+        ref={attachWorld}
+        className="absolute left-0 top-0"
         style={{
           width: WORLD_WIDTH,
           height: WORLD_HEIGHT,
-          transform: `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale})`,
           transformOrigin: "0 0",
+          willChange: "transform",
         }}
       >
         <svg
@@ -517,8 +596,8 @@ export default function SkillsWeb({
             // parent. pathLength="1" makes that one unit for every edge, so
             // long and short lines take the same time and arrive together.
             const drawDelay = EDGE_DELAY[edge.to.kind];
-            // The line the comet leaves behind. It does not fade — what the
-            // head has passed over stays drawn.
+            // The line drawing itself inward. It does not fade — what has been
+            // drawn stays drawn.
             const drawing = assembly === "done"
               ? undefined
               : {
@@ -530,46 +609,18 @@ export default function SkillsWeb({
               };
 
             return (
-              <g key={edge.id}>
-                <path
-                  d={assembly === "done" ? edge.path : skillWebEdgePathFromChild(edge)}
-                  pathLength="1"
-                  fill="none"
-                  stroke={edge.accent}
-                  strokeWidth={isActive ? 2.2 : 1}
-                  strokeOpacity={isActive ? 0.48 : 0.07}
-                  filter={isActive && activeNode ? "url(#skill-web-glow)" : undefined}
-                  className="transition-all duration-300"
-                  style={drawing}
-                />
-                {/* The comet: a bright head riding the leading edge of the line
-                    being drawn. Its dash offset is the line's own offset shifted
-                    by its length, so the two cannot come apart however long the
-                    edge is. Two animations: the run in, then — after it has sat
-                    on the meeting point long enough to be seen touching — the
-                    fade, by which time the node is springing out beneath it. */}
-                {assembly === "building" && (
-                  <path
-                    d={skillWebEdgePathFromChild(edge)}
-                    pathLength="1"
-                    fill="none"
-                    stroke={edge.accent}
-                    strokeWidth={3.4}
-                    strokeLinecap="round"
-                    filter="url(#skill-web-glow)"
-                    style={{
-                      "--comet-length": COMET_LENGTH,
-                      strokeDasharray: `${COMET_LENGTH} 1`,
-                      strokeDashoffset: COMET_LENGTH,
-                      animation: [
-                        `skill-edge-comet ${LINE_MS}ms linear ${drawDelay}ms both`,
-                        `skill-comet-land ${COMET_LAND_MS}ms linear ${drawDelay + LINE_MS + TOUCH_HOLD_MS}ms both`,
-                      ].join(", "),
-                    } as React.CSSProperties}
-                  />
-                )}
-
-              </g>
+              <path
+                key={edge.id}
+                d={assembly === "done" ? edge.path : skillWebEdgePathFromChild(edge)}
+                pathLength="1"
+                fill="none"
+                stroke={edge.accent}
+                strokeWidth={isActive ? 2.2 : 1}
+                strokeOpacity={isActive ? 0.48 : 0.07}
+                filter={isActive && activeNode ? "url(#skill-web-glow)" : undefined}
+                className="transition-[stroke-width,stroke-opacity] duration-300"
+                style={drawing}
+              />
             );
           })}
         </svg>
@@ -606,8 +657,13 @@ export default function SkillsWeb({
              halves the frame rate for the whole build, 33.3ms a frame against
              16.7ms without it. The utility is left off while it arrives rather
              than overridden: a rule setting backdrop-filter:none is minified
-             down to the -webkit- form alone and Chrome then ignores it. */
-          const blur = assembly === "building"
+             down to the -webkit- form alone and Chrome then ignores it.
+
+             The same cost lands on every pan and zoom, for the same reason:
+             moving the world moves what is behind all fifty-eight blurs, so
+             all fifty-eight are re-sampled every frame. It is dropped while
+             the view is in motion too, and comes back when it stops. */
+          const blur = assembly === "building" || moving
             ? ""
             : node.kind === "skill" ? "backdrop-blur-md" : "backdrop-blur-xl";
 
@@ -625,7 +681,7 @@ export default function SkillsWeb({
                 key={node.id}
                 data-web-node
                 href={`/skills/${node.skill.slug}`}
-                className={`absolute z-20 flex min-h-12 w-36 -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border bg-black/80 px-3 py-2 text-left text-sm text-white shadow-xl transition-all hover:z-40 hover:scale-110 hover:bg-black focus-visible:z-40 focus-visible:scale-110 ${blur} ${dimmed ? "opacity-20" : "opacity-100"}`}
+                className={`absolute z-20 flex min-h-12 w-36 -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border bg-black/80 px-3 py-2 text-left text-sm text-white shadow-xl transition-[opacity,scale] hover:z-40 hover:scale-110 hover:bg-black focus-visible:z-40 focus-visible:scale-110 ${blur} ${dimmed ? "opacity-20" : "opacity-100"}`}
                 style={sharedStyle}
                 onPointerEnter={() => setActiveNodeId(node.id)}
                 onPointerLeave={() => setActiveNodeId(null)}
@@ -633,16 +689,16 @@ export default function SkillsWeb({
                 onBlur={() => setActiveNodeId(null)}
                 aria-label={`${node.label}: ${node.description}`}
               >
+                {/* The same mark the marquee, the project cards and the
+                    skill's own page render. Rendering the icon field directly
+                    here meant every node fell through to initials, because the
+                    brand marks are components and no content file names one. */}
                 <span
                   className="flex h-7 min-w-7 items-center justify-center overflow-hidden rounded-full text-[0.65rem] font-bold"
                   style={{ color: node.accent, backgroundColor: `${node.accent}18` }}
                   aria-hidden="true"
                 >
-                  {node.skill.icon ? (
-                    <Image src={node.skill.icon} alt="" width={24} height={24} className="h-6 w-6 object-contain" />
-                  ) : (
-                    node.skill.iconText ?? node.label.slice(0, 2)
-                  )}
+                  <SkillMark skill={node.skill} className="h-4 w-4" imageSize={24} />
                 </span>
                 <span className="truncate font-medium">{node.label}</span>
               </Link>
@@ -659,7 +715,7 @@ export default function SkillsWeb({
               key={node.id}
               type="button"
               data-web-node
-              className={`absolute z-30 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center border bg-black/80 text-center text-white transition-all hover:z-40 hover:scale-105 focus-visible:z-40 focus-visible:scale-105 ${blur} ${sizeClasses} ${dimmed ? "opacity-25" : "opacity-100"}`}
+              className={`absolute z-30 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center border bg-black/80 text-center text-white transition-[opacity,scale] hover:z-40 hover:scale-105 focus-visible:z-40 focus-visible:scale-105 ${blur} ${sizeClasses} ${dimmed ? "opacity-25" : "opacity-100"}`}
               style={sharedStyle}
               onClick={() => node.kind === "center" ? fitWeb() : focusNode(node, node.kind === "domain" ? 0.82 : 1.02)}
               onPointerEnter={() => setActiveNodeId(node.id)}
@@ -681,7 +737,9 @@ export default function SkillsWeb({
               </span>
               {node.kind === "category" && (
                 <span className="mt-1 text-[0.6rem] text-gray-500">
-                  {graph.nodes.filter((item) => item.parentId === node.id).length || "Explore"}
+                  {childCounts.get(node.id)
+                    ? `${childCounts.get(node.id)} ${childCounts.get(node.id) === 1 ? "skill" : "skills"}`
+                    : "Nothing published here yet"}
                 </span>
               )}
             </button>
