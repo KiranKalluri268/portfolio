@@ -254,6 +254,17 @@ export default function SkillsWeb({
     [graph.nodes],
   );
 
+  /** How many skills hang off each category, counted once rather than by
+   *  scanning all fifty-eight nodes again inside every category's render. */
+  const childCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const node of graph.nodes) {
+      if (!node.parentId) continue;
+      counts.set(node.parentId, (counts.get(node.parentId) ?? 0) + 1);
+    }
+    return counts;
+  }, [graph.nodes]);
+
   const enableViewTransition = useCallback(() => {
     setTransitioning(true);
     window.clearTimeout(transitionTimerRef.current);
@@ -681,7 +692,9 @@ export default function SkillsWeb({
               </span>
               {node.kind === "category" && (
                 <span className="mt-1 text-[0.6rem] text-gray-500">
-                  {graph.nodes.filter((item) => item.parentId === node.id).length || "Explore"}
+                  {childCounts.get(node.id)
+                    ? `${childCounts.get(node.id)} ${childCounts.get(node.id) === 1 ? "skill" : "skills"}`
+                    : "Nothing published here yet"}
                 </span>
               )}
             </button>
