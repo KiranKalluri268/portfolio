@@ -605,10 +605,16 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
       }
       applyPerformancePreset(newTier, false);
     },
-    onWarmupComplete: ({ tier, heavyFrames, panicFrames, reason }) => {
+    onWarmupComplete: ({ tier, heavyFrames, panicFrames, p90, frames, reason }) => {
+      // p90 first, because that is what the verdict is made on. The heavy and
+      // panic counts are still printed, but only as context - they are the
+      // outliers the percentile is there to ignore, and reading them as the
+      // decision is what sent a 143fps laptop to the bottom rung.
       console.log(
         "Quality Manager: Warmup complete at " + tier +
-        " (" + heavyFrames + " heavy frames, " + panicFrames + " panic frames, " + reason + ")"
+        " (p90 " + (p90 === null ? "n/a" : p90.toFixed(1) + "ms") +
+        " over " + frames + " frames; " +
+        heavyFrames + " heavy, " + panicFrames + " panic; " + reason + ")"
       );
       setTimeout(() => {
         // A benchmark that ran out of wall-clock never sampled a usable frame,

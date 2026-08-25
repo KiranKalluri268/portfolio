@@ -49,6 +49,9 @@ export class ThreeDQualityManager {
     this.warmupComplete = false;
     this.warmupHeavyFrames = 0;
     this.warmupPanicFrames = 0;
+    // Every warmup frame time, so the verdict can be a percentile instead of a
+    // count of outliers. Discarded once warmup is done.
+    this.warmupFrameTimes = [];
 
     // Safety net for the initial benchmark. Frames longer than maxFrameGapMs are
     // discarded as invalid samples, so a device slow enough that *every* frame
@@ -269,6 +272,12 @@ export class ThreeDQualityManager {
   updateWarmup(frameMs) {
     this.warmupElapsedMs += frameMs;
 
+    // Every frame is kept so the verdict can be a percentile rather than a
+    // count. Three seconds is a few hundred samples at worst, which is nothing.
+    this.warmupFrameTimes.push(frameMs);
+
+    // Still counted, but only for the log line. Nothing decides on these any
+    // more - see completeWarmup.
     if (frameMs > this.panicFrameMs) {
       this.warmupPanicFrames++;
     }
@@ -282,6 +291,17 @@ export class ThreeDQualityManager {
     this.completeWarmup('warmup-elapsed');
   }
 
+  /** The frame time that `fraction` of warmup's frames came in under. */
+  warmupPercentile(fraction) {
+    if (this.warmupFrameTimes.length === 0) return null;
+    const sorted = [...this.warmupFrameTimes].sort((a, b) => a - b);
+    const index = Math.min(
+      sorted.length - 1,
+      Math.max(0, Math.ceil(fraction * sorted.length) - 1)
+    );
+    return sorted[index];
+  }
+
   completeWarmup(reason) {
     if (this.warmupComplete) return;
 
@@ -291,6 +311,10 @@ export class ThreeDQualityManager {
       tier: this.currentTier,
       heavyFrames: this.warmupHeavyFrames,
       panicFrames: this.warmupPanicFrames,
+      // The number the decision is actually made on, so the log line explains
+      // the verdict instead of just reporting the outliers it ignored.
+      p90: this.warmupPercentile(0.9),
+      frames: this.warmupFrameTimes.length,
       reason,
     });
 
@@ -303,16 +327,40 @@ export class ThreeDQualityManager {
       return;
     }
 
-    // Only enhance if the baseline survived warmup with clear headroom.
-    if (this.warmupHeavyFrames === 0 && this.warmupPanicFrames === 0) {
+    // Judged on a percentile, not on a count of bad frames.
+    //
+    // Counting outliers reads the startup rather than the scene. Warmup is the
+    // one stretch where transients are guaranteed - ~10MB of texture uploading
+    // to the GPU on first sample, shader variants compiling, hydration
+    // finishing, GPU clocks still ramping - and the old rule downgraded on
+    // `warmupPanicFrames > 0`, a single frame over 50ms anywhere in three
+    // seconds, with no budget at all. That made warmup stricter than the live
+    // path, which tolerates five heavy frames in a rolling 1.5s window.
+    //
+    // Measured: a plugged-in laptop rendering this pose at 7.0ms produced ~348
+    // warmup frames, of which 336 sat on the 143fps cap and 12 did not. Twelve
+    // startup frames outvoted three hundred and thirty-six, and a machine with
+    // headroom for `high` was told it was a `low` device. It also explains the
+    // noise - the same phone landing on medium one run and low the next was
+    // never measuring the device, only how unlucky its first three seconds were.
+    //
+    // p90 asks the question the tier decision actually asks: is most of this
+    // fast enough. It needs no guess about when transients happen, which matters
+    // because clock ramping is not confined to the opening frames.
+    const p90 = this.warmupPercentile(0.9);
+
+    if (p90 === null) return;
+
+    if (p90 < this.healthyFrameMs) {
       if (this.currentTier === 'low') {
         this.startMediumProbe();
       } else if (this.currentTier === 'medium' && this.allowHighAutoUpgrade) {
         this.upgrade('warmup-headroom');
       }
-    } else if (this.warmupPanicFrames > 0 || this.warmupHeavyFrames > this.heavyFrameLimit) {
+    } else if (p90 > this.heavyFrameMs) {
       this.downgrade('warmup-struggling');
     }
+    // Between the two bars: the tier it warmed up at is the right one. Stay.
   }
 
   trackUpgradeHeadroom(frameMs) {
