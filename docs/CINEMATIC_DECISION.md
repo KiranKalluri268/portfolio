@@ -314,6 +314,53 @@ desktop-only patch for a problem the phones share.
 a cost gradient, it is the GPU spinning up. Worth remembering because warmup runs
 in exactly that cold window.
 
+### Every reading above was taken with the FPS meter mounted, and the meter was breaking the scene
+
+This is the most expensive thing on this page, so it goes at the end of the
+measurements rather than in a footnote.
+
+`?devtools=1` mounted stats.js. Its panel is an 80×48 `<canvas>` redrawn once a
+second (`Stats.js:77`), sitting over the WebGL canvas. On the AMD 780M through
+ANGLE/D3D11 that redraw costs **76–723ms of presentation time**, once a second,
+on the dot. Not script time: `long-animation-frame` reported `blockingDuration: 0`
+and no scripts at all on every one of them. The compositor simply stopped
+producing frames for about twenty refreshes.
+
+Same tab, seconds apart, at the entry gate:
+
+| | frames / 8s | median | p90 | max | spikes |
+|---|---|---|---|---|---|
+| with the meter | 955 | 7.0ms | 7.1ms | **201.8ms** | 10, at gaps of 1002 995 1009 1002 1009ms |
+| without it | 632 | 13.9ms | 20.9ms | **21.6ms** | none, and it held `high` throughout |
+
+Reproduced from scratch to be sure it was not stats.js specifically: an empty
+80×48 canvas appended to the page and filled once a second brought the spikes
+straight back on a clean tab. Layer promotion did not help — `will-change:
+transform` and `contain: strict` both still spiked — and neither did moving it
+out to `<body>`. **Text does not spike at all**, which is what the meter is now.
+
+**What this invalidates.** Every tier transition observed on a device: the iPhone
+dropping the moment a scroll started, "instantly drops to low when unlocked",
+`low` being selected at the entry gate on a plugged-in laptop. Those were the
+meter tripping the panic rule, not the devices. Several days went into chasing
+them, and the last of them — a supposed bug in the benchmark's pose handover —
+did not exist at all.
+
+**What survives, and why.** The cost curves above are medians of 30 frames per
+pose (`curveRunner.js:68`); a once-per-second stall touches at most one sample in
+thirty and cannot move a median. So the fall plateau, the 11× tunnel/fall ratio,
+"the opening is not cheap", and `BENCHMARK_APPROACH_PROGRESS = 0.30` all stand.
+Warmup's p90 figures survive for the same reason — three spikes in three hundred
+frames do not move a 90th percentile. The eyeballed fps numbers read off the
+meter are depressed by roughly 10–20% (about 150ms lost per second) rather than
+void.
+
+**The lesson worth keeping.** An instrument that shares a frame budget with the
+thing it measures has to be proven not to spend any of it. This one was mounted
+specifically to diagnose frame drops and was itself the cause. The tell was
+available the whole time and went unread: `median 7.0ms, p90 7.1ms, max 201.8ms`
+describes a healthy scene with something else on top of it, not a struggling one.
+
 ---
 
 ## 5. Choosing the tier
