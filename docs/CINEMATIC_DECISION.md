@@ -276,6 +276,44 @@ compositing all land on the same frame — which is why `high` on the iPhone rea
 a comfortable 22–24ms here but was observed dropping tiers under an actual scroll.
 The curve is a floor on cost, not the whole of it.
 
+### The laptop, and why power state matters more than the tier
+
+A 144Hz laptop on a Radeon 780M iGPU (the browser does not pick the discrete
+3050), swept in three power states. Frame time in the fall:
+
+| tier | plugged in | on battery | battery + saver |
+|---|---|---|---|
+| `low` | 7.0ms *(cap)* | 7.0ms *(cap)* | 7.0ms *(cap)* |
+| `medium` | 7.0ms *(cap)* | 7.0–7.3ms *(cap)* | 7.0–7.2ms *(cap)* |
+| `high` | **20.9ms** (48fps) | **27.8ms** (36fps) | **27.8ms** (36fps) |
+
+**`low` and `medium` are the same tier here.** Both sit on the 143fps cap in every
+power state, so the manager cannot tell them apart from frame timing — the exact
+condition this document warns makes a rung worthless. `medium` is strictly better
+on this machine: more resolution at identical measured cost. `low` earns nothing
+on a desktop, and that is now measured rather than assumed.
+
+**Unplugging costs 33%, and it straddles the heavy line.** `high` passes at 20.9ms
+plugged and fails at 27.8ms on battery, against a 25ms bar. Same machine, same
+scene, same session.
+
+That is a real limit on the tier ceiling. The ceiling's stated reasoning is that
+*nothing that happens later is evidence the device got faster* — and plugging in
+is precisely that evidence. Unplug mid-journey, `high` fails, the ceiling pins the
+session to `medium`, and plugging back in does not release it.
+
+**Accepted deliberately rather than fixed.** Plugging in mid-journey is rare;
+picking a tier by hand already clears the ceiling; and the churn the ceiling
+prevents — climb, fail, drop, climb again, every thirty seconds — is a worse
+experience than the recovery it blocks. The obvious fix, listening for the
+Battery Status API, works on this laptop and on neither phone, which makes it a
+desktop-only patch for a problem the phones share.
+
+**Clocks ramp during the first seconds of a sweep.** On battery, `high` reads
+21.2 → 24.2 → 27.7ms across units 0 / 1.5 / 3 and then drops to 14.0. That is not
+a cost gradient, it is the GPU spinning up. Worth remembering because warmup runs
+in exactly that cold window.
+
 ---
 
 ## 5. Choosing the tier
