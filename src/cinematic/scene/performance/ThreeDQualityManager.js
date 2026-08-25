@@ -431,6 +431,22 @@ export class ThreeDQualityManager {
 
     const nextTier = this.tiers[tierIndex - 1];
 
+    // Warmup is not allowed to cap anything, and getting this wrong cost an
+    // iPhone 16 Pro its whole session.
+    //
+    // The benchmark runs for three seconds while textures are still decoding and
+    // two shader variants are compiling - the most contended moment there is -
+    // and it is noisy enough to land on medium one run and low the next on the
+    // same hardware. When a warmup downgrade set the ceiling, that coin flip
+    // became permanent: the manager dropped to low, the medium probe that exists
+    // to recover a conservative start was refused by the ceiling, and the phone
+    // sat at low for the rest of the session at 50-60fps with headroom it could
+    // never spend.
+    //
+    // A ceiling is meant to record "this device rendered this tier and could not
+    // hold it", not "this device had a rough three seconds while loading".
+    const isWarmupVerdict = reason === 'warmup-struggling' || reason === 'benchmark-deadline';
+
     // Asked and answered, the same rule a failed medium probe already follows.
     // This tier has now been rendered on this device and could not be held, so
     // the automatic path stops offering it.
@@ -444,7 +460,7 @@ export class ThreeDQualityManager {
     //
     // The visitor can still pick any tier by hand; this governs only what the
     // manager reaches for on its own.
-    this.tierCeiling = nextTier;
+    if (!isWarmupVerdict) this.tierCeiling = nextTier;
 
     this.lastAdjustmentReason = reason;
     this.setTier(nextTier);

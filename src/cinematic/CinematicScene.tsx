@@ -17,7 +17,13 @@ import "./cinematic.css";
  * data-cinematic attribute inside the root, never by document id - the site is
  * full of other elements and nothing here should be reachable from outside.
  */
-export default function CinematicScene({ showDevTools = false }: { showDevTools?: boolean }) {
+export default function CinematicScene({
+  showDevTools = false,
+  measureCurve = false,
+}: {
+  showDevTools?: boolean;
+  measureCurve?: boolean;
+}) {
   const rootRef = useRef<HTMLDivElement>(null);
   const { lenis } = useScrollActions();
 
@@ -41,7 +47,7 @@ export default function CinematicScene({ showDevTools = false }: { showDevTools?
     // anything else this site ships, and no visitor who does not come here
     // should pay for a byte of it.
     import("./scene/main")
-      .then(({ mountCinematic }) => mountCinematic(root, lenis, showDevTools))
+      .then(({ mountCinematic }) => mountCinematic(root, lenis, { showDevTools, measureCurve }))
       .then((dispose) => {
         // Unmounted while the import or the shader compile was still in flight.
         // StrictMode makes this the normal case in development rather than a
@@ -66,7 +72,7 @@ export default function CinematicScene({ showDevTools = false }: { showDevTools?
       // leaves the whole site unable to scroll.
       document.documentElement.classList.remove("cinematic-loading");
     };
-  }, [lenis, showDevTools]);
+  }, [lenis, showDevTools, measureCurve]);
 
   return (
     <div ref={rootRef} data-cinematic-root>

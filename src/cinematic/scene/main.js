@@ -5,6 +5,7 @@ import { createSceneConfig } from './sceneConfig';
 import { createPresetSwitcher } from './gui/presetSwitcher';
 import { ThreeDQualityManager } from './performance/ThreeDQualityManager';
 import { createStoryOverlay } from './story/StoryOverlay';
+import { createCurveRunner } from './curveRunner';
 import { createTunnel } from './graphics/tunnel';
 import { createPlanet } from './graphics/planet';
 
@@ -26,10 +27,14 @@ import { createPlanet } from './graphics/planet';
  *   journey is a pure function of scroll position and the site already owns one
  *   Lenis in the root layout; a second one would mean two sources of truth for
  *   a single number. See docs/ANIMATIONS.md.
- * @param {boolean} [showDevTools] - render the FPS meter and tier switcher.
+ * @param {object} [options]
+ * @param {boolean} [options.showDevTools] - render the FPS meter and tier switcher.
+ * @param {boolean} [options.measureCurve] - instead of following scroll, walk the
+ *   camera through the whole journey and report what each part costs. See
+ *   curveRunner.js.
  * @returns {Promise<() => void>} teardown
  */
-export async function mountCinematic(root, lenis, showDevTools = false) {
+export async function mountCinematic(root, lenis, { showDevTools = false, measureCurve = false } = {}) {
 
   const loadingOverlay = root.querySelector('[data-cinematic="loading-overlay"]')
   const loadingPercentage = root.querySelector('[data-cinematic="loading-percentage"]')
@@ -117,6 +122,18 @@ export async function mountCinematic(root, lenis, showDevTools = false) {
     lenis.start()
     loadingOverlay?.classList.add('loaded')
     loadingOverlay?.addEventListener('transitionend', () => loadingOverlay.remove(), { once: true })
+
+    if (measureCurve && !curveRunner) {
+      // Hold the tier for the whole sweep. A downgrade partway through would
+      // make the second half of the curve a measurement of a different scene,
+      // and the point is to compare poses against each other.
+      qualityManager?.setLocked(true)
+      curveRunner = createCurveRunner({
+        journey: JOURNEY,
+        getTier: () => qualityManager?.currentTier ?? performanceConfig.preset,
+        onPose: () => {},
+      })
+    }
   }
 
   setLoadingStage('Initializing renderer...', 3)
@@ -412,6 +429,12 @@ export async function mountCinematic(root, lenis, showDevTools = false) {
       })
     : { setTier() {}, dispose() {} };
 
+  // Built on entry rather than here, so the measurement runs on a frame the
+  // visitor can see and not behind the loading overlay while textures are still
+  // settling - that contention is exactly what makes the warmup verdict noisy,
+  // and there is no reason to inherit it.
+  let curveRunner = null;
+
   const DEFAULT_ELEVATION = 5 * Math.PI / 180 // 5° — default camera elevation above disk
 
   // Resize handler — only fires on actual window resize, not every frame
@@ -662,9 +685,17 @@ export async function mountCinematic(root, lenis, showDevTools = false) {
     // fall instead of from scroll. This works because every value below is a
     // pure function of this number, so there is nothing to restore afterwards —
     // the frame after the benchmark ends reads scroll again and retraces itself.
-    const scrollViewportUnits = benchmarkPoseActive()
-      ? BENCHMARK_POSE_UNITS
-      : lenis.scroll / Math.max(1, window.innerHeight);
+    // The curve runner drives the camera itself, so it outranks scroll while it
+    // is working. It is only ever on behind ?curve=1.
+    const curvePose = curveRunner && !curveRunner.finished
+      ? curveRunner.update(frameTimestamp - lastframe)
+      : null;
+
+    const scrollViewportUnits = curvePose !== null
+      ? curvePose
+      : benchmarkPoseActive()
+        ? BENCHMARK_POSE_UNITS
+        : lenis.scroll / Math.max(1, window.innerHeight);
     storyOverlay.update(scrollViewportUnits)
     if (benchmarkStarted) {
       // Past the tunnel is the fall, where the raymarcher is close, the disk
@@ -1147,6 +1178,7 @@ export async function mountCinematic(root, lenis, showDevTools = false) {
     cameraControl.dispose();
     disposeConfig();
     presetSwitcher.dispose();
+    curveRunner?.dispose();
     storyOverlay.dispose();
     disposeParticleSystem();
     disposeTunnel();

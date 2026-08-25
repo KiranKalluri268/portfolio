@@ -369,3 +369,29 @@ html.cinematic-journey [data-blackhole-video] {
   background: #100b06;
   color: #fff5e0;
 }
+
+/* The cost-curve readout. Appended to the body rather than the scene root,
+   because it has to survive being read after the sweep ends and it is the only
+   output of that run - a phone has no console to fall back on. Monospace and
+   scrollable, since the result is a table. */
+#curve-runner {
+  position: fixed;
+  right: max(8px, env(safe-area-inset-right));
+  bottom: max(8px, env(safe-area-inset-bottom));
+  z-index: 200;
+  max-width: min(92vw, 420px);
+  max-height: 70vh;
+  overflow: auto;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 245, 224, 0.22);
+  background: rgba(8, 6, 4, 0.92);
+  color: #fff5e0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.45;
+  white-space: pre;
+  -webkit-user-select: text;
+  user-select: text;
+}
