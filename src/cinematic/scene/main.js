@@ -178,31 +178,6 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
   let benchmarkStarted = false;
   let loadingOverlayDismissed = false;
 
-  // ── Handover instrument (temporary) ──────────────────────────────────────
-  // Open question: when the benchmark releases its held pose, two frames go
-  // over the 50ms panic bar and the tier falls from high to low before the
-  // visitor has entered. The measured cost curve says the pose it lands on
-  // (unit 0) is no more expensive than the pose it just left, so the frames are
-  // more likely to be the two render-target reallocations than scene cost -
-  // but a `panic` in the log carries no frame time, so the two look identical.
-  //
-  // This records the last 16 frames and prints them around the handover and on
-  // every panic. Remove it once the cause is settled.
-  const FRAME_LOG_SIZE = 16;
-  const frameLog = [];
-  let framesUntilHandoverDump = -1;
-
-  function recordFrame(frameMs, tier, pose) {
-    frameLog.push(
-      frameMs.toFixed(1) + 'ms@' + tier + '/u' + pose.toFixed(1)
-    );
-    if (frameLog.length > FRAME_LOG_SIZE) frameLog.shift();
-  }
-
-  function dumpFrameLog(label) {
-    console.log('Frame log (' + label + '): ' + frameLog.join('  '));
-  }
-
   // set variables types for shader
   const uniforms = {
     time: { type: "f", value: 0.0 },
@@ -618,7 +593,6 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
         (frameMs === undefined || frameMs === null
           ? "" : ", frame " + frameMs.toFixed(1) + "ms") + ")"
       );
-      if (reason === 'panic') dumpFrameLog('panic -> ' + newTier);
       // The dropdown follows a safety downgrade: it shows what is running, not
       // what was asked for, so an overridden selection is visible immediately.
       presetSwitcher.setTier(newTier);
@@ -661,14 +635,12 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
         }
 
         initialQualityBenchmarkComplete = true;
-        framesUntilHandoverDump = 8;
         setLoadingStage(`Selected ${qualityManager.currentTier} graphics`, 100)
         dismissLoadingOverlayIfReady();
       }, 0)
     },
     onMediumProbeComplete: ({ tier }) => {
       initialQualityBenchmarkComplete = true
-      framesUntilHandoverDump = 8
       setLoadingStage(`Selected ${tier} graphics`, 100)
       dismissLoadingOverlayIfReady()
     },
@@ -759,19 +731,9 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
       // healthy frame there says nothing about whether a higher tier would
       // survive what comes next. The manager uses this for upgrades only; it
       // protects the frame rate everywhere.
-      recordFrame(
-        frameTimestamp - lastframe,
-        qualityManager.currentTier,
-        scrollViewportUnits
-      );
       qualityManager.update(frameTimestamp, {
         representative: scrollViewportUnits > JOURNEY.tunnelEnd,
       });
-      // Eight frames past the pose release, so the dump straddles it.
-      if (framesUntilHandoverDump > 0) {
-        framesUntilHandoverDump--;
-        if (framesUntilHandoverDump === 0) dumpFrameLog('around handover');
-      }
     }
     if (frameTimestamp - lastDiagnosticsUpdate >= 250) {
       lastDiagnosticsUpdate = frameTimestamp
