@@ -666,7 +666,17 @@ export async function mountCinematic(root, lenis, showDevTools = false) {
       ? BENCHMARK_POSE_UNITS
       : lenis.scroll / Math.max(1, window.innerHeight);
     storyOverlay.update(scrollViewportUnits)
-    if (benchmarkStarted) qualityManager.update(frameTimestamp);
+    if (benchmarkStarted) {
+      // Past the tunnel is the fall, where the raymarcher is close, the disk
+      // fills the frame and the cost is worth judging by. Everything before it -
+      // the wormhole from 22 units out, the passage - is cheap enough that a
+      // healthy frame there says nothing about whether a higher tier would
+      // survive what comes next. The manager uses this for upgrades only; it
+      // protects the frame rate everywhere.
+      qualityManager.update(frameTimestamp, {
+        representative: scrollViewportUnits > JOURNEY.tunnelEnd,
+      });
+    }
     if (frameTimestamp - lastDiagnosticsUpdate >= 250) {
       lastDiagnosticsUpdate = frameTimestamp
       updateDiagnostics(qualityManager.getDiagnostics())

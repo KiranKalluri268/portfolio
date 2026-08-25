@@ -86,6 +86,17 @@ export class ThreeDQualityManager {
     // question for the session.
     this.mediumProbeRejected = false;
 
+    // Whether the frame currently being judged came from a part of the journey
+    // expensive enough to be worth judging by. Set per frame from update();
+    // true until told otherwise, so a caller that passes nothing is unaffected.
+    this.frameIsRepresentative = true;
+
+    // The highest tier the manager may still reach for on its own. Set by the
+    // first downgrade away from a tier and never raised again, because nothing
+    // that happens later is evidence the device got faster. A hand-picked tier
+    // clears it - an explicit choice outranks the manager's memory.
+    this.tierCeiling = null;
+
     // A tier chosen by hand stops the manager climbing, but not dropping. The
     // safety net is protection and stays on; probing upward is ambition, and
     // once someone has picked a tier the manager should stop having opinions
@@ -130,6 +141,11 @@ export class ThreeDQualityManager {
     if (!this.tiers.includes(tier)) return;
 
     this.userPinned = true;
+    // An explicit choice outranks the manager's memory of what failed. Picking a
+    // tier by hand is allowed to reach above the ceiling, and clears it, so that
+    // letting the manager take over again later does not start from a verdict
+    // reached before the choice was made.
+    this.tierCeiling = null;
     this.mediumProbeActive = false;
     this.mediumProbeElapsedMs = 0;
     this.mediumProbeHeavyFrames = 0;
@@ -149,7 +165,20 @@ export class ThreeDQualityManager {
     this.locked = locked;
   }
 
-  update(timestampMs = performance.now()) {
+  /**
+   * @param {number} timestampMs
+   * @param {object} [options]
+   * @param {boolean} [options.representative] - whether this frame is drawn
+   *   from a part of the journey whose cost is worth judging by. Defaults to
+   *   true, so a caller that says nothing behaves as before.
+   *
+   *   Only the upgrade path reads it. Downgrades never do: a frame that has
+   *   fallen apart has fallen apart wherever it was drawn, and protection is not
+   *   conditional on where the visitor happens to be.
+   */
+  update(timestampMs = performance.now(), { representative = true } = {}) {
+    this.frameIsRepresentative = representative;
+
     if (this.previousTimestampMs === null) {
       this.previousTimestampMs = timestampMs;
       return;
@@ -287,6 +316,23 @@ export class ThreeDQualityManager {
   }
 
   trackUpgradeHeadroom(frameMs) {
+    // A cheap frame is not evidence of headroom unless it came from an
+    // expensive part of the journey.
+    //
+    // This is the same mistake the benchmark used to make, in the one place it
+    // survived being fixed. The benchmark now judges the device on the fall
+    // instead of the wormhole; this path was still counting whatever happened
+    // to be on screen. At scroll zero the wormhole is the cheapest thing the
+    // scene draws, so eight seconds of sitting still there is guaranteed
+    // headroom - and the tier it buys is one the fall cannot hold. Measured on
+    // an iPhone 16 Pro: idle at the opening climbs to high, scrolling into the
+    // fall drops it straight back to medium, and it will do that all day.
+    //
+    // Paused rather than reset. Coming back up out of the fall should not spend
+    // credit that was honestly earned in it - it should simply stop earning
+    // more until the journey is somewhere worth measuring again.
+    if (!this.frameIsRepresentative) return;
+
     if (this.userPinned) {
       this.upgradeStableElapsedMs = 0;
       return;
@@ -317,6 +363,11 @@ export class ThreeDQualityManager {
   // onMediumProbeComplete have to know when it refused, or they wait forever.
   startMediumProbe() {
     if (this.userPinned || this.locked || this.mediumProbeRejected) return false;
+    // The probe reaches medium through setTier rather than upgrade(), so the
+    // ceiling has to be checked here too or it would be the one way around it.
+    if (this.tierCeiling !== null && this.tiers.indexOf('medium') > this.tiers.indexOf(this.tierCeiling)) {
+      return false;
+    }
 
     this.lastAdjustmentReason = 'low-to-medium-probe';
     this.mediumProbeActive = true;
@@ -379,6 +430,22 @@ export class ThreeDQualityManager {
     }
 
     const nextTier = this.tiers[tierIndex - 1];
+
+    // Asked and answered, the same rule a failed medium probe already follows.
+    // This tier has now been rendered on this device and could not be held, so
+    // the automatic path stops offering it.
+    //
+    // Without this the manager cannot help but retry it. Headroom at the current
+    // tier is the only evidence it has, and headroom at one tier says nothing
+    // about the next one when the rungs are roughly twice each other's cost.
+    // A device where medium is comfortable in the fall and high is not will
+    // climb, fail, drop, wait out the cooldown and climb again for as long as
+    // the visitor stays - which is what an iPhone 16 Pro actually does here.
+    //
+    // The visitor can still pick any tier by hand; this governs only what the
+    // manager reaches for on its own.
+    this.tierCeiling = nextTier;
+
     this.lastAdjustmentReason = reason;
     this.setTier(nextTier);
     this.onQualityDowngrade(nextTier, { reason });
@@ -402,6 +469,13 @@ export class ThreeDQualityManager {
     }
 
     const nextTier = this.tiers[tierIndex + 1];
+
+    // Never climb back above a tier that has already failed here.
+    if (this.tierCeiling !== null && this.tiers.indexOf(nextTier) > this.tiers.indexOf(this.tierCeiling)) {
+      this.upgradeStableElapsedMs = 0;
+      return;
+    }
+
     this.lastAdjustmentReason = reason;
     this.setTier(nextTier);
     this.onQualityUpgrade(nextTier, { reason });
