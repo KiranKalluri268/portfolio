@@ -289,14 +289,26 @@ html.cinematic-journey [data-blackhole-video] {
 }
 
 /* ── Dev instruments ─────────────────────────────────────── */
-/* Only mounted when the flag asks for them. The stats.js canvas needs the same
-   exemption from the renderer rule above that it needs in portfolio-3D, or it
-   is pinned full-screen along with everything else. */
-[data-cinematic-root] #stats-panel canvas {
-  position: static;
-  display: block;
-  width: 80px;
-  height: 48px;
+/* Only mounted when the flag asks for them.
+   The meter is text rather than a canvas, and that is not a style choice: a
+   small 2D canvas redrawn once a second alongside the WebGL canvas stalls the
+   compositor for 76-723ms on this GPU, which tripped the panic rule and cost
+   two tiers. See the note in scene/gui/statsGUI.js. The exemption the stats.js
+   canvas used to need from the renderer rule above went with it. */
+[data-cinematic-root] #stats-panel {
+  min-width: 80px;
+  padding: 4px 6px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #d8f4ff;
+  font: 500 11px/1.35 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+[data-cinematic-root] #stats-panel .stats-fps {
+  font-size: 13px;
+  color: #7fe7ff;
 }
 
 /* Both instruments clear the site header, which portfolio-3D has no equivalent
@@ -307,9 +319,9 @@ html.cinematic-journey [data-blackhole-video] {
    places already and this is the fifth, which STATUS.md has open as its own
    piece of work. */
 [data-cinematic-root] #stats-panel {
-  position: fixed !important;
-  top: calc(max(8px, env(safe-area-inset-top)) + 56px) !important;
-  left: max(8px, env(safe-area-inset-left)) !important;
+  position: fixed;
+  top: calc(max(8px, env(safe-area-inset-top)) + 56px);
+  left: max(8px, env(safe-area-inset-left));
   /* Above the loading overlay (100), which portfolio-3D deliberately puts these
      under so the entry moment is not shared with a control. Right for a visitor
      and wrong for an instrument: the tier has to be chosen and locked *before*
@@ -317,8 +329,13 @@ html.cinematic-journey [data-blackhole-video] {
      unlocked tier can change halfway through, which would make the second half
      a measurement of a different scene. At 17 the switcher was rendered but sat
      behind the gate, so it could not be reached at the one moment it is needed.
-     Both only exist behind ?devtools=1, so no visitor ever meets them. */
-  z-index: 120 !important;
+     Both only exist behind ?devtools=1, so no visitor ever meets them.
+
+     The !important throughout this block was aimed at stats.js, which wrote
+     position, top, left and a z-index of 10000 inline on its own container. The
+     meter is plain DOM now and sets no inline styles, so these went back to
+     being ordinary declarations. */
+  z-index: 120;
 }
 
 /* Under the FPS meter, clearing its 48px height plus an 8px gap. */
@@ -334,7 +351,7 @@ html.cinematic-journey [data-blackhole-video] {
 
 @media (min-width: 640px) {
   [data-cinematic-root] #stats-panel {
-    top: calc(max(8px, env(safe-area-inset-top)) + 96px) !important;
+    top: calc(max(8px, env(safe-area-inset-top)) + 96px);
   }
 
   [data-cinematic-root] #preset-switcher-wrap {
