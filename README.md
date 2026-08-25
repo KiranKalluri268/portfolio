@@ -153,8 +153,19 @@ Performance-sensitive changes should be tested on a real touch device as well as
 
 This repository uses two licenses:
 
-- **Source code:** [MIT License](LICENSE)
+- **Source code:** [GNU General Public License v3.0 or later](LICENSE)
 - **Original design, documentation, written content, résumé data, and original visual assets:** [Creative Commons Attribution 4.0](LICENSE-CONTENT.md)
+
+The code was MIT until the black hole journey was ported in. Its accretion-disk
+texture and parts of its GLSL derive from
+[Starless](https://github.com/rantonels/starless), which is GPLv3, and the GPL is
+copyleft — a work built on it has to carry the same licence. That is a
+consequence of the scene, not a change of heart, and it was
+[decided deliberately](docs/CINEMATIC_DECISION.md) rather than discovered later.
+See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+The written content and design are unaffected: they were never under the code
+licence and remain CC BY 4.0.
 
 Reuse of the CC BY material requires attribution to **Saikiran Kalluri / [@KiranKalluri268](https://github.com/KiranKalluri268)**, a link to the [original repository](https://github.com/KiranKalluri268/portfolio1), a link to CC BY 4.0, and an indication of changes.
 
