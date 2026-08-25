@@ -230,11 +230,66 @@ a resolution change under that flash cannot be seen. Deliberately not built —
 it is a feature rather than a tuning change, and it belongs after step 4 rather
 than tangled into it.
 
+### The cost curve, measured
+
+`?curve=1` locks a tier, walks the camera through all 19 poses of the journey and
+reports frame time at each. Run on both phones. This replaces every earlier guess
+about where the expensive frames are — there were two, and both were wrong, in
+opposite directions.
+
+**Read the caps first.** 17.0ms is 59fps and 13.9ms is 72fps: those are display
+refresh limits, not scene cost. The iPhone runs at 60Hz here (Safari caps `rAF`
+at 60 regardless of ProMotion), so **its `medium` and `low` sweeps are capped on
+every row and contain no cost information at all**. The Realme's tunnel rows are
+capped too. Usable data: iPhone `high`, and Realme at all three tiers.
+
+| units | phase | iPhone `high` | Realme `low` | Realme `medium` | Realme `high` |
+|---|---|---|---|---|---|
+| 0–3 | crossing, far | 22–24ms | 20.8–20.9 | 55.5–55.6 | 125–132 |
+| 4.5–6 | crossing, near | 17 *(cap)* | 13.9 *(cap)* | 13.9 *(cap)* | 13.9–20.8 |
+| 7.5–10.5 | tunnel | 17 *(cap)* | 13.9 *(cap)* | 13.9 *(cap)* | 13.9 *(cap)* |
+| 12–21 | arrival + fall | **22–23** | **24.3–27.7** | **62.4–62.5** | **145.8–152.8** |
+| 24–27 | fall, very close | 21→17 | 20.8 | 48.5–55.6 | 138.8→111.1 |
+
+**The fall is a plateau, not a peak.** Flat from the arrival at 12 units to about
+21, then falling away as the black hole grows to fill the frame. Up close the
+shadow terminates rays early; at distance almost nothing terminates and nearly
+every ray spends its whole step budget on mildly-lensed background. The note on
+`arriveDist` in `main.js` says the same thing from the other side — beyond ~43
+units on `low`, the most-bent rays run out of steps entirely.
+
+That plateau is why the sweep's own suggested constant came out as 0.36, 0.04,
+0.25 and 0.57 on different runs: the argmax of a flat stretch is noise.
+`BENCHMARK_APPROACH_PROGRESS` is now **0.30**, the middle of it, and anything from
+about 0.05 to 0.55 measures the same thing.
+
+**The tunnel/fall ratio is now a number rather than an impression:** 13.9ms
+against 152.7ms on the Realme at `high`. **Eleven times.**
+
+**The rungs, for that phone:** `low` 24–28ms in the fall, `medium` 62ms, `high`
+153ms. Roughly 2.5× per rung rather than the ~1.6× predicted from pixel counts,
+and it confirms `low` is the only tier it can use.
+
+**One thing this method cannot see.** Every pose is measured standing still, and
+the journey is normally scrolled. Scrolling costs more — Lenis, ScrollTrigger and
+compositing all land on the same frame — which is why `high` on the iPhone reads
+a comfortable 22–24ms here but was observed dropping tiers under an actual scroll.
+The curve is a floor on cost, not the whole of it.
+
 ---
 
 ## 5. Choosing the tier
 
 ### The benchmark measures the wrong workload
+
+> **Half right, and the wrong half was load-bearing.** The claim below — that the
+> opening is the cheapest thing in the journey — is false, and it was measured
+> false with `?curve=1` on two phones. On a Realme 9 Speed Edition at `high` the
+> opening costs **132ms against the fall's 153ms**: 87% of peak, and the second
+> most expensive part of the whole journey. Benchmarking the fall is still
+> correct, because the fall genuinely is the peak — but the gap being closed is
+> a sixth, not the chasm this section describes. See *The cost curve, measured*
+> below.
 
 `ThreeDQualityManager` judges the device from frame times during warmup. At the
 loading screen, what is rendering is the **opening** of the journey — the wormhole

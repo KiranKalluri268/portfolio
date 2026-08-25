@@ -300,15 +300,32 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
   // enough round the photon sphere to spend most of their step budget. Judging
   // a device on the opening and then sending it into the fall is measuring the
   // wrong workload, and it comes out optimistic every time. Measured on a
-  // Realme 9 Speed Edition, high runs at 75fps inside the tunnel and 5-10fps in
-  // the fall: same tier, same device, a tenfold spread across one journey.
+  // Realme 9 Speed Edition at high: 13.9ms inside the tunnel against 152.7ms in
+  // the fall. Same tier, same device, eleven times the cost across one journey.
   //
-  // 0.85 of the approach rather than the very last frame. The fall is nearly at
-  // its closest here, so it stands in for the worst the device will be asked
-  // for, while staying clear of the final frame's viewport-dependent framing.
-  // One global tier has to survive the most expensive moment, so that is the
-  // moment to measure.
-  const BENCHMARK_APPROACH_PROGRESS = 0.85
+  // 0.30, and it is the middle of a plateau rather than a peak.
+  //
+  // Measured with ?curve=1 on two phones rather than guessed, which is how the
+  // two previous values got here. Frame time is flat from the arrival at 12
+  // units to about 21, then falls away as the black hole grows to fill the
+  // frame — up close the shadow terminates rays early, where at distance almost
+  // nothing terminates and nearly every ray spends its whole step budget on
+  // mildly-lensed background. Realme 9 Speed Edition at high:
+  //
+  //   units  12    13.5   16.5   18    21    24    27
+  //   ms     145.8 152.7  152.8  152.7 152.7 138.8 111.1
+  //
+  // So 0.85 — which is 24.9 units — was sampling the far side of the plateau at
+  // about 138ms against a 153ms peak, and the sweep's own suggested constant
+  // came out as 0.36, 0.04, 0.25 and 0.57 on different runs because the argmax
+  // of a flat stretch is noise. Anything from roughly 0.05 to 0.55 measures the
+  // same thing; the middle is simply furthest from either edge.
+  //
+  // Note the opening is *not* cheap, whatever CINEMATIC_DECISION.md says: at
+  // 132ms it is 87% of the fall's cost on that device, the second most expensive
+  // part of the journey. The fall is still the right place to benchmark because
+  // it is genuinely the peak, but the gap is far narrower than that doc claims.
+  const BENCHMARK_APPROACH_PROGRESS = 0.30
   const BENCHMARK_POSE_UNITS =
     JOURNEY.arrivalEnd + (JOURNEY.approachEnd - JOURNEY.arrivalEnd) * BENCHMARK_APPROACH_PROGRESS
 
