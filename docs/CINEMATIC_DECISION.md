@@ -4,7 +4,9 @@ What was decided about turning this portfolio into a scroll-driven cinematic,
 and why. `ARCHITECTURE.md` describes what the code is; this describes what it
 is becoming and which options were rejected on the way.
 
-**Status:** decided, not built. Nothing here has shipped.
+**Status:** steps 1–3 of the build order are done. The scene lives in this repo
+and runs at `/cinematic?cinematic=1`; nothing is enabled for visitors, and every
+other route still gets `still`. Steps 4–6 are untouched.
 
 ---
 
@@ -59,10 +61,31 @@ and `LICENSE-CONTENT.md` already separates the writing and images from the code,
 so the content stays reserved. It should be recorded deliberately, not
 discovered later.
 
+> **Done.** The code moved from MIT to GPL-3.0-or-later in its own commit,
+> landed *before* the scene rather than after, so the history says why. Content
+> is untouched and stays CC BY 4.0. See `THIRD_PARTY_NOTICES.md`.
+
 **Three.js 0.148 is from 2022.** Port the scene as a plain module mounted by one
 client component — not react-three-fiber. Two things break on the way across:
 the `.glsl` import, which Vite handles natively and Next does not, and the ~17MB
 of textures, which must load after first paint rather than sitting in the bundle.
+
+> **Done, and both were worse and better than expected.** The textures are
+> **9.7MB, not 17MB** — only three of the four files in `portfolio-3D/assets` are
+> ever imported; `milkyway-generated.jpg` is the source plate, not a runtime
+> asset. They now live in `public/textures/`.
+>
+> The `.glsl` import is the one that bit. Turbopack's `type: "raw"` rule looks
+> like the answer and is not: it produces a module with no ES namespace, the
+> import lands as `undefined`, and the shader compiles as the literal text
+> `undefined`. That fails at the GPU driver rather than at the build — the page
+> loads, the canvas appears, and only the console says why the frame is black.
+> The shader is generated into a TypeScript string by `scripts/port-shader.mjs`
+> instead, which needs no bundler config and behaves the same in Vitest.
+>
+> A third thing broke that this list did not predict: the site drives
+> `lenis.raf()` from the GSAP ticker, so the scene's own `raf` call had to go or
+> Lenis steps twice a frame and scroll runs at double speed.
 
 ---
 
@@ -174,6 +197,38 @@ hardware ask for it.
 
 Sustained load is what matters, not first-frame FPS: a mid-range Android on
 battery, ten minutes in, after thermal throttling.
+
+### The measurement changed the shape of this section
+
+Held each tier still with the preset lock and read the counter:
+
+| | Realme 9 Speed Edition | iPhone 16 Pro |
+|---|---|---|
+| low | 50–75 fps | — |
+| medium | 15–20 fps | — |
+| high | 5–10 fps | 40–60 fps, smooth |
+| high, **inside the tunnel** | **75 fps** | — |
+
+Two things follow that this section did not anticipate.
+
+**The Realme falls off a cliff, not a slope.** The presets are pure resolution
+ladders, so cost should track the square of the effective pixel ratio — about
+1.6× from low to medium on that device. Observed is 3–5×. Low already sits at
+that GPU's limit and everything above it goes off a bandwidth edge. For that
+phone the ladder is not three rungs: low is the only one it has, and medium is
+not a fallback but a tier it cannot reach.
+
+**One tier cannot fit the whole journey.** 75fps in the tunnel against 5–10fps in
+the fall — same tier, same device, a tenfold spread across one run. A tier that
+survives the fall wastes the tunnel; one that suits the tunnel dies in the fall.
+Benchmarking the worst moment, which is what the fixed benchmark now does, buys
+correctness by giving up everything the cheap acts could have had.
+
+The fix would be a per-act budget, and there is already a free place to change
+it: the wormhole→tunnel handover is covered by a flash that burns to black, and
+a resolution change under that flash cannot be seen. Deliberately not built —
+it is a feature rather than a tuning change, and it belongs after step 4 rather
+than tangled into it.
 
 ---
 
@@ -295,11 +350,25 @@ scroll stops the film.
 
 ## Order to build in
 
-1. **Measure `medium` on the old phone.** Decides three rungs or two. Everything
-   about tuning follows from it.
-2. **Fix the benchmark workload.** Cheap, and every tier decision rests on it.
-3. **Port the scene into this repo** behind a flag, at `still` for everyone, and
-   confirm nothing regresses.
+1. ~~**Measure `medium` on the old phone.**~~ **Done.** Three rungs, but not the
+   three that were assumed. On a Realme 9 Speed Edition: low 50–75fps, medium
+   15–20, high 5–10 — a 3–5× collapse where pixel-count maths predicted ~1.6×.
+   Low is the only rung that phone has. An iPhone 16 Pro runs high at 40–60fps
+   comfortably. So the ladder is real, but it is separated by device class
+   rather than by anything a phone can climb.
+2. ~~**Fix the benchmark workload.**~~ **Done** in portfolio-3D. It now parks the
+   camera at 0.85 of the approach instead of judging the device on the wormhole
+   opening. Two things came out with it: the heavy-frame line was at 50fps and
+   was taking `high` away from the iPhone that was rendering it well, and moving
+   that line turned the low→medium probe into a loop that climbed and collapsed
+   every 30 seconds. Both fixed there.
+3. ~~**Port the scene into this repo** behind a flag~~ **Done.** It runs at
+   `/cinematic?cinematic=1`, on a route of its own rather than behind the home
+   page, because the journey owns scroll for 28 viewports and is not ambient.
+   `still` is unchanged for everyone. What the port cost is recorded in the
+   commit: one Lenis instead of two, lil-gui's config extracted, the shader
+   generated into a string because Turbopack has no working `?raw`, and 9.7MB
+   of texture moved to `/public`.
 4. **Make the tier ladder real**, `still` included as a rung rather than a
    separate site.
 5. **Add the presentation switch** and build the cinematic presentation against
