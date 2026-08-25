@@ -10,6 +10,8 @@ export class ThreeDQualityManager {
     benchmarkDeadlineMs = 15000,
     heavyFrameLimit = 5,
     heavyFrameWindowMs = 1500,
+    panicFrameLimit = 2,
+    panicFrameWindowMs = 600,
     cooldownMs = 7000,
     ignoredFramesAfterChange = 5,
     upgradeStableMs = 3000,
@@ -35,6 +37,34 @@ export class ThreeDQualityManager {
     this.heavyFrameMs = heavyFrameMs;
     this.panicFrameMs = panicFrameMs;
     this.maxFrameGapMs = maxFrameGapMs;
+
+    // A panic frame used to downgrade on its own: one frame over 50ms, no
+    // budget, no second opinion. That made the manager trust a single sample
+    // more than it trusts five heavy frames, and a lone stall is the least
+    // trustworthy sample there is - a notification, a tab switch, the GPU
+    // reclaiming memory, someone's overlay software.
+    //
+    // It was not hypothetical. The dev FPS meter redrew a small 2D canvas over
+    // the WebGL canvas once a second, which stalled the compositor for 76-723ms
+    // with no script running at all. Two of those cost two rungs and pinned the
+    // ceiling at `low` before the visitor had entered, on a laptop that holds
+    // `high` at 20.9ms. The meter is fixed, but a visitor's machine will do the
+    // same thing and cannot be fixed from here.
+    //
+    // Two panics inside the window still drop a tier immediately, so a genuinely
+    // overloaded GPU is caught as fast as it ever was. One does not.
+    //
+    // The window is 600ms rather than the heavy path's 1500ms, and that number
+    // is doing real work: periodic artefacts land about a second apart, and a
+    // 1500ms window is wide enough to hold two of them and call the pair a
+    // pattern. Simulated against the meter's own signature - a healthy 7ms scene
+    // with a 200ms stall every second - a 1500ms window still fell to `low` in
+    // 2.2 seconds, while 600ms never downgrades at all. A device that genuinely
+    // cannot render the tier spikes far closer together than that: 120ms frames
+    // drop a rung in 360ms either way.
+    this.panicFrameLimit = panicFrameLimit;
+    this.panicFrameWindowMs = panicFrameWindowMs;
+    this.panicFrameTimestamps = [];
 
     // Heavy-frame timestamps form a bounded rolling window. Old spikes expire
     // automatically instead of influencing decisions indefinitely.
@@ -126,6 +156,10 @@ export class ThreeDQualityManager {
 
     this.currentTier = tier;
     this.heavyFrameTimestamps.length = 0;
+    // The new tier gets a fresh window. Spikes measured against the old one are
+    // not evidence about this one, and carrying them over would let a single
+    // bad frame here finish a downgrade the previous tier started.
+    this.panicFrameTimestamps.length = 0;
     this.upgradeStableElapsedMs = 0;
     this.ignoredFramesRemaining = this.ignoredFramesAfterChange;
     if (tier !== 'medium') {
@@ -227,7 +261,7 @@ export class ThreeDQualityManager {
       this.cooldownRemainingMs = Math.max(0, this.cooldownRemainingMs - frameMs);
 
       // Panic frames indicate a backed-up GPU queue; downgrade even in cooldown.
-      if (frameMs > this.panicFrameMs) {
+      if (frameMs > this.panicFrameMs && this.recordPanicFrame(timestampMs)) {
         if (this.mediumProbeActive) this.failMediumProbe();
         else this.downgrade('panic');
       }
@@ -235,8 +269,12 @@ export class ThreeDQualityManager {
     }
 
     if (frameMs > this.panicFrameMs) {
-      if (this.mediumProbeActive) this.failMediumProbe();
-      else this.downgrade('panic');
+      if (this.recordPanicFrame(timestampMs)) {
+        if (this.mediumProbeActive) this.failMediumProbe();
+        else this.downgrade('panic');
+      }
+      // Either way the frame was bad, so it cannot count toward headroom.
+      this.upgradeStableElapsedMs = 0;
       return;
     }
 
@@ -567,7 +605,28 @@ export class ThreeDQualityManager {
 
     this.previousTimestampMs = timestampMs;
     this.heavyFrameTimestamps.length = 0;
+    this.panicFrameTimestamps.length = 0;
     this.upgradeStableElapsedMs = 0;
+  }
+
+  /**
+   * Record a frame over the panic line and say whether it is enough to act on.
+   * @returns {boolean} true once `panicFrameLimit` have landed inside the window.
+   */
+  recordPanicFrame(timestampMs) {
+    this.panicFrameTimestamps.push(timestampMs);
+    const cutoff = timestampMs - this.panicFrameWindowMs;
+    while (
+      this.panicFrameTimestamps.length > 0
+      && this.panicFrameTimestamps[0] < cutoff
+    ) {
+      this.panicFrameTimestamps.shift();
+    }
+    if (this.panicFrameTimestamps.length < this.panicFrameLimit) return false;
+    // Acted on, so the window starts again rather than letting the same spikes
+    // immediately justify a second downgrade on the next bad frame.
+    this.panicFrameTimestamps.length = 0;
+    return true;
   }
 
   recordHeavyFrame(timestampMs) {
