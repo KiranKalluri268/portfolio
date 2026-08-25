@@ -310,9 +310,15 @@ html.cinematic-journey [data-blackhole-video] {
   position: fixed !important;
   top: calc(max(8px, env(safe-area-inset-top)) + 56px) !important;
   left: max(8px, env(safe-area-inset-left)) !important;
-  /* stats.js writes z-index 10000 inline, which would float it over the loading
-     overlay. */
-  z-index: 17 !important;
+  /* Above the loading overlay (100), which portfolio-3D deliberately puts these
+     under so the entry moment is not shared with a control. Right for a visitor
+     and wrong for an instrument: the tier has to be chosen and locked *before*
+     entering, because the cost sweep measures whatever is running and an
+     unlocked tier can change halfway through, which would make the second half
+     a measurement of a different scene. At 17 the switcher was rendered but sat
+     behind the gate, so it could not be reached at the one moment it is needed.
+     Both only exist behind ?devtools=1, so no visitor ever meets them. */
+  z-index: 120 !important;
 }
 
 /* Under the FPS meter, clearing its 48px height plus an 8px gap. */
@@ -320,7 +326,7 @@ html.cinematic-journey [data-blackhole-video] {
   position: fixed;
   top: calc(max(8px, env(safe-area-inset-top)) + 112px);
   left: max(8px, env(safe-area-inset-left));
-  z-index: 17;
+  z-index: 120;
   display: flex;
   align-items: center;
   gap: 6px;
