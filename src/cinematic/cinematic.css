@@ -1,0 +1,371 @@
+/* Styles for the ported black hole journey.
+ *
+ * Adapted from style.css in portfolio-3D, with one difference that matters
+ * everywhere: every rule is scoped. That file styles a document the scene owns
+ * outright, so it can say `canvas { position: fixed; width: 100% }` and mean it.
+ * Here the same rule would catch the projects card stack and the skill web,
+ * both of which draw to canvases of their own, and pin them full-screen. So
+ * nothing below applies outside [data-cinematic-root].
+ */
+
+/* The journey's timeline is scroll length. JOURNEY in scene/main.js ends at 27
+   viewport units and this leaves one more for run-out.
+
+   On <html> rather than on the scene's own element, because the scene reads
+   window scroll through Lenis - the document itself has to be this tall, not a
+   container inside it. Removed on unmount, or every other route inherits a page
+   twenty-eight screens long. */
+html.cinematic-journey,
+html.cinematic-journey body {
+  height: 2800vh;
+}
+
+/* Scroll is held while the loading screen is up. The scene calls lenis.stop(),
+   which governs smooth scrolling; this governs the native scrolling underneath
+   it, including touch dragging and overscroll bounce. */
+html.cinematic-loading,
+html.cinematic-loading body {
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+/* The still tier is the site's ordinary background - StarsBackground and the
+   BlackholeEffect video, mounted in the root layout on every route. They are the
+   bottom rung of the same ladder this scene sits at the top of, so while the
+   journey is running they are hidden rather than left drawing underneath it.
+   Both come back the moment the class is removed, because that is all this is. */
+html.cinematic-journey [data-stars-background],
+html.cinematic-journey [data-blackhole-video] {
+  display: none;
+}
+
+[data-cinematic-root] {
+  position: fixed;
+  inset: 0;
+  /* Above the still tier's canvas (z-0) and its video (z-1), below the site
+     header, which stays reachable as a way off this route. */
+  z-index: 2;
+}
+
+/* The renderer's canvas, and only ever that one. */
+[data-cinematic-root] canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Covers the handover between the raymarched scene and the tunnel: fades to
+   black going in, blows out to white coming out the other side. Under the story
+   overlay so the horizon message reads against the blackout. */
+[data-cinematic="transition-veil"] {
+  position: fixed;
+  inset: 0;
+  z-index: 16;
+  background-color: #000;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Implies the cockpit without drawing hardware that would have to hold up at
+   every viewport. Only present while travelling through the tunnel. */
+[data-cinematic="cockpit-vignette"] {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  opacity: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 78% 68% at 50% 50%,
+    rgba(0, 0, 0, 0) 42%,
+    rgba(0, 0, 0, 0.45) 74%,
+    rgba(0, 0, 0, 0.92) 100%
+  );
+}
+
+[data-cinematic="story-overlay"] {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+[data-cinematic-root] .story-scene {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  will-change: opacity, transform;
+}
+
+[data-cinematic-root] .story-scene h2 {
+  max-width: min(1000px, 92vw);
+  margin: 0;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  font-size: clamp(32px, 6vw, 82px);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: 0;
+  text-align: center;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.65);
+}
+
+[data-cinematic-root] .story-accent {
+  color: #e52b2b;
+}
+
+/* ── Loading overlay ─────────────────────────────────────── */
+[data-cinematic="loading-overlay"] {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transition: opacity 0.8s ease;
+}
+
+[data-cinematic="loading-overlay"].loaded {
+  opacity: 0;
+  pointer-events: none;
+}
+
+[data-cinematic="loading-overlay"].ready-to-enter {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+[data-cinematic="loading-overlay"].ready-to-enter [data-cinematic="loading-status"] {
+  color: #fff5e0;
+  animation: cinematic-entry-pulse 1.6s ease-in-out infinite;
+}
+
+[data-cinematic="loading-overlay"].holding-entry [data-cinematic="loading-status"] {
+  animation: none;
+  opacity: 1;
+}
+
+[data-cinematic="loading-overlay"].holding-entry .loading-ring.outer {
+  animation-duration: 0.55s;
+  box-shadow: 0 0 30px rgba(232, 160, 72, 0.75);
+}
+
+@keyframes cinematic-entry-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+[data-cinematic-root] .loading-ring {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  border-radius: 50%;
+  border: 2px solid transparent;
+}
+
+[data-cinematic-root] .loading-ring.outer {
+  width: 120px;
+  height: 120px;
+  border-top-color: #e8a048;
+  border-right-color: rgba(232, 160, 72, 0.3);
+  animation: cinematic-spin-cw 2s linear infinite;
+  box-shadow: 0 0 18px rgba(232, 160, 72, 0.4);
+}
+
+[data-cinematic-root] .loading-ring.inner {
+  width: 70px;
+  height: 70px;
+  border-bottom-color: #fff5e0;
+  border-left-color: rgba(255, 245, 224, 0.2);
+  animation: cinematic-spin-ccw 1.4s linear infinite, cinematic-pulse 2s ease-in-out infinite;
+}
+
+@keyframes cinematic-spin-cw {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes cinematic-spin-ccw {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+@keyframes cinematic-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+[data-cinematic-root] .loading-headline {
+  max-width: min(900px, 90vw);
+  margin: 0 0 42px;
+  color: #e52b2b;
+  font-family: Arial, sans-serif;
+  font-size: clamp(34px, 6vw, 84px);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: 0;
+  text-align: center;
+}
+
+[data-cinematic-root] .loading-visual {
+  position: relative;
+  width: 124px;
+  height: 124px;
+}
+
+[data-cinematic-root] .loading-copy {
+  margin-top: 28px;
+  color: #fff5e0;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  letter-spacing: 0;
+}
+
+[data-cinematic="loading-percentage"] {
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+[data-cinematic="loading-status"] {
+  min-width: 280px;
+  margin-top: 8px;
+  color: rgba(255, 245, 224, 0.72);
+  font-size: 13px;
+}
+
+[data-cinematic="source-license-links"] {
+  position: fixed;
+  left: 50%;
+  bottom: max(22px, env(safe-area-inset-bottom));
+  z-index: 18;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  transform: translate(-50%, 10px);
+  color: rgba(255, 245, 224, 0.58);
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  letter-spacing: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 320ms ease, transform 320ms ease;
+}
+
+[data-cinematic="source-license-links"].visible {
+  transform: translate(-50%, 0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+[data-cinematic="source-license-links"] a {
+  color: inherit;
+  text-decoration: none;
+}
+
+[data-cinematic="source-license-links"] a:hover,
+[data-cinematic="source-license-links"] a:focus-visible {
+  color: #fff5e0;
+  text-decoration: underline;
+}
+
+/* ── Dev instruments ─────────────────────────────────────── */
+/* Only mounted when the flag asks for them. The stats.js canvas needs the same
+   exemption from the renderer rule above that it needs in portfolio-3D, or it
+   is pinned full-screen along with everything else. */
+[data-cinematic-root] #stats-panel canvas {
+  position: static;
+  display: block;
+  width: 80px;
+  height: 48px;
+}
+
+/* Both instruments clear the site header, which portfolio-3D has no equivalent
+   of - there the top-left corner is empty and they sit in it. Here the logo is
+   in that corner and lands straight on top of the tier dropdown, which makes the
+   one control worth having on a phone unclickable. 56px on a phone and 96px
+   above are the header's own heights; they are repeated by hand in four other
+   places already and this is the fifth, which STATUS.md has open as its own
+   piece of work. */
+[data-cinematic-root] #stats-panel {
+  position: fixed !important;
+  top: calc(max(8px, env(safe-area-inset-top)) + 56px) !important;
+  left: max(8px, env(safe-area-inset-left)) !important;
+  /* stats.js writes z-index 10000 inline, which would float it over the loading
+     overlay. */
+  z-index: 17 !important;
+}
+
+/* Under the FPS meter, clearing its 48px height plus an 8px gap. */
+[data-cinematic-root] #preset-switcher-wrap {
+  position: fixed;
+  top: calc(max(8px, env(safe-area-inset-top)) + 112px);
+  left: max(8px, env(safe-area-inset-left));
+  z-index: 17;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (min-width: 640px) {
+  [data-cinematic-root] #stats-panel {
+    top: calc(max(8px, env(safe-area-inset-top)) + 96px) !important;
+  }
+
+  [data-cinematic-root] #preset-switcher-wrap {
+    top: calc(max(8px, env(safe-area-inset-top)) + 152px);
+  }
+}
+
+[data-cinematic-root] #preset-switcher,
+[data-cinematic-root] #preset-switcher-lock {
+  min-height: 32px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 245, 224, 0.18);
+  background: rgba(8, 6, 4, 0.72);
+  color: rgba(255, 245, 224, 0.82);
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+[data-cinematic-root] #preset-switcher-lock {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  user-select: none;
+}
+
+[data-cinematic-root] #preset-switcher:hover,
+[data-cinematic-root] #preset-switcher:focus-visible,
+[data-cinematic-root] #preset-switcher-lock:hover {
+  color: #fff5e0;
+  border-color: rgba(255, 245, 224, 0.38);
+}
+
+/* The dropdown list is drawn by the OS and does not inherit the dark background
+   above, so the options are set explicitly or they render as light on light. */
+[data-cinematic-root] #preset-switcher option {
+  background: #100b06;
+  color: #fff5e0;
+}

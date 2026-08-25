@@ -330,6 +330,7 @@ export default function StarsBackground() {
   return (
     <canvas
       ref={canvasRef}
+      data-stars-background
       className="pointer-events-none fixed inset-0 z-0 h-full w-full"
       aria-hidden="true"
     />
