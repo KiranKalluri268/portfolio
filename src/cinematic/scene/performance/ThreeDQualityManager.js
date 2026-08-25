@@ -511,8 +511,12 @@ export class ThreeDQualityManager {
     if (!isWarmupVerdict) this.tierCeiling = nextTier;
 
     this.lastAdjustmentReason = reason;
+    // The frame that triggered this, read before setTier clears the timing
+    // state. A `panic` reason without its frame time cannot be told apart from
+    // a render-target reallocation, which is exactly the question open here.
+    const frameMs = this.latestFrameMs;
     this.setTier(nextTier);
-    this.onQualityDowngrade(nextTier, { reason });
+    this.onQualityDowngrade(nextTier, { reason, frameMs });
   }
 
   upgrade(reason) {
