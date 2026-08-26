@@ -61,6 +61,7 @@ function setWebGL2(available: boolean) {
 describe("falling back to the still presentation", () => {
   beforeEach(() => {
     replace.mockClear();
+    lenis.start.mockClear();
     mountCinematic.mockReset();
     mountCinematic.mockResolvedValue(() => {});
     setReducedMotion(false);
@@ -106,6 +107,9 @@ describe("falling back to the still presentation", () => {
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/"));
     expect(document.documentElement.className).not.toContain("cinematic-loading");
     expect(document.documentElement.className).not.toContain("cinematic-journey");
+    // The other half of the same lock: the scene stops the site's own borrowed
+    // Lenis and only restarts it from the teardown, which a throw never reaches.
+    expect(lenis.start).toHaveBeenCalled();
     consoleError.mockRestore();
   });
 

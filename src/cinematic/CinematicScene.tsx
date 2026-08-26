@@ -69,8 +69,15 @@ export default function CinematicScene({
     // failed partway. Left behind, they lock scroll on a 28-viewport page.
     document.documentElement.classList.remove("cinematic-journey");
     document.documentElement.classList.remove("cinematic-loading");
+    // The other half of the same lock. The scene calls `lenis.stop()` on the
+    // site's own borrowed instance and `disposeApp` starts it again — but a
+    // throw between those two never reaches the teardown, and smooth scrolling
+    // would stay stopped for the rest of the visit, on every route. Starting an
+    // instance that was never stopped is a no-op, so this is safe on the paths
+    // that never got that far.
+    lenis?.start();
     router.replace("/");
-  }, [router]);
+  }, [router, lenis]);
 
   useEffect(() => {
     const root = rootRef.current;
