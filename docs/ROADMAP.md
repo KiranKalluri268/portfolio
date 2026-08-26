@@ -195,11 +195,21 @@ Five words on a grey field. It could carry contact links, or where you
 currently are, or something of the black hole. Deliberately left bare rather
 than filled with invented content.
 
+**Partly used now.** The presentation switch went in below the destinations —
+plain or cinematic — because it is a real setting rather than invented content,
+and because it has to be reachable during the journey, not only before it. It
+also proved the panel had no room to spare: six destinations already filled a
+709px window to within a few pixels, so the link size is now capped by viewport
+height and the panel scrolls if it still overflows. Anything else added here
+should be measured at a short viewport before it is called done.
+
 ### FAQ and a 3D version
 
-Both were left out of the site menu because neither exists. The menu takes one
-line per entry once they do. The FAQ needs real questions and real answers —
-its content cannot be generated. The 3D version is a project, not a task.
+Both were left out of the site menu because neither exists. **Both exist now.**
+The FAQ has real questions and real answers and takes its line in the menu. The
+3D version is reachable through the presentation switch, though only the hero is
+scored against it so far — see `CINEMATIC_DECISION.md`, which is where that
+project is tracked rather than here.
 
 ### An accessibility pass, done once and properly
 

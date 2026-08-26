@@ -23,6 +23,14 @@ Native document scrolling remains the source of truth. Lenis smooths that scroll
 
 `SceneWrapper` is a lightweight layout wrapper. It does not mount/unmount sections or manage navigation state.
 
+## Two presentations, one set of facts
+
+The portfolio is served two ways. `/` is the plain presentation described above. `/cinematic` is the same portfolio read from a camera falling toward a black hole, and it is a visitor's choice rather than a device's — see `CINEMATIC_DECISION.md` for why those two decisions are kept apart.
+
+`src/proxy.ts` (Next 16's rename of `middleware`) decides which one a request gets, before any page renders, so `/` stays statically prerendered. It reads two cookies: `presentation` holds the choice and persists for a year; `journey-unavailable` is session-scoped and records that this device could not run the journey, which is what stops the scene's fallback to `still` from becoming a redirect loop back into it. `?presentation=` in the URL beats both. `src/lib/presentation.ts` holds the shared vocabulary; the client half that writes the cookies is `presentation-client.ts`.
+
+Content never forks between the two. `src/data/**` is the single source, and every fact has to exist as real markup in both — a name painted into a WebGL texture is invisible to crawlers, screen readers, and anyone tabbing through. Layout, motion and arrival are free to differ completely.
+
 ## Scrolling and navigation
 
 `SmoothScrollContext` owns one Lenis instance and exposes a small command API:
