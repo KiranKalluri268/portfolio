@@ -716,14 +716,48 @@ the bodies, which is where it belongs physically anyway, and it costs one angle
 per body rather than a new camera path. Every composition decision in the fall —
 the elevation ramp, the roll, the off-centre framing — survives untouched.
 
+### The sky is not a sphere, and today it is
+
+Worth recording as its own finding, because it is the first thing anyone notices
+and the diagnosis is not obvious from looking at it.
+
+`render.js` builds the star field as a **hollow, flattened shell**: 2,200 small
+points and 300 bright ones, radius 8 to 42, with Y multiplied by 0.25 so it is an
+oblate lens rather than a ball. The fall runs the camera from 30 down to about
+3.6. So the visitor arrives inside that shell near its outer wall and ends inside
+its **inner void**, with every star outside them at radius 8 or more and nothing
+whatsoever beyond 42. That bounded bubble is what reads as a sphere.
+
+Enlarging it is not the fix. It moves the wall without removing it, and
+`sizeAttenuation` is on, so every star dims and shrinks as the radius grows —
+trading a visible boundary for an empty sky.
+
+The fix is to **separate the sky from the field**. Distant stars have no parallax:
+they are a direction, not a position. Sampled from the escaped ray direction in
+the fragment shader they sit at infinity, have no radius to hit a wall at, cost
+one call at ray termination, and — because the raymarcher already has the *bent*
+ray in hand — are gravitationally lensed for free. The 2,500-point shell then
+stops pretending to be the universe and becomes what it is good at: local dust
+with real parallax, which is what sells motion.
+
+This is also what makes the galaxy affordable. Skills as a procedural sky is
+close to free; skills as thirty-seven more sprites in a shell would have been
+cheap too, but the shell is the thing being removed.
+
 ### What this rests on that already exists
 
 More than expected, which is the main reason to think it is affordable at all:
 
-- **A planet already works.** `graphics/planet.js` renders a sphere to its own
-  target and the raymarcher samples it back along the *bent* ray, so it is
-  gravitationally lensed, throws a second image, and is occluded by the hole for
-  free. A body placed in this world already obeys it.
+- **A planet already works — and is currently switched off.**
+  `graphics/planet.js` renders a sphere to its own target and the raymarcher
+  samples it back along the *bent* ray, so it is gravitationally lensed, throws a
+  second image, and is occluded by the hole for free. A body placed in this world
+  already obeys it. But `PLANET_ENABLED` is `false` in `main.js`, with two
+  problems recorded above it: the last pass put the planet low enough to graze
+  the accretion disk, and near enough that the end of the fall is governed by the
+  photon ring rather than by where it is anchored. Nothing is deleted and the
+  flag is the whole of it. Re-tuning that one planet is part of the work rather
+  than a starting point.
 - **The camera is already spherical.** `Observer` holds distance, theta and
   elevation, so "a radius and an angle" is the coordinate system it is already
   in.
@@ -771,6 +805,16 @@ measured rather than assumed.
   one ring is empty.
 - **37 skills across 5 domains**, each domain already carrying an angle and an
   accent colour.
+
+### How it gets built
+
+`CINEMATIC_WORLD_PLAN.md` is the execution spec: eight phases, one PR each, a
+feature flag each, a frame-time budget measured with `?curve=1` against a
+committed baseline, and the test and mutation strategy. It is written to be picked
+up on a different machine with no memory of the conversation that produced this
+section. The gate it sets is strict on purpose — **no phase merges if it makes
+the curve measurably worse on the Realme** — because 152.7ms is already the
+ceiling there.
 
 ### Still open
 
