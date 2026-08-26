@@ -32,9 +32,16 @@ import { createPlanet } from './graphics/planet';
  * @param {boolean} [options.measureCurve] - instead of following scroll, walk the
  *   camera through the whole journey and report what each part costs. See
  *   curveRunner.js.
+ * @param {(info: { reason: string, p90: number|null }) => void} [options.onStill] -
+ *   called once if the device turns out not to be worth running the journey on.
+ *   `still` is the bottom rung of the same ladder, but unlike the others it is
+ *   not a preset this file can apply - there is no cheaper way to draw the
+ *   scene, only the decision not to draw it. So the scene reports it and the
+ *   caller decides, which on this route means handing the visitor back to the
+ *   presentation the site already ships. Only ever fires before the entry gate.
  * @returns {Promise<() => void>} teardown
  */
-export async function mountCinematic(root, lenis, { showDevTools = false, measureCurve = false } = {}) {
+export async function mountCinematic(root, lenis, { showDevTools = false, measureCurve = false, onStill = null } = {}) {
 
   const loadingOverlay = root.querySelector('[data-cinematic="loading-overlay"]')
   const loadingPercentage = root.querySelector('[data-cinematic="loading-percentage"]')
@@ -113,6 +120,10 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
 
     cancelEntryHold()
     loadingOverlayDismissed = true
+    // Past this point the journey is a scroll-driven camera flight, and taking
+    // the scene away from underneath one is worse than any frame rate. `low` is
+    // the floor from here; the manager keeps every other move it had.
+    qualityManager?.lockOutStill()
     loadingOverlay?.removeEventListener('pointerdown', startEntryHold)
     loadingOverlay?.removeEventListener('pointerup', cancelEntryHold)
     loadingOverlay?.removeEventListener('pointercancel', cancelEntryHold)
@@ -643,6 +654,18 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
       initialQualityBenchmarkComplete = true
       setLoadingStage(`Selected ${tier} graphics`, 100)
       dismissLoadingOverlayIfReady()
+    },
+    // The bottom rung, and the only one the manager cannot apply itself: there
+    // is no cheaper way to draw the journey, only the decision not to. The
+    // scene stops here and hands the visitor back to the presentation the site
+    // already ships, which is what `still` is.
+    onStillRequired: ({ reason, p90 }) => {
+      console.log(
+        "Quality Manager: Falling back to still (" + reason +
+        (p90 === null || p90 === undefined ? "" : ", p90 " + p90.toFixed(1) + "ms") + ")"
+      );
+      setLoadingStage('This device is better off without the flight...', 100)
+      onStill?.({ reason, p90 });
     },
   });
 

@@ -12,6 +12,7 @@ export class ThreeDQualityManager {
     heavyFrameWindowMs = 1500,
     panicFrameLimit = 2,
     panicFrameWindowMs = 600,
+    stillFrameMs = 50,
     cooldownMs = 7000,
     ignoredFramesAfterChange = 5,
     upgradeStableMs = 3000,
@@ -24,6 +25,12 @@ export class ThreeDQualityManager {
     onQualityUpgrade = () => {},
     onWarmupComplete = () => {},
     onMediumProbeComplete = () => {},
+    onStillRequired = /**
+      @type {((info: {
+        reason: string,
+        p90: number | null,
+        tier: string,
+      }) => void) | null} */ (null),
   } = {}) {
     this.tiers = tiers;
     this.currentTier = initialTier;
@@ -65,6 +72,24 @@ export class ThreeDQualityManager {
     this.panicFrameLimit = panicFrameLimit;
     this.panicFrameWindowMs = panicFrameWindowMs;
     this.panicFrameTimestamps = [];
+
+    // The line below which the journey is not worth running at all.
+    //
+    // Deliberately the panic line and not the heavy one. `low` failing the heavy
+    // line means the device is marginal, not incapable: a Realme 9 Speed Edition
+    // measures 24.3-27.7ms at `low` in the fall, straddling the 25ms bar, and it
+    // has been running the journey there perfectly happily. Demoting it would be
+    // taking away a tier it can hold. At p90 above 50ms a device is under 20fps
+    // sustained on the cheapest rung there is, with nothing left to give up.
+    this.stillFrameMs = stillFrameMs;
+
+    // `still` is entry-only. Tearing three.js down mid-flight, while someone is
+    // scrolling a camera through a wormhole, is a far worse experience than a
+    // low frame rate - so once the visitor is in, `low` is the floor. The scene
+    // clears this the moment the entry gate is passed. A hard failure is the one
+    // exception and does not come through here at all.
+    this.stillAllowed = true;
+    this.stillRequested = false;
 
     // Heavy-frame timestamps form a bounded rolling window. Old spikes expire
     // automatically instead of influencing decisions indefinitely.
@@ -149,6 +174,7 @@ export class ThreeDQualityManager {
     this.onQualityUpgrade = onQualityUpgrade;
     this.onWarmupComplete = onWarmupComplete;
     this.onMediumProbeComplete = onMediumProbeComplete;
+    this.onStillRequired = onStillRequired;
   }
 
   setTier(tier, { startCooldown = true } = {}) {
@@ -361,7 +387,17 @@ export class ThreeDQualityManager {
     // them as headroom would upgrade exactly the hardware that just failed to
     // render — drop to the safest tier instead.
     if (reason === 'benchmark-deadline') {
-      if (this.currentTier !== 'low') this.downgrade('benchmark-deadline');
+      // Already on the bottom rung and still unable to finish a three-second
+      // benchmark inside fifteen seconds of wall clock. Every frame this device
+      // produced was longer than `maxFrameGapMs`, which is why none of them
+      // counted. There is no rung left to drop to, so the honest move is to stop
+      // asking it to render the journey at all. This used to fall through and do
+      // nothing, leaving the worst hardware there is on `low`.
+      if (this.currentTier === 'low') {
+        this.requestStill('benchmark-deadline');
+        return;
+      }
+      this.downgrade('benchmark-deadline');
       return;
     }
 
@@ -388,6 +424,14 @@ export class ThreeDQualityManager {
     const p90 = this.warmupPercentile(0.9);
 
     if (p90 === null) return;
+
+    // Below the bottom rung there is no cheaper way to draw this scene, only the
+    // decision not to draw it. `still` is that decision, and it is the manager's
+    // to make in one place only: here, at the end of warmup, before the visitor
+    // has committed to anything. See `requestStill`.
+    if (this.currentTier === 'low' && p90 > this.stillFrameMs) {
+      if (this.requestStill('warmup-below-low', p90)) return;
+    }
 
     if (p90 < this.healthyFrameMs) {
       if (this.currentTier === 'low') {
@@ -607,6 +651,44 @@ export class ThreeDQualityManager {
     this.heavyFrameTimestamps.length = 0;
     this.panicFrameTimestamps.length = 0;
     this.upgradeStableElapsedMs = 0;
+  }
+
+  /**
+   * Ask the caller to abandon the journey and fall back to `still`.
+   *
+   * `still` is the bottom rung of the same ladder, but it is not a preset: there
+   * is no cheaper way to draw this scene, only the decision not to draw it. So
+   * the manager cannot apply it the way it applies `low` - it can only say so,
+   * and the scene decides what that means. Here it means the visitor goes to the
+   * site's ordinary presentation, which is what `still` already is.
+   *
+   * Terminal and one-shot. A device does not stop being incapable, and asking
+   * twice would mean tearing down a scene that is already being torn down.
+   *
+   * @returns {boolean} true if the caller took it, false if it was refused - in
+   *   which case the ordinary tier logic must carry on, because refusing leaves
+   *   the visitor on whatever rung they were already on.
+   */
+  requestStill(reason, p90 = null) {
+    if (!this.stillAllowed || this.stillRequested) return false;
+    if (typeof this.onStillRequired !== 'function') return false;
+
+    this.stillRequested = true;
+    this.lastAdjustmentReason = reason;
+    this.onStillRequired({ reason, p90, tier: this.currentTier });
+    return true;
+  }
+
+  /**
+   * Close the door on `still` for the rest of the session.
+   *
+   * Called when the visitor passes the entry gate. Everything after that point
+   * is a scroll-driven camera flight, and taking the scene away underneath one
+   * is worse than any frame rate - so from here `low` is the floor and the
+   * manager's only remaining moves are the ordinary rungs.
+   */
+  lockOutStill() {
+    this.stillAllowed = false;
   }
 
   /**
