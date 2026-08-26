@@ -67,7 +67,24 @@
      screen — which must stay the only thing in front of an unentered page. */
   z-index: 5000;
   display: flex;
+  /* A column since the presentation switch joined the destinations underneath
+     them. As a row the two were side by side, which read as two menus. */
+  flex-direction: column;
   align-items: center;
+  /* Six destinations at clamp(2.5rem, 12vw, 6rem) already fill a laptop window
+     to within a few pixels; the switch underneath them takes it past. So the
+     panel scrolls rather than hiding whatever did not fit.
+
+     Centred with auto margins rather than justify-content, which is the whole
+     reason this is written out. `justify-content: center` in a scroll container
+     centres by pushing content off the *top*, past the scrollable origin, and
+     the first destination cannot be reached by scrolling — the menu simply had
+     no Home on a 709px-tall window. Auto margins collapse to zero once the
+     content overflows, so it centres when it fits and scrolls when it does
+     not. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-block: clamp(2rem, 6vh, 5rem);
   /* Grey rather than black. The page it opens over is black, so a black panel
      made the circle sweeping across it invisible — the menu appeared to arrive
      all at once. The same grey the entry screen's curtain lifts to, so the
@@ -96,6 +113,8 @@
 }
 
 .list {
+  /* Half of the auto-margin centring described on .panel. */
+  margin-top: auto;
   display: flex;
   width: 100%;
   flex-direction: column;
@@ -108,7 +127,12 @@
   align-items: baseline;
   gap: 1rem;
   padding: 0.35rem 0;
-  font-size: clamp(2.5rem, 12vw, 6rem);
+  /* Width-driven, then capped by height. Six of these plus the switch stood at
+     960px inside a 709px window, so the menu scrolled and the switch sat below
+     the fold on an ordinary laptop — findable only by someone who guessed it was
+     there. The vh cap gives the height back on short windows and changes nothing
+     on tall ones. */
+  font-size: min(clamp(2.5rem, 12vw, 6rem), 8.5vh);
   font-weight: 700;
   line-height: 1.05;
   letter-spacing: -0.02em;
@@ -152,9 +176,98 @@
   color: rgb(255 255 255 / 55%);
 }
 
+/* The presentation switch. Deliberately quiet next to the destinations above
+   it — this is a setting, and a setting the size of a navigation link would
+   read as a seventh place to go. */
+.presentation {
+  /* The other half. */
+  margin-bottom: auto;
+  width: 100%;
+  padding: 2rem 1.5rem 0;
+  opacity: 0;
+  transform: translateY(1.5rem);
+  transition-property: opacity, transform;
+  transition-duration: 420ms;
+  transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.panel[data-covered="true"] .presentation {
+  opacity: 1;
+  transform: none;
+}
+
+.presentationLabel {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  /* Matches .index, so the switch reads as part of the same small print rather
+     than as a heading of its own. */
+  color: rgb(255 255 255 / 55%);
+}
+
+.presentationOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.presentationOption {
+  display: flex;
+  flex: 1 1 14rem;
+  flex-direction: column;
+  gap: 0.2rem;
+  cursor: pointer;
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: 0.4rem;
+  background: transparent;
+  padding: 0.7rem 0.9rem;
+  text-align: left;
+  color: rgb(255 255 255 / 85%);
+  transition: border-color 200ms ease, color 200ms ease;
+}
+
+.presentationOption:hover,
+.presentationOption:focus-visible {
+  border-color: var(--color-accent-soft);
+  color: var(--color-accent-soft);
+}
+
+.presentationOption:focus-visible {
+  outline: 2px solid var(--color-accent-soft);
+  outline-offset: 3px;
+}
+
+/* The one you are on. Marked by border and colour rather than by disabling it —
+   pressing the current option is a reasonable way to close the menu, the same
+   way the current page's link already is. */
+.presentationOption[data-current="true"] {
+  border-color: var(--color-accent-soft);
+  color: var(--color-accent-soft);
+}
+
+.presentationName {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.presentationBlurb {
+  font-size: 0.8rem;
+  line-height: 1.35;
+  /* Against the grey panel this lands around 4.6:1. Lighter than the name it
+     sits under, but still text rather than a rumour. */
+  color: rgb(255 255 255 / 62%);
+}
+
 @media (min-width: 640px) {
   .list {
     padding: 0 4rem;
+  }
+
+  .presentation {
+    padding: 2.5rem 4rem 0;
   }
 
   .index {
@@ -163,7 +276,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .link {
+  .link,
+  .presentation {
     opacity: 1;
     transform: none;
     transition: none;

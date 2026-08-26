@@ -6,6 +6,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useScrollActions } from "@/context/SmoothScrollContext";
 import { useReducedMotion } from "@/hooks/useMediaQuery";
+import {
+  DEFAULT_PRESENTATION,
+  PRESENTATION_ROUTES,
+  PRESENTATIONS,
+  parsePresentation,
+  type Presentation,
+} from "@/lib/presentation";
+import { readStoredPresentation, rememberPresentation } from "@/lib/presentation-client";
 import { lockPageScroll } from "../page-scroll-lock";
 import { dropCoverIn, raiseCover } from "./navigation-cover";
 import styles from "./site-menu.module.css";
@@ -20,6 +28,14 @@ const DESTINATIONS = [
   { href: "/resume", label: "Résumé" },
   { href: "/cv", label: "CV" },
 ];
+
+/** What each presentation is called, and the one-liner under it. Nobody knows
+ *  what "cinematic" means until they have seen it, so the description does the
+ *  work the label cannot. */
+const PRESENTATION_LABELS: Record<Presentation, { name: string; blurb: string }> = {
+  plain: { name: "Plain", blurb: "The portfolio, straight down the page." },
+  cinematic: { name: "Cinematic", blurb: "The same portfolio, read from a falling camera." },
+};
 
 /** How long the circle takes to cover the screen, and to uncover it again. */
 const REVEAL_MS = 520;
@@ -59,6 +75,11 @@ export default function SiteMenu() {
   /** A destination whose page has been asked for but has not arrived yet. The
    *  cover stays up until it does, so the old page is never seen leaving. */
   const [pending, setPending] = useState<string | null>(null);
+  /** Which presentation the switch shows as current. Starts at the default on
+   *  both server and client — the cookie is only readable in the browser, and
+   *  guessing at it during render is a hydration mismatch. It is read when the
+   *  menu opens, which is the only moment anyone can see the answer. */
+  const [presentation, setPresentation] = useState<Presentation>(DEFAULT_PRESENTATION);
 
   useEffect(() => {
     // Portalled to the body, so it has to wait for hydration.
@@ -110,6 +131,19 @@ export default function SiteMenu() {
     closeRef.current?.focus();
   }, [open]);
 
+  // Being on /cinematic outranks the cookie: arriving by URL is a choice too,
+  // and a switch that says "Plain" while a black hole fills the screen behind it
+  // is not reporting state, it is arguing with the visitor.
+  useEffect(() => {
+    if (!open) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPresentation(
+      pathname === PRESENTATION_ROUTES.cinematic
+        ? "cinematic"
+        : parsePresentation(readStoredPresentation()) ?? DEFAULT_PRESENTATION,
+    );
+  }, [open, pathname]);
+
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -154,6 +188,36 @@ export default function SiteMenu() {
       close();
       return;
     }
+    setPending(href);
+    raiseCover();
+    router.push(href);
+  };
+
+  /**
+   * The real control, in the place §6 of CINEMATIC_DECISION.md asks for it.
+   *
+   * Not in the entry screen: that screen says YOU ARE NOT READY FOR THIS and
+   * asks for a press-and-hold, and a settings panel in the middle of it costs
+   * more than the control gains. And it has to be reachable *during* the
+   * experience anyway — someone twenty minutes into a warm phone should be able
+   * to leave without hunting for a reload.
+   */
+  const choosePresentation = (next: Presentation) => {
+    rememberPresentation(next);
+    setPresentation(next);
+
+    const href = PRESENTATION_ROUTES[next];
+    // From a sub-route the choice is remembered and nothing else happens.
+    // Switching presentation is not a request to leave the page you are reading;
+    // /projects is /projects either way, and the choice takes effect the next
+    // time you go home.
+    const atFrontDoor =
+      pathname === PRESENTATION_ROUTES.plain || pathname === PRESENTATION_ROUTES.cinematic;
+    if (!atFrontDoor || pathname === href) {
+      close();
+      return;
+    }
+
     setPending(href);
     raiseCover();
     router.push(href);
@@ -236,6 +300,42 @@ export default function SiteMenu() {
               );
             })}
           </nav>
+
+          {/* Secondary on purpose, and below the destinations: findable if
+              looked for, never in the way of getting somewhere. */}
+          <div
+            className={styles.presentation}
+            style={{
+              transitionDelay: reduceMotion ? "0ms" : `${160 + DESTINATIONS.length * 70}ms`,
+            }}
+          >
+            <p className={styles.presentationLabel} id="presentation-switch-label">
+              Presentation
+            </p>
+            <div
+              className={styles.presentationOptions}
+              role="group"
+              aria-labelledby="presentation-switch-label"
+            >
+              {PRESENTATIONS.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  className={styles.presentationOption}
+                  aria-pressed={presentation === option}
+                  data-current={presentation === option}
+                  onClick={() => choosePresentation(option)}
+                >
+                  <span className={styles.presentationName}>
+                    {PRESENTATION_LABELS[option].name}
+                  </span>
+                  <span className={styles.presentationBlurb}>
+                    {PRESENTATION_LABELS[option].blurb}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>,
         document.body,
       )}

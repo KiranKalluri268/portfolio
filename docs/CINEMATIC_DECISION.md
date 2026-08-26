@@ -4,11 +4,15 @@ What was decided about turning this portfolio into a scroll-driven cinematic,
 and why. `ARCHITECTURE.md` describes what the code is; this describes what it
 is becoming and which options were rejected on the way.
 
-**Status:** steps 1–4 of the build order are done. The scene lives in this repo
-and runs at `/cinematic?cinematic=1`; nothing is enabled for visitors, and every
-other route still gets `still`. The tier ladder now has `still` as its bottom
-rung, so a device that cannot fly — or a visitor who has asked not to be flown —
-is handed back to the site instead of stranded. Steps 5–6 are untouched.
+**Status:** steps 1–5 of the build order are done. The scene lives in this repo
+and the cinematic is now a choice rather than a flag: `/cinematic` is a real
+route, the site menu offers it, and a cookie remembers it. **Plain is still the
+default**, so nothing changes for anyone who does not go looking. The tier ladder
+has `still` as its bottom rung, so a device that cannot fly — or a visitor who
+has asked not to be flown — is handed back to the site instead of stranded. The
+hero is the first section scored against the flight; the rest of the portfolio
+is not there yet, which is the only reason the default has not flipped. Step 6 is
+untouched.
 
 ---
 
@@ -146,6 +150,20 @@ text into canvas textures.
 
 This does not restrict the cinematic. The canvas is *how it is shown*, with the
 real markup underneath.
+
+### First section through, and what it proved
+
+The hero. Same three facts in both presentations, now read from
+`src/data/hero.json` by each — they were string literals inside the plain hero's
+component until this step, which means the rule above was already being broken
+before there was a second presentation to break it with. Worth knowing that the
+fork does not need two files to start: one component holding facts nobody else
+can reach is the same failure, one step earlier.
+
+What differs is everything else. The plain hero types itself, centred, at the top
+of a page. The cinematic hero is bottom-left, all four roles at once, over a
+wormhole — no typing, because the camera is already moving and a second animation
+competes with it. Neither of those is content.
 
 ---
 
@@ -524,6 +542,48 @@ phone should be able to turn it down without reloading.
 Remember the choice between visits, with the rule the deep-linking work already
 established: an explicit request outranks a stored preference.
 
+### Built, and what it cost
+
+The switch is in the menu, under the six destinations and deliberately quieter
+than them. Each option carries a line of description, because "cinematic" means
+nothing to anyone who has not seen one yet. From a sub-route it only remembers —
+`/projects` is `/projects` in either presentation, and switching is not a request
+to stop reading what you are reading.
+
+Two costs came with it, both worth recording:
+
+**The menu did not fit.** Six destinations at `clamp(2.5rem, 12vw, 6rem)` already
+stood at 960px inside a 709px window. Adding anything below them cut `Home` off
+the top. The link size is now capped by viewport height as well as width, and the
+panel scrolls if it still does not fit — centred with auto margins rather than
+`justify-content`, because `justify-content: center` in a scroll container
+centres by pushing content past the scrollable origin, where scrolling cannot
+reach it. Measured at 709, 800 and 1000px tall.
+
+**The redirect loop.** Every route to `still` ends in `router.replace("/")`, and
+`/` is exactly where the stored preference is read. Rewriting the preference to
+`plain` would fix it and would be the welding §2 forbids — a hardware verdict
+silently overwriting a person's choice. So there are two cookies: `presentation`
+holds the choice and persists; `journey-unavailable` holds the device's verdict
+and lasts the session. Asking for the cinematic by name clears the second one,
+because a phone that was hot or a browser flag that has changed deserves another
+go.
+
+### Where it lives, and the SEO cost
+
+`/cinematic` is its own route rather than a branch inside `/`, and that is a
+compromise rather than the destination. §7 wants one document with one scroll
+position; two URLs serving one portfolio is duplicate content, so `/cinematic` is
+`noindex` with `/` as its canonical. That is fine while the cinematic carries one
+section. It stops being fine when it carries the whole portfolio, and the
+decision is worth taking again then.
+
+The routing is done in `src/proxy.ts` — Next 16's rename of `middleware`, which
+also removed a deprecation warning on every dev start. In the proxy rather than
+by reading `cookies()` in the page, because that would make `/` dynamic: the
+busiest route on the site rendered on demand to answer a question that is nearly
+always "no". It stays statically prerendered.
+
 ---
 
 ## 7. Scroll ownership
@@ -587,8 +647,9 @@ scroll stops the film.
    that line turned the low→medium probe into a loop that climbed and collapsed
    every 30 seconds. Both fixed there.
 3. ~~**Port the scene into this repo** behind a flag~~ **Done.** It runs at
-   `/cinematic?cinematic=1`, on a route of its own rather than behind the home
-   page, because the journey owns scroll for 28 viewports and is not ambient.
+   `/cinematic?cinematic=1` — the flag came off in step 5 — on a route of its own
+   rather than behind the home page, because the journey owns scroll for 28
+   viewports and is not ambient.
    `still` is unchanged for everyone. What the port cost is recorded in the
    commit: one Lenis instead of two, lil-gui's config extracted, the shader
    generated into a string because Turbopack has no working `?raw`, and 9.7MB
@@ -611,6 +672,17 @@ scroll stops the film.
    rung is entry-only; once the gate is passed, `low` is the floor.
    One thing this step corrected rather than added: `still` is not "no WebGL".
    The projects grid keeps its `ogl` cards there.
-5. **Add the presentation switch** and build the cinematic presentation against
-   content that already exists.
+5. ~~**Add the presentation switch** and build the cinematic presentation against
+   content that already exists.~~ **Done**, for the switch and for the first
+   section. `/cinematic` is a real route with a control in the menu and a cookie
+   behind it, and the hero rides the wormhole crossing as real markup. Plain
+   stays the default until there is more than one section in there.
+
+   Three things this step corrected rather than added. The hero's copy was
+   string literals inside its component, so §3's one-source rule was already
+   broken before there was a second presentation to break it with. The story
+   overlay drove one hardcoded element, so a second section could be added to
+   the markup and would simply never move. And `getScenePresence` treated a
+   scene's own first frame as outside its window — invisible until something
+   sat at scroll 0, which nothing did until the hero.
 6. **Rethink the `/projects` list view** for a world where scroll is the film.

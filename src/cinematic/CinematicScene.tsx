@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef } from "react";
 import { useScrollActions } from "@/context/SmoothScrollContext";
+import { markJourneyUnavailable } from "@/lib/presentation-client";
+import hero from "@/data/hero.json";
 import "./cinematic.css";
 
 /**
@@ -65,6 +67,13 @@ export default function CinematicScene({
    */
   const fallBackToStill = useCallback((reason: string) => {
     console.info(`Cinematic: falling back to the still presentation (${reason}).`);
+    // Before the navigation, not after. A visitor whose stored preference is the
+    // cinematic is about to be sent to `/`, where the proxy reads that
+    // preference and sends them back here - so unless the verdict is recorded
+    // first, this is a redirect loop rather than a fallback. Deliberately a
+    // separate cookie from the preference: the choice stays theirs, this is only
+    // the device reporting that it cannot honour it this visit.
+    markJourneyUnavailable();
     // Owned by the scene, but the scene may never have started or may have
     // failed partway. Left behind, they lock scroll on a 28-viewport page.
     document.documentElement.classList.remove("cinematic-journey");
@@ -169,7 +178,11 @@ export default function CinematicScene({
   return (
     <div ref={rootRef} data-cinematic-root>
       <div data-cinematic="loading-overlay">
-        <h1 className="loading-headline">YOU ARE NOT READY FOR THIS</h1>
+        {/* A curtain's line, not the document's heading. It was an h1 when this
+            route had no content of its own and nothing else could claim the
+            title; now the hero does, and two h1s where one is a loading screen
+            is the wrong one winning. */}
+        <p className="loading-headline">YOU ARE NOT READY FOR THIS</p>
         <div className="loading-visual" aria-hidden="true">
           <div className="loading-ring outer" />
           <div className="loading-ring inner" />
@@ -186,6 +199,32 @@ export default function CinematicScene({
       <div data-cinematic="cockpit-vignette" aria-hidden="true" />
 
       <div data-cinematic="story-overlay" aria-live="polite">
+        {/* The site's content, scored against the flight rather than stacked
+            down a page. Same three facts the plain presentation opens with,
+            from src/data/hero.json — §3 of CINEMATIC_DECISION.md lets the
+            presentation differ freely and does not let the content fork.
+
+            Real markup, not a texture. A name painted into a WebGL canvas is
+            invisible to crawlers, to screen readers, and to anyone tabbing
+            through, which is the one thing neither presentation is allowed to
+            be. The canvas is how it is shown; this is what it is. */}
+        <section
+          className="story-scene hero-intro"
+          data-story-scene="heroIntro"
+        >
+          <div className="hero-intro-copy">
+            <h1>
+              <span className="hero-intro-prefix">{hero.namePrefix}</span>
+              <span className="hero-intro-name">{hero.name}</span>
+            </h1>
+            <ul className="hero-intro-roles">
+              {hero.roles.map((role) => (
+                <li key={role}>{role}</li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
         <section
           className="story-scene horizon-message"
           data-story-scene="horizonMessage"

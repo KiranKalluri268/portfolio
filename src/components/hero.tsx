@@ -5,6 +5,7 @@ import { useScrollActions } from "@/context/SmoothScrollContext";
 import { useAudio } from "@/context/AudioContextProvider";
 import { ENTRY_RELEASE_MS } from "./entry-timing";
 import { useReducedMotion } from "@/hooks/useMediaQuery";
+import hero from "@/data/hero.json";
 
 export default function Hero() {
   const { scrollNext, scrollToSection } = useScrollActions();
@@ -25,15 +26,11 @@ export default function Hero() {
     const timer = setTimeout(() => setCurtainOpening(true), reduceMotion ? 0 : ENTRY_RELEASE_MS);
     return () => clearTimeout(timer);
   }, [hasEntered, curtainOpening, reduceMotion]);
-  const words = useMemo(
-    () => [
-      "MERN FULL-STACK DEVELOPER...",
-      "PYTHON DEVELOPER...",
-      "AWS ENGINEER...",
-      "C++ DEVELOPER...",
-    ],
-    []
-  );
+  // The trailing dots are the typing affordance, not part of the job title, so
+  // they are added here rather than stored. The screen-reader line below used to
+  // strip them back off with a regex, which was the same information being put
+  // in and taken out again in two places.
+  const words = useMemo(() => hero.roles.map((role) => `${role}...`), []);
 
   const typingSpeed = 100;
   const deleteSpeed = 100;
@@ -52,8 +49,10 @@ export default function Hero() {
 
   const heroRef = useRef<HTMLDivElement>(null);
 
-  const introText = "NAMASTE!";
-  const mainText = "I'M,\nSAIKIRAN KALLURI";
+  // One source for both presentations. The cinematic renders the same three
+  // facts against a falling camera; the copy itself does not fork.
+  const introText = hero.greeting;
+  const mainText = `${hero.namePrefix}\n${hero.name}`;
   const visibleH1State = reduceMotion ? "done" : h1State;
   const visibleDisplayText = reduceMotion ? mainText : displayText;
   const visibleSecondLine = reduceMotion ? words[0] : secondLine;
@@ -196,9 +195,7 @@ export default function Hero() {
             {/* The visible line retypes character by character. Announcing that
                 live would fire on every keystroke, so assistive technology gets
                 the full set of roles as static text instead. */}
-            <span className="sr-only">
-              {words.map((word) => word.replace(/\.+$/, "")).join(", ")}
-            </span>
+            <span className="sr-only">{hero.roles.join(", ")}</span>
             <span className="text-accent" aria-hidden="true">{visibleSecondLine}</span>
             {!reduceMotion && showSecondCursor && <span className="animate-blink text-accent" aria-hidden="true">|</span>}
           </h2>
