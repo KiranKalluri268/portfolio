@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef } from "react";
 import { useScrollActions } from "@/context/SmoothScrollContext";
+import { markJourneyUnavailable } from "@/lib/presentation-client";
 import "./cinematic.css";
 
 /**
@@ -65,6 +66,13 @@ export default function CinematicScene({
    */
   const fallBackToStill = useCallback((reason: string) => {
     console.info(`Cinematic: falling back to the still presentation (${reason}).`);
+    // Before the navigation, not after. A visitor whose stored preference is the
+    // cinematic is about to be sent to `/`, where the proxy reads that
+    // preference and sends them back here - so unless the verdict is recorded
+    // first, this is a redirect loop rather than a fallback. Deliberately a
+    // separate cookie from the preference: the choice stays theirs, this is only
+    // the device reporting that it cannot honour it this visit.
+    markJourneyUnavailable();
     // Owned by the scene, but the scene may never have started or may have
     // failed partway. Left behind, they lock scroll on a 28-viewport page.
     document.documentElement.classList.remove("cinematic-journey");

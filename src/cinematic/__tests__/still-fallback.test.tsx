@@ -33,6 +33,11 @@ vi.mock("../scene/main", () => ({
 
 vi.mock("../cinematic.css", () => ({}));
 
+const markJourneyUnavailable = vi.fn();
+vi.mock("@/lib/presentation-client", () => ({
+  markJourneyUnavailable: () => markJourneyUnavailable(),
+}));
+
 import CinematicScene from "../CinematicScene";
 
 /** Pretend the browser does or does not honour reduced motion. */
@@ -62,6 +67,7 @@ describe("falling back to the still presentation", () => {
   beforeEach(() => {
     replace.mockClear();
     lenis.start.mockClear();
+    markJourneyUnavailable.mockClear();
     mountCinematic.mockReset();
     mountCinematic.mockResolvedValue(() => {});
     setReducedMotion(false);
@@ -129,11 +135,29 @@ describe("falling back to the still presentation", () => {
     expect(document.documentElement.className).not.toContain("cinematic-journey");
   });
 
+  it("records the verdict before it navigates, so the proxy cannot bounce it back", async () => {
+    // A visitor whose stored preference is the cinematic is about to be sent to
+    // `/`, which is precisely where that preference is read. Without this mark
+    // the fallback is a redirect loop rather than a fallback, and the loop is
+    // invisible in every test that only checks where `replace` was pointed.
+    setReducedMotion(true);
+    render(<CinematicScene />);
+
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/"));
+    expect(markJourneyUnavailable).toHaveBeenCalled();
+    expect(markJourneyUnavailable.mock.invocationCallOrder[0])
+      .toBeLessThan(replace.mock.invocationCallOrder[0]);
+  });
+
   it("runs the journey normally when nothing objects", async () => {
     render(<CinematicScene />);
 
     await waitFor(() => expect(mountCinematic).toHaveBeenCalled());
     expect(replace).not.toHaveBeenCalled();
     expect(document.documentElement.className).toContain("cinematic-journey");
+    // A device that is running the journey has not failed it, and marking it as
+    // failed would lock this visitor out of the cinematic for the rest of the
+    // session for no reason at all.
+    expect(markJourneyUnavailable).not.toHaveBeenCalled();
   });
 });
