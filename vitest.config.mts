@@ -8,6 +8,12 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [react()],
+  // Tailwind's PostCSS plugin is built for Next's pipeline and throws when Vite
+  // loads it ("Invalid PostCSS Plugin found at: plugins[0]"), which took out any
+  // test whose component imports a CSS module. Nothing here asserts on styles —
+  // the class names are only needed as opaque strings — so the transform is
+  // pointed at an empty plugin list rather than at postcss.config.mjs.
+  css: { postcss: { plugins: [] } },
   resolve: {
     alias: {
       "@": path.resolve(dirname, "src"),
