@@ -200,7 +200,11 @@ battery, ten minutes in, after thermal throttling.
 
 ### The measurement changed the shape of this section
 
-Held each tier still with the preset lock and read the counter:
+Held each tier still with the preset lock and read the counter. **These numbers
+were read off the FPS meter, which was itself costing about 150ms a second — see
+"Every reading above was taken with the FPS meter mounted" below. Treat them as
+depressed by roughly 10–20%, and the ordering rather than the values as the
+finding.**
 
 | | Realme 9 Speed Edition | iPhone 16 Pro |
 |---|---|---|
@@ -361,6 +365,37 @@ specifically to diagnose frame drops and was itself the cause. The tell was
 available the whole time and went unread: `median 7.0ms, p90 7.1ms, max 201.8ms`
 describes a healthy scene with something else on top of it, not a struggling one.
 
+### Re-measured with the instrument fixed, and the ladder agrees with the curve
+
+Every device re-run after the meter became text and the panic rule started
+needing two frames instead of one. The point of this section is that the
+behaviour is now *predictable from the tables above* — which is the check that
+the tables themselves are sound.
+
+| device | settles at | what it does | the curve says |
+|---|---|---|---|
+| laptop, plugged | `high` | warmup → `high`, no downgrades, 12s+ | `high` 20.9ms vs a 25ms bar |
+| iPhone 16 Pro | `medium` | starts `high`, drops once when scrolling starts, then stable | `high` 22–23ms static, and scroll adds the rest |
+| Realme 9 SE | `low` | starts `low`; a hand-picked `medium` fails after a few seconds | `medium` 62.5ms, every frame past the 50ms panic bar |
+
+**The iPhone's drop is the ladder working, not failing.** 22–23ms static against
+a 25ms line is a 2–3ms margin, and the note above already says the curve is a
+floor rather than the whole cost: Lenis, ScrollTrigger and compositing land on
+the same frame. So `high` crosses the line the moment a scroll begins. `medium`
+is the honest answer for that phone and it is now reached in **one** transition.
+
+**The Realme confirms it has one rung.** `medium` at 62.5ms cannot survive a
+50ms panic bar for even a second, and `low` at 24–28ms holds only because there
+is nothing below it to fall to. The few seconds before a hand-picked `medium`
+gives way are the probe evaluation window, not hesitation.
+
+Worth contrasting with the same devices before the fix — the readings that sent
+several days sideways: the iPhone "never moved to medium, even if I moved it
+without lock it dropped back in few seconds", the Realme "instantly drops to low
+when unlocked", the laptop picking `low` at the entry gate while plugged in.
+Every one of those was churn. Every device now makes **at most one** automatic
+transition and stays there.
+
 ---
 
 ## 5. Choosing the tier
@@ -496,9 +531,11 @@ scroll stops the film.
    Low is the only rung that phone has. An iPhone 16 Pro runs high at 40–60fps
    comfortably. So the ladder is real, but it is separated by device class
    rather than by anything a phone can climb.
-2. ~~**Fix the benchmark workload.**~~ **Done** in portfolio-3D. It now parks the
-   camera at 0.85 of the approach instead of judging the device on the wormhole
-   opening. Two things came out with it: the heavy-frame line was at 50fps and
+2. ~~**Fix the benchmark workload.**~~ **Done** in portfolio-3D. It parks the
+   camera in the fall instead of judging the device on the wormhole opening.
+   First at 0.85 of the approach, and now at **0.30** — the cost sweep later
+   showed the fall is a flat plateau rather than a peak, so the middle of it is
+   the safest place to stand. Two things came out with it: the heavy-frame line was at 50fps and
    was taking `high` away from the iPhone that was rendering it well, and moving
    that line turned the low→medium probe into a loop that climbed and collapsed
    every 30 seconds. Both fixed there.
@@ -509,8 +546,17 @@ scroll stops the film.
    commit: one Lenis instead of two, lil-gui's config extracted, the shader
    generated into a string because Turbopack has no working `?raw`, and 9.7MB
    of texture moved to `/public`.
+3b. ~~**Make the tier machinery trustworthy.**~~ **Done**, and it was not on this
+   list because nobody knew it was needed. The benchmark was moved to the fall
+   plateau, warmup was made to judge on a percentile rather than a count of
+   outliers, a ceiling was added so a failed tier is not retried all session,
+   and the panic rule was made to need two bad frames instead of one. Then the
+   FPS meter turned out to be stalling the compositor once a second and causing
+   most of what was being fixed. Every device now makes at most one automatic
+   transition and settles where the cost curve says it should.
 4. **Make the tier ladder real**, `still` included as a rung rather than a
-   separate site.
+   separate site. **Next.** The tier machinery is now measured rather than
+   guessed at, which is what this step has to build on.
 5. **Add the presentation switch** and build the cinematic presentation against
    content that already exists.
 6. **Rethink the `/projects` list view** for a world where scroll is the film.
