@@ -10,6 +10,8 @@ export class ThreeDQualityManager {
     benchmarkDeadlineMs = 15000,
     heavyFrameLimit = 5,
     heavyFrameWindowMs = 1500,
+    panicFrameLimit = 2,
+    panicFrameWindowMs = 600,
     cooldownMs = 7000,
     ignoredFramesAfterChange = 5,
     upgradeStableMs = 3000,
@@ -36,6 +38,34 @@ export class ThreeDQualityManager {
     this.panicFrameMs = panicFrameMs;
     this.maxFrameGapMs = maxFrameGapMs;
 
+    // A panic frame used to downgrade on its own: one frame over 50ms, no
+    // budget, no second opinion. That made the manager trust a single sample
+    // more than it trusts five heavy frames, and a lone stall is the least
+    // trustworthy sample there is - a notification, a tab switch, the GPU
+    // reclaiming memory, someone's overlay software.
+    //
+    // It was not hypothetical. The dev FPS meter redrew a small 2D canvas over
+    // the WebGL canvas once a second, which stalled the compositor for 76-723ms
+    // with no script running at all. Two of those cost two rungs and pinned the
+    // ceiling at `low` before the visitor had entered, on a laptop that holds
+    // `high` at 20.9ms. The meter is fixed, but a visitor's machine will do the
+    // same thing and cannot be fixed from here.
+    //
+    // Two panics inside the window still drop a tier immediately, so a genuinely
+    // overloaded GPU is caught as fast as it ever was. One does not.
+    //
+    // The window is 600ms rather than the heavy path's 1500ms, and that number
+    // is doing real work: periodic artefacts land about a second apart, and a
+    // 1500ms window is wide enough to hold two of them and call the pair a
+    // pattern. Simulated against the meter's own signature - a healthy 7ms scene
+    // with a 200ms stall every second - a 1500ms window still fell to `low` in
+    // 2.2 seconds, while 600ms never downgrades at all. A device that genuinely
+    // cannot render the tier spikes far closer together than that: 120ms frames
+    // drop a rung in 360ms either way.
+    this.panicFrameLimit = panicFrameLimit;
+    this.panicFrameWindowMs = panicFrameWindowMs;
+    this.panicFrameTimestamps = [];
+
     // Heavy-frame timestamps form a bounded rolling window. Old spikes expire
     // automatically instead of influencing decisions indefinitely.
     this.heavyFrameLimit = heavyFrameLimit;
@@ -49,6 +79,9 @@ export class ThreeDQualityManager {
     this.warmupComplete = false;
     this.warmupHeavyFrames = 0;
     this.warmupPanicFrames = 0;
+    // Every warmup frame time, so the verdict can be a percentile instead of a
+    // count of outliers. Discarded once warmup is done.
+    this.warmupFrameTimes = [];
 
     // Safety net for the initial benchmark. Frames longer than maxFrameGapMs are
     // discarded as invalid samples, so a device slow enough that *every* frame
@@ -86,6 +119,17 @@ export class ThreeDQualityManager {
     // question for the session.
     this.mediumProbeRejected = false;
 
+    // Whether the frame currently being judged came from a part of the journey
+    // expensive enough to be worth judging by. Set per frame from update();
+    // true until told otherwise, so a caller that passes nothing is unaffected.
+    this.frameIsRepresentative = true;
+
+    // The highest tier the manager may still reach for on its own. Set by the
+    // first downgrade away from a tier and never raised again, because nothing
+    // that happens later is evidence the device got faster. A hand-picked tier
+    // clears it - an explicit choice outranks the manager's memory.
+    this.tierCeiling = null;
+
     // A tier chosen by hand stops the manager climbing, but not dropping. The
     // safety net is protection and stays on; probing upward is ambition, and
     // once someone has picked a tier the manager should stop having opinions
@@ -112,6 +156,10 @@ export class ThreeDQualityManager {
 
     this.currentTier = tier;
     this.heavyFrameTimestamps.length = 0;
+    // The new tier gets a fresh window. Spikes measured against the old one are
+    // not evidence about this one, and carrying them over would let a single
+    // bad frame here finish a downgrade the previous tier started.
+    this.panicFrameTimestamps.length = 0;
     this.upgradeStableElapsedMs = 0;
     this.ignoredFramesRemaining = this.ignoredFramesAfterChange;
     if (tier !== 'medium') {
@@ -130,6 +178,11 @@ export class ThreeDQualityManager {
     if (!this.tiers.includes(tier)) return;
 
     this.userPinned = true;
+    // An explicit choice outranks the manager's memory of what failed. Picking a
+    // tier by hand is allowed to reach above the ceiling, and clears it, so that
+    // letting the manager take over again later does not start from a verdict
+    // reached before the choice was made.
+    this.tierCeiling = null;
     this.mediumProbeActive = false;
     this.mediumProbeElapsedMs = 0;
     this.mediumProbeHeavyFrames = 0;
@@ -149,7 +202,20 @@ export class ThreeDQualityManager {
     this.locked = locked;
   }
 
-  update(timestampMs = performance.now()) {
+  /**
+   * @param {number} timestampMs
+   * @param {object} [options]
+   * @param {boolean} [options.representative] - whether this frame is drawn
+   *   from a part of the journey whose cost is worth judging by. Defaults to
+   *   true, so a caller that says nothing behaves as before.
+   *
+   *   Only the upgrade path reads it. Downgrades never do: a frame that has
+   *   fallen apart has fallen apart wherever it was drawn, and protection is not
+   *   conditional on where the visitor happens to be.
+   */
+  update(timestampMs = performance.now(), { representative = true } = {}) {
+    this.frameIsRepresentative = representative;
+
     if (this.previousTimestampMs === null) {
       this.previousTimestampMs = timestampMs;
       return;
@@ -195,7 +261,7 @@ export class ThreeDQualityManager {
       this.cooldownRemainingMs = Math.max(0, this.cooldownRemainingMs - frameMs);
 
       // Panic frames indicate a backed-up GPU queue; downgrade even in cooldown.
-      if (frameMs > this.panicFrameMs) {
+      if (frameMs > this.panicFrameMs && this.recordPanicFrame(timestampMs)) {
         if (this.mediumProbeActive) this.failMediumProbe();
         else this.downgrade('panic');
       }
@@ -203,8 +269,12 @@ export class ThreeDQualityManager {
     }
 
     if (frameMs > this.panicFrameMs) {
-      if (this.mediumProbeActive) this.failMediumProbe();
-      else this.downgrade('panic');
+      if (this.recordPanicFrame(timestampMs)) {
+        if (this.mediumProbeActive) this.failMediumProbe();
+        else this.downgrade('panic');
+      }
+      // Either way the frame was bad, so it cannot count toward headroom.
+      this.upgradeStableElapsedMs = 0;
       return;
     }
 
@@ -240,6 +310,12 @@ export class ThreeDQualityManager {
   updateWarmup(frameMs) {
     this.warmupElapsedMs += frameMs;
 
+    // Every frame is kept so the verdict can be a percentile rather than a
+    // count. Three seconds is a few hundred samples at worst, which is nothing.
+    this.warmupFrameTimes.push(frameMs);
+
+    // Still counted, but only for the log line. Nothing decides on these any
+    // more - see completeWarmup.
     if (frameMs > this.panicFrameMs) {
       this.warmupPanicFrames++;
     }
@@ -253,6 +329,17 @@ export class ThreeDQualityManager {
     this.completeWarmup('warmup-elapsed');
   }
 
+  /** The frame time that `fraction` of warmup's frames came in under. */
+  warmupPercentile(fraction) {
+    if (this.warmupFrameTimes.length === 0) return null;
+    const sorted = [...this.warmupFrameTimes].sort((a, b) => a - b);
+    const index = Math.min(
+      sorted.length - 1,
+      Math.max(0, Math.ceil(fraction * sorted.length) - 1)
+    );
+    return sorted[index];
+  }
+
   completeWarmup(reason) {
     if (this.warmupComplete) return;
 
@@ -262,6 +349,10 @@ export class ThreeDQualityManager {
       tier: this.currentTier,
       heavyFrames: this.warmupHeavyFrames,
       panicFrames: this.warmupPanicFrames,
+      // The number the decision is actually made on, so the log line explains
+      // the verdict instead of just reporting the outliers it ignored.
+      p90: this.warmupPercentile(0.9),
+      frames: this.warmupFrameTimes.length,
       reason,
     });
 
@@ -274,19 +365,60 @@ export class ThreeDQualityManager {
       return;
     }
 
-    // Only enhance if the baseline survived warmup with clear headroom.
-    if (this.warmupHeavyFrames === 0 && this.warmupPanicFrames === 0) {
+    // Judged on a percentile, not on a count of bad frames.
+    //
+    // Counting outliers reads the startup rather than the scene. Warmup is the
+    // one stretch where transients are guaranteed - ~10MB of texture uploading
+    // to the GPU on first sample, shader variants compiling, hydration
+    // finishing, GPU clocks still ramping - and the old rule downgraded on
+    // `warmupPanicFrames > 0`, a single frame over 50ms anywhere in three
+    // seconds, with no budget at all. That made warmup stricter than the live
+    // path, which tolerates five heavy frames in a rolling 1.5s window.
+    //
+    // Measured: a plugged-in laptop rendering this pose at 7.0ms produced ~348
+    // warmup frames, of which 336 sat on the 143fps cap and 12 did not. Twelve
+    // startup frames outvoted three hundred and thirty-six, and a machine with
+    // headroom for `high` was told it was a `low` device. It also explains the
+    // noise - the same phone landing on medium one run and low the next was
+    // never measuring the device, only how unlucky its first three seconds were.
+    //
+    // p90 asks the question the tier decision actually asks: is most of this
+    // fast enough. It needs no guess about when transients happen, which matters
+    // because clock ramping is not confined to the opening frames.
+    const p90 = this.warmupPercentile(0.9);
+
+    if (p90 === null) return;
+
+    if (p90 < this.healthyFrameMs) {
       if (this.currentTier === 'low') {
         this.startMediumProbe();
       } else if (this.currentTier === 'medium' && this.allowHighAutoUpgrade) {
         this.upgrade('warmup-headroom');
       }
-    } else if (this.warmupPanicFrames > 0 || this.warmupHeavyFrames > this.heavyFrameLimit) {
+    } else if (p90 > this.heavyFrameMs) {
       this.downgrade('warmup-struggling');
     }
+    // Between the two bars: the tier it warmed up at is the right one. Stay.
   }
 
   trackUpgradeHeadroom(frameMs) {
+    // A cheap frame is not evidence of headroom unless it came from an
+    // expensive part of the journey.
+    //
+    // This is the same mistake the benchmark used to make, in the one place it
+    // survived being fixed. The benchmark now judges the device on the fall
+    // instead of the wormhole; this path was still counting whatever happened
+    // to be on screen. At scroll zero the wormhole is the cheapest thing the
+    // scene draws, so eight seconds of sitting still there is guaranteed
+    // headroom - and the tier it buys is one the fall cannot hold. Measured on
+    // an iPhone 16 Pro: idle at the opening climbs to high, scrolling into the
+    // fall drops it straight back to medium, and it will do that all day.
+    //
+    // Paused rather than reset. Coming back up out of the fall should not spend
+    // credit that was honestly earned in it - it should simply stop earning
+    // more until the journey is somewhere worth measuring again.
+    if (!this.frameIsRepresentative) return;
+
     if (this.userPinned) {
       this.upgradeStableElapsedMs = 0;
       return;
@@ -317,6 +449,11 @@ export class ThreeDQualityManager {
   // onMediumProbeComplete have to know when it refused, or they wait forever.
   startMediumProbe() {
     if (this.userPinned || this.locked || this.mediumProbeRejected) return false;
+    // The probe reaches medium through setTier rather than upgrade(), so the
+    // ceiling has to be checked here too or it would be the one way around it.
+    if (this.tierCeiling !== null && this.tiers.indexOf('medium') > this.tiers.indexOf(this.tierCeiling)) {
+      return false;
+    }
 
     this.lastAdjustmentReason = 'low-to-medium-probe';
     this.mediumProbeActive = true;
@@ -379,9 +516,45 @@ export class ThreeDQualityManager {
     }
 
     const nextTier = this.tiers[tierIndex - 1];
+
+    // Warmup is not allowed to cap anything, and getting this wrong cost an
+    // iPhone 16 Pro its whole session.
+    //
+    // The benchmark runs for three seconds while textures are still decoding and
+    // two shader variants are compiling - the most contended moment there is -
+    // and it is noisy enough to land on medium one run and low the next on the
+    // same hardware. When a warmup downgrade set the ceiling, that coin flip
+    // became permanent: the manager dropped to low, the medium probe that exists
+    // to recover a conservative start was refused by the ceiling, and the phone
+    // sat at low for the rest of the session at 50-60fps with headroom it could
+    // never spend.
+    //
+    // A ceiling is meant to record "this device rendered this tier and could not
+    // hold it", not "this device had a rough three seconds while loading".
+    const isWarmupVerdict = reason === 'warmup-struggling' || reason === 'benchmark-deadline';
+
+    // Asked and answered, the same rule a failed medium probe already follows.
+    // This tier has now been rendered on this device and could not be held, so
+    // the automatic path stops offering it.
+    //
+    // Without this the manager cannot help but retry it. Headroom at the current
+    // tier is the only evidence it has, and headroom at one tier says nothing
+    // about the next one when the rungs are roughly twice each other's cost.
+    // A device where medium is comfortable in the fall and high is not will
+    // climb, fail, drop, wait out the cooldown and climb again for as long as
+    // the visitor stays - which is what an iPhone 16 Pro actually does here.
+    //
+    // The visitor can still pick any tier by hand; this governs only what the
+    // manager reaches for on its own.
+    if (!isWarmupVerdict) this.tierCeiling = nextTier;
+
     this.lastAdjustmentReason = reason;
+    // The frame that triggered this, read before setTier clears the timing
+    // state. A `panic` reason without its frame time cannot be told apart from
+    // a render-target reallocation, which is exactly the question open here.
+    const frameMs = this.latestFrameMs;
     this.setTier(nextTier);
-    this.onQualityDowngrade(nextTier, { reason });
+    this.onQualityDowngrade(nextTier, { reason, frameMs });
   }
 
   upgrade(reason) {
@@ -402,6 +575,13 @@ export class ThreeDQualityManager {
     }
 
     const nextTier = this.tiers[tierIndex + 1];
+
+    // Never climb back above a tier that has already failed here.
+    if (this.tierCeiling !== null && this.tiers.indexOf(nextTier) > this.tiers.indexOf(this.tierCeiling)) {
+      this.upgradeStableElapsedMs = 0;
+      return;
+    }
+
     this.lastAdjustmentReason = reason;
     this.setTier(nextTier);
     this.onQualityUpgrade(nextTier, { reason });
@@ -425,7 +605,28 @@ export class ThreeDQualityManager {
 
     this.previousTimestampMs = timestampMs;
     this.heavyFrameTimestamps.length = 0;
+    this.panicFrameTimestamps.length = 0;
     this.upgradeStableElapsedMs = 0;
+  }
+
+  /**
+   * Record a frame over the panic line and say whether it is enough to act on.
+   * @returns {boolean} true once `panicFrameLimit` have landed inside the window.
+   */
+  recordPanicFrame(timestampMs) {
+    this.panicFrameTimestamps.push(timestampMs);
+    const cutoff = timestampMs - this.panicFrameWindowMs;
+    while (
+      this.panicFrameTimestamps.length > 0
+      && this.panicFrameTimestamps[0] < cutoff
+    ) {
+      this.panicFrameTimestamps.shift();
+    }
+    if (this.panicFrameTimestamps.length < this.panicFrameLimit) return false;
+    // Acted on, so the window starts again rather than letting the same spikes
+    // immediately justify a second downgrade on the next bad frame.
+    this.panicFrameTimestamps.length = 0;
+    return true;
   }
 
   recordHeavyFrame(timestampMs) {

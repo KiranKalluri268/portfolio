@@ -230,11 +230,151 @@ a resolution change under that flash cannot be seen. Deliberately not built —
 it is a feature rather than a tuning change, and it belongs after step 4 rather
 than tangled into it.
 
+### The cost curve, measured
+
+`?curve=1` locks a tier, walks the camera through all 19 poses of the journey and
+reports frame time at each. Run on both phones. This replaces every earlier guess
+about where the expensive frames are — there were two, and both were wrong, in
+opposite directions.
+
+**Read the caps first.** 17.0ms is 59fps and 13.9ms is 72fps: those are display
+refresh limits, not scene cost. The iPhone runs at 60Hz here (Safari caps `rAF`
+at 60 regardless of ProMotion), so **its `medium` and `low` sweeps are capped on
+every row and contain no cost information at all**. The Realme's tunnel rows are
+capped too. Usable data: iPhone `high`, and Realme at all three tiers.
+
+| units | phase | iPhone `high` | Realme `low` | Realme `medium` | Realme `high` |
+|---|---|---|---|---|---|
+| 0–3 | crossing, far | 22–24ms | 20.8–20.9 | 55.5–55.6 | 125–132 |
+| 4.5–6 | crossing, near | 17 *(cap)* | 13.9 *(cap)* | 13.9 *(cap)* | 13.9–20.8 |
+| 7.5–10.5 | tunnel | 17 *(cap)* | 13.9 *(cap)* | 13.9 *(cap)* | 13.9 *(cap)* |
+| 12–21 | arrival + fall | **22–23** | **24.3–27.7** | **62.4–62.5** | **145.8–152.8** |
+| 24–27 | fall, very close | 21→17 | 20.8 | 48.5–55.6 | 138.8→111.1 |
+
+**The fall is a plateau, not a peak.** Flat from the arrival at 12 units to about
+21, then falling away as the black hole grows to fill the frame. Up close the
+shadow terminates rays early; at distance almost nothing terminates and nearly
+every ray spends its whole step budget on mildly-lensed background. The note on
+`arriveDist` in `main.js` says the same thing from the other side — beyond ~43
+units on `low`, the most-bent rays run out of steps entirely.
+
+That plateau is why the sweep's own suggested constant came out as 0.36, 0.04,
+0.25 and 0.57 on different runs: the argmax of a flat stretch is noise.
+`BENCHMARK_APPROACH_PROGRESS` is now **0.30**, the middle of it, and anything from
+about 0.05 to 0.55 measures the same thing.
+
+**The tunnel/fall ratio is now a number rather than an impression:** 13.9ms
+against 152.7ms on the Realme at `high`. **Eleven times.**
+
+**The rungs, for that phone:** `low` 24–28ms in the fall, `medium` 62ms, `high`
+153ms. Roughly 2.5× per rung rather than the ~1.6× predicted from pixel counts,
+and it confirms `low` is the only tier it can use.
+
+**One thing this method cannot see.** Every pose is measured standing still, and
+the journey is normally scrolled. Scrolling costs more — Lenis, ScrollTrigger and
+compositing all land on the same frame — which is why `high` on the iPhone reads
+a comfortable 22–24ms here but was observed dropping tiers under an actual scroll.
+The curve is a floor on cost, not the whole of it.
+
+### The laptop, and why power state matters more than the tier
+
+A 144Hz laptop on a Radeon 780M iGPU (the browser does not pick the discrete
+3050), swept in three power states. Frame time in the fall:
+
+| tier | plugged in | on battery | battery + saver |
+|---|---|---|---|
+| `low` | 7.0ms *(cap)* | 7.0ms *(cap)* | 7.0ms *(cap)* |
+| `medium` | 7.0ms *(cap)* | 7.0–7.3ms *(cap)* | 7.0–7.2ms *(cap)* |
+| `high` | **20.9ms** (48fps) | **27.8ms** (36fps) | **27.8ms** (36fps) |
+
+**`low` and `medium` are the same tier here.** Both sit on the 143fps cap in every
+power state, so the manager cannot tell them apart from frame timing — the exact
+condition this document warns makes a rung worthless. `medium` is strictly better
+on this machine: more resolution at identical measured cost. `low` earns nothing
+on a desktop, and that is now measured rather than assumed.
+
+**Unplugging costs 33%, and it straddles the heavy line.** `high` passes at 20.9ms
+plugged and fails at 27.8ms on battery, against a 25ms bar. Same machine, same
+scene, same session.
+
+That is a real limit on the tier ceiling. The ceiling's stated reasoning is that
+*nothing that happens later is evidence the device got faster* — and plugging in
+is precisely that evidence. Unplug mid-journey, `high` fails, the ceiling pins the
+session to `medium`, and plugging back in does not release it.
+
+**Accepted deliberately rather than fixed.** Plugging in mid-journey is rare;
+picking a tier by hand already clears the ceiling; and the churn the ceiling
+prevents — climb, fail, drop, climb again, every thirty seconds — is a worse
+experience than the recovery it blocks. The obvious fix, listening for the
+Battery Status API, works on this laptop and on neither phone, which makes it a
+desktop-only patch for a problem the phones share.
+
+**Clocks ramp during the first seconds of a sweep.** On battery, `high` reads
+21.2 → 24.2 → 27.7ms across units 0 / 1.5 / 3 and then drops to 14.0. That is not
+a cost gradient, it is the GPU spinning up. Worth remembering because warmup runs
+in exactly that cold window.
+
+### Every reading above was taken with the FPS meter mounted, and the meter was breaking the scene
+
+This is the most expensive thing on this page, so it goes at the end of the
+measurements rather than in a footnote.
+
+`?devtools=1` mounted stats.js. Its panel is an 80×48 `<canvas>` redrawn once a
+second (`Stats.js:77`), sitting over the WebGL canvas. On the AMD 780M through
+ANGLE/D3D11 that redraw costs **76–723ms of presentation time**, once a second,
+on the dot. Not script time: `long-animation-frame` reported `blockingDuration: 0`
+and no scripts at all on every one of them. The compositor simply stopped
+producing frames for about twenty refreshes.
+
+Same tab, seconds apart, at the entry gate:
+
+| | frames / 8s | median | p90 | max | spikes |
+|---|---|---|---|---|---|
+| with the meter | 955 | 7.0ms | 7.1ms | **201.8ms** | 10, at gaps of 1002 995 1009 1002 1009ms |
+| without it | 632 | 13.9ms | 20.9ms | **21.6ms** | none, and it held `high` throughout |
+
+Reproduced from scratch to be sure it was not stats.js specifically: an empty
+80×48 canvas appended to the page and filled once a second brought the spikes
+straight back on a clean tab. Layer promotion did not help — `will-change:
+transform` and `contain: strict` both still spiked — and neither did moving it
+out to `<body>`. **Text does not spike at all**, which is what the meter is now.
+
+**What this invalidates.** Every tier transition observed on a device: the iPhone
+dropping the moment a scroll started, "instantly drops to low when unlocked",
+`low` being selected at the entry gate on a plugged-in laptop. Those were the
+meter tripping the panic rule, not the devices. Several days went into chasing
+them, and the last of them — a supposed bug in the benchmark's pose handover —
+did not exist at all.
+
+**What survives, and why.** The cost curves above are medians of 30 frames per
+pose (`curveRunner.js:68`); a once-per-second stall touches at most one sample in
+thirty and cannot move a median. So the fall plateau, the 11× tunnel/fall ratio,
+"the opening is not cheap", and `BENCHMARK_APPROACH_PROGRESS = 0.30` all stand.
+Warmup's p90 figures survive for the same reason — three spikes in three hundred
+frames do not move a 90th percentile. The eyeballed fps numbers read off the
+meter are depressed by roughly 10–20% (about 150ms lost per second) rather than
+void.
+
+**The lesson worth keeping.** An instrument that shares a frame budget with the
+thing it measures has to be proven not to spend any of it. This one was mounted
+specifically to diagnose frame drops and was itself the cause. The tell was
+available the whole time and went unread: `median 7.0ms, p90 7.1ms, max 201.8ms`
+describes a healthy scene with something else on top of it, not a struggling one.
+
 ---
 
 ## 5. Choosing the tier
 
 ### The benchmark measures the wrong workload
+
+> **Half right, and the wrong half was load-bearing.** The claim below — that the
+> opening is the cheapest thing in the journey — is false, and it was measured
+> false with `?curve=1` on two phones. On a Realme 9 Speed Edition at `high` the
+> opening costs **132ms against the fall's 153ms**: 87% of peak, and the second
+> most expensive part of the whole journey. Benchmarking the fall is still
+> correct, because the fall genuinely is the peak — but the gap being closed is
+> a sixth, not the chasm this section describes. See *The cost curve, measured*
+> below.
 
 `ThreeDQualityManager` judges the device from frame times during warmup. At the
 loading screen, what is rendering is the **opening** of the journey — the wormhole

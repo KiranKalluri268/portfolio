@@ -43,5 +43,11 @@ export default async function CinematicPage({
   // the two things a desktop cannot tell me.
   const showDevTools = params.devtools === "1";
 
-  return <CinematicScene showDevTools={showDevTools} />;
+  // Walk the camera through the whole journey and report what each part costs,
+  // instead of following scroll. Every tuning decision so far has rested on a
+  // guess about where the expensive frames are, and the guess has now been wrong
+  // twice in opposite directions.
+  const measureCurve = params.curve === "1";
+
+  return <CinematicScene showDevTools={showDevTools} measureCurve={measureCurve} />;
 }

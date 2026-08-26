@@ -5,6 +5,7 @@ import { createSceneConfig } from './sceneConfig';
 import { createPresetSwitcher } from './gui/presetSwitcher';
 import { ThreeDQualityManager } from './performance/ThreeDQualityManager';
 import { createStoryOverlay } from './story/StoryOverlay';
+import { createCurveRunner } from './curveRunner';
 import { createTunnel } from './graphics/tunnel';
 import { createPlanet } from './graphics/planet';
 
@@ -26,10 +27,14 @@ import { createPlanet } from './graphics/planet';
  *   journey is a pure function of scroll position and the site already owns one
  *   Lenis in the root layout; a second one would mean two sources of truth for
  *   a single number. See docs/ANIMATIONS.md.
- * @param {boolean} [showDevTools] - render the FPS meter and tier switcher.
+ * @param {object} [options]
+ * @param {boolean} [options.showDevTools] - render the FPS meter and tier switcher.
+ * @param {boolean} [options.measureCurve] - instead of following scroll, walk the
+ *   camera through the whole journey and report what each part costs. See
+ *   curveRunner.js.
  * @returns {Promise<() => void>} teardown
  */
-export async function mountCinematic(root, lenis, showDevTools = false) {
+export async function mountCinematic(root, lenis, { showDevTools = false, measureCurve = false } = {}) {
 
   const loadingOverlay = root.querySelector('[data-cinematic="loading-overlay"]')
   const loadingPercentage = root.querySelector('[data-cinematic="loading-percentage"]')
@@ -117,6 +122,18 @@ export async function mountCinematic(root, lenis, showDevTools = false) {
     lenis.start()
     loadingOverlay?.classList.add('loaded')
     loadingOverlay?.addEventListener('transitionend', () => loadingOverlay.remove(), { once: true })
+
+    if (measureCurve && !curveRunner) {
+      // Hold the tier for the whole sweep. A downgrade partway through would
+      // make the second half of the curve a measurement of a different scene,
+      // and the point is to compare poses against each other.
+      qualityManager?.setLocked(true)
+      curveRunner = createCurveRunner({
+        journey: JOURNEY,
+        getTier: () => qualityManager?.currentTier ?? performanceConfig.preset,
+        onPose: () => {},
+      })
+    }
   }
 
   setLoadingStage('Initializing renderer...', 3)
@@ -283,15 +300,32 @@ export async function mountCinematic(root, lenis, showDevTools = false) {
   // enough round the photon sphere to spend most of their step budget. Judging
   // a device on the opening and then sending it into the fall is measuring the
   // wrong workload, and it comes out optimistic every time. Measured on a
-  // Realme 9 Speed Edition, high runs at 75fps inside the tunnel and 5-10fps in
-  // the fall: same tier, same device, a tenfold spread across one journey.
+  // Realme 9 Speed Edition at high: 13.9ms inside the tunnel against 152.7ms in
+  // the fall. Same tier, same device, eleven times the cost across one journey.
   //
-  // 0.85 of the approach rather than the very last frame. The fall is nearly at
-  // its closest here, so it stands in for the worst the device will be asked
-  // for, while staying clear of the final frame's viewport-dependent framing.
-  // One global tier has to survive the most expensive moment, so that is the
-  // moment to measure.
-  const BENCHMARK_APPROACH_PROGRESS = 0.85
+  // 0.30, and it is the middle of a plateau rather than a peak.
+  //
+  // Measured with ?curve=1 on two phones rather than guessed, which is how the
+  // two previous values got here. Frame time is flat from the arrival at 12
+  // units to about 21, then falls away as the black hole grows to fill the
+  // frame — up close the shadow terminates rays early, where at distance almost
+  // nothing terminates and nearly every ray spends its whole step budget on
+  // mildly-lensed background. Realme 9 Speed Edition at high:
+  //
+  //   units  12    13.5   16.5   18    21    24    27
+  //   ms     145.8 152.7  152.8  152.7 152.7 138.8 111.1
+  //
+  // So 0.85 — which is 24.9 units — was sampling the far side of the plateau at
+  // about 138ms against a 153ms peak, and the sweep's own suggested constant
+  // came out as 0.36, 0.04, 0.25 and 0.57 on different runs because the argmax
+  // of a flat stretch is noise. Anything from roughly 0.05 to 0.55 measures the
+  // same thing; the middle is simply furthest from either edge.
+  //
+  // Note the opening is *not* cheap, whatever CINEMATIC_DECISION.md says: at
+  // 132ms it is 87% of the fall's cost on that device, the second most expensive
+  // part of the journey. The fall is still the right place to benchmark because
+  // it is genuinely the peak, but the gap is far narrower than that doc claims.
+  const BENCHMARK_APPROACH_PROGRESS = 0.30
   const BENCHMARK_POSE_UNITS =
     JOURNEY.arrivalEnd + (JOURNEY.approachEnd - JOURNEY.arrivalEnd) * BENCHMARK_APPROACH_PROGRESS
 
@@ -411,6 +445,12 @@ export async function mountCinematic(root, lenis, showDevTools = false) {
         root,
       })
     : { setTier() {}, dispose() {} };
+
+  // Built on entry rather than here, so the measurement runs on a frame the
+  // visitor can see and not behind the loading overlay while textures are still
+  // settling - that contention is exactly what makes the warmup verdict noisy,
+  // and there is no reason to inherit it.
+  let curveRunner = null;
 
   const DEFAULT_ELEVATION = 5 * Math.PI / 180 // 5° — default camera elevation above disk
 
@@ -547,8 +587,12 @@ export async function mountCinematic(root, lenis, showDevTools = false) {
     mediumProbeEvaluationMs: 4000,
     failedProbeCooldownMs: 20000,
     allowHighAutoUpgrade: true,
-    onQualityDowngrade: (newTier, { reason }) => {
-      console.log("Quality Manager: Downgraded to " + newTier + " (" + reason + ")");
+    onQualityDowngrade: (newTier, { reason, frameMs }) => {
+      console.log(
+        "Quality Manager: Downgraded to " + newTier + " (" + reason +
+        (frameMs === undefined || frameMs === null
+          ? "" : ", frame " + frameMs.toFixed(1) + "ms") + ")"
+      );
       // The dropdown follows a safety downgrade: it shows what is running, not
       // what was asked for, so an overridden selection is visible immediately.
       presetSwitcher.setTier(newTier);
@@ -565,10 +609,16 @@ export async function mountCinematic(root, lenis, showDevTools = false) {
       }
       applyPerformancePreset(newTier, false);
     },
-    onWarmupComplete: ({ tier, heavyFrames, panicFrames, reason }) => {
+    onWarmupComplete: ({ tier, heavyFrames, panicFrames, p90, frames, reason }) => {
+      // p90 first, because that is what the verdict is made on. The heavy and
+      // panic counts are still printed, but only as context - they are the
+      // outliers the percentile is there to ignore, and reading them as the
+      // decision is what sent a 143fps laptop to the bottom rung.
       console.log(
         "Quality Manager: Warmup complete at " + tier +
-        " (" + heavyFrames + " heavy frames, " + panicFrames + " panic frames, " + reason + ")"
+        " (p90 " + (p90 === null ? "n/a" : p90.toFixed(1) + "ms") +
+        " over " + frames + " frames; " +
+        heavyFrames + " heavy, " + panicFrames + " panic; " + reason + ")"
       );
       setTimeout(() => {
         // A benchmark that ran out of wall-clock never sampled a usable frame,
@@ -662,11 +712,29 @@ export async function mountCinematic(root, lenis, showDevTools = false) {
     // fall instead of from scroll. This works because every value below is a
     // pure function of this number, so there is nothing to restore afterwards —
     // the frame after the benchmark ends reads scroll again and retraces itself.
-    const scrollViewportUnits = benchmarkPoseActive()
-      ? BENCHMARK_POSE_UNITS
-      : lenis.scroll / Math.max(1, window.innerHeight);
+    // The curve runner drives the camera itself, so it outranks scroll while it
+    // is working. It is only ever on behind ?curve=1.
+    const curvePose = curveRunner && !curveRunner.finished
+      ? curveRunner.update(frameTimestamp - lastframe)
+      : null;
+
+    const scrollViewportUnits = curvePose !== null
+      ? curvePose
+      : benchmarkPoseActive()
+        ? BENCHMARK_POSE_UNITS
+        : lenis.scroll / Math.max(1, window.innerHeight);
     storyOverlay.update(scrollViewportUnits)
-    if (benchmarkStarted) qualityManager.update(frameTimestamp);
+    if (benchmarkStarted) {
+      // Past the tunnel is the fall, where the raymarcher is close, the disk
+      // fills the frame and the cost is worth judging by. Everything before it -
+      // the wormhole from 22 units out, the passage - is cheap enough that a
+      // healthy frame there says nothing about whether a higher tier would
+      // survive what comes next. The manager uses this for upgrades only; it
+      // protects the frame rate everywhere.
+      qualityManager.update(frameTimestamp, {
+        representative: scrollViewportUnits > JOURNEY.tunnelEnd,
+      });
+    }
     if (frameTimestamp - lastDiagnosticsUpdate >= 250) {
       lastDiagnosticsUpdate = frameTimestamp
       updateDiagnostics(qualityManager.getDiagnostics())
@@ -1137,6 +1205,7 @@ export async function mountCinematic(root, lenis, showDevTools = false) {
     cameraControl.dispose();
     disposeConfig();
     presetSwitcher.dispose();
+    curveRunner?.dispose();
     storyOverlay.dispose();
     disposeParticleSystem();
     disposeTunnel();
