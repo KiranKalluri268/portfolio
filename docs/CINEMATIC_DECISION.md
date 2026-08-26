@@ -4,9 +4,11 @@ What was decided about turning this portfolio into a scroll-driven cinematic,
 and why. `ARCHITECTURE.md` describes what the code is; this describes what it
 is becoming and which options were rejected on the way.
 
-**Status:** steps 1–3 of the build order are done. The scene lives in this repo
+**Status:** steps 1–4 of the build order are done. The scene lives in this repo
 and runs at `/cinematic?cinematic=1`; nothing is enabled for visitors, and every
-other route still gets `still`. Steps 4–6 are untouched.
+other route still gets `still`. The tier ladder now has `still` as its bottom
+rung, so a device that cannot fly — or a visitor who has asked not to be flown —
+is handed back to the site instead of stranded. Steps 5–6 are untouched.
 
 ---
 
@@ -171,19 +173,64 @@ place by being roughly half the cost of the one above.
 
 | Rung | What runs |
 |---|---|
-| **still** | `StarsBackground` + `BlackholeEffect`. No WebGL required. Also the `prefers-reduced-motion` and no-WebGL2 answer |
+| **still** | The site's ordinary presentation: `StarsBackground`, `BlackholeEffect`, and the projects grid. No *journey*. Also the `prefers-reduced-motion` and no-WebGL2 answer |
 | **low → high** | The journey, with the resolution slider moving inside each |
+
+**`still` is not "no WebGL", and this table used to say it was.** The projects
+grid renders its cards through `ogl` — a separate, much smaller WebGL renderer
+from the journey's three.js, with its own context-loss handling in
+`useGlRecovery`. That grid keeps working at `still` and must: it is one of the
+main things the site is for. `still` means *no journey*, nothing more. Written
+down because the old wording would have led someone to gate the carousel off
+along with the flight.
+
+It follows that **"no WebGL2" cannot be what selects `still`** — `still` needs
+WebGL itself. The WebGL2 probe in `CinematicScene.tsx` asks on behalf of the
+journey only. A browser with no WebGL at all is the grid's problem and has its
+own answer.
 
 `still` is what this repo ships today. It is already built, already tested, and
 confirmed smooth on the oldest phone available. It is the floor of the same
 ladder, not a consolation prize.
 
-It is also the honest response to `prefers-reduced-motion`, which currently has
-no good one. A scroll-driven camera flight is precisely what that setting asks
-you not to do, and lowering the frame rate is not a reduction in motion.
+It is also the honest response to `prefers-reduced-motion`, which had no answer
+on the cinematic route until step 4. A scroll-driven camera flight is precisely
+what that setting asks you not to do, and lowering the frame rate is not a
+reduction in motion.
 
 Add a fourth rung only when a real device is badly served by all of these. Let
 hardware ask for it.
+
+### How `still` is reached, and the number that decides it
+
+Unlike the other rungs, `still` is not a preset the manager can apply. There is
+no cheaper way to draw the journey, only the decision not to draw it — so the
+manager asks (`onStillRequired`) and the scene answers. On `/cinematic` that
+answer is a navigation back to the site, because the route has no content of its
+own without the flight. Four ways in:
+
+| Trigger | Decided | Where |
+|---|---|---|
+| `prefers-reduced-motion` | before the import | `CinematicScene.tsx` |
+| no WebGL2 | before the import | `CinematicScene.tsx` |
+| the scene throws on the way up | at mount | `CinematicScene.tsx` |
+| p90 > **50ms** while already on `low`, or the benchmark deadline expiring there | end of warmup | `ThreeDQualityManager.js` |
+
+The first two run before the dynamic import, so a device that was never going to
+draw a frame does not download three.js and 9.7MB of texture to find that out.
+
+**The 50ms bar is the panic line, deliberately not the heavy one.** `low` failing
+the 25ms heavy line means *marginal*, not incapable — the Realme measures
+24.3–27.7ms at `low` in the fall, straddling that bar, and runs the journey there
+perfectly happily. Pinning `still` to the heavy line would take away a tier a
+real phone can hold. Above 50ms p90 a device is under 20fps sustained on the
+cheapest rung there is, with nothing left to give up. There is a test whose only
+job is to hold that line.
+
+**Entry-only.** `lockOutStill()` fires as the gate is passed. Tearing three.js
+down mid-flight, while someone is scrolling a camera through a wormhole, is worse
+than any frame rate; from there `low` is the floor. A hard failure is the one
+exception, because the alternative is a frozen page.
 
 ### Measured so far
 
@@ -554,9 +601,16 @@ scroll stops the film.
    FPS meter turned out to be stalling the compositor once a second and causing
    most of what was being fixed. Every device now makes at most one automatic
    transition and settles where the cost curve says it should.
-4. **Make the tier ladder real**, `still` included as a rung rather than a
-   separate site. **Next.** The tier machinery is now measured rather than
-   guessed at, which is what this step has to build on.
+4. ~~**Make the tier ladder real**, `still` included as a rung rather than a
+   separate site.~~ **Done.** `still` is reachable four ways — reduced motion,
+   no WebGL2, the scene throwing, and the benchmark finding that even `low`
+   cannot hold 20fps — and all four hand the visitor back to the site rather
+   than to a broken page. Two of those were live bugs rather than missing
+   features: `prefers-reduced-motion` had no answer at all on this route, and a
+   throw during startup left scroll locked behind a frozen loading overlay. The
+   rung is entry-only; once the gate is passed, `low` is the floor.
+   One thing this step corrected rather than added: `still` is not "no WebGL".
+   The projects grid keeps its `ogl` cards there.
 5. **Add the presentation switch** and build the cinematic presentation against
    content that already exists.
 6. **Rethink the `/projects` list view** for a world where scroll is the film.
