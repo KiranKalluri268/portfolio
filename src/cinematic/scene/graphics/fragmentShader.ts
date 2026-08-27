@@ -104,6 +104,16 @@ uniform float bg_lensing;        // 0 = background sampled straight, 1 = bent wi
 uniform vec3 space_color_plane;  // deep space toward the galactic plane
 uniform vec3 space_color_pole;   // deep space away from it
 
+// What the background sky is made of, as gains rather than literals at the call
+// site. They exist so each layer can be switched off on its own: the scene has a
+// long-standing complaint that the world reads as a sphere rather than as open
+// space, and there are several candidate causes stacked on top of each other -
+// the star plate, the nebula plate, the plane-to-pole gradient and a point field
+// in front of all three. Isolating them by eye is the only way to tell which.
+// Defaults are the values that used to be written in the call.
+uniform float bg_star_gain;      // 1.0
+uniform float bg_nebula_gain;    // 0.2
+
 // The five domains of the skill web, laid across the sky as the arms of the
 // galaxy this system sits in.
 //
@@ -662,7 +672,7 @@ void main()	{
     vec3 bg_dir = normalize(mix(orig_ray_dir, normalize(velocity), bg_lensing));
     color += vec4(sample_sky(bg_dir, 45.0, bg_tint,
                              space_color_plane, space_color_pole,
-                             1.0, 0.2, ray_doppler_factor, 0.0), 1.0);
+                             bg_star_gain, bg_nebula_gain, ray_doppler_factor, 0.0), 1.0);
 
     // The domains, added over the sky rather than into sample_sky, because
     // sample_sky is shared with the far side of the throat and the wormhole is

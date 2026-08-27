@@ -178,7 +178,12 @@ export async function createShaderProjectionPlane(uniforms) {
   };
 }
 
-export function createParticleSystem() {
+/**
+ * @param {Readonly<import("../worldConfig").WorldConfig>} [world] - which parts of
+ *   the world are on for this visit. Defaults to the shipped flags so a caller
+ *   that does not care keeps the old behaviour.
+ */
+export function createParticleSystem(world = worldConfig, skyLayers = { dust: true }) {
   const targetLensed = new THREE.WebGLRenderTarget(
     window.innerWidth, window.innerHeight,
     { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat }
@@ -215,7 +220,9 @@ export function createParticleSystem() {
   // The inner radius stays clear of where the fall ends so the camera does not
   // finish inside a cloud of sprites, and the outer radius stops well short of
   // the arrival distance so there is no wall to arrive at.
-  const dust = worldConfig.sky
+  const dust = !skyLayers.dust
+    ? { count: 0, innerRadius: 0, radiusSpan: 0, size: 0.05, brightCount: 0, brightSize: 0.075 }
+    : world.sky
     ? { count: 900, innerRadius: 5, radiusSpan: 12, size: 0.05, brightCount: 120, brightSize: 0.075 }
     : { count: 2200, innerRadius: 8, radiusSpan: 34, size: 0.08, brightCount: 300, brightSize: 0.11 };
 

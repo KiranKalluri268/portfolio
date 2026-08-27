@@ -8,7 +8,7 @@ import { createStoryOverlay } from './story/StoryOverlay';
 import { createCurveRunner } from './curveRunner';
 import { createTunnel } from './graphics/tunnel';
 import { createPlanet } from './graphics/planet';
-import { worldConfig } from './worldConfig';
+import { resolveArmGain, resolveSkyLayers, resolveWorldConfig } from './worldConfig';
 import { buildArmUniforms } from './graphics/skyArms';
 import skillWeb from '@/data/skill-web.json';
 import { createGpuTimer } from './performance/gpuTimer';
@@ -219,12 +219,27 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
   // set variables types for shader
   // The sky's arms, read once from the same file /skills lays itself out from.
   // Content never forks: see CINEMATIC_DECISION.md section 3.
+  // The flags for this visit. Shipped values unless the URL asked otherwise -
+  // see worldConfig.js for why that override exists.
+  const world = resolveWorldConfig(window.location.search);
+  const skyLayers = resolveSkyLayers(window.location.search);
+
+  // Said out loud, because "I turned the flag on and nothing changed" has
+  // already cost a round trip once, and from the outside a flag that did not
+  // take effect looks exactly like a feature that does nothing.
+  console.info(
+    'Cinematic world:',
+    Object.entries(world).filter(([, on]) => on).map(([name]) => name).join(', ') || 'nothing on',
+    '| sky layers:',
+    Object.entries(skyLayers).map(([name, on]) => (on ? name : `no-${name}`)).join(', '),
+  )
+
   const skyArms = buildArmUniforms(skillWeb);
 
   // How bright the arms sit against the star field. Low on purpose: this is a
   // galaxy at a distance, behind everything, and the disk is the thing in frame.
   // Tuned in the lab, which is where anything about how this looks belongs.
-  const SKY_ARM_GAIN = 0.035;
+  const SKY_ARM_GAIN = resolveArmGain(window.location.search, 0.035);
 
   const uniforms = {
     time: { type: "f", value: 0.0 },
@@ -268,8 +283,10 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
     // also what keeps the arms out of the wormhole, which is not this galaxy.
     arm_color: { type: "v3v", value: skyArms.colors.map((c) => new THREE.Vector3(c[0], c[1], c[2])) },
     arm_angle: { type: "fv1", value: skyArms.angles.slice() },
-    arm_count: { type: "i", value: worldConfig.sky ? skyArms.count : 0 },
+    arm_count: { type: "i", value: world.sky ? skyArms.count : 0 },
     arm_gain: { type: "f", value: 0.0 },
+    bg_star_gain: { type: "f", value: skyLayers.stars ? 1.0 : 0.0 },
+    bg_nebula_gain: { type: "f", value: skyLayers.nebula ? 0.2 : 0.0 },
     arm_pole: { type: "v3", value: new THREE.Vector3(0.22, 0.94, 0.26).normalize() },
     // The far side. Rotated well away from the background's own 45° so the star
     // pattern through the throat is visibly not the star pattern around it, and
@@ -437,7 +454,7 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
     particleCamera,
     resizeParticleTargets,
     disposeParticleSystem
-  } = createParticleSystem();
+  } = createParticleSystem(world, skyLayers);
   uniforms.particle_texture.value = particleTargetLensed.texture;
   uniforms.particle_texture_unlensed.value = particleTargetUnlensed.texture;
 
@@ -466,7 +483,7 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
   // is how one of them ends up shipped on by accident. Same value, same
   // behaviour — this planet is simply the first body rather than a feature
   // beside the body system that is coming.
-  const planet = worldConfig.bodies
+  const planet = world.bodies
     ? createPlanet(window.innerWidth, window.innerHeight)
     : null;
   if (planet) uniforms.planet_texture.value = planet.planetTarget.texture;
@@ -914,7 +931,7 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
     // This was flattened to 14 degrees at one point because the planet, once it
     // became a fixed body in the world rather than a scripted screen position,
     // swung further from a turning camera than an approaching one ever moved it —
-    // the rotation ate the parallax. The planet is unmounted now (worldConfig.bodies),
+    // the rotation ate the parallax. The planet is unmounted now (world.bodies),
     // so that constraint is gone and the sweep comes back.
     //
     // Elevation is the angle between the disk plane and the camera-to-black-hole
@@ -1190,7 +1207,15 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
     // leaves. At mix 1 the sky is the wormhole's and the domains have no business
     // being in it, so they fade out with the world rather than being switched.
     // With the flag off this is 0 at every mix and the shader's loop never runs.
-    uniforms.arm_gain.value = worldConfig.sky ? SKY_ARM_GAIN * (1 - mix) : 0
+    uniforms.arm_gain.value = world.sky ? SKY_ARM_GAIN * (1 - mix) : 0
+
+    // The plane-to-pole gradient, off. Applied after the world lerp above, which
+    // writes both colours every frame, so switching it anywhere else would be
+    // overwritten immediately.
+    if (!skyLayers.glow) {
+      uniforms.space_color_plane.value.set(0, 0, 0)
+      uniforms.space_color_pole.value.set(0, 0, 0)
+    }
   }
 
   let veilColor = ''
