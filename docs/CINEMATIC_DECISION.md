@@ -11,8 +11,14 @@ default**, so nothing changes for anyone who does not go looking. The tier ladde
 has `still` as its bottom rung, so a device that cannot fly — or a visitor who
 has asked not to be flown — is handed back to the site instead of stranded. The
 hero is the first section scored against the flight; the rest of the portfolio
-is not there yet, which is the only reason the default has not flipped. Step 6 is
-untouched.
+is not there yet, which is the only reason the default has not flipped.
+
+Putting the hero in there is also what showed the approach was wrong. It reads as
+the website's header pasted over someone else's black hole, and four more
+sections in the same idiom would have been four more of those. So step 6 is no
+longer the `/projects` list view — it is **the world** (§8): the sections become
+things in a system rather than captions over one. That is designed and written
+down; none of it is built.
 
 ---
 
@@ -615,6 +621,209 @@ WebGL tree.
 runs a second WebGL context. Inside a scroll-driven journey, a section that stops
 scroll stops the film.
 
+This rule is also what settles the camera in §8. The obvious way to let someone
+look at a planet is to stop falling while they do, and that is the same bug wearing
+a nicer coat.
+
+---
+
+## 8. The world, and what the sections are in it
+
+**Decided, not built.** This section is the design; nothing in it is code yet.
+
+### What the hero exposed
+
+The hero went onto the journey in step 5 and it does not belong there. It is
+worth being exact about why, because each reason points somewhere different:
+
+- It is parented to the screen, not the world. It slides in on fixed pixel
+  offsets while the camera moves through 3D space. Stop anywhere and it is a
+  caption.
+- It wears the plain site's clothes — same Tektur, same white halo, same
+  `#ff7a45`. That was deliberate, so the two presentations show one person; but
+  the halo was drawn to lift text off a dark flat page, and here it competes with
+  bloom coming off an actual light source.
+- It is not lit. Everything else in frame is emissive or lit by the disk.
+- It ignores the physics the scene spends 9.7MB of texture selling. It fades and
+  slides 48px on the diagonal, which is a scroll reveal, not a place near a black
+  hole.
+- It is a left-aligned rectangle in a frame whose composition is entirely radial.
+
+Underneath all five: the overlay is a layer *in front of* the world rather than
+something *in* it. Scoring five more sections in that idiom produces six things
+that do not fit instead of one, which is why the build order stopped here.
+
+### The premise
+
+You come through a wormhole into his system. You fall inward past his work. The
+last thing before the horizon is how to reach him.
+
+That is not decoration bolted onto the existing phases — it is the phases read
+back. The scene already crosses a wormhole, blacks out, runs a tunnel, and
+*arrives* somewhere before the fall begins. There is already a front door and a
+destination. What was missing is that the destination meant nothing: 14 viewport
+units, half the journey, falling toward a black hole that stood for nothing.
+
+### The map
+
+| Section | What it is in the world |
+|---|---|
+| Hero | the star at the centre — a distant beacon at scroll 0, the body you arrive at |
+| Skills | the galaxy behind everything; the five domains as arms, in their own colours |
+| Experience | the orbital rings — one radius per role, ordered by date |
+| Projects | planets, each on the ring of the role it was built in |
+| About | close in, and the one thing that stays plainly text |
+| Contact | **the black hole** |
+
+Three of those rows are not arbitrary, and that is the argument for the whole
+scheme:
+
+**Contact as the black hole** gives the destination a meaning, and is the only
+reading under which the 14-unit approach earns its length. Everything in the
+system is falling toward the point where you stop reading and get in touch.
+
+**Experience as the rings** is the data, drawn. Five of the eleven projects were
+built inside a role, and that relationship is already declared in
+`src/data/experience/*.json` as a `projectSlug` on a work item, already resolved
+and already validated at build time by `src/lib/content/relationships.ts` — an
+unknown slug fails the build today. Planets on the ring of the era they belong to
+is not a metaphor laid over the content; it is the content's existing shape.
+
+**Skills as arms** is the layout that already exists. `src/data/skill-web.json`
+gives each of the five domains an `angle` and an `accent` colour, and `/skills`
+draws that radially today. The galaxy reuses the same numbers rather than
+inventing a second spatial truth that can drift from the first.
+
+### The camera does not stop — and it does not spiral either
+
+The first instinct is to stop the camera at each ring so the planets can be
+looked at. That cannot happen. Scroll is the film: a stretch where scroll no
+longer moves the camera either does nothing, and reads as broken, or drives
+something else, and there are now two owners of scroll — the exact trap §7 is
+about, and the exact bug that put the `/projects` list view on this list.
+
+The second instinct is better and still wrong: make the fall a decaying orbit, so
+the camera winds past each ring and the planets swing through frame with real
+parallax. It is what an infalling trajectory does. But the fall was deliberately
+made to end *still*. `orbitDamp` in `main.js` damps the idle spin to zero across
+the approach, and the comment above it says why: the planet is a fixed point in
+the world, and at three degrees a second a camera left sitting there carries it
+out of the shot. An inspiral would be re-fighting a fight that was already
+settled, with a reason.
+
+So: **the camera falls straight and the planets move.** Orbital motion belongs to
+the bodies, which is where it belongs physically anyway, and it costs one angle
+per body rather than a new camera path. Every composition decision in the fall —
+the elevation ramp, the roll, the off-centre framing — survives untouched.
+
+### The sky is not a sphere, and today it is
+
+Worth recording as its own finding, because it is the first thing anyone notices
+and the diagnosis is not obvious from looking at it.
+
+`render.js` builds the star field as a **hollow, flattened shell**: 2,200 small
+points and 300 bright ones, radius 8 to 42, with Y multiplied by 0.25 so it is an
+oblate lens rather than a ball. The fall runs the camera from 30 down to about
+3.6. So the visitor arrives inside that shell near its outer wall and ends inside
+its **inner void**, with every star outside them at radius 8 or more and nothing
+whatsoever beyond 42. That bounded bubble is what reads as a sphere.
+
+Enlarging it is not the fix. It moves the wall without removing it, and
+`sizeAttenuation` is on, so every star dims and shrinks as the radius grows —
+trading a visible boundary for an empty sky.
+
+The fix is to **separate the sky from the field**. Distant stars have no parallax:
+they are a direction, not a position. Sampled from the escaped ray direction in
+the fragment shader they sit at infinity, have no radius to hit a wall at, cost
+one call at ray termination, and — because the raymarcher already has the *bent*
+ray in hand — are gravitationally lensed for free. The 2,500-point shell then
+stops pretending to be the universe and becomes what it is good at: local dust
+with real parallax, which is what sells motion.
+
+This is also what makes the galaxy affordable. Skills as a procedural sky is
+close to free; skills as thirty-seven more sprites in a shell would have been
+cheap too, but the shell is the thing being removed.
+
+### What this rests on that already exists
+
+More than expected, which is the main reason to think it is affordable at all:
+
+- **A planet already works — and is currently switched off.**
+  `graphics/planet.js` renders a sphere to its own target and the raymarcher
+  samples it back along the *bent* ray, so it is gravitationally lensed, throws a
+  second image, and is occluded by the hole for free. A body placed in this world
+  already obeys it. But `PLANET_ENABLED` is `false` in `main.js`, with two
+  problems recorded above it: the last pass put the planet low enough to graze
+  the accretion disk, and near enough that the end of the fall is governed by the
+  photon ring rather than by where it is anchored. Nothing is deleted and the
+  flag is the whole of it. Re-tuning that one planet is part of the work rather
+  than a starting point.
+- **The camera is already spherical.** `Observer` holds distance, theta and
+  elevation, so "a radius and an angle" is the coordinate system it is already
+  in.
+- **The star shell already exists** as an additive particle system, which is what
+  a galaxy of 37 skills would be built from rather than from nothing.
+
+### What it costs, honestly
+
+**Eleven planets is not one planet eleven times.** The single planet is
+hand-tuned: `ORBIT_RADIUS` is 12.0, and the comment above it records two attempts
+and the trigonometry explaining why dropping 65 to 30 barely moved anything. Its
+occlusion is free only while it is genuinely further away than the hole, and that
+margin "never gets above about 10 units". Eleven bodies at eleven radii cannot
+each be placed by hand against the composition, so this needs a placement *rule*
+that the current planet is one solved instance of — and re-tuning that planet is
+part of the work rather than something to route around.
+
+**It lands in the most expensive phase there is.** The fall measured 152.7ms per
+frame on the Realme 9 Speed Edition against 13.9ms in the tunnel — eleven times
+the cost, same device, same tier, one journey. That is the whole reason the
+benchmark parks at 0.30. Adding geometry to the fall specifically is adding cost
+exactly where there is none spare. The tier ladder already exists and already has
+`still` at the bottom, so an answer is available; but `low` may need a genuinely
+simpler system rather than the same one with fewer triangles, and that has to be
+measured rather than assumed.
+
+### What does not move
+
+- **Content is real markup.** §3 stands unchanged. A planet is how a project is
+  *shown*; the project's name and description stay DOM text a crawler and a
+  screen reader can reach. A body in a WebGL canvas is not content.
+- **`src/data` stays the only source of facts.** The world reads the same files
+  the plain presentation reads. Nothing about a section's meaning may live only
+  in the scene.
+- **One Lenis, one scroll position, one owner.**
+
+### Counted, not guessed
+
+- **11 projects**, of which 5 carry a `projectSlug` from a work item
+  (`digichikitsak`, `elphie`, `axion` and `healthymitra` under AarogyalinQ;
+  `aude-diagnostics` under Aude.ai). The other six are his own and belong to no
+  role — a fact about the work, and the placement rule should say something true
+  about it rather than inventing a ring to hide it.
+- **3 roles**, one of which — `eduskills-aws` — references no project at all, so
+  one ring is empty.
+- **37 skills across 5 domains**, each domain already carrying an angle and an
+  accent colour.
+
+### How it gets built
+
+`CINEMATIC_WORLD_PLAN.md` is the execution spec: eight phases, one PR each, a
+feature flag each, a frame-time budget measured with `?curve=1` against a
+committed baseline, and the test and mutation strategy. It is written to be picked
+up on a different machine with no memory of the conversation that produced this
+section. The gate it sets is strict on purpose — **no phase merges if it makes
+the curve measurably worse on the Realme** — because 152.7ms is already the
+ceiling there.
+
+### Still open
+
+- Where the hero's star sits relative to the black hole, given that the two
+  cannot both own the centre of the frame.
+- What the six roleless projects orbit.
+- Whether About is a held section or something continuous across the fall.
+- What `low` gets, and whether the galaxy survives there at all.
+
 ---
 
 ## What was rejected
@@ -627,6 +836,9 @@ scroll stops the film.
 | The journey as an ambient background behind unchanged sections | It is not ambient. It has a plot, a flash and a scene swap. It would finish during the hero or drag across the résumé |
 | Named tiers for very-low / very-high | Each is a look to tune and verify; adjacent tiers cannot be distinguished from frame timing. The resolution slider covers this range continuously |
 | Section-to-act mapping as the content's home | Tier-locks the layout. Acts score the sections; they do not decide where content lives |
+| Stopping the camera at each ring so the planets can be looked at | Scroll is the film. A stretch where scroll no longer moves the camera either does nothing or acquires a second owner — §7, and the reason the `/projects` list view is on this list at all |
+| Making the fall a decaying orbit so the camera winds past the rings | Correct physics, wrong fight. `orbitDamp` already damps the spin to zero across the approach on purpose, so a body left in frame stays in frame. The bodies move instead of the camera |
+| Content sections as overlays, styled to match the site | What step 5 shipped, and what §8 exists to undo. The hero reads as the website's header pasted over a black hole |
 
 ---
 
@@ -685,4 +897,13 @@ scroll stops the film.
    the markup and would simply never move. And `getScenePresence` treated a
    scene's own first frame as outside its window — invisible until something
    sat at scroll 0, which nothing did until the hero.
-6. **Rethink the `/projects` list view** for a world where scroll is the film.
+6. **Build the world.** §8. The sections stop being captions over someone else's
+   black hole and become things in a system: the hero a star, experience the
+   orbital rings, projects the planets on them, skills the galaxy behind it, and
+   Contact the black hole itself. This replaced what used to be step 6 — the
+   `/projects` list view — because the hero going onto the journey in step 5
+   showed the idiom was wrong, and scoring five more sections into a wrong idiom
+   is five more things to undo. Designed, not built.
+7. **Rethink the `/projects` list view** for a world where scroll is the film.
+   Unchanged in substance and now downstream of §8: what the list view has to
+   survive depends on what the world turns out to be.
