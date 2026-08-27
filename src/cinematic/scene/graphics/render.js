@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { worldConfig } from '../worldConfig';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass';
@@ -194,7 +195,30 @@ export function createParticleSystem() {
   let targetWidth = window.innerWidth;
   let targetHeight = window.innerHeight;
 
-  // 2500 points in a flattened shell (r = 8..42) around the BH
+  // What this field is for, and why its numbers changed.
+  //
+  // It used to be the universe: 2,500 points in a hollow shell from radius 8 to
+  // 42, flattened to a lens by multiplying Y by 0.25. The fall runs the camera
+  // from 30 down to about 3.6, so a visitor arrived just inside its outer wall
+  // and ended inside its inner void, with every point outside them and nothing at
+  // all beyond 42. A bounded bubble, crossed end to end. That is the sphere.
+  //
+  // It was never needed for that job. The sky is already infinite and already
+  // right: sample_sky in the fragment shader draws stars, a nebula plate and the
+  // domain arms from the ray direction, so it has no radius to reach the edge of
+  // and it bends with the lensing for free.
+  //
+  // So the field stops being the universe and becomes local dust: near, sparse,
+  // faint, and there for the one thing an infinite sky cannot do, which is
+  // parallax. Motion is only legible against something close enough to slide.
+  //
+  // The inner radius stays clear of where the fall ends so the camera does not
+  // finish inside a cloud of sprites, and the outer radius stops well short of
+  // the arrival distance so there is no wall to arrive at.
+  const dust = worldConfig.sky
+    ? { count: 900, innerRadius: 5, radiusSpan: 12, size: 0.05, brightCount: 120, brightSize: 0.075 }
+    : { count: 2200, innerRadius: 8, radiusSpan: 34, size: 0.08, brightCount: 300, brightSize: 0.11 };
+
   // ── Shared circular sprite — tight core, fast falloff (no large shadow halo)
   const canvas = document.createElement('canvas');
   canvas.width = 64; canvas.height = 64;
@@ -220,35 +244,35 @@ export function createParticleSystem() {
   };
 
   // Layer 1: many small crisp stars (bulk of the field)
-  const COUNT_S = 2200;
+  const COUNT_S = dust.count;
   const posS = new Float32Array(COUNT_S * 3);
   for (let i = 0; i < COUNT_S; i++) {
     const theta = Math.random() * Math.PI * 2;
     const phi   = Math.acos(2 * Math.random() - 1);
-    const r     = 8 + Math.random() * 34;
+    const r     = dust.innerRadius + Math.random() * dust.radiusSpan;
     posS[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
     posS[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta) * 0.25;
     posS[i * 3 + 2] = r * Math.cos(phi);
   }
   const geoS = new THREE.BufferGeometry();
   geoS.setAttribute('position', new THREE.BufferAttribute(posS, 3));
-  const materialS = new THREE.PointsMaterial({ ...matBase, size: 0.08 });
+  const materialS = new THREE.PointsMaterial({ ...matBase, size: dust.size });
   sceneLensed.add(new THREE.Points(geoS, materialS));
 
   // Layer 2: fewer brighter slightly-larger stars (foreground highlights)
-  const COUNT_B = 300;
+  const COUNT_B = dust.brightCount;
   const posB = new Float32Array(COUNT_B * 3);
   for (let i = 0; i < COUNT_B; i++) {
     const theta = Math.random() * Math.PI * 2;
     const phi   = Math.acos(2 * Math.random() - 1);
-    const r     = 8 + Math.random() * 30;
+    const r     = dust.innerRadius + Math.random() * (dust.radiusSpan * 0.88);
     posB[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
     posB[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta) * 0.25;
     posB[i * 3 + 2] = r * Math.cos(phi);
   }
   const geoB = new THREE.BufferGeometry();
   geoB.setAttribute('position', new THREE.BufferAttribute(posB, 3));
-  const materialB = new THREE.PointsMaterial({ ...matBase, size: 0.11 });
+  const materialB = new THREE.PointsMaterial({ ...matBase, size: dust.brightSize });
   sceneUnlensed.add(new THREE.Points(geoB, materialB));
 
   function resize(width, height) {
