@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveArmGain, resolveSkyLayers, resolveWorldConfig, worldConfig, WORLD_FEATURES } from "../worldConfig";
+import { resolveArmGain, resolveFov, resolveSkyLayers, resolveWorldConfig, worldConfig, WORLD_FEATURES } from "../worldConfig";
 
 /**
  * The world arrives one phase at a time, each behind a flag. These tests exist
@@ -172,5 +172,31 @@ describe("the sky's layer switches", () => {
 
   it("cannot be edited after the fact", () => {
     expect(Object.isFrozen(resolveSkyLayers("?sky=nodust"))).toBe(true);
+  });
+});
+
+describe("the field of view override", () => {
+  it("keeps the scene's own value when nothing asks otherwise", () => {
+    expect(resolveFov("", 90)).toBe(90);
+    expect(resolveFov("?world=sky", 90)).toBe(90);
+  });
+
+  it("takes a field of view from the URL", () => {
+    expect(resolveFov("?fov=65", 90)).toBe(65);
+    expect(resolveFov("?world=sky&fov=72.5", 90)).toBe(72.5);
+  });
+
+  it("refuses values that would not render a usable frame", () => {
+    // Below 20 the scene is a telescope; above 120 a flat image plane stops
+    // being able to represent the angles at all, which is the very problem this
+    // parameter exists to tune.
+    for (const bad of ["0", "19", "121", "180", "-65", "abc", "", "NaN"]) {
+      expect(resolveFov(`?fov=${bad}`, 90)).toBe(90);
+    }
+  });
+
+  it("accepts both ends of the usable range", () => {
+    expect(resolveFov("?fov=20", 90)).toBe(20);
+    expect(resolveFov("?fov=120", 90)).toBe(120);
   });
 });

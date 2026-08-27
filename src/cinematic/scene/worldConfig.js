@@ -172,3 +172,44 @@ export function resolveSkyLayers(search) {
 
   return Object.freeze(layers);
 }
+
+/**
+ * The camera's field of view, for one page load.
+ *
+ * This is the number behind the journey's oldest complaint — that the world
+ * reads as the inside of a sphere rather than as open space. It is not the star
+ * field and it is not lensing. `main()` in the fragment shader builds rays
+ * through a flat image plane, and `COMPOSE_SHIFT` slides that plane sideways so
+ * the black hole composes off to the right, which puts the optical axis about
+ * 85% of the way across the screen. A flat plane stretches by 1/cos² of the
+ * angle off that axis, and at 90° of field of view the left edge of a wide
+ * monitor is 74.7° off it — a radial smear of 14.4×, about a centre sitting over
+ * by the hole. A radial gradient of elongation is exactly the cue the eye reads
+ * as curvature.
+ *
+ * Narrowing the field of view attacks it without giving up the composition:
+ * 65° takes the left edge to 66.8° and 6.4×, and the hole stays at 1.0× because
+ * the axis is still on it. What it costs is zoom — the hole and the disk grow in
+ * frame — which is a matter of taste and so wants sweeping by eye rather than
+ * deciding from arithmetic. `?fov=65`.
+ *
+ * @param {string} search
+ * @param {number} fallback
+ * @returns {number}
+ */
+export function resolveFov(search, fallback) {
+  let raw = null;
+  try {
+    raw = new URLSearchParams(search).get("fov");
+  } catch {
+    return fallback;
+  }
+  if (raw === null) return fallback;
+
+  const value = Number.parseFloat(raw);
+  // Below about 20 the scene is a telescope and above about 120 the projection
+  // stops being usable at all, so both ends fall back rather than render
+  // something nobody asked for.
+  if (!Number.isFinite(value) || value < 20 || value > 120) return fallback;
+  return value;
+}

@@ -8,7 +8,7 @@ import { createStoryOverlay } from './story/StoryOverlay';
 import { createCurveRunner } from './curveRunner';
 import { createTunnel } from './graphics/tunnel';
 import { createPlanet } from './graphics/planet';
-import { resolveArmGain, resolveSkyLayers, resolveWorldConfig } from './worldConfig';
+import { resolveArmGain, resolveFov, resolveSkyLayers, resolveWorldConfig } from './worldConfig';
 import { buildArmUniforms } from './graphics/skyArms';
 import skillWeb from '@/data/skill-web.json';
 import { createGpuTimer } from './performance/gpuTimer';
@@ -622,6 +622,9 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
     applyConfigChange('bloom', 'strength', bloomConfig.strength)
     applyConfigChange('bloom', 'radius', bloomConfig.radius)
     applyConfigChange('bloom', 'threshold', bloomConfig.threshold)
+    // Swept from the URL while the projection distortion is being tuned by eye.
+    // See resolveFov for why the field of view is the lever on it.
+    cameraConfig.fov = resolveFov(window.location.search, cameraConfig.fov)
     applyConfigChange('camera', 'fov', cameraConfig.fov)
     applyConfigChange('camera', 'orbit', cameraConfig.orbit)
     applyConfigChange('camera', 'enableDrag', cameraConfig.enableDrag)
