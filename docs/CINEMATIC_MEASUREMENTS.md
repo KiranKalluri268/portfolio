@@ -163,7 +163,8 @@ than absolute cost:
 | 2026-08-27 | `b1aacbe` | Laptop | high | battery | off | **Superseded.** Vsync-quantised, 144Hz. Not a baseline |
 | 2026-08-27 | `b1aacbe` | iPhone 16 Pro | high | | off | **Superseded.** Not quantised, but taken without GPU timing |
 | 2026-08-27 | `b1aacbe` | Realme 9 Speed Edition | low | | off | **Superseded.** Vsync-quantised, 144Hz. Not a baseline |
-| 2026-08-27 | `a4ec595` | Laptop | medium | | off | **Phase 0 baseline**, 2x scale, GPU timing |
+| 2026-08-27 | `a4ec595` | Laptop | medium | battery | off | **Phase 0 baseline**, 2x scale, GPU timing |
+| 2026-08-27 | `a4ec595` | Laptop | high | battery | off | 2x scale, GPU timing. Isolates the quality knob against the medium row |
 | 2026-08-27 | `a4ec595` | iPhone 16 Pro | high | | off | **Phase 0 baseline**, 2x scale |
 | 2026-08-27 | `a4ec595` | Realme 9 Speed Edition | low | | off | **Phase 0 baseline**, 2x scale |
 
@@ -250,17 +251,87 @@ by 27 units the laptop is at 40.6ms against 53.1, and the Realme at 236 against
 frame, rays that terminate at the horizon are cheap, where mid-distance rays spend
 their whole step budget on background and hard lensing.
 
-**`BENCHMARK_APPROACH_PROGRESS` of 0.30 is confirmed, and the per-run suggestion
-is not worth reading.** The three sweeps proposed 0.68, 0.25 and 0.46, which is
-`report()` taking the maximum of a flat top — the differences it is choosing
-between are 2–7%. The plateau spans progress **0.04 to 0.68** on every device, and
-0.30 sits at 17.2 units, comfortably inside it on all three. The value stays where
-it is, now for a measured reason rather than an inherited one.
+**`BENCHMARK_APPROACH_PROGRESS` of 0.30 is confirmed.** How, and why the
+runner now reports a plateau rather than a peak, is below.
 
-That also means the runner's peak-hunting output is misleading by design and
-should eventually report the plateau rather than a point. Left as it is for now:
-it is a reporting change, not a measurement one, and the number it was being used
-to derive is already settled.
+---
+
+### The quality knob is worth exactly 2×, and the tunnel proves it
+
+**Laptop, tier `high`, on battery, 2× render scale, GPU timing available.** Taken
+alongside the `medium` baseline above on the same machine, also on battery.
+
+| Units | Phase | Frame | GPU |
+|---|---|---|---|
+| 0 | crossing | 97.4ms | 98.16ms |
+| 1.5 | crossing | 97.6ms | 98.66ms |
+| 3 | crossing | 104.3ms | 100.18ms |
+| 4.5 | crossing | 62.6ms | 61.96ms |
+| 6 | blackout | 7.0ms | 8.54ms |
+| 7.5 | tunnel | 7.0ms | 7.53ms |
+| 9 | tunnel | 7.0ms | 4.97ms |
+| 10.5 | tunnel | 7.0ms | 4.92ms |
+| 12 | arrival | 104.2ms | 103.62ms |
+| 13.5 | fall | 105.0ms | 105.66ms |
+| 15 | fall | 104.5ms | **106.32ms** |
+| 16.5 | fall | 104.7ms | 106.02ms |
+| 18 | fall | 104.7ms | 106.29ms |
+| 19.5 | fall | 104.5ms | 105.98ms |
+| 21 | fall | 104.7ms | 105.41ms |
+| 22.5 | fall | 104.8ms | 104.48ms |
+| 24 | fall | 104.3ms | 101.50ms |
+| 25.5 | fall | 91.0ms | 91.51ms |
+| 27 | fall | 80.0ms | 79.28ms |
+
+Because a sweep forces the same render scale whatever the tier, resolution is
+held constant across these two runs. The only thing that differs is the shader's
+step budget — `render.js` sets `STEP` and `NSTEPS` per quality, medium being
+`0.09 / 500` and high `0.055 / 850`.
+
+| Region | high ÷ medium |
+|---|---|
+| Fall, all ten poses | 1.95 – 2.01 |
+| Crossing 0, 1.5, 4.5 | 1.98 – 2.01 |
+| Arrival (12) | 1.89 |
+| **Tunnel** | **1.03, 0.68, 1.05** |
+
+**The tunnel is the control.** It does not run the raymarcher, and it costs the
+same in both runs. So the 2× is not the machine being slower on battery, nor
+thermal state, nor anything environmental — a throttled laptop would have slowed
+the tunnel too. It is the shader and only the shader.
+
+Note the knob is not proportional to its own settings: `NSTEPS` rises 1.70× and
+`STEP` falls 1.64×, and neither alone predicts 2.0×. The cost is the interaction,
+since a finer step means more of the 850 are actually taken before a ray
+terminates.
+
+**Why this matters.** There is a clean 2× lever available that costs nothing in
+geometry, content or resolution. If the world turns out too expensive on the
+Realme, lowering the step budget is a larger and cheaper win than removing
+objects — and phase 7, "what does `low` get", now has a measured number behind it
+rather than a guess.
+
+### Reading a sweep: the plateau, not the peak
+
+Four sweeps of this journey proposed `BENCHMARK_APPROACH_PROGRESS` of **0.68,
+0.46, 0.25 and 0.14**. That was never four devices disagreeing. The fall is flat:
+its top varies by 1–7% within itself, so taking the single most expensive pose was
+ranking measurement scatter.
+
+Read as plateaus — every pose within 10% of the peak, contiguous — the same four
+sweeps agree:
+
+| Sweep | Plateau | Midpoint | Old peak-based answer |
+|---|---|---|---|
+| Laptop, medium | 13.5 – 24 units | 0.41 | 0.46 |
+| Laptop, high | 13.5 – 24 units | 0.41 | 0.14 |
+| iPhone 16 Pro | 13.5 – 24 units | 0.41 | 0.68 |
+| Realme, low | 13.5 – 22.5 units | 0.36 | 0.25 |
+
+The runner now reports the plateau and suggests its middle. **`0.30` stays**: it
+sits inside the plateau on all four sweeps, so there is nothing to gain by moving
+it and a re-tiering of every device to lose. Worth knowing that a marginally
+better-centred value would be about 0.38.
 
 ---
 
