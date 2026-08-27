@@ -9,6 +9,8 @@ import { createCurveRunner } from './curveRunner';
 import { createTunnel } from './graphics/tunnel';
 import { createPlanet } from './graphics/planet';
 import { worldConfig } from './worldConfig';
+import { buildArmUniforms } from './graphics/skyArms';
+import skillWeb from '@/data/skill-web.json';
 import { createGpuTimer } from './performance/gpuTimer';
 
 /**
@@ -215,6 +217,15 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
   let loadingOverlayDismissed = false;
 
   // set variables types for shader
+  // The sky's arms, read once from the same file /skills lays itself out from.
+  // Content never forks: see CINEMATIC_DECISION.md section 3.
+  const skyArms = buildArmUniforms(skillWeb);
+
+  // How bright the arms sit against the star field. Low on purpose: this is a
+  // galaxy at a distance, behind everything, and the disk is the thing in frame.
+  // Tuned in the lab, which is where anything about how this looks belongs.
+  const SKY_ARM_GAIN = 0.035;
+
   const uniforms = {
     time: { type: "f", value: 0.0 },
     resolution: { type: "v2", value: new THREE.Vector2() },
@@ -247,6 +258,19 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
     bg_tint: { type: "v3", value: new THREE.Vector3(1.0, 1.0, 1.0) },
     space_color_plane: { type: "v3", value: new THREE.Vector3(0.01, 0.013, 0.03) },
     space_color_pole: { type: "v3", value: new THREE.Vector3(0.0, 0.0, 0.006) },
+
+    // The skill web, laid across the sky. Read from src/data/skill-web.json so
+    // the arms are the same five domains, at the same angles, in the same
+    // colours that /skills already draws - see graphics/skyArms.js.
+    //
+    // Fixed-length arrays because GLSL ES 1.00 needs a constant loop bound;
+    // arm_count says how much of them is real. arm_gain is the switch, and it is
+    // also what keeps the arms out of the wormhole, which is not this galaxy.
+    arm_color: { type: "v3v", value: skyArms.colors.map((c) => new THREE.Vector3(c[0], c[1], c[2])) },
+    arm_angle: { type: "fv1", value: skyArms.angles.slice() },
+    arm_count: { type: "i", value: worldConfig.sky ? skyArms.count : 0 },
+    arm_gain: { type: "f", value: 0.0 },
+    arm_pole: { type: "v3", value: new THREE.Vector3(0.22, 0.94, 0.26).normalize() },
     // The far side. Rotated well away from the background's own 45° so the star
     // pattern through the throat is visibly not the star pattern around it, and
     // landed on 40° because that patch of the nebula plate has the clumpy
@@ -1161,6 +1185,12 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
       BLACK_HOLE.spaceColorPole, WORMHOLE.spaceColorPole, mix)
     uniforms.bg_lensing.value =
       BLACK_HOLE.bgLensing + (WORMHOLE.bgLensing - BLACK_HOLE.bgLensing) * mix
+
+    // The arms belong to the system the journey arrives in, not to the one it
+    // leaves. At mix 1 the sky is the wormhole's and the domains have no business
+    // being in it, so they fade out with the world rather than being switched.
+    // With the flag off this is 0 at every mix and the shader's loop never runs.
+    uniforms.arm_gain.value = worldConfig.sky ? SKY_ARM_GAIN * (1 - mix) : 0
   }
 
   let veilColor = ''

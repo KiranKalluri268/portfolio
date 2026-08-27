@@ -104,6 +104,26 @@ uniform float bg_lensing;        // 0 = background sampled straight, 1 = bent wi
 uniform vec3 space_color_plane;  // deep space toward the galactic plane
 uniform vec3 space_color_pole;   // deep space away from it
 
+// The five domains of the skill web, laid across the sky as the arms of the
+// galaxy this system sits in.
+//
+// Not decoration and not invented: src/data/skill-web.json already gives every
+// domain an angle and an accent colour, and /skills already draws that same
+// radial arrangement in two dimensions. These are those numbers handed over as
+// uniforms, so a sixth domain added to the data changes the sky with no shader
+// edit. See docs/CINEMATIC_DECISION.md section 8.
+//
+// A fixed array size because GLSL ES 1.00 wants a constant loop bound.
+// DOMAIN_SLOTS is the ceiling, not the truth; arm_count says how many are really
+// there and the rest are skipped.
+#define DOMAIN_SLOTS 8
+uniform vec3 arm_color[DOMAIN_SLOTS];
+uniform float arm_angle[DOMAIN_SLOTS]; // radians about the galactic pole
+uniform int arm_count;
+uniform float arm_gain;                // 0 switches the whole thing off
+uniform vec3 arm_pole;                 // normal of the galactic plane the arms lie in
+
+
 // The sky on the far side of the throat. Its own rotation and colours, because a
 // wormhole that opened onto the same sky it sits in would not read as a way out.
 // The gains are not decoration: sampled at the background's own brightness the
@@ -274,6 +294,66 @@ vec3 galaxy_band(vec3 dir, vec3 pole, vec3 view, vec3 tint, float gain){
 
   return tint * gain * (belt*mottle*lane + bulge*1.6);
 }
+
+// The galaxy this system sits in, with the skill web's domains as its arms.
+//
+// Distinct from galaxy_band above, which belongs to the far side of the throat
+// and is a single band chosen to make lensing legible. This one belongs to the
+// black hole's own sky and has a different job: to be the skills, present in the
+// world, as something you fall through rather than something written over the
+// top of it.
+//
+// Sampled by direction, so it sits at infinity: no radius, no shell, nothing for
+// the camera to reach the edge of. It is added at the background call site,
+// which passes the bent ray, so the arms lens around the hole for free.
+//
+// Deliberately low frequency. The star field learned this the hard way - see the
+// note about aliasing into rings in sample_sky - and an arm with fine structure
+// would come back the same way once the deflection stretches it.
+vec3 domain_arms(vec3 dir){
+  if (arm_gain <= 0.0) return vec3(0.0);
+
+  vec3 pole = normalize(arm_pole);
+  // Any two directions square to the pole will do for measuring longitude from;
+  // the arms carry their own angles and the whole thing is rotationally free.
+  // Cross with whichever axis the pole leans on least, so this never degenerates.
+  vec3 seed = abs(pole.z) < 0.9 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
+  vec3 ref = normalize(cross(pole, seed));
+  vec3 tangent = cross(pole, ref);
+
+  vec3 n = normalize(dir);
+  float lat = dot(n, pole);          // 0 in the galactic plane, +-1 at its poles
+
+  // The disc. Thick enough to read as a galaxy rather than a drawn line, and
+  // thick enough to survive being stretched by the lensing.
+  float disc = exp(-(lat * lat) / (0.26 * 0.26));
+
+  float lon = atan(dot(n, tangent), dot(n, ref));
+
+  vec3 arms = vec3(0.0);
+  for (int i = 0; i < DOMAIN_SLOTS; i++) {
+    if (i >= arm_count) break;
+
+    // Wrapped into [-pi, pi] through atan rather than by adding multiples of
+    // 2*pi, so an arm at the seam is as bright as one in the middle.
+    float delta = lon - arm_angle[i];
+    delta = atan(sin(delta), cos(delta));
+
+    // Two lobes half a turn apart: an arm of a spiral galaxy crosses the sky and
+    // comes back, and one lobe reads as a smudge rather than as structure.
+    float near = exp(-(delta * delta) / (0.42 * 0.42));
+    float far = exp(-((abs(delta) - PI) * (abs(delta) - PI)) / (0.55 * 0.55));
+
+    arms += arm_color[i] * (near + far * 0.45);
+  }
+
+  // Brighter toward the plane and toward the core, which is the direction the
+  // arms all leave from, so the whole thing has a centre.
+  float core = exp(-(lat * lat) / 0.02) * 0.6;
+
+  return arm_gain * (arms * disc + core * vec3(0.55, 0.45, 0.62));
+}
+
 
 vec3 sample_sky(vec3 dir, float rotation, vec3 tint, vec3 plane_color, vec3 pole_color,
                 float star_gain, float nebula_gain, float doppler_factor, float star_blur){
@@ -583,6 +663,12 @@ void main()	{
     color += vec4(sample_sky(bg_dir, 45.0, bg_tint,
                              space_color_plane, space_color_pole,
                              1.0, 0.2, ray_doppler_factor, 0.0), 1.0);
+
+    // The domains, added over the sky rather than into sample_sky, because
+    // sample_sky is shared with the far side of the throat and the wormhole is
+    // not this galaxy. arm_gain carries the world: it is driven to 0 while the
+    // wormhole is on screen.
+    color += vec4(domain_arms(bg_dir), 0.0);
 
     // ── The planet ────────────────────────────────────────────────────────
     // Composited alpha-over, and before the star field and the disk, because it
