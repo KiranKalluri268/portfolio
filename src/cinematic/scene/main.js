@@ -9,6 +9,7 @@ import { createCurveRunner } from './curveRunner';
 import { createTunnel } from './graphics/tunnel';
 import { createPlanet } from './graphics/planet';
 import { worldConfig } from './worldConfig';
+import { createGpuTimer } from './performance/gpuTimer';
 
 /**
  * Start the journey inside `root` and return the function that tears it down.
@@ -140,10 +141,33 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
       // make the second half of the curve a measurement of a different scene,
       // and the point is to compare poses against each other.
       qualityManager?.setLocked(true)
+
+      // And hold the resolution, above what any tier would choose.
+      //
+      // Wall-clock frame time cannot come out below the display's refresh
+      // interval, so on a device drawing faster than its screen the curve
+      // reports the screen: a 144Hz laptop yields 6.9, 13.9, 20.8, 27.8 and
+      // nothing between. Rendering several times as many pixels as the tier
+      // asks for pushes every pose clear of that floor, so differences between
+      // them become visible again.
+      //
+      // This makes the numbers useless as "what a visitor gets" and exactly
+      // right for what they are wanted for, which is comparing one build against
+      // another on the same device. Both sides of that comparison have to use
+      // the same scale, so it is fixed here rather than chosen per device, and
+      // the report prints it.
+      measureRestoreScale = {
+        resolution: performanceConfig.resolution,
+        maxPixelRatio: PERFORMANCE_PRESETS[performanceConfig.preset]?.maxPixelRatio ?? 1.5,
+      }
+      applyRenderScale(MEASURE_RENDER_SCALE, MEASURE_MAX_PIXEL_RATIO)
+
       curveRunner = createCurveRunner({
         journey: JOURNEY,
         getTier: () => qualityManager?.currentTier ?? performanceConfig.preset,
         onPose: () => {},
+        gpuTimer,
+        measureScale: MEASURE_RENDER_SCALE,
       })
     }
   }
@@ -468,6 +492,19 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
   // settling - that contention is exactly what makes the warmup verdict noisy,
   // and there is no reason to inherit it.
   let curveRunner = null;
+  let measureRestoreScale = null;
+
+  // How many times the tier's resolution a measurement sweep renders at, and the
+  // ceiling it is allowed to reach. Fixed rather than per-device: a baseline and
+  // the run compared against it have to be the same workload, and "whatever this
+  // phone chose" is not.
+  const MEASURE_RENDER_SCALE = 2.0;
+  const MEASURE_MAX_PIXEL_RATIO = 4.0;
+
+  // Real GPU time, where the driver will give it. Unavailable on iOS Safari and
+  // gated in some Chrome builds, which is why the render scale above exists as
+  // well rather than instead.
+  const gpuTimer = createGpuTimer(renderer.getContext());
 
   const DEFAULT_ELEVATION = 5 * Math.PI / 180 // 5° — default camera elevation above disk
 
@@ -746,6 +783,16 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
     const curvePose = curveRunner && !curveRunner.finished
       ? curveRunner.update(frameTimestamp - lastframe)
       : null;
+
+    // Give the resolution back the frame the sweep ends. The measurement scale is
+    // several times what any tier would choose, so leaving it on would hand
+    // whoever ran the sweep a page that is much slower than the one it just
+    // measured — and on a phone, one that is slower than anything the tier ladder
+    // would ever allow.
+    if (curveRunner?.finished && measureRestoreScale) {
+      applyRenderScale(measureRestoreScale.resolution, measureRestoreScale.maxPixelRatio)
+      measureRestoreScale = null
+    }
 
     const scrollViewportUnits = curvePose !== null
       ? curvePose
@@ -1035,7 +1082,16 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
     updateUniforms()
 
     // render
+    //
+    // Timed on the GPU only while a sweep is running. A timer query is not free
+    // and it forces the driver to keep timestamps it would otherwise skip, so
+    // there is no case for paying for it on a visitor's frame - and measuring
+    // the instrument into the thing being measured is a mistake this scene has
+    // already made once, with the FPS meter.
+    const timingThisFrame = curveRunner && !curveRunner.finished && gpuTimer.supported;
+    if (timingThisFrame) gpuTimer.begin(curveRunner.currentPose);
     render();
+    if (timingThisFrame) gpuTimer.end();
 
     // loop
     animationFrameId = requestAnimationFrame(update)
@@ -1235,6 +1291,9 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
     disposeConfig();
     presetSwitcher.dispose();
     curveRunner?.dispose();
+    // Before the renderer goes. Queries belong to the context and deleting them
+    // afterwards is an operation on a dead object.
+    gpuTimer.dispose();
     storyOverlay.dispose();
     disposeParticleSystem();
     disposeTunnel();
