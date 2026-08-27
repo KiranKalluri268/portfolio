@@ -16,7 +16,23 @@ what is known about this scene came from noticing that two readings disagreed.
    up to `approachEnd` (27.0), discarding 10 settle frames and sampling 30 per
    pose. It drives the camera itself, so **do not scroll while it runs**; it says
    so on screen.
-2. Let it finish. It reports a curve, not a number.
+2. Let it finish. It reports a curve, not a number, and it now reports two
+   columns rather than one:
+   - **frame** — the gap between animation frames. What the visitor experiences,
+     and capped from below by the display's refresh rate.
+   - **gpu** — how long the GPU actually spent, from
+     `EXT_disjoint_timer_query_webgl2`. What the frame *cost*, unrelated to when
+     it was presented. A dash means this device has no such extension, which is
+     normal on iOS.
+
+   **Read the gpu column when it is there.** Where it is not, the sweep renders
+   at a fixed multiple of the tier's resolution so the frame column sits clear of
+   the refresh floor — the header says which scale was used, and two runs being
+   compared must have used the same one.
+
+   If the report prints a `NOTE:` about quantisation, the frame column is
+   describing the screen rather than the scene. That is the failure this whole
+   file was rewritten around.
 3. Record every column in the table below. The ones that look like bureaucracy
    are the ones that have already caused wrong conclusions:
    - **Tier**, because a downgrade partway through makes the second half of the
@@ -42,29 +58,280 @@ useful for asserting that DOM exists, worthless as a cost measurement.
 
 ---
 
+## The first sweep measured the display, not the scene
+
+Kept in full, because it is the evidence for why the runner changed and because
+the same mistake is easy to make again.
+
+Three sweeps were taken on 2026-08-27 against commit `b1aacbe`. Every reading on
+two of the three devices is an integer number of the display's refresh
+intervals — the laptop and the Realme both run 144Hz screens, one interval being
+**6.944ms**:
+
+| Reading | Intervals |
+|---|---|
+| 7.0ms | 1 |
+| 13.9ms | 2 (13.89) |
+| 20.9ms | 3 (20.83) |
+| 27.5ms | 4 (27.78) |
+
+The Realme's `17.4ms` is the clinching detail. No frame took 17.4ms. `median()`
+averages the two middle values of an even-length sample set, and `SAMPLE_FRAMES`
+is 30, so a pose alternating between two and three intervals reports
+`(13.89 + 20.83) / 2 = 17.36`.
+
+This happens because the runner measured the gap between `requestAnimationFrame`
+callbacks, which cannot be shorter than the refresh interval however cheap the
+frame is. Where a device draws faster than its screen, the curve reports the
+screen. It is a staircase, and a change smaller than one step is invisible in it
+— which makes "no phase may make the curve worse" unenforceable, since the world
+could add 5ms and nothing would move until it crossed a 7ms threshold.
+
+It also explains three sweeps suggesting `BENCHMARK_APPROACH_PROGRESS` of
+**0.57, 0.04 and 0.14**. That is not three devices disagreeing about where the
+fall is expensive; it is `report()` taking the maximum of a flat staircase, so
+the answer is decided by which pose happened to land a step higher. The shipped
+`0.30` came from the same instrument. It is left alone for now rather than
+replaced with another number from the same source.
+
+The iPhone is the exception and is probably the only honest column of the three:
+ProMotion varies the refresh rate to match the renderer, so its readings sit on
+no grid.
+
+**What changed as a result.** The runner now asks the GPU how long the frame
+actually took, through `EXT_disjoint_timer_query_webgl2`, and reports it as its
+own column. Where that extension does not exist — iOS Safari, some Chrome
+builds — a sweep instead renders at a fixed multiple of the tier's resolution, so
+every pose sits clear of the refresh floor and differences between them are
+visible again. And the report now detects the quantisation itself and says so,
+rather than leaving it to be noticed.
+
+### The readings
+
+Laptop, **on battery**, tier high — so soft twice over, since power state has
+moved readings here more than the tier has.
+
+| Units | Phase | Frame | Intervals |
+|---|---|---|---|
+| 0–3 | crossing | 20.9ms | 3 |
+| 4.5 | crossing | 13.9ms | 2 |
+| 6–10.5 | blackout/tunnel | 7.0ms | 1 |
+| 12 | arrival | 27.5ms | 4 |
+| 13.5–27 | fall | 20.5–21.1ms | 3 |
+
+iPhone 16 Pro, tier high:
+
+| Units | Phase | Frame |
+|---|---|---|
+| 0 | crossing | 23.0ms |
+| 1.5–3 | crossing | 22.0–21.0ms |
+| 4.5–10.5 | crossing/tunnel | 17.0ms |
+| 12–19.5 | arrival/fall | 22.0ms |
+| 21–27 | fall | 21.5 → 17.0ms |
+
+Realme 9 Speed Edition, tier low:
+
+| Units | Phase | Frame | Intervals |
+|---|---|---|---|
+| 0 | crossing | 20.8ms | 3 |
+| 1.5–10.5 | crossing/tunnel | 13.9–14.0ms | 2 |
+| 12 | arrival | 20.7ms | 3 |
+| 13.5–27 | fall | 13.9–20.8ms | 2–3 |
+
+### What they do say, despite everything
+
+Two things survive the instrument problem, because they are about *shape* rather
+than absolute cost:
+
+- **Nothing is struggling at the tier it actually runs.** The Realme sits at
+  48–72fps across the whole journey at `low`, worst pose 20.8ms. The 152.7ms
+  recorded elsewhere in these docs was that phone at `high`, which is not a rung
+  it has.
+- **The fall may not be the expensive part after all.** The laptop's peak is the
+  **arrival at 12 units**, and the iPhone's is the **crossing at 0**. On the
+  iPhone the fall gets steadily *cheaper* as it goes, 22ms down to 17ms, which
+  fits the note in `curveRunner.js` about rays terminating early and cheap once
+  the shadow fills the frame. Worth re-checking against GPU time before anything
+  is concluded from it.
+
+---
+
 ## Runs
 
-| Date | Commit | Device | Tier | Power | Dev tools | Browser | Notes |
-|---|---|---|---|---|---|---|---|
-| _(pending)_ | `b1aacbe` | Realme 9 Speed Edition | low | | off | | Phase 0 baseline — everything in `worldConfig` off |
-| _(pending)_ | `b1aacbe` | iPhone 16 Pro | high | | off | | Phase 0 baseline — everything in `worldConfig` off |
+| Date | Commit | Device | Tier | Power | Dev tools | Notes |
+|---|---|---|---|---|---|---|
+| 2026-08-27 | `b1aacbe` | Laptop | high | battery | off | **Superseded.** Vsync-quantised, 144Hz. Not a baseline |
+| 2026-08-27 | `b1aacbe` | iPhone 16 Pro | high | | off | **Superseded.** Not quantised, but taken without GPU timing |
+| 2026-08-27 | `b1aacbe` | Realme 9 Speed Edition | low | | off | **Superseded.** Vsync-quantised, 144Hz. Not a baseline |
+| 2026-08-27 | `a4ec595` | Laptop | medium | battery | off | **Phase 0 baseline**, 2x scale, GPU timing |
+| 2026-08-27 | `a4ec595` | Laptop | high | battery | off | 2x scale, GPU timing. Isolates the quality knob against the medium row |
+| 2026-08-27 | `a4ec595` | iPhone 16 Pro | high | | off | **Phase 0 baseline**, 2x scale |
+| 2026-08-27 | `a4ec595` | Realme 9 Speed Edition | low | | off | **Phase 0 baseline**, 2x scale |
+
+The first three are kept as evidence rather than as measurements; the section
+above says why. They are not what any phase gate compares against.
 
 ## Curves
 
-### Phase 0 baseline
+### Phase 0 baseline — 2026-08-27, commit `a4ec595`, 2× render scale
 
-**Not yet taken.** Both rows above are placeholders, and every phase gate in
-`CINEMATIC_WORLD_PLAN.md` compares against them — so phase 1 cannot honestly be
-called done until they exist. They need the physical devices; they cannot be
-produced from a development machine.
+Everything in `worldConfig` off. **This is what every phase of the world is
+compared against.** All three taken with the fixed runner; the laptop is the only
+one of the three with GPU timing, which is the expected picture — iOS Safari has
+no such extension and Chrome on Android did not offer one either.
 
-Paste the per-pose output here when they are taken, one table per device:
+**Laptop, tier `medium`, GPU timing available.** Note the tier: the first sweep of
+this machine ran at `high`, so the two are not comparable with each other. This
+one is the baseline.
 
-| Scroll (vu) | Phase | Frame time (ms) |
+| Units | Phase | Frame | GPU |
+|---|---|---|---|
+| 0 | crossing | 48.8ms | 49.20ms |
+| 1.5 | crossing | 48.8ms | 49.12ms |
+| 3 | crossing | 48.8ms | 48.34ms |
+| 4.5 | crossing | 34.6ms | 31.35ms |
+| 6 | blackout | 7.0ms | 5.85ms |
+| 7.5 | tunnel | 7.0ms | 7.33ms |
+| 9 | tunnel | 7.1ms | 7.33ms |
+| 10.5 | tunnel | 7.0ms | 4.71ms |
+| 12 | arrival | 55.7ms | **54.82ms** |
+| 13.5 | fall | 55.5ms | 53.04ms |
+| 15 | fall | 55.7ms | 53.03ms |
+| 16.5 | fall | 55.5ms | 53.05ms |
+| 18 | fall | 55.6ms | 53.08ms |
+| 19.5 | fall | 55.6ms | 53.12ms |
+| 21 | fall | 55.6ms | 53.01ms |
+| 22.5 | fall | 55.4ms | 52.59ms |
+| 24 | fall | 48.9ms | 51.17ms |
+| 25.5 | fall | 48.6ms | 46.10ms |
+| 27 | fall | 41.8ms | 40.59ms |
+
+The GPU column tracks the frame column within a few per cent everywhere it is not
+sitting on the refresh grid, which is the best evidence available that both are
+measuring the same thing.
+
+**iPhone 16 Pro, tier `high`, no GPU timing.**
+
+| Units | Phase | Frame |
 |---|---|---|
-| 0.0 | crossing | |
-| … | | |
-| 27.0 | approach | |
+| 0–3 | crossing | 133 / 138 / 132ms |
+| 4.5 | crossing | 21.0ms |
+| 6–10.5 | blackout, tunnel | 17.0ms |
+| 12 | arrival | 144.0ms |
+| 13.5–21 | fall | 147–150ms |
+| 22.5 | fall | **158.0ms** |
+| 24–27 | fall | 152 / 139 / 126ms |
+
+**Realme 9 Speed Edition, tier `low`, no GPU timing.**
+
+| Units | Phase | Frame |
+|---|---|---|
+| 0–3 | crossing | 305.5 / 305.5 / 284.7ms |
+| 4.5 | crossing | 55.7ms |
+| 6 | blackout | 34.7ms |
+| 7.5–10.5 | tunnel | 20.8ms |
+| 12 | arrival | 336.9ms |
+| 13.5–16.5 | fall | 340.1 / 340.2 / **340.3ms** |
+| 18–22.5 | fall | 329.6 / 333.2 / 326.3 / 319.4ms |
+| 24–27 | fall | 302.0 / 270.8 / 236.1ms |
+
+### What the baseline says
+
+**The journey has three expensive regions, not one.** The crossing at 0–3, the
+arrival at 12, and a plateau across the fall — and they are close to each other on
+every device. On the laptop the single most expensive pose in the whole journey is
+the **arrival**, at 54.82ms GPU, slightly above anything in the fall. The tunnel is
+nearly free everywhere: 7ms, 17ms and 20.8ms against fall figures of 53, 150 and
+340.
+
+**The fall is a plateau, then a decline.** Within 10% of its own peak it runs from
+**13.5 units to 22.5** on all three devices, and falls away steadily after that —
+by 27 units the laptop is at 40.6ms against 53.1, and the Realme at 236 against
+340. That fits the note already in `curveRunner.js`: once the shadow fills the
+frame, rays that terminate at the horizon are cheap, where mid-distance rays spend
+their whole step budget on background and hard lensing.
+
+**`BENCHMARK_APPROACH_PROGRESS` of 0.30 is confirmed.** How, and why the
+runner now reports a plateau rather than a peak, is below.
+
+---
+
+### The quality knob is worth exactly 2×, and the tunnel proves it
+
+**Laptop, tier `high`, on battery, 2× render scale, GPU timing available.** Taken
+alongside the `medium` baseline above on the same machine, also on battery.
+
+| Units | Phase | Frame | GPU |
+|---|---|---|---|
+| 0 | crossing | 97.4ms | 98.16ms |
+| 1.5 | crossing | 97.6ms | 98.66ms |
+| 3 | crossing | 104.3ms | 100.18ms |
+| 4.5 | crossing | 62.6ms | 61.96ms |
+| 6 | blackout | 7.0ms | 8.54ms |
+| 7.5 | tunnel | 7.0ms | 7.53ms |
+| 9 | tunnel | 7.0ms | 4.97ms |
+| 10.5 | tunnel | 7.0ms | 4.92ms |
+| 12 | arrival | 104.2ms | 103.62ms |
+| 13.5 | fall | 105.0ms | 105.66ms |
+| 15 | fall | 104.5ms | **106.32ms** |
+| 16.5 | fall | 104.7ms | 106.02ms |
+| 18 | fall | 104.7ms | 106.29ms |
+| 19.5 | fall | 104.5ms | 105.98ms |
+| 21 | fall | 104.7ms | 105.41ms |
+| 22.5 | fall | 104.8ms | 104.48ms |
+| 24 | fall | 104.3ms | 101.50ms |
+| 25.5 | fall | 91.0ms | 91.51ms |
+| 27 | fall | 80.0ms | 79.28ms |
+
+Because a sweep forces the same render scale whatever the tier, resolution is
+held constant across these two runs. The only thing that differs is the shader's
+step budget — `render.js` sets `STEP` and `NSTEPS` per quality, medium being
+`0.09 / 500` and high `0.055 / 850`.
+
+| Region | high ÷ medium |
+|---|---|
+| Fall, all ten poses | 1.95 – 2.01 |
+| Crossing 0, 1.5, 4.5 | 1.98 – 2.01 |
+| Arrival (12) | 1.89 |
+| **Tunnel** | **1.03, 0.68, 1.05** |
+
+**The tunnel is the control.** It does not run the raymarcher, and it costs the
+same in both runs. So the 2× is not the machine being slower on battery, nor
+thermal state, nor anything environmental — a throttled laptop would have slowed
+the tunnel too. It is the shader and only the shader.
+
+Note the knob is not proportional to its own settings: `NSTEPS` rises 1.70× and
+`STEP` falls 1.64×, and neither alone predicts 2.0×. The cost is the interaction,
+since a finer step means more of the 850 are actually taken before a ray
+terminates.
+
+**Why this matters.** There is a clean 2× lever available that costs nothing in
+geometry, content or resolution. If the world turns out too expensive on the
+Realme, lowering the step budget is a larger and cheaper win than removing
+objects — and phase 7, "what does `low` get", now has a measured number behind it
+rather than a guess.
+
+### Reading a sweep: the plateau, not the peak
+
+Four sweeps of this journey proposed `BENCHMARK_APPROACH_PROGRESS` of **0.68,
+0.46, 0.25 and 0.14**. That was never four devices disagreeing. The fall is flat:
+its top varies by 1–7% within itself, so taking the single most expensive pose was
+ranking measurement scatter.
+
+Read as plateaus — every pose within 10% of the peak, contiguous — the same four
+sweeps agree:
+
+| Sweep | Plateau | Midpoint | Old peak-based answer |
+|---|---|---|---|
+| Laptop, medium | 13.5 – 24 units | 0.41 | 0.46 |
+| Laptop, high | 13.5 – 24 units | 0.41 | 0.14 |
+| iPhone 16 Pro | 13.5 – 24 units | 0.41 | 0.68 |
+| Realme, low | 13.5 – 22.5 units | 0.36 | 0.25 |
+
+The runner now reports the plateau and suggests its middle. **`0.30` stays**: it
+sits inside the plateau on all four sweeps, so there is nothing to gain by moving
+it and a re-tiering of every device to lose. Worth knowing that a marginally
+better-centred value would be about 0.38.
 
 ---
 

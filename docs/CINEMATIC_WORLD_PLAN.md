@@ -43,8 +43,9 @@ visual loop are, and comes across with `scripts/port-shader.mjs`. Anything typed
 into the generated file is lost on the next port, silently, and the failure mode
 is a black frame explained only in the console.
 
-The script's built-in default path is wrong — it resolves one directory too high,
-to `K:\kiran\Projects\portfolio3D`. Phase 0 fixes it. Until then, pass the path.
+Its default path used to be wrong — one directory too high — so it could never
+run without an explicit argument. Fixed in phase 0. Running it now confirms the
+lab and this repo hold identical GLSL.
 
 ### Working agreements
 
@@ -127,10 +128,26 @@ the sphere.
 ### The gate
 
 **No phase merges if it makes the `?curve=1` sweep measurably worse on the
-Realme, at the tier that device runs.** Not "within 10%" — no worse. 152.7ms is
-already the ceiling; the world is free or it does not ship at that tier. High-tier
-devices are measured too, and a regression there needs an explicit decision
-rather than a shrug.
+Realme, at the tier that device runs.** Not "within 10%" — no worse. The world is
+free or it does not ship at that tier. High-tier devices are measured too, and a
+regression there needs an explicit decision rather than a shrug.
+
+Compared against the phase 0 baseline in `CINEMATIC_MEASUREMENTS.md`, taken at 2×
+render scale so the readings sit clear of the display's refresh floor. **Both
+sides of a comparison must use the same scale and the same tier** — the tier is
+part of what is being measured, and one machine has already produced two
+non-comparable sweeps by settling on `high` once and `medium` the next time.
+
+Where the baseline says the cost is, measured rather than assumed:
+
+- **Three expensive regions, not one.** The crossing (0–3), the arrival (12), and
+  a plateau across the fall — all within a few per cent of each other. On the
+  laptop the single most expensive pose in the journey is the *arrival*.
+- **The tunnel is nearly free**: 7ms, 17ms and 20.8ms on the three devices,
+  against 53, 150 and 340 in the fall. Anything added there is cheap.
+- **The fall declines after about 22 units.** By 27 the laptop is at 40.6ms
+  against a peak of 53.1. Content scored late in the fall is landing on the
+  cheapest part of it.
 
 ---
 
@@ -172,7 +189,11 @@ without a revert, the way the old `PLANET_ENABLED` did. Flags live in one place:
 
 ### Phase 0 — Groundwork, flags and a baseline
 
-**Done, except the baseline itself, which needs the physical devices.**
+**Done, except the baseline itself, which needs the physical devices.** It also
+grew a fourth item that was not in the original list: the curve runner was
+measuring the display rather than the scene, and had to be fixed before any
+baseline taken with it would have meant anything. See
+`CINEMATIC_MEASUREMENTS.md`.
 
 **Goal.** Make the following phases measurable and revertable. Change nothing a
 visitor can see.
@@ -200,10 +221,10 @@ visitor can see.
   canvases are created, the hero `h1` is real DOM, and nothing falls back.
 - ~~`npm test`, `npm run lint`, `npm run build` green; `/` still `○ (Static)`.~~
   **Met.** 305 tests, 0 lint errors, `/` still `○`.
-- **Baseline curve committed for both devices — NOT MET.** The table exists in
-  `CINEMATIC_MEASUREMENTS.md` with the rows and the protocol; the numbers need
-  the Realme and the iPhone in hand. **Phase 1 cannot honestly be called done
-  until these exist**, because its gate is a comparison against them.
+- ~~Baseline curve committed for both devices.~~ **Met**, and for three devices
+  rather than two, in `CINEMATIC_MEASUREMENTS.md` against commit `a4ec595` at 2×
+  render scale. Taking it needed the runner fixed first — the first attempt was
+  measuring the display rather than the scene.
 
 **Risk.** None material. This phase exists so the rest can be measured.
 
@@ -420,6 +441,13 @@ by all four routes. `prefers-reduced-motion` still hands the visitor back.
    journey a pose at a time — every 1.5 units to `approachEnd`, discarding 10
    settle frames and sampling 30 per pose. It drives the camera itself, so do not
    scroll while it runs; it says so on screen.
+
+   It holds the **resolution** too, at a fixed multiple of the tier's, and it
+   reports two columns: wall-clock frame time and real GPU time where the driver
+   offers it. **Read the GPU column.** Wall-clock can never fall below the
+   display's refresh interval, so on a device drawing faster than its screen it
+   reports the screen — which is exactly what the first three sweeps did. The
+   report now detects that and says so itself.
 2. Run it on **both** reference devices at the **same tier** as the baseline.
    Record device, tier, browser, date, and whether the device was on mains power —
    `CINEMATIC_DECISION.md` already records that power state moved readings more
