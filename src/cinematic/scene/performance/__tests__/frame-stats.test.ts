@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { detectVsyncQuantisation, median } from "../frameStats";
+import { COARSE_RESOLUTION_FRACTION, detectVsyncQuantisation, median } from "../frameStats";
 
 /**
  * The three sets below are real `?curve=1` output, taken on 2026-08-27, and they
@@ -68,8 +68,8 @@ describe("detectVsyncQuantisation", () => {
   });
 
   it("says nothing useful about too few readings", () => {
-    expect(detectVsyncQuantisation([16.7])).toEqual({ quantised: false, intervalMs: null });
-    expect(detectVsyncQuantisation([])).toEqual({ quantised: false, intervalMs: null });
+    expect(detectVsyncQuantisation([16.7])).toEqual({ quantised: false, intervalMs: null, resolutionFraction: null });
+    expect(detectVsyncQuantisation([])).toEqual({ quantised: false, intervalMs: null, resolutionFraction: null });
   });
 
   it("ignores readings that are not positive numbers", () => {
@@ -92,5 +92,40 @@ describe("median", () => {
 
   it("survives an empty set", () => {
     expect(median([])).toBe(0);
+  });
+});
+
+/** The same phone, the same 144Hz screen, measured at 2x render scale. Still on
+ *  the grid - Android Chrome presents on vsync boundaries whatever the cost - but
+ *  now at forty-nine intervals rather than three, where one interval is a rounding
+ *  error rather than a floor. */
+const REALME_AT_2X = [
+  305.5, 305.5, 284.7, 55.7, 34.7, 20.8, 20.9, 20.8, 336.9, 340.1, 340.2, 340.3,
+  329.6, 333.2, 326.3, 319.4, 302.0, 270.8, 236.1,
+];
+
+describe("how much the quantisation matters", () => {
+  it("is severe when the readings are only a few intervals", () => {
+    const { quantised, resolutionFraction } = detectVsyncQuantisation(REALME_144HZ);
+    expect(quantised).toBe(true);
+    // Peak 20.8ms is three intervals, so one interval is a third of it and any
+    // change smaller than that is invisible.
+    expect(resolutionFraction).toBeGreaterThan(COARSE_RESOLUTION_FRACTION);
+    expect(resolutionFraction).toBeCloseTo(1 / 3, 1);
+  });
+
+  it("is negligible when the readings are tens of intervals", () => {
+    const { quantised, resolutionFraction } = detectVsyncQuantisation(REALME_AT_2X);
+    // Still detected - these really are multiples of 6.944ms, which is not luck:
+    // 340.3 is 49.0, 305.5 is 44.0, 284.7 is 41.0, 236.1 is 34.0.
+    expect(quantised).toBe(true);
+    // But one interval is 2% of the peak, so the numbers are usable. Reporting
+    // this as "do not trust" is how a good sweep gets thrown away.
+    expect(resolutionFraction).toBeLessThan(COARSE_RESOLUTION_FRACTION);
+    expect(resolutionFraction).toBeCloseTo(0.02, 2);
+  });
+
+  it("has no opinion when there is no grid", () => {
+    expect(detectVsyncQuantisation(IPHONE_PROMOTION).resolutionFraction).toBeNull();
   });
 });

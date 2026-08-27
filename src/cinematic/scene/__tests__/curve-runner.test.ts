@@ -120,9 +120,22 @@ describe("the curve runner's report", () => {
     const { report } = sweep({
       frameMs: (pose) => interval * (1 + (pose % 3)),
     });
-    expect(report).toContain("NOTE:");
+    expect(report).toContain("WARNING:");
     expect(report).toMatch(/quantised to about 6\.9ms/);
     expect(report).toContain("floor");
+  });
+
+  it("downgrades the warning to a note when the grid is fine enough to ignore", () => {
+    // The same 144Hz grid, but every pose is tens of intervals rather than a
+    // handful - the shape of a sweep taken at a raised render scale. Real numbers
+    // from the Realme at 2x. Calling this untrustworthy would throw away a good
+    // sweep.
+    const { report } = sweep({
+      frameMs: (pose) => [305.5, 340.3, 236.1, 20.8][pose % 4],
+    });
+    expect(report).not.toContain("WARNING:");
+    expect(report).toContain("rounding error rather than a floor");
+    expect(report).not.toContain("do not trust");
   });
 
   it("says nothing about quantisation when frame times genuinely vary", () => {

@@ -19,7 +19,7 @@
 // Runs only behind ?curve=1. It drives the camera itself and is useless with
 // anyone scrolling, so it says so on screen while it works.
 
-import { detectVsyncQuantisation, median } from './performance/frameStats';
+import { COARSE_RESOLUTION_FRACTION, detectVsyncQuantisation, median } from './performance/frameStats';
 
 const SETTLE_FRAMES = 10;   // discarded per pose: tier/pose changes cost frames
 const SAMPLE_FRAMES = 30;   // measured per pose
@@ -142,7 +142,7 @@ export function createCurveRunner({ journey, onPose, getTier, gpuTimer = null, m
     const cost = (row) => (hasGpuTiming && row.gpuMs !== null ? row.gpuMs : row.ms);
 
     const wallReadings = results.map((r) => r.ms);
-    const { quantised, intervalMs } = detectVsyncQuantisation(wallReadings);
+    const { quantised, intervalMs, resolutionFraction } = detectVsyncQuantisation(wallReadings);
 
     const peak = results.reduce((a, b) => (cost(b) > cost(a) ? b : a), results[0]);
     const fallPoses = results.filter((r) => r.phase === 'fall');
@@ -170,20 +170,31 @@ export function createCurveRunner({ journey, onPose, getTier, gpuTimer = null, m
       (measureScale ? `, measured at ${measureScale}x render scale` : '') +
       (hasGpuTiming ? ', GPU timing available' : ', no GPU timing on this device');
 
-    // The warning that would have saved this scene months of trusting the wrong
-    // number. A wall-clock reading can never be shorter than the display's
-    // refresh interval, so where the scene is faster than the screen the curve
-    // is a staircase and a change smaller than one step is invisible in it.
-    const quantisationNote = quantised
-      ? `\n\nNOTE: the frame column is quantised to about ${intervalMs.toFixed(1)}ms, ` +
-        `which is this display's refresh interval, not a cost. Those readings are a ` +
-        `floor: the scene is drawing faster than the screen and this column cannot ` +
-        `see a change smaller than one interval. ` +
-        (hasGpuTiming
-          ? `The GPU column is unaffected and is what the peaks below are read from.`
-          : `There is no GPU timing on this device, so raise the render scale until ` +
-            `the frame column stops sitting on multiples of ${intervalMs.toFixed(1)}ms.`)
-      : '';
+    // A wall-clock reading can never be shorter than the display's refresh
+    // interval, so it is always presented on a grid. Whether that is a problem
+    // depends entirely on how coarse the grid is against the readings: one
+    // interval out of three is a floor and hides everything smaller, one interval
+    // out of forty-nine is a rounding error on a number that is otherwise fine.
+    // Saying "do not trust this" in the second case is how a useful sweep gets
+    // thrown away.
+    const coarse = quantised && resolutionFraction > COARSE_RESOLUTION_FRACTION;
+    const gridPercent = quantised ? (resolutionFraction * 100).toFixed(0) : null;
+
+    const quantisationNote = !quantised
+      ? ''
+      : coarse
+        ? `\n\nWARNING: the frame column is quantised to about ${intervalMs.toFixed(1)}ms — ` +
+          `this display's refresh interval — and that is ${gridPercent}% of the largest ` +
+          `reading here. These are a floor rather than a cost: the scene is drawing ` +
+          `faster than the screen and this column cannot see a change smaller than one ` +
+          `interval. ` +
+          (hasGpuTiming
+            ? `The GPU column is unaffected and is what the peaks below are read from.`
+            : `There is no GPU timing on this device, so re-take this sweep at a higher ` +
+              `render scale before using it for anything.`)
+        : `\n\nNote: the frame column sits on this display's ${intervalMs.toFixed(1)}ms ` +
+          `refresh grid, as it always does. At ${gridPercent}% of the largest reading ` +
+          `that is a rounding error rather than a floor, and these numbers are usable.`;
 
     const costLabel = hasGpuTiming ? 'GPU' : 'frame';
     const peakCost = hasGpuTiming ? peak.gpuMs : peak.ms;
@@ -199,8 +210,8 @@ export function createCurveRunner({ journey, onPose, getTier, gpuTimer = null, m
           : 'n/a'
       }\n` +
       `=> BENCHMARK_APPROACH_PROGRESS ${peakProgress}` +
-      (quantised && !hasGpuTiming
-        ? `  (do not trust this - see the note above)`
+      (coarse && !hasGpuTiming
+        ? `  (do not trust this - see the warning above)`
         : '');
 
     panel.textContent = summary;

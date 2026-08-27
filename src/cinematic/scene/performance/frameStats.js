@@ -45,12 +45,24 @@ const MIN_DISTINCT_STEPS = 2;
  * Half-steps count, because `median` above manufactures them out of a pose that
  * alternates between two intervals.
  *
+ * Detecting it is not the same as it mattering, which is the mistake the first
+ * version of this made. A frame time snapped to a 6.9ms grid is a floor when the
+ * whole reading is three intervals — one interval is then a third of it, and a
+ * change smaller than that is invisible. The same snapping at forty-nine
+ * intervals is a rounding error of two per cent on a number that is otherwise
+ * telling the truth. `resolutionFraction` is how much of the largest reading one
+ * interval accounts for, and it is what decides whether the quantisation is worth
+ * acting on.
+ *
  * @param {number[]} readings
- * @returns {{ quantised: boolean, intervalMs: number | null }}
+ * @returns {{ quantised: boolean, intervalMs: number | null,
+ *   resolutionFraction: number | null }}
  */
 export function detectVsyncQuantisation(readings) {
   const usable = readings.filter((value) => Number.isFinite(value) && value > 0);
-  if (usable.length < 2) return { quantised: false, intervalMs: null };
+  if (usable.length < 2) {
+    return { quantised: false, intervalMs: null, resolutionFraction: null };
+  }
 
   const fastest = Math.min(...usable);
 
@@ -73,9 +85,25 @@ export function detectVsyncQuantisation(readings) {
     }
 
     if (explainsAll && steps.size >= MIN_DISTINCT_STEPS) {
-      return { quantised: true, intervalMs: interval };
+      return {
+        quantised: true,
+        intervalMs: interval,
+        resolutionFraction: interval / Math.max(...usable),
+      };
     }
   }
 
-  return { quantised: false, intervalMs: null };
+  return { quantised: false, intervalMs: null, resolutionFraction: null };
 }
+
+/**
+ * Above this share of the largest reading, one refresh interval is coarse enough
+ * that the curve cannot answer the question it is being asked.
+ *
+ * 0.10 rather than something tighter because the gate it serves is a comparison
+ * between two runs on one device, and a grid that rounds to within a tenth of the
+ * peak still ranks poses correctly and still shows a regression worth caring
+ * about. Below that the right response is to note it; above it, to re-take the
+ * sweep at a higher render scale.
+ */
+export const COARSE_RESOLUTION_FRACTION = 0.10;
