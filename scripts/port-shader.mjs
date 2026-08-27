@@ -24,7 +24,13 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const DEFAULT_SOURCE = resolve(here, "../../../portfolio3D/src/graphics/fragmentShader.glsl");
+// Two levels up from scripts/, not three. The lab sits beside this repo inside
+// the same Portfolio folder — Portfolio/my-portfolio and Portfolio/portfolio3D —
+// so a third `..` climbs out of Portfolio entirely and looks for the lab
+// somewhere it has never been. The script then prints its "could not read the
+// shader" help and exits 1, which reads like a missing lab rather than a wrong
+// default, so the fix is to pass the path by hand and the default stays broken.
+const DEFAULT_SOURCE = resolve(here, "../../portfolio3D/src/graphics/fragmentShader.glsl");
 const TARGET = resolve(here, "../src/cinematic/scene/graphics/fragmentShader.ts");
 
 const source = process.argv[2] ? resolve(process.cwd(), process.argv[2]) : DEFAULT_SOURCE;

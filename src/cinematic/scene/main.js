@@ -8,6 +8,7 @@ import { createStoryOverlay } from './story/StoryOverlay';
 import { createCurveRunner } from './curveRunner';
 import { createTunnel } from './graphics/tunnel';
 import { createPlanet } from './graphics/planet';
+import { worldConfig } from './worldConfig';
 
 /**
  * Start the journey inside `root` and return the function that tears it down.
@@ -407,12 +408,17 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
   // where the planet is anchored — neither of which has been looked at yet. See
   // status.md for where it was left and what the open questions are.
   //
-  // Nothing is deleted or unwired. This flag is the whole of it: false and the
+  // Nothing is deleted or unwired. The flag is the whole of it: false and the
   // target is never created, never drawn, and planet_amount stays at 0 so the
   // shader's planet block never runs. True puts it back exactly as it was.
-  const PLANET_ENABLED = false;
-
-  const planet = PLANET_ENABLED
+  //
+  // The flag used to be a local `PLANET_ENABLED` const here. It now lives in
+  // worldConfig with the rest of them, because the world adds four more of
+  // exactly this shape and five booleans scattered through a thousand-line file
+  // is how one of them ends up shipped on by accident. Same value, same
+  // behaviour — this planet is simply the first body rather than a feature
+  // beside the body system that is coming.
+  const planet = worldConfig.bodies
     ? createPlanet(window.innerWidth, window.innerHeight)
     : null;
   if (planet) uniforms.planet_texture.value = planet.planetTarget.texture;
@@ -837,7 +843,7 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
     // This was flattened to 14 degrees at one point because the planet, once it
     // became a fixed body in the world rather than a scripted screen position,
     // swung further from a turning camera than an approaching one ever moved it —
-    // the rotation ate the parallax. The planet is unmounted now (PLANET_ENABLED),
+    // the rotation ate the parallax. The planet is unmounted now (worldConfig.bodies),
     // so that constraint is gone and the sweep comes back.
     //
     // Elevation is the angle between the disk plane and the camera-to-black-hole

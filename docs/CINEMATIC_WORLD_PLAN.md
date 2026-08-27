@@ -165,12 +165,14 @@ with real parallax, which is what actually sells motion.
 ## 4. The phases
 
 Each phase is one PR. Each has a flag so it can be switched off in production
-without a revert, the way `PLANET_ENABLED` works today. Flags live in one place:
+without a revert, the way the old `PLANET_ENABLED` did. Flags live in one place:
 `src/cinematic/scene/worldConfig.js`, created in phase 0.
 
 ---
 
 ### Phase 0 — Groundwork, flags and a baseline
+
+**Done, except the baseline itself, which needs the physical devices.**
 
 **Goal.** Make the following phases measurable and revertable. Change nothing a
 visitor can see.
@@ -188,12 +190,27 @@ visitor can see.
    flag cannot be left on by accident.
 
 **Exit criteria.**
-- All flags off, and `/cinematic` renders byte-identically to `main` (compare a
-  screenshot at 1440×900 and at 430×932).
-- Baseline curve committed for both devices.
-- `npm test`, `npm run lint`, `npm run build` green; `/` still `○ (Static)`.
+- ~~All flags off, and `/cinematic` renders identically to `main`.~~ **Met, and
+  by argument rather than by screenshot.** The only behavioural change is that
+  `const PLANET_ENABLED = false` became `worldConfig.bodies`, which is also
+  `false` — the same expression with the constant moved. A screenshot comparison
+  would have run through SwiftShader at ~5.6s a frame and shown two black
+  frames, which is not evidence. What was worth checking in a browser, and was
+  checked, is that the new import resolves at runtime: `/cinematic` mounts, both
+  canvases are created, the hero `h1` is real DOM, and nothing falls back.
+- ~~`npm test`, `npm run lint`, `npm run build` green; `/` still `○ (Static)`.~~
+  **Met.** 305 tests, 0 lint errors, `/` still `○`.
+- **Baseline curve committed for both devices — NOT MET.** The table exists in
+  `CINEMATIC_MEASUREMENTS.md` with the rows and the protocol; the numbers need
+  the Realme and the iPhone in hand. **Phase 1 cannot honestly be called done
+  until these exist**, because its gate is a comparison against them.
 
 **Risk.** None material. This phase exists so the rest can be measured.
+
+**What it found.** `scripts/port-shader.mjs` could never have run without an
+explicit path, and with the default fixed it turns out the lab's shader and the
+generated copy in this repo are **identical** — there is no divergence to
+reconcile before phase 1 touches the GLSL.
 
 ---
 
@@ -243,13 +260,14 @@ behind everything.
 **Goal.** One system that can place and draw N bodies, with the existing planet
 absorbed into it as one instance rather than kept as a special case.
 
-**Flag.** `worldConfig.bodies`. `PLANET_ENABLED` is deleted by this phase, not
-left alongside.
+**Flag.** `worldConfig.bodies` — already the planet's flag. Phase 0 migrated it
+rather than leaving a second boolean beside it, so this phase extends a flag that
+already governs the one body that exists.
 
 **Context you need.** `src/cinematic/scene/graphics/planet.js` renders one sphere
 to its own target, which the raymarcher samples back along the **bent** ray — so
 it is lensed, throws a second image, and is occluded by the hole for free. It is
-currently switched off (`main.js:413`, `PLANET_ENABLED = false`) with two known
+currently switched off (`worldConfig.bodies`) with two known
 problems recorded in the comment: it grazed the accretion disk, and the end of
 the fall came to be governed by the photon ring rather than by where it was
 anchored.

@@ -752,7 +752,8 @@ More than expected, which is the main reason to think it is affordable at all:
   `graphics/planet.js` renders a sphere to its own target and the raymarcher
   samples it back along the *bent* ray, so it is gravitationally lensed, throws a
   second image, and is occluded by the hole for free. A body placed in this world
-  already obeys it. But `PLANET_ENABLED` is `false` in `main.js`, with two
+  already obeys it. But it is switched off — `worldConfig.bodies`, which is where
+  phase 0 moved the old `PLANET_ENABLED` — with two
   problems recorded above it: the last pass put the planet low enough to graze
   the accretion disk, and near enough that the end of the fall is governed by the
   photon ring rather than by where it is anchored. Nothing is deleted and the
