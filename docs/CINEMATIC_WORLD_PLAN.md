@@ -43,8 +43,9 @@ visual loop are, and comes across with `scripts/port-shader.mjs`. Anything typed
 into the generated file is lost on the next port, silently, and the failure mode
 is a black frame explained only in the console.
 
-The script's built-in default path is wrong — it resolves one directory too high,
-to `K:\kiran\Projects\portfolio3D`. Phase 0 fixes it. Until then, pass the path.
+Its default path used to be wrong — one directory too high — so it could never
+run without an explicit argument. Fixed in phase 0. Running it now confirms the
+lab and this repo hold identical GLSL.
 
 ### Working agreements
 
@@ -172,7 +173,11 @@ without a revert, the way the old `PLANET_ENABLED` did. Flags live in one place:
 
 ### Phase 0 — Groundwork, flags and a baseline
 
-**Done, except the baseline itself, which needs the physical devices.**
+**Done, except the baseline itself, which needs the physical devices.** It also
+grew a fourth item that was not in the original list: the curve runner was
+measuring the display rather than the scene, and had to be fixed before any
+baseline taken with it would have meant anything. See
+`CINEMATIC_MEASUREMENTS.md`.
 
 **Goal.** Make the following phases measurable and revertable. Change nothing a
 visitor can see.
@@ -420,6 +425,13 @@ by all four routes. `prefers-reduced-motion` still hands the visitor back.
    journey a pose at a time — every 1.5 units to `approachEnd`, discarding 10
    settle frames and sampling 30 per pose. It drives the camera itself, so do not
    scroll while it runs; it says so on screen.
+
+   It holds the **resolution** too, at a fixed multiple of the tier's, and it
+   reports two columns: wall-clock frame time and real GPU time where the driver
+   offers it. **Read the GPU column.** Wall-clock can never fall below the
+   display's refresh interval, so on a device drawing faster than its screen it
+   reports the screen — which is exactly what the first three sweeps did. The
+   report now detects that and says so itself.
 2. Run it on **both** reference devices at the **same tier** as the baseline.
    Record device, tier, browser, date, and whether the device was on mains power —
    `CINEMATIC_DECISION.md` already records that power state moved readings more
