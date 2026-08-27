@@ -11,11 +11,11 @@
   "resume": {
     "technologies": "Next.js, TypeScript, GSAP, Vitest, Playwright",
     "highlights": [
-      "Content-driven site built from typed JSON, with 229 unit tests and 37 real-browser tests gated in CI alongside lint and type checks.",
+      "Content-driven site built from typed JSON, with 330 unit tests and 45 real-browser tests gated in CI alongside lint and type checks.",
       "Diagnosed a frame-time regression on iPad by measuring rather than guessing — isolated backdrop-filter across 125 cards as the entire cost, taking frames from 83ms to 16.7ms.",
       "Maintain a public status document recording known defects and deferred work, including the limits of my own code."
     ],
-    "order": 3
+    "order": 2
   },
   "role": "Full-stack development and site engineering",
   "skills": [

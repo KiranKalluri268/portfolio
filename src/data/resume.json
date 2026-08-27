@@ -1,7 +1,7 @@
 {
   "basics": {
     "name": "SAIKIRAN KALLURI",
-    "headline": "Full-Stack Engineer — Frontend · Backend · AI-integrated products",
+    "headline": "Software Engineer — Full-stack · Backend · Cloud deployment",
     "location": "Palakurthi, Jangaon, Telangana – 506252",
     "phone": "+91-8897008268",
     "email": "kirankalluri888@gmail.com",
@@ -20,7 +20,7 @@
       }
     ]
   },
-  "objective": "Full-stack engineer working in React, Next.js, TypeScript, Node and Python. Recently built an internal diagnostics platform at Aude.ai. Outside work I maintain a portfolio codebase with CI-gated unit and browser test suites, and a written record of its own known defects.",
+  "objective": "Software engineer with two internships shipping production software: an internal diagnostics platform at Aude.ai, and client-facing delivery across four healthcare products at AarogyalinQ. Comfortable picking up unfamiliar codebases and languages — that work spanned JavaScript, Python and an existing C++ desktop application. Outside work I maintain a portfolio codebase with CI-gated unit and browser test suites and a public record of its own known defects.",
   "skillGroupOrder": [
     "Languages",
     "AI/ML",

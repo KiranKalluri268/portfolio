@@ -8,7 +8,7 @@
   "iconText": "C++",
   "showInSkillsSection": true,
   "skillsSectionOrder": 37,
-  "showInResume": false,
+  "showInResume": true,
   "whatItIs": [
     "C++ is a compiled systems language that gives direct control over memory and performance, which is why it tends to sit close to hardware."
   ],
@@ -31,5 +31,7 @@
   "seo": {
     "title": "C++ Skill and Experience",
     "description": "How I worked in a production C++ desktop application to add AWS S3 video storage and AWS IVS live streaming."
-  }
+  },
+  "resumeGroup": "Languages",
+  "resumeOrder": 4
 }
