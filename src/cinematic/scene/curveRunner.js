@@ -19,7 +19,7 @@
 // Runs only behind ?curve=1. It drives the camera itself and is useless with
 // anyone scrolling, so it says so on screen while it works.
 
-import { COARSE_RESOLUTION_FRACTION, detectVsyncQuantisation, median } from './performance/frameStats';
+import { COARSE_RESOLUTION_FRACTION, detectVsyncQuantisation, findPlateau, median } from './performance/frameStats';
 
 const SETTLE_FRAMES = 10;   // discarded per pose: tier/pose changes cost frames
 const SAMPLE_FRAMES = 30;   // measured per pose
@@ -150,13 +150,29 @@ export function createCurveRunner({ journey, onPose, getTier, gpuTimer = null, m
       ? fallPoses.reduce((a, b) => (cost(b) > cost(a) ? b : a), fallPoses[0])
       : null;
 
-    // The number the benchmark actually needs: where in the approach the fall is
-    // most expensive, as a fraction, which is what BENCHMARK_APPROACH_PROGRESS
-    // is expressed in.
+    // The number the benchmark actually needs: where in the approach it should
+    // park to judge a device, as a fraction, which is what
+    // BENCHMARK_APPROACH_PROGRESS is expressed in.
+    //
+    // This used to be the position of the most expensive pose in the fall, and
+    // that was wrong in a way that took four sweeps to see. The fall is a
+    // plateau: its flat top varies by one to seven per cent within itself, so
+    // taking the maximum was ranking measurement scatter. Those four sweeps
+    // proposed 0.68, 0.46, 0.25 and 0.14 for one constant. Read as plateaus they
+    // agree to within half a pose.
+    //
+    // So the answer is a region and the suggestion is its middle, which is also
+    // the most defensible place to stand: furthest from both edges, where the
+    // cost is actually changing.
     const fallSpan = journey.approachEnd - journey.arrivalEnd;
-    const peakProgress = fallPeak
-      ? ((fallPeak.units - journey.arrivalEnd) / fallSpan).toFixed(2)
-      : 'n/a';
+    const progressOf = (units) => (units - journey.arrivalEnd) / fallSpan;
+    const plateau = findPlateau(fallPoses.map(cost));
+    const plateauStart = plateau ? fallPoses[plateau.startIndex] : null;
+    const plateauEnd = plateau ? fallPoses[plateau.endIndex] : null;
+    const plateauMidUnits = plateau
+      ? (plateauStart.units + plateauEnd.units) / 2
+      : null;
+    const peakProgress = plateau ? progressOf(plateauMidUnits).toFixed(2) : 'n/a';
 
     const rows = results
       .map((r) => {
@@ -209,7 +225,13 @@ export function createCurveRunner({ journey, onPose, getTier, gpuTimer = null, m
           ? `${fallPeak.units} units at ${(hasGpuTiming ? fallPeak.gpuMs : fallPeak.ms).toFixed(2)}ms ${costLabel}`
           : 'n/a'
       }\n` +
-      `=> BENCHMARK_APPROACH_PROGRESS ${peakProgress}` +
+      `fall plateau: ${
+        plateau
+          ? `${plateauStart.units} to ${plateauEnd.units} units, everything within ` +
+            `10% of the peak — read this rather than the peak, which is scatter`
+          : 'n/a'
+      }\n` +
+      `=> BENCHMARK_APPROACH_PROGRESS ${peakProgress} (middle of that plateau)` +
       (coarse && !hasGpuTiming
         ? `  (do not trust this - see the warning above)`
         : '');

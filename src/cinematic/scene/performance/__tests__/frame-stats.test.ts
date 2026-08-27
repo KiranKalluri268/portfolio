@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { COARSE_RESOLUTION_FRACTION, detectVsyncQuantisation, median } from "../frameStats";
+import { COARSE_RESOLUTION_FRACTION, detectVsyncQuantisation, findPlateau, median } from "../frameStats";
 
 /**
  * The three sets below are real `?curve=1` output, taken on 2026-08-27, and they
@@ -127,5 +127,72 @@ describe("how much the quantisation matters", () => {
 
   it("has no opinion when there is no grid", () => {
     expect(detectVsyncQuantisation(IPHONE_PROMOTION).resolutionFraction).toBeNull();
+  });
+});
+
+/**
+ * The fall, from all four real sweeps, in pose order from 13.5 to 27 units.
+ * Laptop columns are GPU time; the phones had no GPU timing, so those are frame
+ * times taken at 2x render scale.
+ */
+const FALL = {
+  laptopMedium: [53.04, 53.03, 53.05, 53.08, 53.12, 53.01, 52.59, 51.17, 46.10, 40.59],
+  laptopHigh: [105.66, 106.32, 106.02, 106.29, 105.98, 105.41, 104.48, 101.50, 91.51, 79.28],
+  iphone: [147, 149, 149, 149, 150, 150, 158, 152, 139, 126],
+  realme: [340.1, 340.2, 340.3, 329.6, 333.2, 326.3, 319.4, 302.0, 270.8, 236.1],
+};
+
+/** Pose index to viewport units, then to progress through the fall. */
+const unitsAt = (index: number) => 13.5 + index * 1.5;
+const progressOf = (units: number) => (units - 13) / 14;
+
+describe("findPlateau", () => {
+  it("agrees across four devices where the peak does not", () => {
+    // This is the whole argument for the change. Read as peaks, these same four
+    // sweeps proposed 0.68, 0.46, 0.25 and 0.14 for one constant - because the
+    // flat top varies by 1-7% and max() was ranking scatter.
+    const midpoints = Object.values(FALL).map((costs) => {
+      const plateau = findPlateau(costs);
+      if (!plateau) throw new Error("no plateau");
+      const mid = (unitsAt(plateau.startIndex) + unitsAt(plateau.endIndex)) / 2;
+      return Number(progressOf(mid).toFixed(2));
+    });
+
+    // Every device lands in the same half-pose window.
+    expect(Math.max(...midpoints) - Math.min(...midpoints)).toBeLessThanOrEqual(0.06);
+    for (const midpoint of midpoints) {
+      expect(midpoint).toBeGreaterThan(0.3);
+      expect(midpoint).toBeLessThan(0.45);
+    }
+  });
+
+  it("puts the shipped 0.30 inside the plateau on every device", () => {
+    // Which is why that constant is left where it is rather than re-derived.
+    for (const costs of Object.values(FALL)) {
+      const plateau = findPlateau(costs);
+      if (!plateau) throw new Error("no plateau");
+      expect(progressOf(unitsAt(plateau.startIndex))).toBeLessThanOrEqual(0.3);
+      expect(progressOf(unitsAt(plateau.endIndex))).toBeGreaterThanOrEqual(0.3);
+    }
+  });
+
+  it("excludes the decline at the end of the fall", () => {
+    // Every device falls away after about 22 units, and that tail must not be
+    // counted as part of the flat top or the midpoint drifts late.
+    const plateau = findPlateau(FALL.laptopHigh);
+    expect(plateau).not.toBeNull();
+    expect(unitsAt(plateau!.endIndex)).toBeLessThan(27);
+  });
+
+  it("does not wander across a dip to reach a distant high pose", () => {
+    // Contiguity is the point: a spike the far side of a trough is not the same
+    // plateau, however close its value is.
+    const plateau = findPlateau([100, 99, 40, 40, 98, 97]);
+    expect(plateau).toEqual({ startIndex: 0, endIndex: 1, peakIndex: 0 });
+  });
+
+  it("handles a single pose and none at all", () => {
+    expect(findPlateau([42])).toEqual({ startIndex: 0, endIndex: 0, peakIndex: 0 });
+    expect(findPlateau([])).toBeNull();
   });
 });

@@ -107,3 +107,41 @@ export function detectVsyncQuantisation(readings) {
  * sweep at a higher render scale.
  */
 export const COARSE_RESOLUTION_FRACTION = 0.10;
+
+/** How far below the peak a pose may sit and still count as part of the same
+ *  plateau. Chosen against four real sweeps: the fall's flat top varies by 1-7%
+ *  within itself, so anything tighter splits one plateau into several and
+ *  anything much looser swallows the decline that follows it. */
+const PLATEAU_TOLERANCE = 0.10;
+
+/**
+ * The flat top of a curve, rather than the single highest point on it.
+ *
+ * Reporting a peak was actively misleading here. Four sweeps of the same journey
+ * proposed 0.68, 0.46, 0.25 and 0.14 for the same constant, not because the
+ * devices disagreed about where the fall is expensive but because the fall is
+ * flat and `max()` was ranking measurement scatter. The plateau is the honest
+ * answer, and it comes out at 0.36-0.41 across all four.
+ *
+ * Contiguous from the peak rather than every pose within tolerance: a plateau is
+ * a region, and a stray pose the far side of a dip is not part of it.
+ *
+ * @param {number[]} costs - in pose order.
+ * @returns {{ startIndex: number, endIndex: number, peakIndex: number } | null}
+ */
+export function findPlateau(costs) {
+  if (!costs.length) return null;
+
+  let peakIndex = 0;
+  for (let i = 1; i < costs.length; i++) {
+    if (costs[i] > costs[peakIndex]) peakIndex = i;
+  }
+
+  const floor = costs[peakIndex] * (1 - PLATEAU_TOLERANCE);
+  let startIndex = peakIndex;
+  let endIndex = peakIndex;
+  while (startIndex > 0 && costs[startIndex - 1] >= floor) startIndex--;
+  while (endIndex < costs.length - 1 && costs[endIndex + 1] >= floor) endIndex++;
+
+  return { startIndex, endIndex, peakIndex };
+}
