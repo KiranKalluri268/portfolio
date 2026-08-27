@@ -732,7 +732,12 @@ Enlarging it is not the fix. It moves the wall without removing it, and
 `sizeAttenuation` is on, so every star dims and shrinks as the radius grows —
 trading a visible boundary for an empty sky.
 
-The fix is to **separate the sky from the field**. Distant stars have no parallax:
+It turned out the separating had mostly been done. `sample_sky` in the fragment
+shader already draws stars, a nebula plate and a plane-to-pole gradient from the
+ray direction, so the sky was already at infinity and already lensed. The shell
+was an extra layer in front of it, and the only bounded thing in the scene.
+
+The fix is still to **separate the sky from the field**. Distant stars have no parallax:
 they are a direction, not a position. Sampled from the escaped ray direction in
 the fragment shader they sit at infinity, have no radius to hit a wall at, cost
 one call at ray termination, and — because the raymarcher already has the *bent*
