@@ -128,10 +128,26 @@ the sphere.
 ### The gate
 
 **No phase merges if it makes the `?curve=1` sweep measurably worse on the
-Realme, at the tier that device runs.** Not "within 10%" — no worse. 152.7ms is
-already the ceiling; the world is free or it does not ship at that tier. High-tier
-devices are measured too, and a regression there needs an explicit decision
-rather than a shrug.
+Realme, at the tier that device runs.** Not "within 10%" — no worse. The world is
+free or it does not ship at that tier. High-tier devices are measured too, and a
+regression there needs an explicit decision rather than a shrug.
+
+Compared against the phase 0 baseline in `CINEMATIC_MEASUREMENTS.md`, taken at 2×
+render scale so the readings sit clear of the display's refresh floor. **Both
+sides of a comparison must use the same scale and the same tier** — the tier is
+part of what is being measured, and one machine has already produced two
+non-comparable sweeps by settling on `high` once and `medium` the next time.
+
+Where the baseline says the cost is, measured rather than assumed:
+
+- **Three expensive regions, not one.** The crossing (0–3), the arrival (12), and
+  a plateau across the fall — all within a few per cent of each other. On the
+  laptop the single most expensive pose in the journey is the *arrival*.
+- **The tunnel is nearly free**: 7ms, 17ms and 20.8ms on the three devices,
+  against 53, 150 and 340 in the fall. Anything added there is cheap.
+- **The fall declines after about 22 units.** By 27 the laptop is at 40.6ms
+  against a peak of 53.1. Content scored late in the fall is landing on the
+  cheapest part of it.
 
 ---
 
@@ -205,10 +221,10 @@ visitor can see.
   canvases are created, the hero `h1` is real DOM, and nothing falls back.
 - ~~`npm test`, `npm run lint`, `npm run build` green; `/` still `○ (Static)`.~~
   **Met.** 305 tests, 0 lint errors, `/` still `○`.
-- **Baseline curve committed for both devices — NOT MET.** The table exists in
-  `CINEMATIC_MEASUREMENTS.md` with the rows and the protocol; the numbers need
-  the Realme and the iPhone in hand. **Phase 1 cannot honestly be called done
-  until these exist**, because its gate is a comparison against them.
+- ~~Baseline curve committed for both devices.~~ **Met**, and for three devices
+  rather than two, in `CINEMATIC_MEASUREMENTS.md` against commit `a4ec595` at 2×
+  render scale. Taking it needed the runner fixed first — the first attempt was
+  measuring the display rather than the scene.
 
 **Risk.** None material. This phase exists so the rest can be measured.
 

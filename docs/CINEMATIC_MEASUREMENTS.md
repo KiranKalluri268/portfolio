@@ -163,28 +163,104 @@ than absolute cost:
 | 2026-08-27 | `b1aacbe` | Laptop | high | battery | off | **Superseded.** Vsync-quantised, 144Hz. Not a baseline |
 | 2026-08-27 | `b1aacbe` | iPhone 16 Pro | high | | off | **Superseded.** Not quantised, but taken without GPU timing |
 | 2026-08-27 | `b1aacbe` | Realme 9 Speed Edition | low | | off | **Superseded.** Vsync-quantised, 144Hz. Not a baseline |
-| _(pending)_ | | Realme 9 Speed Edition | low | | off | Phase 0 baseline — everything in `worldConfig` off |
-| _(pending)_ | | iPhone 16 Pro | high | | off | Phase 0 baseline — everything in `worldConfig` off |
+| 2026-08-27 | `a4ec595` | Laptop | medium | | off | **Phase 0 baseline**, 2x scale, GPU timing |
+| 2026-08-27 | `a4ec595` | iPhone 16 Pro | high | | off | **Phase 0 baseline**, 2x scale |
+| 2026-08-27 | `a4ec595` | Realme 9 Speed Edition | low | | off | **Phase 0 baseline**, 2x scale |
 
 The first three are kept as evidence rather than as measurements; the section
 above says why. They are not what any phase gate compares against.
 
 ## Curves
 
-### Phase 0 baseline
+### Phase 0 baseline — 2026-08-27, commit `a4ec595`, 2× render scale
 
-**Not yet taken.** Both rows above are placeholders, and every phase gate in
-`CINEMATIC_WORLD_PLAN.md` compares against them — so phase 1 cannot honestly be
-called done until they exist. They need the physical devices; they cannot be
-produced from a development machine.
+Everything in `worldConfig` off. **This is what every phase of the world is
+compared against.** All three taken with the fixed runner; the laptop is the only
+one of the three with GPU timing, which is the expected picture — iOS Safari has
+no such extension and Chrome on Android did not offer one either.
 
-Paste the per-pose output here when they are taken, one table per device:
+**Laptop, tier `medium`, GPU timing available.** Note the tier: the first sweep of
+this machine ran at `high`, so the two are not comparable with each other. This
+one is the baseline.
 
-| Scroll (vu) | Phase | Frame time (ms) |
+| Units | Phase | Frame | GPU |
+|---|---|---|---|
+| 0 | crossing | 48.8ms | 49.20ms |
+| 1.5 | crossing | 48.8ms | 49.12ms |
+| 3 | crossing | 48.8ms | 48.34ms |
+| 4.5 | crossing | 34.6ms | 31.35ms |
+| 6 | blackout | 7.0ms | 5.85ms |
+| 7.5 | tunnel | 7.0ms | 7.33ms |
+| 9 | tunnel | 7.1ms | 7.33ms |
+| 10.5 | tunnel | 7.0ms | 4.71ms |
+| 12 | arrival | 55.7ms | **54.82ms** |
+| 13.5 | fall | 55.5ms | 53.04ms |
+| 15 | fall | 55.7ms | 53.03ms |
+| 16.5 | fall | 55.5ms | 53.05ms |
+| 18 | fall | 55.6ms | 53.08ms |
+| 19.5 | fall | 55.6ms | 53.12ms |
+| 21 | fall | 55.6ms | 53.01ms |
+| 22.5 | fall | 55.4ms | 52.59ms |
+| 24 | fall | 48.9ms | 51.17ms |
+| 25.5 | fall | 48.6ms | 46.10ms |
+| 27 | fall | 41.8ms | 40.59ms |
+
+The GPU column tracks the frame column within a few per cent everywhere it is not
+sitting on the refresh grid, which is the best evidence available that both are
+measuring the same thing.
+
+**iPhone 16 Pro, tier `high`, no GPU timing.**
+
+| Units | Phase | Frame |
 |---|---|---|
-| 0.0 | crossing | |
-| … | | |
-| 27.0 | approach | |
+| 0–3 | crossing | 133 / 138 / 132ms |
+| 4.5 | crossing | 21.0ms |
+| 6–10.5 | blackout, tunnel | 17.0ms |
+| 12 | arrival | 144.0ms |
+| 13.5–21 | fall | 147–150ms |
+| 22.5 | fall | **158.0ms** |
+| 24–27 | fall | 152 / 139 / 126ms |
+
+**Realme 9 Speed Edition, tier `low`, no GPU timing.**
+
+| Units | Phase | Frame |
+|---|---|---|
+| 0–3 | crossing | 305.5 / 305.5 / 284.7ms |
+| 4.5 | crossing | 55.7ms |
+| 6 | blackout | 34.7ms |
+| 7.5–10.5 | tunnel | 20.8ms |
+| 12 | arrival | 336.9ms |
+| 13.5–16.5 | fall | 340.1 / 340.2 / **340.3ms** |
+| 18–22.5 | fall | 329.6 / 333.2 / 326.3 / 319.4ms |
+| 24–27 | fall | 302.0 / 270.8 / 236.1ms |
+
+### What the baseline says
+
+**The journey has three expensive regions, not one.** The crossing at 0–3, the
+arrival at 12, and a plateau across the fall — and they are close to each other on
+every device. On the laptop the single most expensive pose in the whole journey is
+the **arrival**, at 54.82ms GPU, slightly above anything in the fall. The tunnel is
+nearly free everywhere: 7ms, 17ms and 20.8ms against fall figures of 53, 150 and
+340.
+
+**The fall is a plateau, then a decline.** Within 10% of its own peak it runs from
+**13.5 units to 22.5** on all three devices, and falls away steadily after that —
+by 27 units the laptop is at 40.6ms against 53.1, and the Realme at 236 against
+340. That fits the note already in `curveRunner.js`: once the shadow fills the
+frame, rays that terminate at the horizon are cheap, where mid-distance rays spend
+their whole step budget on background and hard lensing.
+
+**`BENCHMARK_APPROACH_PROGRESS` of 0.30 is confirmed, and the per-run suggestion
+is not worth reading.** The three sweeps proposed 0.68, 0.25 and 0.46, which is
+`report()` taking the maximum of a flat top — the differences it is choosing
+between are 2–7%. The plateau spans progress **0.04 to 0.68** on every device, and
+0.30 sits at 17.2 units, comfortably inside it on all three. The value stays where
+it is, now for a measured reason rather than an inherited one.
+
+That also means the runner's peak-hunting output is misleading by design and
+should eventually report the plateau rather than a point. Left as it is for now:
+it is a reporting change, not a measurement one, and the number it was being used
+to derive is already settled.
 
 ---
 
