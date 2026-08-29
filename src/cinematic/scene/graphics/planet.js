@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { applyComposeShiftProjection } from './composeShift';
 
 // The system we arrive in needs a body in it, not just a black hole in an empty
 // sky. The planet is a mesh rendered to its own target and sampled back by the
@@ -51,13 +52,6 @@ const SEGMENTS = 64;
 // nothing: the particle layers add over the planet rather than depth-testing
 // against it, and always did.
 const ORBIT_RADIUS = 12.0;
-
-// Must match COMPOSE_SHIFT in fragmentShader.glsl, which slides the projection
-// sideways so the black hole composes off to the right instead of dead centre.
-// The planet is sampled by screen position, so its camera has to carry the same
-// shift or the two disagree about where a direction lands.
-const COMPOSE_SHIFT = 0.67;
-const COMPOSE_SHIFT_Y = 0.26;
 
 // Where the planet is put, the first frame of the fall.
 //
@@ -117,7 +111,6 @@ const NARROW_ELEVATION_GAIN = 5.4 * Math.PI / 180;
 // so it is set once and the fall does the rest.
 const PLANET_RADIUS = 0.26;
 
-const DEG_TO_RAD = Math.PI / 180;
 
 const vertexShader = /* glsl */ `
   varying vec3 vObjectPos;
@@ -238,12 +231,8 @@ export function createPlanet(width, height) {
   // it is the whole game once the planet is a fixed point in the world and the
   // projection is what decides where it appears.
   //
-  // Deriving the frustum: the shader builds its ray as forward + right*x*t +
-  // up*y*t, where t = tan(fov/2), y runs -1 to 1 up the screen, and x runs -1 to
-  // 1 across it, shifted by COMPOSE_SHIFT and then scaled by the aspect ratio.
-  // Its right vector is cross(forward, up), which in three.js view space — where
-  // forward is -Z and up is +Y — is +X. So the two agree on handedness, and the
-  // near plane bounds fall straight out of substituting x and y at the edges.
+  // The frustum itself is derived in composeShift.js, which the star sprites
+  // share.
   //
   // The wide lens costs a little shape: a sphere this far off axis is stretched
   // by 1/cos of the angle, around 12 percent out at 27 degrees. That is the
@@ -255,17 +244,7 @@ export function createPlanet(width, height) {
     projectionFov = fov;
     projectionAspect = aspect;
 
-    const halfHeight = camera.near * Math.tan(fov / 2 * DEG_TO_RAD);
-    const halfWidth = halfHeight * aspect;
-    camera.projectionMatrix.makePerspective(
-      (-1 - COMPOSE_SHIFT) * halfWidth,
-      (1 - COMPOSE_SHIFT) * halfWidth,
-      (1 - COMPOSE_SHIFT_Y) * halfHeight,
-      (-1 - COMPOSE_SHIFT_Y) * halfHeight,
-      camera.near,
-      camera.far,
-    );
-    camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
+    applyComposeShiftProjection(camera, fov, aspect);
   }
 
   const geometry = new THREE.SphereGeometry(1, SEGMENTS, SEGMENTS / 2);

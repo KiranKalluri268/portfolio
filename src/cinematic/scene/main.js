@@ -8,6 +8,7 @@ import { createStoryOverlay } from './story/StoryOverlay';
 import { createCurveRunner } from './curveRunner';
 import { createTunnel } from './graphics/tunnel';
 import { createPlanet } from './graphics/planet';
+import { applyComposeShiftProjection } from './graphics/composeShift';
 import { resolveArmGain, resolveFov, resolveSkyLayers, resolveWorldConfig } from './worldConfig';
 import { buildArmUniforms } from './graphics/skyArms';
 import skillWeb from '@/data/skill-web.json';
@@ -1310,7 +1311,7 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
       particleCameraAspect = nextParticleAspect
       particleCamera.fov = particleCameraFov
       particleCamera.aspect = particleCameraAspect
-      particleCamera.updateProjectionMatrix()
+      applyComposeShiftProjection(particleCamera, particleCameraFov, particleCameraAspect)
     }
     particleCamera.position.copy(observer.position)
     particleCamera.up.copy(observer.up)
