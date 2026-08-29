@@ -237,6 +237,18 @@ reconcile before phase 1 touches the GLSL.
 
 ### Phase 1 — The sky
 
+**Built, not yet seen.** Everything below is behind `worldConfig.sky`, which is
+still `false`. It needs looking at on a real GPU and a `?curve=1` sweep against
+the phase 0 baseline before the flag turns on.
+
+**One correction to what this section assumed.** The sky was not missing.
+`sample_sky` in the lab shader already draws stars, a nebula plate and a
+plane-to-pole gradient from the ray direction, so it already sits at infinity and
+`bg_lensing` already bends it. What was missing was a reason for it to look like
+anything in particular, and the bounded thing in the scene was the point shell in
+front of it. So phase 1 became: give the sky the domains, and stop the shell
+pretending to be the universe.
+
 **Goal.** Remove the bounded sphere. Give the world a galaxy that is genuinely
 behind everything.
 
