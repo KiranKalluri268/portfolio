@@ -233,7 +233,7 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
 
   // The level the star plate is drawn at. See resolveStarGain for why this is a
   // separate question from what is in the texture.
-  const SKY_STAR_GAIN = resolveStarGain(window.location.search, 3.0);
+  const SKY_STAR_GAIN = resolveStarGain(window.location.search, 9.0);
 
   // Resolved here rather than where it is applied, so the report below can say
   // whether it took. null means no override and the configured default stands.
@@ -294,12 +294,14 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
     arm_angle: { type: "fv1", value: skyArms.angles.slice() },
     arm_count: { type: "i", value: world.sky ? skyArms.count : 0 },
     arm_gain: { type: "f", value: 0.0 },
-    // 3.0 rather than the 1.0 that used to be written into the call, because the
-    // star plate was regenerated with a real brightness distribution and a sky
-    // whose stars are not all bright integrates about 3.5x dimmer. This carries
-    // the level back; it does not carry back the old flatness, which was the
-    // point. Sweepable with ?starGain= because the level, unlike the
-    // distribution, can only be settled by looking at it.
+    // 9.0 rather than the 1.0 that used to be written into the call. The star
+    // plate now has a real brightness distribution, real density variation and
+    // far fewer stars, and a sky like that integrates about 10x dimmer than the
+    // flat one it replaced. The gain is set to hold the overall level exactly
+    // where the previous plate sat, so the only thing that changed is what was
+    // asked to change — the shape of the sky, not how brightly it burns.
+    // Sweepable with ?starGain= because the level, unlike the distribution,
+    // cannot be measured off anything.
     bg_star_gain: { type: "f", value: skyLayers.stars ? SKY_STAR_GAIN : 0.0 },
     bg_nebula_gain: { type: "f", value: skyLayers.nebula ? 0.2 : 0.0 },
     arm_pole: { type: "v3", value: new THREE.Vector3(0.22, 0.94, 0.26).normalize() },
