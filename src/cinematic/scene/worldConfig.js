@@ -187,15 +187,24 @@ export function resolveSkyLayers(search) {
  * by the hole. A radial gradient of elongation is exactly the cue the eye reads
  * as curvature.
  *
- * Narrowing the field of view attacks it without giving up the composition:
- * 65° takes the left edge to 66.8° and 6.4×, and the hole stays at 1.0× because
- * the axis is still on it. What it costs is zoom — the hole and the disk grow in
- * frame — which is a matter of taste and so wants sweeping by eye rather than
- * deciding from arithmetic. `?fov=65`.
+ * The numbers above are for 16:9. This scales with aspect ratio and not with
+ * this parameter: `fov` here is the vertical basis — the shader multiplies only
+ * `uv.x` by the aspect — so the horizontal field, and with it the whole problem,
+ * grows with how wide the window is. On a phone in portrait the worst corner is
+ * 3.2×, a fifth of what a desktop does, and most of that little is the vertical
+ * shift rather than the horizontal one.
+ *
+ * Narrowing the field of view does attack it, and does not give up the
+ * composition — the hole stays at 1.0× because the axis stays on it. But it is
+ * not a sufficient lever: 65° only reaches 4.6× on 16:9, and the left edge does
+ * not come under 1.5× until about 27°, which is a telephoto that throws the
+ * composition away. What actually fixes the anisotropy is the projection itself,
+ * which is a larger change. This stays because it is the cheap way to see how
+ * much of the feeling is projection at all. `?fov=65`.
  *
  * @param {string} search
- * @param {number} fallback
- * @returns {number}
+ * @param {number|null} fallback returned when the parameter is absent or unusable
+ * @returns {number|null}
  */
 export function resolveFov(search, fallback) {
   let raw = null;
@@ -211,5 +220,38 @@ export function resolveFov(search, fallback) {
   // stops being usable at all, so both ends fall back rather than render
   // something nobody asked for.
   if (!Number.isFinite(value) || value < 20 || value > 120) return fallback;
+  return value;
+}
+
+/**
+ * How brightly the background star plate is rendered, from `?starGain=3`.
+ *
+ * The texture decides the distribution of stars — how many are faint, how few
+ * are bright, where they crowd — and this decides the level the whole field is
+ * drawn at. They are separate questions and separate knobs: regenerating the
+ * texture is how you change the shape of the sky, and this is how you change
+ * how brightly it burns.
+ *
+ * It exists because the two cannot be settled the same way. The distribution is
+ * measurable off the file. The level is not measurable off anything; it has to
+ * be looked at.
+ *
+ * @param {string} search location.search, or anything URLSearchParams accepts
+ * @param {number} fallback the value to use when the parameter is absent or unusable
+ * @returns {number}
+ */
+export function resolveStarGain(search, fallback) {
+  let raw = null;
+  try {
+    raw = new URLSearchParams(search).get("starGain");
+  } catch {
+    return fallback;
+  }
+  if (raw === null) return fallback;
+
+  const value = Number.parseFloat(raw);
+  // Zero is meaningful — it is the same as ?sky=nostars — so the floor is
+  // inclusive. The ceiling is high enough to be obviously too much.
+  if (!Number.isFinite(value) || value < 0 || value > 40) return fallback;
   return value;
 }

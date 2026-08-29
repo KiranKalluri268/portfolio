@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { resolveArmGain, resolveFov, resolveSkyLayers, resolveWorldConfig, worldConfig, WORLD_FEATURES } from "../worldConfig";
+import { resolveArmGain, resolveFov,
+  resolveStarGain, resolveSkyLayers, resolveWorldConfig, worldConfig, WORLD_FEATURES } from "../worldConfig";
 
 /**
  * The world arrives one phase at a time, each behind a flag. These tests exist
@@ -198,5 +199,33 @@ describe("the field of view override", () => {
   it("accepts both ends of the usable range", () => {
     expect(resolveFov("?fov=20", 90)).toBe(20);
     expect(resolveFov("?fov=120", 90)).toBe(120);
+  });
+});
+
+describe("resolveStarGain", () => {
+  it("leaves the level alone when nothing asks for a change", () => {
+    expect(resolveStarGain("", 3.0)).toBe(3.0);
+    expect(resolveStarGain("?world=sky", 3.0)).toBe(3.0);
+  });
+
+  it("takes a star gain from the URL", () => {
+    expect(resolveStarGain("?starGain=1", 3.0)).toBe(1);
+    expect(resolveStarGain("?world=sky&starGain=5.5", 3.0)).toBe(5.5);
+  });
+
+  it("accepts zero, because a dark sky is a real thing to want to see", () => {
+    // Same result as ?sky=nostars, reached from the other direction. A sweep
+    // that cannot reach its own floor cannot show what the floor looks like.
+    expect(resolveStarGain("?starGain=0", 3.0)).toBe(0);
+  });
+
+  it("refuses values that are not a level", () => {
+    for (const bad of ["-1", "41", "abc", "", "NaN", "Infinity"]) {
+      expect(resolveStarGain(`?starGain=${bad}`, 3.0)).toBe(3.0);
+    }
+  });
+
+  it("accepts the top of the range", () => {
+    expect(resolveStarGain("?starGain=40", 3.0)).toBe(40);
   });
 });
