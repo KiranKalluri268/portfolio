@@ -233,7 +233,13 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
 
   // The level the star plate is drawn at. See resolveStarGain for why this is a
   // separate question from what is in the texture.
-  const SKY_STAR_GAIN = resolveStarGain(window.location.search, 9.0);
+  //
+  // 9.0 was chosen against the old plate, which had empty sky to compensate for
+  // and fewer bright texels to blow out. The retuned plate has a density floor
+  // everywhere and half the nebula's baked stars are gone, so the same gain
+  // burns a sky that is already carrying more. 3.0 is what the lab has always
+  // used, so the two now agree on one number rather than drifting apart.
+  const SKY_STAR_GAIN = resolveStarGain(window.location.search, 3.0);
 
   // Resolved here rather than where it is applied, so the report below can say
   // whether it took. null means no override and the configured default stands.
