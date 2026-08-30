@@ -704,11 +704,9 @@ void main()	{
     // into an arc, which is the real behaviour, and directly behind it wraps the
     // photon ring instead of vanishing.
     //
-    // The inverse of the projection at the top of main(), COMPOSE_SHIFT included —
-    // which is the one thing the particle blocks below get to skip, since their
-    // cameras are centred. Skipping it there is why they sample nothing across the
-    // left quarter of the frame. A planet would be sliced down a hard vertical
-    // edge by that, so it is carried here.
+    // The inverse of the projection at the top of main(), COMPOSE_SHIFT included.
+    // The particle blocks below do the same; all three cameras carry the shift,
+    // which is what composeShift.js is for.
     if (planet_amount > 0.0) {
       vec3 planet_dir = show_lensing ? normalize(point - oldpoint) : orig_ray_dir;
       float planet_fwd = dot(planet_dir, forward);
@@ -729,6 +727,12 @@ void main()	{
     // then sample the off-screen particle framebuffer at that position.
     // show_lensing ON  → use lensed direction → particles arc around BH
     // show_lensing OFF → use straight direction → particles at true 3D positions
+    //
+    // COMPOSE_SHIFT is applied here and the particle camera is built with the
+    // matching off-centre frustum. Without it the bounds test below rejected
+    // every ray left of u = -0.33, which is the leftmost 33.5 percent of the
+    // frame at any aspect ratio: the sprites were not dim there, they were
+    // absent, and the sky across that third had no parallax at all.
     vec3 sample_dir = show_lensing ? normalize(point - oldpoint) : orig_ray_dir;
     float fwd_dot = dot(sample_dir, forward);
     if (fwd_dot > 0.0) {
@@ -736,7 +740,8 @@ void main()	{
       float px = dot(sample_dir, nright) / (fwd_dot * uvfov);
       float py = dot(sample_dir, up)    / (fwd_dot * uvfov);
       // Lensed particles (small stars)
-      vec2 p_uv = vec2(px / aspect * 0.5 + 0.5, py * 0.5 + 0.5);
+      vec2 p_uv = vec2((px / aspect + COMPOSE_SHIFT) * 0.5 + 0.5,
+                       (py + COMPOSE_SHIFT_Y) * 0.5 + 0.5);
       if (p_uv.x > 0.0 && p_uv.x < 1.0 && p_uv.y > 0.0 && p_uv.y < 1.0) {
         color += texture2D(particle_texture, p_uv);
       }
@@ -748,7 +753,8 @@ void main()	{
       float aspect = resolution.x / resolution.y;
       float orig_px = dot(orig_ray_dir, nright) / (orig_fwd_dot * uvfov);
       float orig_py = dot(orig_ray_dir, up)    / (orig_fwd_dot * uvfov);
-      vec2 p_uv_unlensed = vec2(orig_px / aspect * 0.5 + 0.5, orig_py * 0.5 + 0.5);
+      vec2 p_uv_unlensed = vec2((orig_px / aspect + COMPOSE_SHIFT) * 0.5 + 0.5,
+                                (orig_py + COMPOSE_SHIFT_Y) * 0.5 + 0.5);
       if (p_uv_unlensed.x > 0.0 && p_uv_unlensed.x < 1.0 && p_uv_unlensed.y > 0.0 && p_uv_unlensed.y < 1.0) {
         color += texture2D(particle_texture_unlensed, p_uv_unlensed);
       }

@@ -8,7 +8,8 @@ import { createStoryOverlay } from './story/StoryOverlay';
 import { createCurveRunner } from './curveRunner';
 import { createTunnel } from './graphics/tunnel';
 import { createPlanet } from './graphics/planet';
-import { resolveArmGain, resolveFov, resolveSkyLayers, resolveWorldConfig } from './worldConfig';
+import { resolveArmGain, resolveFov, resolveSkyLayers, resolveStarGain, resolveWorldConfig } from './worldConfig';
+import { applyComposeShiftProjection } from './graphics/composeShift';
 import { buildArmUniforms } from './graphics/skyArms';
 import skillWeb from '@/data/skill-web.json';
 import { createGpuTimer } from './performance/gpuTimer';
@@ -223,6 +224,26 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
   // see worldConfig.js for why that override exists.
   const world = resolveWorldConfig(window.location.search);
   const skyLayers = resolveSkyLayers(window.location.search);
+  const skyArms = buildArmUniforms(skillWeb);
+
+  // How bright the arms sit against the star field. Low on purpose: this is a
+  // galaxy at a distance, behind everything, and the disk is the thing in frame.
+  // Tuned in the lab, which is where anything about how this looks belongs.
+  const SKY_ARM_GAIN = resolveArmGain(window.location.search, 0.035);
+
+  // The level the star plate is drawn at. See resolveStarGain for why this is a
+  // separate question from what is in the texture.
+  //
+  // 9.0 was chosen against the old plate, which had empty sky to compensate for
+  // and fewer bright texels to blow out. The retuned plate has a density floor
+  // everywhere and half the nebula's baked stars are gone, so the same gain
+  // burns a sky that is already carrying more. 3.0 is what the lab has always
+  // used, so the two now agree on one number rather than drifting apart.
+  const SKY_STAR_GAIN = resolveStarGain(window.location.search, 3.0);
+
+  // Resolved here rather than where it is applied, so the report below can say
+  // whether it took. null means no override and the configured default stands.
+  const SWEPT_FOV = resolveFov(window.location.search, null);
 
   // Said out loud, because "I turned the flag on and nothing changed" has
   // already cost a round trip once, and from the outside a flag that did not
@@ -232,14 +253,8 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
     Object.entries(world).filter(([, on]) => on).map(([name]) => name).join(', ') || 'nothing on',
     '| sky layers:',
     Object.entries(skyLayers).map(([name, on]) => (on ? name : `no-${name}`)).join(', '),
+    `| fov ${SWEPT_FOV ?? 'default'} | starGain ${SKY_STAR_GAIN} | armGain ${SKY_ARM_GAIN}`,
   )
-
-  const skyArms = buildArmUniforms(skillWeb);
-
-  // How bright the arms sit against the star field. Low on purpose: this is a
-  // galaxy at a distance, behind everything, and the disk is the thing in frame.
-  // Tuned in the lab, which is where anything about how this looks belongs.
-  const SKY_ARM_GAIN = resolveArmGain(window.location.search, 0.035);
 
   const uniforms = {
     time: { type: "f", value: 0.0 },
@@ -285,7 +300,15 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
     arm_angle: { type: "fv1", value: skyArms.angles.slice() },
     arm_count: { type: "i", value: world.sky ? skyArms.count : 0 },
     arm_gain: { type: "f", value: 0.0 },
-    bg_star_gain: { type: "f", value: skyLayers.stars ? 1.0 : 0.0 },
+    // 9.0 rather than the 1.0 that used to be written into the call. The star
+    // plate now has a real brightness distribution, real density variation and
+    // far fewer stars, and a sky like that integrates about 10x dimmer than the
+    // flat one it replaced. The gain is set to hold the overall level exactly
+    // where the previous plate sat, so the only thing that changed is what was
+    // asked to change — the shape of the sky, not how brightly it burns.
+    // Sweepable with ?starGain= because the level, unlike the distribution,
+    // cannot be measured off anything.
+    bg_star_gain: { type: "f", value: skyLayers.stars ? SKY_STAR_GAIN : 0.0 },
     bg_nebula_gain: { type: "f", value: skyLayers.nebula ? 0.2 : 0.0 },
     arm_pole: { type: "v3", value: new THREE.Vector3(0.22, 0.94, 0.26).normalize() },
     // The far side. Rotated well away from the background's own 45° so the star
@@ -624,7 +647,7 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
     applyConfigChange('bloom', 'threshold', bloomConfig.threshold)
     // Swept from the URL while the projection distortion is being tuned by eye.
     // See resolveFov for why the field of view is the lever on it.
-    cameraConfig.fov = resolveFov(window.location.search, cameraConfig.fov)
+    cameraConfig.fov = SWEPT_FOV ?? cameraConfig.fov
     applyConfigChange('camera', 'fov', cameraConfig.fov)
     applyConfigChange('camera', 'orbit', cameraConfig.orbit)
     applyConfigChange('camera', 'enableDrag', cameraConfig.enableDrag)
@@ -1310,7 +1333,7 @@ export async function mountCinematic(root, lenis, { showDevTools = false, measur
       particleCameraAspect = nextParticleAspect
       particleCamera.fov = particleCameraFov
       particleCamera.aspect = particleCameraAspect
-      particleCamera.updateProjectionMatrix()
+      applyComposeShiftProjection(particleCamera, particleCameraFov, particleCameraAspect)
     }
     particleCamera.position.copy(observer.position)
     particleCamera.up.copy(observer.up)

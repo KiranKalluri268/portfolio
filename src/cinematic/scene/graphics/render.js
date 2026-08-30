@@ -6,12 +6,13 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import { CameraDragControls } from "../camera/CameraDragControls";
 import { Observer } from "../camera/Observer";
 import { Vector2 } from 'three/src/math/Vector2';
+import { applyComposeShiftProjection } from './composeShift';
 // Generated from portfolio-3D's fragmentShader.glsl by scripts/port-shader.mjs.
 // A string rather than a .glsl import because Turbopack has no equivalent of
 // Vite's `?raw` that works - the header of the generated file has the detail.
 import { fragmentShader } from './fragmentShader';
 
-// Served from /public rather than imported. Between them these three are 9.7MB,
+// Served from /public rather than imported. Between them these three are 5.6MB,
 // and an import would put every byte in the JS bundle, where they would be
 // fetched and parsed before anything at all could paint. As URLs they are
 // ordinary image requests the scene makes once it is running, which is what the
@@ -193,7 +194,13 @@ export function createParticleSystem(world = worldConfig, skyLayers = { dust: tr
     { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat }
   );
 
+  // The same off-centre frustum the raymarcher uses. Centred, this camera drew
+  // the sprites into a rectangle of sky that the shifted screen only partly
+  // overlaps, so the leftmost third of the frame sampled outside the target and
+  // got nothing — the one part of the scene with no parallax in it, in the part
+  // of the scene that most needed some.
   const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100000);
+  applyComposeShiftProjection(camera, camera.fov, camera.aspect);
 
   const sceneLensed = new THREE.Scene();
   const sceneUnlensed = new THREE.Scene();
@@ -290,7 +297,7 @@ export function createParticleSystem(world = worldConfig, skyLayers = { dust: tr
     targetLensed.setSize(width, height);
     targetUnlensed.setSize(width, height);
     camera.aspect = width / height;
-    camera.updateProjectionMatrix();
+    applyComposeShiftProjection(camera, camera.fov, camera.aspect);
   }
 
   function dispose() {
