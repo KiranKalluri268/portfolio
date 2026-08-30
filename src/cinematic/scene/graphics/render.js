@@ -12,7 +12,7 @@ import { applyComposeShiftProjection } from './composeShift';
 // Vite's `?raw` that works - the header of the generated file has the detail.
 import { fragmentShader } from './fragmentShader';
 
-// Served from /public rather than imported. Between them these three are 9.7MB,
+// Served from /public rather than imported. Between them these three are 5.6MB,
 // and an import would put every byte in the JS bundle, where they would be
 // fetched and parsed before anything at all could paint. As URLs they are
 // ordinary image requests the scene makes once it is running, which is what the

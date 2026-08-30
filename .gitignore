@@ -61,3 +61,8 @@ public/reference/
 /*.profile
 /*.cpuprofile
 /*.heapsnapshot
+
+# Per-machine Claude Code settings: locally granted tool permissions, which
+# differ per checkout and are nobody else's business. .claude/launch.json is
+# shared configuration and stays tracked.
+.claude/settings.local.json
