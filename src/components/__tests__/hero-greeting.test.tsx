@@ -109,14 +109,18 @@ describe("the entry greeting", () => {
     const budget = greetingSequenceMs(
       hero.greetingCycle.opening.length + hero.greetingCycle.indian.length,
     );
-    // The budget is a decision, not a consequence, so it is written down. It
-    // started at 4.5s with thirteen greetings; adding five more in their own
-    // scripts was taken knowing it buys the length, because every beat was
-    // already sitting on the readable floor and could not be shortened. Six and
-    // a bit is the agreed ceiling - past that the entry gate's two seconds plus
-    // this is a toll nobody agreed to, and every other check here would still
-    // pass.
-    expect(budget).toBeLessThanOrEqual(6200);
+    // The budget is a decision, not a consequence, so it is written down, and
+    // it has been raised twice on purpose: 4.5s at thirteen greetings, 6.2s
+    // when five more went in in their own scripts, 6.4s when Malayalam took it
+    // to nineteen. Every one of those was taken knowing it buys length, because
+    // every beat already sits on the readable floor and cannot be shortened -
+    // more words can only mean more time.
+    //
+    // Which is exactly why the number is asserted rather than derived. Six and
+    // a half seconds on top of the entry gate's two is the outside edge of what
+    // this is worth; a greeting that drifted to nine would pass every other
+    // check in this file.
+    expect(budget).toBeLessThanOrEqual(6400);
     expect(budget).toBeGreaterThan(FLY_MS);
 
     advance(ENTRY_RELEASE_MS + budget + 500);

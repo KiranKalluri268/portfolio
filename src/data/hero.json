@@ -21,6 +21,7 @@
       { "text": "नमस्ते", "script": "devanagari", "language": "Hindi" },
       { "text": "வணக்கம்", "script": "tamil", "language": "Tamil" },
       { "text": "ನಮಸ್ಕಾರ", "script": "kannada", "language": "Kannada" },
+      { "text": "നമസ്കാരം", "script": "malayalam", "language": "Malayalam" },
       { "text": "నమస్కారం", "script": "telugu", "language": "Telugu", "flyOrigin": "38% 52%" }
     ]
   },
