@@ -1,5 +1,11 @@
 import type { Metadata } from "next";
-import { Tektur } from "next/font/google";
+import {
+  Tektur,
+  Noto_Sans_Devanagari,
+  Noto_Sans_Tamil,
+  Noto_Sans_Kannada,
+  Noto_Sans_Telugu,
+} from "next/font/google";
 import "./globals.css";
 import "lenis/dist/lenis.css";
 import BlackholeEffect from '@/background/BlackholeEffect';
@@ -18,10 +24,50 @@ const SITE_DESCRIPTION =
 
 const tektur = Tektur({
   variable: "--font-tektur",
-  subsets: ["latin"],
+  // The entry greeting says hello in Russian, Greek, Vietnamese, Turkish and
+  // Polish before it reaches the Indian scripts. Tektur covers all five itself,
+  // so they are set in the site's own face rather than a Noto fallback - and
+  // each subset is its own file behind a unicode-range, so a visitor only
+  // fetches the ones their greeting actually needs.
+  subsets: ["latin", "latin-ext", "cyrillic", "greek", "vietnamese"],
   display: 'swap',
   weight: ["400", "500", "600", "700"],
 });
+
+/* The entry greeting says hello in four Indian scripts, and Tektur covers none
+   of them. Without a face named for each the sequence renders in whatever the
+   visitor happens to have installed, or in tofu on a machine with no Indic
+   fonts at all, and the fly-through then pushes through a box instead of a
+   letter. Each is subset to its own script at the one weight the greeting
+   uses. */
+const notoDevanagari = Noto_Sans_Devanagari({
+  variable: "--font-greeting-devanagari",
+  subsets: ["devanagari"],
+  display: "swap",
+  weight: ["700"],
+});
+
+const notoTamil = Noto_Sans_Tamil({
+  variable: "--font-greeting-tamil",
+  subsets: ["tamil"],
+  display: "swap",
+  weight: ["700"],
+});
+
+const notoKannada = Noto_Sans_Kannada({
+  variable: "--font-greeting-kannada",
+  subsets: ["kannada"],
+  display: "swap",
+  weight: ["700"],
+});
+
+const notoTelugu = Noto_Sans_Telugu({
+  variable: "--font-greeting-telugu",
+  subsets: ["telugu"],
+  display: "swap",
+  weight: ["700"],
+});
+
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -118,7 +164,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={tektur.variable}>
+    <html lang="en" className={`${tektur.variable} ${notoDevanagari.variable} ${notoTamil.variable} ${notoKannada.variable} ${notoTelugu.variable}`}>
       <body className="relative bg-black">
         <script
           type="application/ld+json"
