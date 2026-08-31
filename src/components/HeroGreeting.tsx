@@ -19,6 +19,7 @@ type Beat = {
   hold: number;
   scale: number;
   swellMs: number;
+  swellEasing: string;
   flyOrigin: string;
 };
 
@@ -54,6 +55,7 @@ const BEATS: Beat[] = GREETINGS.map((entry, index) => {
     // Not the same as the hold on the last word, which keeps growing into the
     // push rather than stopping to wait for it.
     swellMs: swell.duration,
+    swellEasing: swell.easing,
   };
 });
 
@@ -142,7 +144,7 @@ export default function HeroGreeting({ onDone }: { onDone: () => void }) {
           // the swell is continuous and only the words are stepped.
           transition: flying
             ? undefined
-            : `font-size ${beat.swellMs}ms linear`,
+            : `font-size ${beat.swellMs}ms ${beat.swellEasing}`,
           // An animation, not a transition. A transition needs its start value
           // painted in an earlier frame than its end value, which meant a state
           // flip and two rAFs before the push could begin - and the swell had

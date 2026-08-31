@@ -14,6 +14,8 @@ import {
   MIN_HOLD_MS,
   scaleAt,
   scaleFor,
+  SWELL_EASING,
+  SWELL_FINAL_EASING,
   SWELL_OVERRUN_MS,
   swellFor,
 } from "../hero-greeting-timing";
@@ -271,22 +273,36 @@ describe("the swell", () => {
     expect(scaleAt(1)).toBeCloseTo(MAX_SCALE);
   });
 
-  it("keeps growing at the same rate through the overrun", () => {
-    // The last word carries on swelling past its own beat, because the push is
-    // started by a different clock and drifts. If the target were not extended
-    // to match, the swell would slow down over that overrun - a sag in the one
-    // place the sequence is supposed to be winding up hardest.
+  it("spends the last word's growth early and lands it exactly", () => {
+    // The size curve's steepest segment is its last, so on a straight line the
+    // final word sat nearly still and then bolted. It eases out instead: the
+    // lunge is at the front, the tail is flat, and the push supplies the
+    // acceleration afterwards.
+    //
+    // The flat tail is also what the overrun is for. The swell and the push run
+    // off different clocks and drift; under an easing that has already tapered,
+    // that drift lands where nothing is happening.
     for (const count of counts) {
       const last = count - 1;
       const holds = holdsFor(count);
       const swell = swellFor(last, count);
 
+      expect(swell.easing).toBe(SWELL_FINAL_EASING);
       expect(swell.duration).toBe(holds[last] + SWELL_OVERRUN_MS);
-      expect(swell.scale).toBeGreaterThan(MAX_SCALE);
+      // It lands on full size exactly - no overshoot to compensate for a
+      // duration the easing already accounts for.
+      expect(swell.scale).toBeCloseTo(MAX_SCALE);
+    }
+  });
 
-      const beatRate = (scaleFor(last, count) - scaleFor(last - 1, count)) / holds[last];
-      const overrunRate = (swell.scale - scaleFor(last - 1, count)) / swell.duration;
-      expect(overrunRate).toBeCloseTo(beatRate, 5);
+  it("leaves the shaping to the size curve on every other beat", () => {
+    // A beat between two samples of the curve is a straight line. Easing those
+    // individually would shape the gaps as well as the samples, and the curve
+    // would no longer be the only thing deciding what the swell does.
+    for (const count of counts) {
+      for (let i = 0; i < count - 1; i += 1) {
+        expect(swellFor(i, count).easing).toBe(SWELL_EASING);
+      }
     }
   });
 
