@@ -5,6 +5,7 @@ import { useScrollActions } from "@/context/SmoothScrollContext";
 import { useAudio } from "@/context/AudioContextProvider";
 import { ENTRY_RELEASE_MS } from "./entry-timing";
 import { useReducedMotion } from "@/hooks/useMediaQuery";
+import HeroGreeting from "./HeroGreeting";
 import hero from "@/data/hero.json";
 
 export default function Hero() {
@@ -44,14 +45,19 @@ export default function Hero() {
   const [isFirstLineDone, setIsFirstLineDone] = useState(false);
   const [showSecondCursor, setShowSecondCursor] = useState(false);
 
-  // New state for H1 intro sequence
-  const [h1State, setH1State] = useState<'typing_intro' | 'deleting_intro' | 'typing_name' | 'done'>('typing_intro');
+  /** The greeting is the entry gate's payoff, so it is only spent on someone
+   *  who went through the gate. `hasEntered` is already true at mount when the
+   *  visitor is coming back to the home page from elsewhere on the site; that
+   *  arrival starts at the name instead. (The old NAMASTE intro replayed on
+   *  those returns; a four-and-a-half second one would be a toll booth.) */
+  const [h1State, setH1State] = useState<'greeting' | 'typing_name' | 'done'>(() =>
+    hasEntered ? 'typing_name' : 'greeting',
+  );
 
   const heroRef = useRef<HTMLDivElement>(null);
 
   // One source for both presentations. The cinematic renders the same three
   // facts against a falling camera; the copy itself does not fork.
-  const introText = hero.greeting;
   const mainText = `${hero.namePrefix}\n${hero.name}`;
   const visibleH1State = reduceMotion ? "done" : h1State;
   const visibleDisplayText = reduceMotion ? mainText : displayText;
@@ -63,25 +69,9 @@ export default function Hero() {
     let timeout: NodeJS.Timeout;
 
     switch (h1State) {
-      case 'typing_intro':
-        if (displayText.length < introText.length) {
-          timeout = setTimeout(() => {
-            setDisplayText(introText.slice(0, displayText.length + 1));
-          }, typingSpeed);
-        } else {
-          // Wait before deleting
-          timeout = setTimeout(() => setH1State('deleting_intro'), 1000);
-        }
-        break;
-
-      case 'deleting_intro':
-        if (displayText.length > 0) {
-          timeout = setTimeout(() => {
-            setDisplayText(displayText.slice(0, -1));
-          }, deleteSpeed / 2); // Delete slightly faster
-        } else {
-          timeout = setTimeout(() => setH1State('typing_name'), 0);
-        }
+      case 'greeting':
+        // HeroGreeting owns its own clock and calls back when it has flown
+        // through the last letter. Nothing to schedule here.
         break;
 
       case 'typing_name':
@@ -105,7 +95,7 @@ export default function Hero() {
     }
 
     return () => clearTimeout(timeout);
-  }, [displayText, h1State, introText, mainText, reduceMotion, curtainOpening]);
+  }, [displayText, h1State, mainText, reduceMotion, curtainOpening]);
 
   // Second line typing
   useEffect(() => {
@@ -141,6 +131,13 @@ export default function Hero() {
       aria-label="Hero section - Introduction"
       style={{ zIndex: 10 }}
     >
+      {/* The greeting is the whole headline until it has finished: it draws
+          full-bleed so the push through the final letter can grow past the
+          edges of the screen, which the section's overflow clips. */}
+      {curtainOpening && !reduceMotion && visibleH1State === 'greeting' && (
+        <HeroGreeting onDone={() => setH1State('typing_name')} />
+      )}
+
       <div className="relative w-full h-full text-white">
         <div
           data-settled={visibleH1State === "done"}
@@ -170,7 +167,7 @@ export default function Hero() {
                 {index === 0 && visibleDisplayText.includes('\n') && '\n'}
               </span>
             ))}
-            {visibleH1State !== 'done' && (
+            {visibleH1State === 'typing_name' && (
               <span
                 className="animate-blink text-[clamp(2.5rem,13vw,8rem)] text-white"
                 aria-hidden="true"

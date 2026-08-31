@@ -1,5 +1,29 @@
 {
   "greeting": "NAMASTE!",
+  "greetingCycle": {
+    "opening": [
+      "Hey",
+      "Hola",
+      "Привет",
+      "Bonjour",
+      "Γεια σου",
+      "Ciao",
+      "Merhaba",
+      "Hallo",
+      "Olá",
+      "Cześć",
+      "Hej",
+      "Xin chào",
+      "Salut"
+    ],
+    "indian": [
+      { "text": "NAMASTE", "script": "latin", "language": "Hindi" },
+      { "text": "नमस्ते", "script": "devanagari", "language": "Hindi" },
+      { "text": "வணக்கம்", "script": "tamil", "language": "Tamil" },
+      { "text": "ನಮಸ್ಕಾರ", "script": "kannada", "language": "Kannada" },
+      { "text": "నమస్కారం", "script": "telugu", "language": "Telugu", "flyOrigin": "38% 52%" }
+    ]
+  },
   "namePrefix": "I'M,",
   "name": "SAIKIRAN KALLURI",
   "roles": [
