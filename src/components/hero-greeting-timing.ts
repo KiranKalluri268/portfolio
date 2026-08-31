@@ -45,12 +45,32 @@ export const FLY_EASING = "cubic-bezier(0.55, 0, 0.85, 0)";
  *  The swell and the push are scheduled by two different clocks - a CSS
  *  transition started by a render, and a setTimeout started by an effect after
  *  that render has painted - and on a loaded main thread they drift apart by a
- *  couple of hundred milliseconds. The swell would finish first and the word
- *  would hang perfectly still for that gap, right at the moment it is supposed
- *  to be accelerating hardest. Overrunning means it is always still growing
- *  when the push takes over; it costs the last few percent of MAX_SCALE, which
- *  the push then covers seventy times over. */
+ *  couple of hundred milliseconds. Whichever way that drift falls, it lands in
+ *  the overrun, which under SWELL_FINAL_EASING is the flat tail of the curve
+ *  where almost nothing is happening. The alternative is the swell finishing
+ *  early and the word sitting dead still until the push notices. */
 export const SWELL_OVERRUN_MS = 300;
+
+/** How the type size moves within a single beat.
+ *
+ *  Linear for the run of greetings: each beat is a straight line between two
+ *  samples of the size curve, and the curve's own shape lives in where those
+ *  samples fall, not in how the gap between two of them is crossed. */
+export const SWELL_EASING = "linear";
+
+/** How the type size moves within the last beat, which is its own case.
+ *
+ *  The size curve accelerates all the way to the end, so its steepest segment
+ *  is the final one - the last word arrived at its opening size, sat nearly
+ *  still, and then bolted. Reading it as one gesture, that is backwards: the
+ *  word should lunge as it lands and settle into its full size, and let the
+ *  push supply the acceleration afterwards.
+ *
+ *  So the last beat alone runs on ease-out. Roughly seven-eighths of its growth
+ *  happens in the first half of the beat, and the tail flattens into the
+ *  overrun - which is what makes the drift between the two clocks invisible
+ *  rather than something to be compensated for. */
+export const SWELL_FINAL_EASING = "cubic-bezier(0.33, 1, 0.68, 1)";
 
 /** The widest the grown word may be set, in vw.
  *
@@ -66,16 +86,33 @@ export const SWELL_OVERRUN_MS = 300;
  *  gives way. */
 export const MAX_WIDTH_VW = 17;
 
-/** The largest multiple of the base the swell ever reaches, overrun included. */
+/** What the base size is divided by to keep the grown word on screen.
+ *
+ *  The swell reaches MAX_SCALE and stops, so 2.0 is what it actually needs.
+ *  This is deliberately 10% clear of that: it was sized when the last beat
+ *  overshot MAX_SCALE to hold its rate, and it is left there because the margin
+ *  costs a little starting size on narrow screens and buys the room for the
+ *  last word to be given a bigger target again without anything clipping.
+ *  Lowering it to 2.0 would make the greeting 10% larger below about 1130px. */
 export const SWELL_HEADROOM = 2.2;
 
 /** Below this a word is a flicker rather than a glimpse, so a long list
  *  stretches the sequence instead of becoming subliminal. */
 export const MIN_HOLD_MS = 90;
 
-/** How far along the fly the word fades out. Leaving is not the same as
- *  arriving: the letterform has to still be there while it is passing us. */
-export const FLY_FADE_START = 0.55;
+/** How far along the fly the word disappears, as a fraction of it.
+ *
+ *  A hard cut, not a fade. Passing through something does not dim it on the
+ *  way past - it is solid right up to the moment it is behind you, and then it
+ *  is not there. The fade this replaced started at 0.55 and spent the last
+ *  45% of the push turning the letterform translucent, which read as the word
+ *  dissolving in front of the camera rather than the camera going through it.
+ *
+ *  Late is the whole point: at 0.9 the glyph is measured at about 35x its own size and the gap
+ *  it was aimed at is many screens wide, so what leaves is a colour, not a
+ *  shape. Pulling this much before about 0.8 puts a recognisable letter on
+ *  screen at the instant it vanishes, and the cut becomes a blink. */
+export const FLY_CUT_AT = 0.9;
 
 /** The type size the last greeting reaches, as a multiple of the opening one. */
 export const MAX_SCALE = 2;
@@ -172,25 +209,25 @@ export function scaleFor(index: number, count: number) {
   return scaleAt(index / (count - 1));
 }
 
-/** What the last word's size is actually aimed at, and how long it has to get
- *  there - the overrun folded in.
+/** How the size moves on one beat: what it is aimed at, how long it has, and
+ *  how it gets there.
  *
- *  Aiming at plain MAX_SCALE over the longer duration would slow the swell down
- *  by the ratio of the two, so the growth would visibly ease off over the last
- *  third of the final word - a sag in exactly the place the whole sequence is
- *  meant to be winding up. Extending the target by the same ratio keeps the
- *  rate flat across the handover instead, and the push takes it from there.
+ *  Every beat but the last is a straight line to its sample of the size curve.
+ *  The last is the shaped one - it lands on MAX_SCALE exactly, takes the
+ *  overrun to do it, and eases out, so the growth is spent early and the tail
+ *  is flat.
  */
 export function swellFor(index: number, count: number) {
   const scale = scaleFor(index, count);
   const duration = holdsFor(count)[index];
-  if (count < 2 || index !== count - 1) return { scale, duration };
+  if (count < 2 || index !== count - 1) {
+    return { scale, duration, easing: SWELL_EASING };
+  }
 
-  const previous = scaleFor(index - 1, count);
-  const overrun = duration + SWELL_OVERRUN_MS;
   return {
-    scale: previous + (scale - previous) * (overrun / duration),
-    duration: overrun,
+    scale,
+    duration: duration + SWELL_OVERRUN_MS,
+    easing: SWELL_FINAL_EASING,
   };
 }
 

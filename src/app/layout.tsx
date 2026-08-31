@@ -4,6 +4,7 @@ import {
   Noto_Sans_Devanagari,
   Noto_Sans_Tamil,
   Noto_Sans_Kannada,
+  Noto_Sans_Malayalam,
   Noto_Sans_Telugu,
 } from "next/font/google";
 import "./globals.css";
@@ -57,6 +58,13 @@ const notoTamil = Noto_Sans_Tamil({
 const notoKannada = Noto_Sans_Kannada({
   variable: "--font-greeting-kannada",
   subsets: ["kannada"],
+  display: "swap",
+  weight: ["700"],
+});
+
+const notoMalayalam = Noto_Sans_Malayalam({
+  variable: "--font-greeting-malayalam",
+  subsets: ["malayalam"],
   display: "swap",
   weight: ["700"],
 });
@@ -164,7 +172,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${tektur.variable} ${notoDevanagari.variable} ${notoTamil.variable} ${notoKannada.variable} ${notoTelugu.variable}`}>
+    <html lang="en" className={`${tektur.variable} ${notoDevanagari.variable} ${notoTamil.variable} ${notoKannada.variable} ${notoMalayalam.variable} ${notoTelugu.variable}`}>
       <body className="relative bg-black">
         <script
           type="application/ld+json"
