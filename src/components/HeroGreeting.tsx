@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import hero from "@/data/hero.json";
 import {
+  FLY_CUT_AT,
   FLY_EASING,
-  FLY_FADE_START,
   FLY_MS,
   FLY_SCALE,
   holdsFor,
@@ -71,7 +71,7 @@ const FLY_KEYFRAMES = `
   from { transform: scale(1); }
   to { transform: scale(${FLY_SCALE}); }
 }
-@keyframes hero-greeting-fade {
+@keyframes hero-greeting-cut {
   from { opacity: 1; }
   to { opacity: 0; }
 }`;
@@ -152,8 +152,11 @@ export default function HeroGreeting({ onDone }: { onDone: () => void }) {
           // applies it.
           animation: flying
             ? `hero-greeting-fly ${FLY_MS}ms ${FLY_EASING} forwards, ` +
-              `hero-greeting-fade ${FLY_MS * (1 - FLY_FADE_START)}ms linear ` +
-              `${FLY_MS * FLY_FADE_START}ms forwards`
+              // step-start holds the keyframe's end value for the whole
+              // duration, so this is a switch thrown once at the delay rather
+              // than a fade run over it.
+              `hero-greeting-cut ${FLY_MS * (1 - FLY_CUT_AT)}ms step-start ` +
+              `${FLY_MS * FLY_CUT_AT}ms forwards`
             : undefined,
         }}
       >

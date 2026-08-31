@@ -73,9 +73,19 @@ export const SWELL_HEADROOM = 2.2;
  *  stretches the sequence instead of becoming subliminal. */
 export const MIN_HOLD_MS = 90;
 
-/** How far along the fly the word fades out. Leaving is not the same as
- *  arriving: the letterform has to still be there while it is passing us. */
-export const FLY_FADE_START = 0.55;
+/** How far along the fly the word disappears, as a fraction of it.
+ *
+ *  A hard cut, not a fade. Passing through something does not dim it on the
+ *  way past - it is solid right up to the moment it is behind you, and then it
+ *  is not there. The fade this replaced started at 0.55 and spent the last
+ *  45% of the push turning the letterform translucent, which read as the word
+ *  dissolving in front of the camera rather than the camera going through it.
+ *
+ *  Late is the whole point: at 0.9 the glyph is measured at about 35x its own size and the gap
+ *  it was aimed at is many screens wide, so what leaves is a colour, not a
+ *  shape. Pulling this much before about 0.8 puts a recognisable letter on
+ *  screen at the instant it vanishes, and the cut becomes a blink. */
+export const FLY_CUT_AT = 0.9;
 
 /** The type size the last greeting reaches, as a multiple of the opening one. */
 export const MAX_SCALE = 2;
