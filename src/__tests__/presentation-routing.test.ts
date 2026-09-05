@@ -48,12 +48,41 @@ describe("routing a visitor to their presentation", () => {
     expect(DEFAULT_PRESENTATION).toBe("plain");
   });
 
-  it("sends a visitor who chose the cinematic to it from the front door", async () => {
+  it("keeps the front door plain even for a visitor who chose the cinematic", async () => {
+    // The journey is one section long. A stored preference that promotes `/`
+    // means anyone following a link to the site sees 28 screens of nothing —
+    // so the preference no longer reaches the address itself, only the menu.
     const response = await proxy(
       request("/", { [PRESENTATION_COOKIE]: "cinematic" }),
     );
 
+    expect(redirectTarget(response)).toBeNull();
+  });
+
+  it("sends the mode door to the journey, and lets the device decide from there", async () => {
+    const response = await proxy(request("/mode?mode=3D"));
+
+    // Case-insensitive: ?mode=3D is what gets typed. The device check is the
+    // scene's own ladder on arrival, which lands a device it turns away on `/`.
     expect(redirectTarget(response)).toBe("/cinematic");
+    expect(response.cookies.get(PRESENTATION_COOKIE)?.value).toBe("cinematic");
+  });
+
+  it("lets the mode door overrule a device that failed the journey before", async () => {
+    const response = await proxy(request("/mode?mode=3d", { [JOURNEY_BLOCKED_COOKIE]: "1" }));
+
+    expect(redirectTarget(response)).toBe("/cinematic");
+    const cleared = response.headers
+      .getSetCookie()
+      .find((header) => header.startsWith(`${JOURNEY_BLOCKED_COOKIE}=`));
+    expect(cleared).toContain("Expires=Thu, 01 Jan 1970");
+  });
+
+  it("sends any other mode to the plain site rather than stranding it", async () => {
+    expect(redirectTarget(await proxy(request("/mode")))).toBe("/");
+    expect(redirectTarget(await proxy(request("/mode?mode=holodeck")))).toBe("/");
+    expect(redirectTarget(await proxy(request("/mode?mode=3d&section=projects"))))
+      .toBe("/cinematic?section=projects");
   });
 
   it("does not redirect away from /cinematic just because the cookie says plain", async () => {
@@ -62,18 +91,6 @@ describe("routing a visitor to their presentation", () => {
     // not, or a shared link to the journey would never once show the journey.
     const response = await proxy(
       request("/cinematic", { [PRESENTATION_COOKIE]: "plain" }),
-    );
-
-    expect(redirectTarget(response)).toBeNull();
-  });
-
-  it("does not send a device that failed the journey back into it", async () => {
-    // The loop this whole session cookie exists to prevent.
-    const response = await proxy(
-      request("/", {
-        [PRESENTATION_COOKIE]: "cinematic",
-        [JOURNEY_BLOCKED_COOKIE]: "1",
-      }),
     );
 
     expect(redirectTarget(response)).toBeNull();
