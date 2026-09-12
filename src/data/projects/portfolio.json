@@ -101,6 +101,7 @@
   ],
   "gallery": [],
   "repositoryUrl": "https://github.com/KiranKalluri268/portfolio",
+  "liveUrl": "https://www.saikirankalluri.dev/",
   "seo": {
     "title": "Personal Portfolio Case Study",
     "description": "How this site is built and verified: content-driven pages, CI-gated tests, and a measured performance fix."
