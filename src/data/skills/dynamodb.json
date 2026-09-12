@@ -8,7 +8,7 @@
   "iconText": "DDB",
   "showInSkillsSection": true,
   "skillsSectionOrder": 20,
-  "showInResume": true,
+  "showInResume": false,
   "resumeGroup": "Databases",
   "resumeOrder": 5,
   "whatItIs": [

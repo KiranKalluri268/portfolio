@@ -8,7 +8,7 @@
   "iconText": "PG",
   "showInSkillsSection": true,
   "skillsSectionOrder": 18,
-  "showInResume": false,
+  "showInResume": true,
   "resumeGroup": "Databases",
   "resumeOrder": 3,
   "whatItIs": [
