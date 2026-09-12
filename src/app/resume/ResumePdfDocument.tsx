@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
   },
   entry: { marginTop: 0.4 },
   entryTitle: { fontFamily: "Times-Bold", fontSize: 10.5 },
-  projectLink: { color: "#111111", textDecoration: "underline" },
+  projectLink: { color: "#0563c1", textDecoration: "underline" },
   italic: { fontFamily: "Times-BoldItalic" },
   skillLine: { flexDirection: "row", flexWrap: "wrap" },
   bold: { fontFamily: "Times-Bold" },
