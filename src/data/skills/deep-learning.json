@@ -12,6 +12,10 @@
   "resumeGroup": "AI/ML",
   "resumeLabel": "Deep Learning (CNN, ResNet)",
   "resumeOrder": 3,
+  "showInResumeAi": true,
+  "resumeAiGroup": "AI/ML",
+  "resumeAiLabel": "Deep Learning (CNN, ResNet)",
+  "resumeAiOrder": 3,
   "whatItIs": [
     "Deep learning uses neural networks to learn useful representations from data."
   ],

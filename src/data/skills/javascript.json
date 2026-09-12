@@ -11,6 +11,9 @@
   "showInResume": true,
   "resumeGroup": "Languages",
   "resumeOrder": 2,
+  "showInResumeAi": true,
+  "resumeAiGroup": "Languages",
+  "resumeAiOrder": 2,
   "whatItIs": [
     "JavaScript is the runtime language used for browser interactions and server-side Node.js applications."
   ],

@@ -12,6 +12,10 @@
   "resumeGroup": "AI/ML",
   "resumeLabel": "RAG (Retrieval-Augmented Generation)",
   "resumeOrder": 2,
+  "showInResumeAi": true,
+  "resumeAiGroup": "AI/ML",
+  "resumeAiLabel": "RAG (Retrieval-Augmented Generation)",
+  "resumeAiOrder": 2,
   "whatItIs": [
     "RAG retrieves relevant information before generation so responses can use specific source context."
   ],

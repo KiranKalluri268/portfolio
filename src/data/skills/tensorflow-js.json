@@ -11,6 +11,9 @@
   "showInResume": false,
   "resumeGroup": "AI/ML",
   "resumeOrder": 1,
+  "showInResumeAi": true,
+  "resumeAiGroup": "AI/ML",
+  "resumeAiOrder": 1,
   "whatItIs": [
     "TensorFlow.js brings machine-learning models and tensor operations to JavaScript runtimes."
   ],
