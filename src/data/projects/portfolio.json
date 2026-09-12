@@ -1,7 +1,7 @@
 {
   "id": 11,
   "slug": "portfolio",
-  "title": "Personal Portfolio – Content-Driven Case-Study Platform",
+  "title": "Content-Driven Case-Study Platform – Personal Portfolio",
   "summary": "This site. A content-driven Next.js portfolio with its own scroll-choreographed animations, an interactive skill graph, and a CI pipeline that gates every change on real tests rather than on trust.",
   "status": "published",
   "featured": false,
