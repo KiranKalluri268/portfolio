@@ -12,13 +12,19 @@ import resume from "@/data/resume.json";
 import type { ResumeInternship } from "@/lib/content/types";
 import type { ResumeProject, ResumeSkillGroup } from "@/lib/content/resume";
 
-// `wrap={false}` on the Page below means react-pdf never paginates: content
-// taller than the declared A4 height does not clip, it silently grows the
-// page past 841.89pt instead. A page report of "1 page" therefore does not
-// mean "fits on A4" — it has to be checked against the real page height, not
-// assumed from the page count. These constants were tightened by measuring
-// the rendered PDF's actual height and trimming until it matched true A4
-// (595.28 x 841.89pt), rather than by guessing at a safe-looking number.
+// The Page below leaves react-pdf's default `wrap` behaviour (true) rather
+// than disabling it. `wrap={false}` does not just stop pagination — it lets
+// react-pdf auto-size the page to whatever the content needs, in *both*
+// directions: shorter content renders shorter than true A4 (a resume with
+// less on it silently came out at 725-740pt tall instead of a full
+// 841.89pt sheet), and longer content silently grows past 841.89pt instead
+// of clipping or paginating. Either way, "1 page" in the output does not
+// mean "a true A4 page." With `wrap` left on, the page stays a literal
+// 595.28 x 841.89pt (A4) box every time, and content that doesn't fit
+// becomes a real second page instead of a silently wrong-sized first one.
+// Verified both directions by rendering with @react-pdf/renderer directly
+// and reading the result back with `pdfinfo`, not by trusting the component
+// tree.
 const styles = StyleSheet.create({
   page: {
     width: 595.28,
@@ -110,7 +116,7 @@ export default function ResumePdfDocument({
       author={resume.basics.name}
       subject="Professional Resume"
     >
-      <Page size={{ width: 595.28, height: 841.89 }} style={styles.page} wrap={false}>
+      <Page size={{ width: 595.28, height: 841.89 }} style={styles.page}>
         <View style={styles.content}>
           <View>
           <Text style={styles.name}>{resume.basics.name}</Text>
