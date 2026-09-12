@@ -23,6 +23,7 @@ export function getResumeAiProjects(): ResumeProject[] {
     .map((project) => ({
       slug: project.slug,
       name: project.title,
+      liveUrl: project.liveUrl,
       technologies: project.resumeAi!.technologies,
       highlights: project.resumeAi!.highlights,
     }));
