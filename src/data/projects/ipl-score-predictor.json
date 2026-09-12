@@ -8,6 +8,15 @@
   "showInProjectsSection": true,
   "projectsSectionOrder": 3,
   "showInResume": false,
+  "showInResumeAi": true,
+  "resumeAi": {
+    "technologies": "Python, Keras, Deep Learning",
+    "highlights": [
+      "Built a deep neural network with Keras that estimates an IPL innings' final score from live match state — current runs, wickets, overs, and recent performance.",
+      "Designed the feature representation translating a continuously evolving match into stable model inputs rather than a fixed snapshot."
+    ],
+    "order": 2
+  },
   "image": "/images/project2.png",
   "imageAlt": "IPL score predictor interface",
   "role": "Machine learning development",

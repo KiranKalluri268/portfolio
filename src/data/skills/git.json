@@ -11,6 +11,9 @@
   "showInResume": true,
   "resumeGroup": "Cloud & DevOps",
   "resumeOrder": 2,
+  "showInResumeAi": true,
+  "resumeAiGroup": "Cloud & DevOps",
+  "resumeAiOrder": 3,
   "whatItIs": [
     "Git records source history and supports branching, review, and collaborative development."
   ],

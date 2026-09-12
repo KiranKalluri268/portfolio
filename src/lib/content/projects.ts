@@ -50,6 +50,17 @@ export function validateProject(value: unknown, source: string): ProjectContent 
     assertString(value.resume.technologies, "technologies", `${source}.resume`);
     assertStringArray(value.resume.highlights, "highlights", `${source}.resume`);
   }
+  // showInResumeAi is optional (most projects appear on neither, one, or the
+  // other résumé) so existing files without it are still valid; when present
+  // it follows the same rule as showInResume above.
+  if (value.showInResumeAi !== undefined && typeof value.showInResumeAi !== "boolean") {
+    throw new Error(`${source}: "showInResumeAi" must be a boolean`);
+  }
+  if (value.showInResumeAi) {
+    assertRecord(value.resumeAi, `${source}.resumeAi`);
+    assertString(value.resumeAi.technologies, "technologies", `${source}.resumeAi`);
+    assertStringArray(value.resumeAi.highlights, "highlights", `${source}.resumeAi`);
+  }
   if (!Array.isArray(value.howItWorks) || !Array.isArray(value.buildingProcess)) {
     throw new Error(`${source}: process fields must be arrays`);
   }

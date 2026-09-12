@@ -11,6 +11,9 @@
   "showInResume": true,
   "resumeGroup": "Web/Frameworks",
   "resumeOrder": 4,
+  "showInResumeAi": true,
+  "resumeAiGroup": "Web/Frameworks",
+  "resumeAiOrder": 3,
   "whatItIs": [
     "Express provides routing and middleware primitives for Node.js web services."
   ],

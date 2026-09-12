@@ -1,7 +1,7 @@
 {
   "basics": {
     "name": "SAIKIRAN KALLURI",
-    "headline": "Full-Stack Engineer — Frontend · Backend · AWS Deployment",
+    "headline": "Software Engineer — Applied Machine Learning & Full-Stack Systems",
     "location": "Telangana, India",
     "phone": "+91-8897008268",
     "email": "kirankalluri888@gmail.com",
@@ -20,13 +20,13 @@
       }
     ]
   },
-  "objective": "Full-stack engineer working in React, Next.js, TypeScript, Node and Python. Recently built an internal diagnostics platform at Aude.ai. Outside work I maintain a portfolio codebase with CI-gated unit and browser test suites, and a written record of its own known defects.",
+  "objective": "Software engineer with applied machine-learning experience — trained a hybrid CNN/ResNet ensemble to 94.25% accuracy for real-time engagement detection and shipped it as client-side inference inside a full WebRTC product, then built a second deep-learning model estimating live match outcomes. Full-stack background in React, Next.js, and Node means I can take a model from notebook to production, not just to a demo.",
   "skillGroupOrder": [
     "Languages",
+    "AI/ML",
     "Web/Frameworks",
     "Databases",
-    "Cloud & DevOps",
-    "Other Tools"
+    "Cloud & DevOps"
   ],
   "education": {
     "degree": "Bachelor of Technology – Computer Science & Engineering",

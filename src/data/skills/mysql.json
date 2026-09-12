@@ -8,7 +8,7 @@
   "iconText": "SQL",
   "showInSkillsSection": true,
   "skillsSectionOrder": 17,
-  "showInResume": true,
+  "showInResume": false,
   "resumeGroup": "Databases",
   "resumeOrder": 2,
   "whatItIs": [

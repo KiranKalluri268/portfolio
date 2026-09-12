@@ -47,6 +47,11 @@ export interface ProjectContent {
   /** Opt in to the one-page résumé. The CV always includes everything. */
   showInResume: boolean;
   resume?: ProjectResumeEntry;
+  /** Opt in to the AI/ML-focused résumé variant at /resume/ai, independent of
+   *  showInResume/resume — a project can appear on one résumé, the other,
+   *  both, or neither. */
+  showInResumeAi?: boolean;
+  resumeAi?: ProjectResumeEntry;
   /** Optional: internal and client work often has no shareable screenshot, in
    *  which case the UI falls back to a generated monogram panel. */
   image?: string;
@@ -247,6 +252,13 @@ export interface SkillContent {
   resumeGroup?: string;
   resumeLabel?: string;
   resumeOrder?: number;
+  /** Opt in to the AI/ML-focused résumé variant at /resume/ai, with its own
+   *  grouping and ordering independent of resumeGroup/resumeLabel/resumeOrder
+   *  so the two résumés can each curate the same skill graph differently. */
+  showInResumeAi?: boolean;
+  resumeAiGroup?: string;
+  resumeAiLabel?: string;
+  resumeAiOrder?: number;
   whatItIs: string[];
   howILearned: string[];
   howIUseIt: string[];
