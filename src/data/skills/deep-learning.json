@@ -8,7 +8,7 @@
   "iconText": "DL",
   "showInSkillsSection": true,
   "skillsSectionOrder": 15,
-  "showInResume": true,
+  "showInResume": false,
   "resumeGroup": "AI/ML",
   "resumeLabel": "Deep Learning (CNN, ResNet)",
   "resumeOrder": 3,

@@ -8,7 +8,7 @@
   "iconText": "C",
   "showInSkillsSection": true,
   "skillsSectionOrder": 26,
-  "showInResume": true,
+  "showInResume": false,
   "resumeGroup": "Other Tools",
   "resumeOrder": 3,
   "whatItIs": [

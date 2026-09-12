@@ -7,7 +7,7 @@
   "featured": true,
   "showInProjectsSection": true,
   "projectsSectionOrder": 1,
-  "showInResume": true,
+  "showInResume": false,
   "resume": {
     "technologies": "MERN, TensorFlow.js, WebRTC, Python",
     "highlights": [

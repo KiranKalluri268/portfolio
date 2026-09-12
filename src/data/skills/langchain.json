@@ -8,7 +8,7 @@
   "iconText": "LC",
   "showInSkillsSection": true,
   "skillsSectionOrder": 13,
-  "showInResume": true,
+  "showInResume": false,
   "resumeGroup": "AI/ML",
   "resumeOrder": 4,
   "whatItIs": [

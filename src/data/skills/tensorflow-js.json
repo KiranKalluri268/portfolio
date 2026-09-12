@@ -8,7 +8,7 @@
   "iconText": "TF",
   "showInSkillsSection": true,
   "skillsSectionOrder": 12,
-  "showInResume": true,
+  "showInResume": false,
   "resumeGroup": "AI/ML",
   "resumeOrder": 1,
   "whatItIs": [
