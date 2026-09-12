@@ -144,16 +144,7 @@ export default function ResumePdfDocument({
             <Text>{resume.objective}</Text>
           </PdfSection>
 
-          <PdfSection title="Core Skills">
-            {skillGroups.map((skill) => (
-              <View style={styles.skillLine} key={skill.category}>
-                <Text style={styles.bold}>{skill.category}: </Text>
-                <Text>{skill.items.join(", ")}</Text>
-              </View>
-            ))}
-          </PdfSection>
-
-          <PdfSection title="Internships">
+          <PdfSection title="Experience">
             {internships.map((internship) => (
               <View style={styles.entry} key={`${internship.company}-${internship.role}`}>
                 <Text style={styles.entryTitle}>
@@ -177,6 +168,15 @@ export default function ResumePdfDocument({
                   <Text style={styles.italic}>({project.technologies})</Text>
                 </Text>
                 <BulletList items={project.highlights} />
+              </View>
+            ))}
+          </PdfSection>
+
+          <PdfSection title="Core Skills">
+            {skillGroups.map((skill) => (
+              <View style={styles.skillLine} key={skill.category}>
+                <Text style={styles.bold}>{skill.category}: </Text>
+                <Text>{skill.items.join(", ")}</Text>
               </View>
             ))}
           </PdfSection>

@@ -15,8 +15,8 @@ import type { ResumeProject, ResumeSkillGroup } from "@/lib/content/resume";
 // Kept as an independent copy of ResumePdfDocument's styles rather than a
 // shared import, deliberately: the two résumés are allowed to drift in
 // content and layout without either one's PDF risking the other's build.
-// See the sibling file's own comment for why wrap={false} and these exact A4
-// dimensions matter.
+// See the sibling file's own comment for why these exact A4 dimensions and
+// `wrap` left on (not `wrap={false}`) matter.
 const styles = StyleSheet.create({
   page: {
     width: 595.28,
@@ -52,6 +52,7 @@ const styles = StyleSheet.create({
   },
   entry: { marginTop: 0.4 },
   entryTitle: { fontFamily: "Times-Bold", fontSize: 10.5 },
+  projectLink: { color: "#0563c1", textDecoration: "underline" },
   italic: { fontFamily: "Times-BoldItalic" },
   skillLine: { flexDirection: "row", flexWrap: "wrap" },
   bold: { fontFamily: "Times-Bold" },
@@ -108,7 +109,7 @@ export default function ResumeAiPdfDocument({
       author={resumeAi.basics.name}
       subject="Applied Machine Learning Resume"
     >
-      <Page size={{ width: 595.28, height: 841.89 }} style={styles.page} wrap={false}>
+      <Page size={{ width: 595.28, height: 841.89 }} style={styles.page}>
         <View style={styles.content}>
           <View>
           <Text style={styles.name}>{resumeAi.basics.name}</Text>
@@ -135,16 +136,7 @@ export default function ResumeAiPdfDocument({
             <Text>{resumeAi.objective}</Text>
           </PdfSection>
 
-          <PdfSection title="Core Skills">
-            {skillGroups.map((skill) => (
-              <View style={styles.skillLine} key={skill.category}>
-                <Text style={styles.bold}>{skill.category}: </Text>
-                <Text>{skill.items.join(", ")}</Text>
-              </View>
-            ))}
-          </PdfSection>
-
-          <PdfSection title="Internships">
+          <PdfSection title="Experience">
             {internships.map((internship) => (
               <View style={styles.entry} key={`${internship.company}-${internship.role}`}>
                 <Text style={styles.entryTitle}>
@@ -160,9 +152,23 @@ export default function ResumeAiPdfDocument({
             {projects.map((project) => (
               <View style={styles.entry} key={project.slug}>
                 <Text style={styles.entryTitle}>
-                  {project.name} <Text style={styles.italic}>({project.technologies})</Text>
+                  {project.liveUrl ? (
+                    <Link src={project.liveUrl} style={styles.projectLink}>{project.name}</Link>
+                  ) : (
+                    project.name
+                  )}{" "}
+                  <Text style={styles.italic}>({project.technologies})</Text>
                 </Text>
                 <BulletList items={project.highlights} />
+              </View>
+            ))}
+          </PdfSection>
+
+          <PdfSection title="Core Skills">
+            {skillGroups.map((skill) => (
+              <View style={styles.skillLine} key={skill.category}>
+                <Text style={styles.bold}>{skill.category}: </Text>
+                <Text>{skill.items.join(", ")}</Text>
               </View>
             ))}
           </PdfSection>

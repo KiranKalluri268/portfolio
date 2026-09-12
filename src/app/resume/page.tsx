@@ -87,16 +87,7 @@ export default function ResumePage() {
           <p className={styles.paragraph}>{resume.objective}</p>
         </Section>
 
-        <Section title="Core Skills" order={2}>
-          {skillGroups.map((skill) => (
-            <p className={styles.skill} key={skill.category}>
-              <span className={styles.skillLabel}>{skill.category}:</span>{" "}
-              {skill.items.join(", ")}
-            </p>
-          ))}
-        </Section>
-
-        <Section title="Internships" order={3}>
+        <Section title="Experience" order={2}>
           {internships.map((internship) => (
             <div key={`${internship.company}-${internship.role}`}>
               <h3 className={styles.entryTitle}>
@@ -110,7 +101,7 @@ export default function ResumePage() {
           ))}
         </Section>
 
-        <Section title="Projects" order={4}>
+        <Section title="Projects" order={3}>
           {projects.map((project) => (
             <div key={project.slug}>
               <h3 className={styles.entryTitle}>
@@ -132,6 +123,15 @@ export default function ResumePage() {
                 {project.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}
               </ul>
             </div>
+          ))}
+        </Section>
+
+        <Section title="Core Skills" order={4}>
+          {skillGroups.map((skill) => (
+            <p className={styles.skill} key={skill.category}>
+              <span className={styles.skillLabel}>{skill.category}:</span>{" "}
+              {skill.items.join(", ")}
+            </p>
           ))}
         </Section>
 
