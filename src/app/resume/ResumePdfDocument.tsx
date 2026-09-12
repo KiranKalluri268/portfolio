@@ -60,6 +60,7 @@ const styles = StyleSheet.create({
   },
   entry: { marginTop: 0.4 },
   entryTitle: { fontFamily: "Times-Bold", fontSize: 10.5 },
+  projectLink: { color: "#111111", textDecoration: "underline" },
   italic: { fontFamily: "Times-BoldItalic" },
   skillLine: { flexDirection: "row", flexWrap: "wrap" },
   bold: { fontFamily: "Times-Bold" },
@@ -168,7 +169,12 @@ export default function ResumePdfDocument({
             {projects.map((project) => (
               <View style={styles.entry} key={project.slug}>
                 <Text style={styles.entryTitle}>
-                  {project.name} <Text style={styles.italic}>({project.technologies})</Text>
+                  {project.liveUrl ? (
+                    <Link src={project.liveUrl} style={styles.projectLink}>{project.name}</Link>
+                  ) : (
+                    project.name
+                  )}{" "}
+                  <Text style={styles.italic}>({project.technologies})</Text>
                 </Text>
                 <BulletList items={project.highlights} />
               </View>

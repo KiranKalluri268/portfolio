@@ -114,7 +114,18 @@ export default function ResumePage() {
           {projects.map((project) => (
             <div key={project.slug}>
               <h3 className={styles.entryTitle}>
-                {project.name}{" "}
+                {project.liveUrl ? (
+                  <a
+                    href={project.liveUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.projectLink}
+                  >
+                    {project.name}
+                  </a>
+                ) : (
+                  project.name
+                )}{" "}
                 <span className={styles.technologies}>({project.technologies})</span>
               </h3>
               <ul className={styles.list}>
