@@ -1,0 +1,53 @@
+{
+  "basics": {
+    "name": "SAIKIRAN KALLURI",
+    "headline": "Software Engineer — Applied Machine Learning & Full-Stack Systems",
+    "location": "Telangana, India",
+    "phone": "+91-8897008268",
+    "email": "kirankalluri888@gmail.com",
+    "links": [
+      {
+        "label": "linkedin.com/in/saikiran-kalluri",
+        "url": "https://linkedin.com/in/saikiran-kalluri"
+      },
+      {
+        "label": "github.com/KiranKalluri268",
+        "url": "https://github.com/KiranKalluri268"
+      },
+      {
+        "label": "saikirankalluri.dev",
+        "url": "https://saikirankalluri.dev"
+      }
+    ]
+  },
+  "objective": "Software engineer with applied machine-learning experience — trained a hybrid CNN/ResNet ensemble to 94.25% accuracy for real-time engagement detection and shipped it as client-side inference inside a full WebRTC product, then built a second deep-learning model estimating live match outcomes. Full-stack background in React, Next.js, and Node means I can take a model from notebook to production, not just to a demo.",
+  "skillGroupOrder": [
+    "Languages",
+    "AI/ML",
+    "Web/Frameworks",
+    "Databases",
+    "Cloud & DevOps"
+  ],
+  "education": {
+    "degree": "Bachelor of Technology – Computer Science & Engineering",
+    "institution": "Vaagdevi College of Engineering",
+    "period": "2022–2026",
+    "cgpa": "8.27"
+  },
+  "certifications": [
+    "AWS Cloud Foundations & Architecture – 2024",
+    "Cisco: Python, Cybersecurity & Packet Tracer – 2024",
+    "Oracle Fusion Cloud Process Essentials (SCM, ERP, CX, HCM) – 2025"
+  ],
+  "languages": [
+    "English",
+    "Telugu",
+    "Hindi"
+  ],
+  "strengths": [
+    "Problem-solving",
+    "leadership",
+    "curiosity",
+    "fast learning"
+  ]
+}
