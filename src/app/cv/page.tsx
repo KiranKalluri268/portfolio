@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import BackNavigationButton from "@/components/BackNavigationButton";
 import { getCvData } from "@/lib/content/cv";
-import type { CvProject, CvRole } from "@/lib/content/types";
+import type { CvProject, CvRole, CvSkillGroup } from "@/lib/content/types";
 import PaperViewport from "@/components/PaperViewport";
 import PaperReveal from "@/components/PaperReveal";
 import CvPages, { type CvBlock } from "./CvPages";
@@ -74,6 +74,12 @@ function RoleEntry({ role }: { role: CvRole }) {
 
       <p className={`${styles.paragraph} ${styles.summary}`}>{role.summary}</p>
 
+      {role.overview.map((paragraph) => (
+        <p className={styles.paragraph} key={paragraph}>
+          {paragraph}
+        </p>
+      ))}
+
       {role.workItems.length > 0 && (
         <>
           <h4 className={styles.subheading}>What I worked on</h4>
@@ -100,6 +106,54 @@ function RoleEntry({ role }: { role: CvRole }) {
         </>
       )}
 
+      {role.outcomes.length > 0 && (
+        <p className={styles.techLine}>
+          <span className={styles.techLabel}>Outcomes:</span>{" "}
+          {role.outcomes.map((outcome) => `${outcome.value} ${outcome.label}`).join(" · ")}
+        </p>
+      )}
+
+      {role.lessonsLearned.length > 0 && (
+        <>
+          <h4 className={styles.subheading}>Lessons learned</h4>
+          <ul className={styles.list}>
+            {role.lessonsLearned.map((lesson) => (
+              <li key={lesson}>{lesson}</li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      {role.recommendations.map((recommendation) => (
+        <blockquote className={styles.quote} key={recommendation.author}>
+          {recommendation.quote.map((paragraph) => (
+            <p key={paragraph}>{paragraph}</p>
+          ))}
+          <p className={styles.quoteAttribution}>
+            <span className={styles.quoteAuthor}>{recommendation.author}</span>
+            {recommendation.authorTitle && `, ${recommendation.authorTitle}`}
+          </p>
+        </blockquote>
+      ))}
+    </article>
+  );
+}
+
+function SkillGroupEntry({ group }: { group: CvSkillGroup }) {
+  return (
+    <article className={styles.entry}>
+      <h3 className={styles.entryTitle}>{group.label}</h3>
+      {group.skills.map((skill) => (
+        <div className={styles.workItem} key={skill.name}>
+          <p className={styles.workItemTitle}>{skill.name}</p>
+          <p className={styles.workItemBody}>{skill.shortDescription}</p>
+          {skill.howIUseIt.length > 0 && (
+            <p className={styles.impact}>
+              <strong>How I use it:</strong> {skill.howIUseIt.join(" ")}
+            </p>
+          )}
+        </div>
+      ))}
     </article>
   );
 }
@@ -114,6 +168,64 @@ function ProjectEntry({ project }: { project: CvProject }) {
 
       <p className={`${styles.paragraph} ${styles.summary}`}>{project.summary}</p>
 
+      {project.overview.map((paragraph) => (
+        <p className={styles.paragraph} key={paragraph}>
+          {paragraph}
+        </p>
+      ))}
+
+      {project.problem && (
+        <p className={styles.paragraph}>
+          <strong>Problem:</strong> {project.problem}
+        </p>
+      )}
+      {project.solution && (
+        <p className={styles.paragraph}>
+          <strong>Solution:</strong> {project.solution}
+        </p>
+      )}
+
+      {project.howItWorks.length > 0 && (
+        <>
+          <h4 className={styles.subheading}>How it works</h4>
+          {project.howItWorks.map((item) => (
+            <div className={styles.workItem} key={item.title}>
+              <p className={styles.workItemTitle}>{item.title}</p>
+              <p className={styles.workItemBody}>{item.description}</p>
+            </div>
+          ))}
+        </>
+      )}
+
+      {project.buildingProcess.length > 0 && (
+        <>
+          <h4 className={styles.subheading}>How it was built</h4>
+          {project.buildingProcess.map((item) => (
+            <div className={styles.workItem} key={item.title}>
+              <p className={styles.workItemTitle}>{item.title}</p>
+              <p className={styles.workItemBody}>{item.description}</p>
+            </div>
+          ))}
+        </>
+      )}
+
+      {project.challenges.length > 0 && (
+        <>
+          <h4 className={styles.subheading}>Challenges</h4>
+          {project.challenges.map((item) => (
+            <div className={styles.workItem} key={item.challenge}>
+              <p className={styles.workItemTitle}>{item.challenge}</p>
+              <p className={styles.workItemBody}>{item.solution}</p>
+              {item.lesson && (
+                <p className={styles.impact}>
+                  <strong>Lesson:</strong> {item.lesson}
+                </p>
+              )}
+            </div>
+          ))}
+        </>
+      )}
+
       {project.highlights.length > 0 && (
         <ul className={styles.list}>
           {project.highlights.map((highlight) => (
@@ -127,6 +239,17 @@ function ProjectEntry({ project }: { project: CvProject }) {
           <span className={styles.techLabel}>Outcomes:</span>{" "}
           {project.outcomes.map((outcome) => `${outcome.value} ${outcome.label}`).join(" · ")}
         </p>
+      )}
+
+      {project.lessonsLearned.length > 0 && (
+        <>
+          <h4 className={styles.subheading}>Lessons learned</h4>
+          <ul className={styles.list}>
+            {project.lessonsLearned.map((lesson) => (
+              <li key={lesson}>{lesson}</li>
+            ))}
+          </ul>
+        </>
       )}
 
       <TechLine label="Technologies" items={project.technologies} />
@@ -210,12 +333,7 @@ export default function CvPage() {
       "Technical Skills",
       cv.skillGroups.map((group) => ({
         id: `skills-${group.label}`,
-        node: (
-          <p className={styles.skillGroup}>
-            <span className={styles.skillLabel}>{group.label}:</span>{" "}
-            {group.skills.map((skill) => skill.name).join(", ")}
-          </p>
-        ),
+        node: <SkillGroupEntry group={group} />,
       })),
     ),
     ...sectionBlocks("Education", [
