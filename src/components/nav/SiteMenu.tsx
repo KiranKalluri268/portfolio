@@ -207,13 +207,16 @@ export default function SiteMenu() {
     setPresentation(next);
 
     const href = PRESENTATION_ROUTES[next];
-    // From a sub-route the choice is remembered and nothing else happens.
-    // Switching presentation is not a request to leave the page you are reading;
-    // /projects is /projects either way, and the choice takes effect the next
-    // time you go home.
-    const atFrontDoor =
-      pathname === PRESENTATION_ROUTES.plain || pathname === PRESENTATION_ROUTES.cinematic;
-    if (!atFrontDoor || pathname === href) {
+    // Which presentation you are reading right now: /cinematic is the journey,
+    // everything else on the site is the plain one.
+    const current: Presentation =
+      pathname === PRESENTATION_ROUTES.cinematic ? "cinematic" : "plain";
+    // Asking for the one you are already in is not a navigation. That covers a
+    // sub-route too: /projects is the plain presentation, so choosing Plain
+    // there records the choice without dragging you off what you were reading.
+    // Choosing Cinematic does go — since `/` is now always the plain site, a
+    // remembered preference alone would never show anyone the journey.
+    if (current === next) {
       close();
       return;
     }

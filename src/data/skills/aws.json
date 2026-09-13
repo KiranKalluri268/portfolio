@@ -12,6 +12,10 @@
   "resumeGroup": "Cloud & DevOps",
   "resumeLabel": "AWS (EC2, S3, Lambda, IAM, IVS, DynamoDB, Amplify)",
   "resumeOrder": 1,
+  "showInResumeAi": true,
+  "resumeAiGroup": "Cloud & DevOps",
+  "resumeAiLabel": "AWS (EC2, S3, Lambda, IAM, IVS, DynamoDB, Amplify)",
+  "resumeAiOrder": 1,
   "whatItIs": [
     "AWS provides cloud services for hosting, data, networking, security, and application infrastructure."
   ],

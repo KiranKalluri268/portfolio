@@ -11,6 +11,9 @@
   "showInResume": true,
   "resumeGroup": "Cloud & DevOps",
   "resumeOrder": 3,
+  "showInResumeAi": true,
+  "resumeAiGroup": "Cloud & DevOps",
+  "resumeAiOrder": 2,
   "whatItIs": [
     "Docker packages applications and their runtime dependencies into portable containers."
   ],

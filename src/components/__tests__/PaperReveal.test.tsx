@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import PaperReveal from "../PaperReveal";
@@ -85,9 +85,17 @@ describe("PaperReveal", () => {
     const { container } = render(<Document />);
     await waitFor(() => expect(container.querySelector(".paper-writing")).not.toBeNull());
 
+    // The "writing" state's own effect — the one that attaches the scroll
+    // listeners below — is a passive effect, so it can still be pending in
+    // React's scheduler even once the DOM above has committed. Flushing here
+    // guarantees the listener exists before the event that must reach it.
+    await act(async () => {});
+
     // Someone scrolling is reading, and the rest of the page is blank paper
     // below them.
-    window.dispatchEvent(new Event("wheel"));
+    act(() => {
+      window.dispatchEvent(new Event("wheel"));
+    });
 
     await waitFor(() => {
       expect(container.querySelector(".paper-writing")).toBeNull();

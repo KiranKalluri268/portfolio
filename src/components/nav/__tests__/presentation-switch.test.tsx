@@ -83,16 +83,35 @@ describe("the presentation switch", () => {
     await waitFor(() => expect(push).toHaveBeenCalledWith("/cinematic"));
   });
 
-  it("remembers the choice from a sub-route without dragging you off the page", async () => {
-    // Switching presentation is not a request to leave what you are reading.
-    // /projects is /projects either way, and the choice takes effect next time
-    // you go home.
+  it("takes you to the journey from a sub-route, since nothing else will", async () => {
+    // `/` is always the plain site now, so a remembered preference on its own
+    // would never once show anyone the cinematic.
     pathname = "/projects";
     openMenu();
     fireEvent.click(await screen.findByRole("button", { name: /Cinematic/ }));
 
     expect(rememberPresentation).toHaveBeenCalledWith("cinematic");
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/cinematic"));
+  });
+
+  it("records plain from a sub-route without dragging you off the page", async () => {
+    // /projects is already the plain presentation; there is nowhere to go.
+    pathname = "/projects";
+    storedPresentation = "cinematic";
+    openMenu();
+    fireEvent.click(await screen.findByRole("button", { name: /Plain/ }));
+
+    expect(rememberPresentation).toHaveBeenCalledWith("plain");
     expect(push).not.toHaveBeenCalled();
+  });
+
+  it("leaves the journey when you choose plain from it", async () => {
+    pathname = "/cinematic";
+    openMenu();
+    fireEvent.click(await screen.findByRole("button", { name: /Plain/ }));
+
+    expect(rememberPresentation).toHaveBeenCalledWith("plain");
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/"));
   });
 
   it("does not navigate to the presentation you are already in", async () => {

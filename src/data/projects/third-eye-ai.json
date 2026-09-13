@@ -9,11 +9,22 @@
   "projectsSectionOrder": 1,
   "showInResume": true,
   "resume": {
+    "technologies": "MERN, WebRTC, TensorFlow.js",
+    "highlights": [
+      "Built a full WebRTC video-conferencing platform from scratch — a Google Meet-style app supporting real-time multi-participant classes.",
+      "Designed and shipped a real-time analytics dashboard giving instructors live engagement visualizations during a session.",
+      "Integrated a browser-side machine-learning model for engagement scoring, achieving 94.25% accuracy, with all inference running client-side so no participant video left the browser.",
+      "Built a natural-language query layer so instructors can ask questions directly about session data."
+    ],
+    "order": 1
+  },
+  "showInResumeAi": true,
+  "resumeAi": {
     "technologies": "MERN, TensorFlow.js, WebRTC, Python",
     "highlights": [
       "Engineered a hybrid ensemble bagging model (1D CNN and 1D ResNet) trained on the DAiSEE dataset to achieve 94.25% accuracy in detecting student engagement.",
       "Implemented client-side inference using TensorFlow.js, enabling infinite horizontal scaling and ensuring user privacy by processing video streams locally within the browser.",
-      "Developed a fully functional WebRTC-based meeting engine for online classes, featuring real-time data visualization of engagement metrics for instructors.",
+      "Built the full WebRTC meeting engine the model runs inside — a real-time video platform for online classes with live engagement visualization for instructors.",
       "Integrated a RAG (Retrieval-Augmented Generation) system to allow instructors to query session data using natural language, providing instant insights into student participation and distractions."
     ],
     "order": 1
@@ -98,7 +109,7 @@
   ],
   "gallery": [],
   "repositoryUrl": "https://github.com/KiranKalluri268/ThirdEye_Client",
-  "liveUrl": "https://thirdeyeai.vercel.app/",
+  "liveUrl": "https://thirdeyeai.saikirankalluri.dev/",
   "seo": {
     "title": "ThirdEyeAI Project Case Study",
     "description": "How I built a privacy-first engagement detection and WebRTC meeting platform."

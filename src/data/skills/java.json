@@ -8,7 +8,7 @@
   "iconText": "Java",
   "showInSkillsSection": true,
   "skillsSectionOrder": 11,
-  "showInResume": true,
+  "showInResume": false,
   "resumeGroup": "Languages",
   "resumeOrder": 3,
   "whatItIs": [

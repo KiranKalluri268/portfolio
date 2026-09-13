@@ -1,25 +1,25 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
-import resume from "@/data/resume.json";
+import resumeAi from "@/data/resume-ai.json";
 import BackNavigationButton from "@/components/BackNavigationButton";
-import { getResumeData } from "@/lib/content/resume";
+import { getResumeAiData } from "@/lib/content/resume-ai";
 import PaperViewport from "@/components/PaperViewport";
 import PaperReveal from "@/components/PaperReveal";
 import { REVEAL_LEAD_IN_MS, RESUME_STEP_MS, revealProps } from "@/components/paper-reveal";
-import DownloadResumeButton from "./DownloadResumeButton";
-import styles from "./resume.module.css";
+import DownloadResumeAiButton from "./DownloadResumeAiButton";
+import styles from "../resume.module.css";
 
 export const metadata: Metadata = {
-  title: "Resume",
-  description: "View and download the professional resume of software engineer Saikiran Kalluri.",
+  title: "AI/ML Resume",
+  description: "The applied machine-learning focused resume of software engineer Saikiran Kalluri.",
   alternates: {
-    canonical: "/resume",
+    canonical: "/resume/ai",
   },
   openGraph: {
-    title: "Resume | Saikiran Kalluri",
-    description: "Experience, projects, and technical skills of software engineer Saikiran Kalluri.",
-    url: "/resume",
+    title: "AI/ML Resume | Saikiran Kalluri",
+    description: "Applied machine-learning experience, projects, and technical skills of software engineer Saikiran Kalluri.",
+    url: "/resume/ai",
   },
 };
 
@@ -39,8 +39,8 @@ function Section({ title, order, children }: { title: string; order: number; chi
   );
 }
 
-export default function ResumePage() {
-  const { internships, projects, skillGroups } = getResumeData();
+export default function ResumeAiPage() {
+  const { internships, projects, skillGroups } = getResumeAiData();
   return (
     <main className={styles.page}>
       <div className={styles.actions}>
@@ -48,34 +48,36 @@ export default function ResumePage() {
           <BackNavigationButton className={styles.backLink}>
             ← Back to portfolio
           </BackNavigationButton>
-          <DownloadResumeButton internships={internships} projects={projects} skillGroups={skillGroups} />
+          <DownloadResumeAiButton internships={internships} projects={projects} skillGroups={skillGroups} />
         </div>
         <p className={styles.resumeNote}>
-          This is not an embedded PDF. The resume is built from structured JSON and rendered as accessible HTML.
-          For the long form with every role and project, see the <Link href="/cv">CV</Link>.
+          This is the applied machine-learning focused version of my resume. This is not an embedded PDF —
+          it is built from structured JSON and rendered as accessible HTML. For the general software
+          engineering resume, see <Link href="/resume">/resume</Link>; for the long form with every role
+          and project, see the <Link href="/cv">CV</Link>.
         </p>
       </div>
       <PaperReveal>
       <PaperViewport className={styles.paperFrame}>
-        <article className={styles.paper} aria-label={`${resume.basics.name} resume`}>
+        <article className={styles.paper} aria-label={`${resumeAi.basics.name} AI/ML resume`}>
         <header {...landsAt(0)}>
-          <h1 className={styles.name}>{resume.basics.name}</h1>
-          <p className={styles.headline}>{resume.basics.headline}</p>
+          <h1 className={styles.name}>{resumeAi.basics.name}</h1>
+          <p className={styles.headline}>{resumeAi.basics.headline}</p>
           <p className={styles.contactLine}>
-            {resume.basics.location} <span className={styles.separator}>|</span>{" "}
-            <a className={styles.contactLink} href={`tel:${resume.basics.phone.replace(/[^+\d]/g, "")}`}>
-              {resume.basics.phone}
+            {resumeAi.basics.location} <span className={styles.separator}>|</span>{" "}
+            <a className={styles.contactLink} href={`tel:${resumeAi.basics.phone.replace(/[^+\d]/g, "")}`}>
+              {resumeAi.basics.phone}
             </a>{" "}
             <span className={styles.separator}>|</span>{" "}
-            <a className={styles.contactLink} href={`mailto:${resume.basics.email}`}>
-              {resume.basics.email}
+            <a className={styles.contactLink} href={`mailto:${resumeAi.basics.email}`}>
+              {resumeAi.basics.email}
             </a>
           </p>
           <p className={styles.links}>
-            {resume.basics.links.map((link, index) => (
+            {resumeAi.basics.links.map((link, index) => (
               <span key={link.url}>
                 <a href={link.url} target="_blank" rel="noopener noreferrer">{link.label}</a>
-                {index < resume.basics.links.length - 1 && (
+                {index < resumeAi.basics.links.length - 1 && (
                   <> <span className={styles.separator}>|</span>{" "}</>
                 )}
               </span>
@@ -84,7 +86,7 @@ export default function ResumePage() {
         </header>
 
         <Section title="Summary" order={1}>
-          <p className={styles.paragraph}>{resume.objective}</p>
+          <p className={styles.paragraph}>{resumeAi.objective}</p>
         </Section>
 
         <Section title="Experience" order={2}>
@@ -137,18 +139,18 @@ export default function ResumePage() {
 
         <Section title="Education" order={5}>
           <p className={styles.education}>
-            {resume.education.degree} <span className={styles.separator}>|</span>{" "}
-            {resume.education.institution} <span className={styles.separator}>|</span>{" "}
-            {resume.education.period} <span className={styles.separator}>|</span>{" "}
-            <span className={styles.noBreak}>CGPA: {resume.education.cgpa}</span>
+            {resumeAi.education.degree} <span className={styles.separator}>|</span>{" "}
+            {resumeAi.education.institution} <span className={styles.separator}>|</span>{" "}
+            {resumeAi.education.period} <span className={styles.separator}>|</span>{" "}
+            <span className={styles.noBreak}>CGPA: {resumeAi.education.cgpa}</span>
           </p>
         </Section>
 
         <div className={styles.footer} {...landsAt(6)}>
           <p className={styles.footerLine}>
-            <span className={styles.footerLabel}>Languages:</span> {resume.languages.join(", ")}{" "}
+            <span className={styles.footerLabel}>Languages:</span> {resumeAi.languages.join(", ")}{" "}
             <span className={styles.separator}>|</span>{" "}
-            <span className={styles.footerLabel}>Strengths:</span> {resume.strengths.join(", ")}
+            <span className={styles.footerLabel}>Strengths:</span> {resumeAi.strengths.join(", ")}
           </p>
         </div>
         </article>

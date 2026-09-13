@@ -11,6 +11,9 @@
   "showInResume": true,
   "resumeGroup": "Languages",
   "resumeOrder": 1,
+  "showInResumeAi": true,
+  "resumeAiGroup": "Languages",
+  "resumeAiOrder": 1,
   "whatItIs": [
     "Python is a readable, broad ecosystem for application development, data processing, and machine learning."
   ],

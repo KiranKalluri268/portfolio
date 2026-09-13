@@ -8,23 +8,15 @@ import {
   Text,
   View,
 } from "@react-pdf/renderer";
-import resume from "@/data/resume.json";
+import resumeAi from "@/data/resume-ai.json";
 import type { ResumeInternship } from "@/lib/content/types";
 import type { ResumeProject, ResumeSkillGroup } from "@/lib/content/resume";
 
-// The Page below leaves react-pdf's default `wrap` behaviour (true) rather
-// than disabling it. `wrap={false}` does not just stop pagination — it lets
-// react-pdf auto-size the page to whatever the content needs, in *both*
-// directions: shorter content renders shorter than true A4 (a resume with
-// less on it silently came out at 725-740pt tall instead of a full
-// 841.89pt sheet), and longer content silently grows past 841.89pt instead
-// of clipping or paginating. Either way, "1 page" in the output does not
-// mean "a true A4 page." With `wrap` left on, the page stays a literal
-// 595.28 x 841.89pt (A4) box every time, and content that doesn't fit
-// becomes a real second page instead of a silently wrong-sized first one.
-// Verified both directions by rendering with @react-pdf/renderer directly
-// and reading the result back with `pdfinfo`, not by trusting the component
-// tree.
+// Kept as an independent copy of ResumePdfDocument's styles rather than a
+// shared import, deliberately: the two résumés are allowed to drift in
+// content and layout without either one's PDF risking the other's build.
+// See the sibling file's own comment for why these exact A4 dimensions and
+// `wrap` left on (not `wrap={false}`) matter.
 const styles = StyleSheet.create({
   page: {
     width: 595.28,
@@ -100,7 +92,7 @@ function BulletList({ items }: { items: string[] }) {
   );
 }
 
-export default function ResumePdfDocument({
+export default function ResumeAiPdfDocument({
   internships,
   projects,
   skillGroups,
@@ -109,39 +101,39 @@ export default function ResumePdfDocument({
   projects: ResumeProject[];
   skillGroups: ResumeSkillGroup[];
 }) {
-  const phoneUrl = `tel:${resume.basics.phone.replace(/[^+\d]/g, "")}`;
+  const phoneUrl = `tel:${resumeAi.basics.phone.replace(/[^+\d]/g, "")}`;
 
   return (
     <Document
-      title={`${resume.basics.name} Resume`}
-      author={resume.basics.name}
-      subject="Professional Resume"
+      title={`${resumeAi.basics.name} AI/ML Resume`}
+      author={resumeAi.basics.name}
+      subject="Applied Machine Learning Resume"
     >
       <Page size={{ width: 595.28, height: 841.89 }} style={styles.page}>
         <View style={styles.content}>
           <View>
-          <Text style={styles.name}>{resume.basics.name}</Text>
-          <Text style={styles.headline}>{resume.basics.headline}</Text>
+          <Text style={styles.name}>{resumeAi.basics.name}</Text>
+          <Text style={styles.headline}>{resumeAi.basics.headline}</Text>
           <View style={styles.contact}>
-            <Text>{resume.basics.location} | </Text>
-            <Link src={phoneUrl} style={styles.contactLink}>{resume.basics.phone}</Link>
+            <Text>{resumeAi.basics.location} | </Text>
+            <Link src={phoneUrl} style={styles.contactLink}>{resumeAi.basics.phone}</Link>
             <Text> | </Text>
-            <Link src={`mailto:${resume.basics.email}`} style={styles.contactLink}>
-              {resume.basics.email}
+            <Link src={`mailto:${resumeAi.basics.email}`} style={styles.contactLink}>
+              {resumeAi.basics.email}
             </Link>
           </View>
           <View style={styles.links}>
-            {resume.basics.links.map((link, index) => (
+            {resumeAi.basics.links.map((link, index) => (
               <View key={link.url} style={{ flexDirection: "row" }}>
                 <Link src={link.url} style={styles.link}>{link.label}</Link>
-                {index < resume.basics.links.length - 1 && <Text> |</Text>}
+                {index < resumeAi.basics.links.length - 1 && <Text> |</Text>}
               </View>
             ))}
           </View>
           </View>
 
           <PdfSection title="Summary">
-            <Text>{resume.objective}</Text>
+            <Text>{resumeAi.objective}</Text>
           </PdfSection>
 
           <PdfSection title="Experience">
@@ -183,18 +175,18 @@ export default function ResumePdfDocument({
 
           <PdfSection title="Education">
             <Text>
-              {resume.education.degree} | {resume.education.institution} | {resume.education.period} |{" "}
+              {resumeAi.education.degree} | {resumeAi.education.institution} | {resumeAi.education.period} |{" "}
               {/* A non-breaking space keeps "CGPA:" and its value from
                   splitting across a wrap. */}
-              CGPA:{" "}{resume.education.cgpa}
+              CGPA:{" "}{resumeAi.education.cgpa}
             </Text>
           </PdfSection>
 
           <View style={styles.footer}>
             <Text style={styles.bold}>Languages: </Text>
-            <Text>{resume.languages.join(", ")} | </Text>
+            <Text>{resumeAi.languages.join(", ")} | </Text>
             <Text style={styles.bold}>Strengths: </Text>
-            <Text>{resume.strengths.join(", ")}</Text>
+            <Text>{resumeAi.strengths.join(", ")}</Text>
           </View>
         </View>
       </Page>

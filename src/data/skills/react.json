@@ -11,6 +11,9 @@
   "showInResume": true,
   "resumeGroup": "Web/Frameworks",
   "resumeOrder": 1,
+  "showInResumeAi": true,
+  "resumeAiGroup": "Web/Frameworks",
+  "resumeAiOrder": 1,
   "whatItIs": [
     "React organizes interfaces as reusable components driven by state and properties."
   ],

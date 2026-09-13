@@ -8,7 +8,9 @@
   "iconText": "TS",
   "showInSkillsSection": true,
   "skillsSectionOrder": 4,
-  "showInResume": false,
+  "showInResume": true,
+  "resumeGroup": "Languages",
+  "resumeOrder": 3,
   "whatItIs": [
     "TypeScript adds compile-time type checking and expressive data models to JavaScript."
   ],
