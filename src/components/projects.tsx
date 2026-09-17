@@ -3,7 +3,6 @@
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
-import Link from "next/link";
 import HomeProjectsRow, {
   SCROLL_MULTIPLIER,
   type HomeRowEntry,
@@ -37,7 +36,8 @@ export default function ProjectsSection({ entries }: { entries: HomeRowEntry[] }
   // reports false at exactly progress 1 — the position the Projects dot lands on.
   const isInCarousel = useActiveSection() === "projects";
 
-  // Panel 0 is the empty lead-in spacer, the last panel is "See all projects".
+  // Panel 0 is the empty lead-in spacer, and the last is the row's own
+  // "See all projects" card, appended after the real ones.
   const panelCount = entries.length + 2;
   const lastPanelIndex = panelCount - 1;
   const panelStep = 1 / lastPanelIndex;
@@ -286,7 +286,6 @@ export default function ProjectsSection({ entries }: { entries: HomeRowEntry[] }
   }, [lenis]);
 
   const centred = entries[activePanel - 1];
-  const onSeeAll = activePanel === lastPanelIndex;
 
   return (
     <section
@@ -385,17 +384,10 @@ export default function ProjectsSection({ entries }: { entries: HomeRowEntry[] }
           </div>
         )}
 
-        {/* The last panel has no card, so its heading takes the card's place
-            rather than sitting in the strip underneath one. */}
-        {onSeeAll && (
-          <div className="absolute inset-0 flex items-center justify-center px-4">
-            <h2 className="whitespace-nowrap text-center text-4xl font-bold tracking-tight group-data-[settled=true]:pointer-events-auto sm:text-5xl">
-              <Link href="/projects" className="rounded-control underline underline-offset-8">
-                See all projects
-              </Link>
-            </h2>
-          </div>
-        )}
+        {/* The last panel is now a real card in the row itself (see
+            HomeProjectsRow), moving and bending exactly like the project
+            cards either side of it rather than sitting apart as DOM markup -
+            so there is nothing left for this overlay to draw there. */}
       </div>
 
       <CarouselProgress
