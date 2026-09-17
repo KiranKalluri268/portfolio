@@ -168,7 +168,7 @@ export default function Hero() {
                 the whole name as plain, static text instead. */}
             <span className="sr-only">{`${hero.namePrefix} ${hero.name}`}</span>
             <span
-              className={`block transition-all duration-1000 ease-in-out ${nameSettled
+              className={`block whitespace-nowrap transition-all duration-1000 ease-in-out ${nameSettled
                 ? "text-[clamp(2.1rem,9vw,4.5rem)]"
                 : "text-[clamp(3rem,13vw,8rem)]"
                 }`}
@@ -180,7 +180,7 @@ export default function Hero() {
               )}
             </span>
             <span
-              className={`block transition-all duration-1000 ease-in-out ${nameSettled
+              className={`block whitespace-nowrap transition-all duration-1000 ease-in-out ${nameSettled
                 ? "text-[clamp(2.7rem,11vw,6rem)]"
                 : "text-[clamp(3rem,13vw,8rem)]"
                 }`}
