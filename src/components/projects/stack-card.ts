@@ -159,8 +159,10 @@ export interface SeeAllCardDrawing {
 /** The row's last panel: a card in the same shell as a project's - the same
  *  glow, background and rounded edge - so it reads as one more thing to tap
  *  rather than as a caption that wandered in among them. It carries no
- *  image, title or skills, so it is the shell alone plus a plain "+" and its
- *  own line, centred where a project's header and image would otherwise be. */
+ *  image, title or skills, so it is the shell alone plus its own centred,
+ *  underlined line - the underline is the only thing marking it clickable,
+ *  since a project card has its whole self for that job and this has just
+ *  the words. */
 export function drawSeeAllCard({
   fontFamily,
   shape,
@@ -199,15 +201,26 @@ export function drawSeeAllCard({
   roundedRect(context, 0, 0, textureWidth, textureHeight, radius);
   context.fill();
 
+  const label = "See all projects";
+  const fontSize = Math.round(56 * scale);
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.fillStyle = "rgba(255,255,255,0.85)";
-  context.font = `700 ${Math.round(116 * scale)}px ${fontFamily}`;
-  context.fillText("+", textureWidth / 2, textureHeight / 2 - 64 * scale);
-
   context.fillStyle = "#ffffff";
-  context.font = `700 ${Math.round(52 * scale)}px ${fontFamily}`;
-  context.fillText("See all projects", textureWidth / 2, textureHeight / 2 + 56 * scale);
+  context.font = `700 ${fontSize}px ${fontFamily}`;
+  const centreX = textureWidth / 2;
+  const centreY = textureHeight / 2;
+  context.fillText(label, centreX, centreY);
+
+  // The underline, not the card, is what says this line is a link - a card
+  // is a link over its whole self, but this one is otherwise only its words.
+  const textWidth = context.measureText(label).width;
+  const underlineY = centreY + fontSize * 0.55;
+  context.strokeStyle = "#ffffff";
+  context.lineWidth = Math.max(2, 3 * scale);
+  context.beginPath();
+  context.moveTo(centreX - textWidth / 2, underlineY);
+  context.lineTo(centreX + textWidth / 2, underlineY);
+  context.stroke();
   context.textAlign = "left";
 
   const edge = 1;
