@@ -479,7 +479,12 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
 
   return (
     <div ref={containerRef} className="relative h-[100svh] w-full cursor-pointer touch-none overflow-hidden">
-      <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
+      {/* Keyed so crossing the `narrow` breakpoint or recovering from a lost
+          context (`generation`) mounts a fresh canvas rather than reusing the
+          old one - see the matching note in HomeProjectsRow for why reusing
+          it races WEBGL_lose_context.loseContext() against the new context's
+          own getContext() call on the same element. */}
+      <canvas key={`${narrow ? "n" : "w"}-${generation}`} ref={canvasRef} className="absolute inset-0 h-full w-full" />
 
       {/* The cards are pixels on the GPU and carry no text a crawler or a
           screen reader can reach, so the same content is published here as

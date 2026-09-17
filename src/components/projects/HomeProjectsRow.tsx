@@ -610,7 +610,17 @@ export default function HomeProjectsRow({
       data-home-projects-row
       className="absolute inset-0 z-10 cursor-pointer"
     >
-      <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
+      {/* Keyed so crossing the `narrow` breakpoint or recovering from a lost
+          context (`generation`) mounts a fresh canvas rather than reusing the
+          old one. Both tear the scene down and build a new one on the same
+          effect run, calling WEBGL_lose_context.loseContext() on the outgoing
+          context and creating a new one in the same tick - and a fresh
+          getContext() call on a canvas whose previous context is still being
+          torn down can come back looking valid while every GL call on it
+          silently fails, which is what a shader "failing to compile" with a
+          null info log actually means. A new element sidesteps the race
+          instead of trying to win it. */}
+      <canvas key={`${narrow ? "n" : "w"}-${generation}`} ref={canvasRef} className="absolute inset-0 h-full w-full" />
 
       {/* The cards are pixels on the GPU and carry no text a crawler or a
           screen reader can reach, so the same content is published here as real
