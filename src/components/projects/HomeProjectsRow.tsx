@@ -469,6 +469,22 @@ export default function HomeProjectsRow({
         // spending a frame's work to be ignored — and about not reading back
         // sizes from a renderer whose context is gone.
         if (contextLost || !visible) return;
+        try {
+          drawFrame();
+        } catch (error) {
+          // A context can be lost between the check above and the GL calls
+          // below - the browser's own event for that fires asynchronously, so
+          // a frame can still be mid-render when it happens. OGL's bookkeeping
+          // assumes a live context and throws rather than no-op'ing, which
+          // otherwise escaped the ticker uncaught and took the whole page down
+          // with it. Treated the same as the watched event: stop drawing and
+          // wait for a restore to rebuild the scene.
+          contextLost = true;
+          if (process.env.NODE_ENV !== "production") console.error(error);
+        }
+      };
+
+      const drawFrame = () => {
         if (!ready) {
           ready = resize();
           if (!ready) return;
@@ -594,7 +610,17 @@ export default function HomeProjectsRow({
       data-home-projects-row
       className="absolute inset-0 z-10 cursor-pointer"
     >
-      <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
+      {/* Keyed so crossing the `narrow` breakpoint or recovering from a lost
+          context (`generation`) mounts a fresh canvas rather than reusing the
+          old one. Both tear the scene down and build a new one on the same
+          effect run, calling WEBGL_lose_context.loseContext() on the outgoing
+          context and creating a new one in the same tick - and a fresh
+          getContext() call on a canvas whose previous context is still being
+          torn down can come back looking valid while every GL call on it
+          silently fails, which is what a shader "failing to compile" with a
+          null info log actually means. A new element sidesteps the race
+          instead of trying to win it. */}
+      <canvas key={`${narrow ? "n" : "w"}-${generation}`} ref={canvasRef} className="absolute inset-0 h-full w-full" />
 
       {/* The cards are pixels on the GPU and carry no text a crawler or a
           screen reader can reach, so the same content is published here as real

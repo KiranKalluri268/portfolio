@@ -734,7 +734,20 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
           setFocusedCell(centre);
         }
 
-        paint(elapsed);
+        try {
+          paint(elapsed);
+        } catch (error) {
+          // A context can be lost between the check above and the GL calls
+          // inside paint - the browser's own event for that fires
+          // asynchronously, so a frame can still be mid-render when it
+          // happens. OGL's bookkeeping assumes a live context and throws
+          // rather than no-op'ing, which otherwise escaped the loop uncaught
+          // and took the whole page down with it. Treated the same as the
+          // watched event: stop drawing and wait for a restore to rebuild the
+          // scene.
+          contextLost = true;
+          if (process.env.NODE_ENV !== "production") console.error(error);
+        }
       };
       frame = requestAnimationFrame(step);
       cleanups.push(() => cancelAnimationFrame(frame));
@@ -964,7 +977,12 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
         role="group"
         aria-label="Projects, arranged as a grid you can drag. Use the arrow keys to move between them, and Enter to open the one in the middle."
       >
-        <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
+        {/* Keyed so crossing the `narrow` breakpoint or recovering from a lost
+            context (`generation`) mounts a fresh canvas rather than reusing
+            the old one - see the matching note in HomeProjectsRow for why
+            reusing it races WEBGL_lose_context.loseContext() against the new
+            context's own getContext() call on the same element. */}
+        <canvas key={`${narrow ? "n" : "w"}-${generation}`} ref={canvasRef} className="absolute inset-0 h-full w-full" />
 
         {/* The cards are pixels on the GPU and carry no text a crawler or a
             screen reader can reach, so the same content is published here as
