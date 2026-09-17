@@ -362,6 +362,22 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
         // A lost context stands down too — every call into one is ignored, so
         // this is about not spending the frame to be ignored.
         if (contextLost || !activeRef.current) return;
+        try {
+          drawFrame();
+        } catch (error) {
+          // A context can be lost between the check above and the GL calls
+          // below - the browser's own event for that fires asynchronously, so
+          // a frame can still be mid-render when it happens. OGL's bookkeeping
+          // assumes a live context and throws rather than no-op'ing, which
+          // otherwise escaped the ticker uncaught and took the whole page down
+          // with it. Treated the same as the watched event: stop drawing and
+          // wait for a restore to rebuild the scene.
+          contextLost = true;
+          if (process.env.NODE_ENV !== "production") console.error(error);
+        }
+      };
+
+      const drawFrame = () => {
         if (!ready) {
           ready = resize();
           if (!ready) return;
