@@ -181,7 +181,7 @@ export default function Hero() {
             </span>
             <span
               className={`block whitespace-nowrap transition-all duration-1000 ease-in-out ${nameSettled
-                ? "text-[clamp(2.7rem,11vw,6rem)]"
+                ? "text-[clamp(1.8rem,8vw,6rem)]"
                 : "text-[clamp(3rem,13vw,8rem)]"
                 }`}
             >
