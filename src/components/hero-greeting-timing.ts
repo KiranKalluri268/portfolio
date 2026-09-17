@@ -98,7 +98,7 @@ export const SWELL_HEADROOM = 2.2;
 
 /** Below this a word is a flicker rather than a glimpse, so a long list
  *  stretches the sequence instead of becoming subliminal. */
-export const MIN_HOLD_MS = 90;
+export const MIN_HOLD_MS = 68;
 
 /** How far along the fly the word disappears, as a fraction of it.
  *
