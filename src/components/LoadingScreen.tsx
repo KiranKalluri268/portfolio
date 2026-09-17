@@ -2,7 +2,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useAudio } from "@/context/AudioContextProvider";
-import { ENTRY_RELEASE_MS } from "./entry-timing";
+import { ENTRY_RELEASE_MS, ENTRY_ESCAPE_MS, ENTRY_DISMISS_MS } from "./entry-timing";
 import { lockPageScroll } from "./page-scroll-lock";
 import { useScrollActions } from "@/context/SmoothScrollContext";
 
@@ -117,8 +117,8 @@ const LOADING_QUIP_MS = 2500;
 const SPIN_MS = ENTRY_RELEASE_MS;
 
 /** How long they take to clear the screen once they are free. */
-const ESCAPE_MS = 750;
-const EXIT_MS = SPIN_MS + ESCAPE_MS;
+const ESCAPE_MS = ENTRY_ESCAPE_MS;
+const EXIT_MS = ENTRY_DISMISS_MS;
 
 /** Without an orbit to watch there is nothing to time a fade to, so reduced
  *  motion gets a short one instead of a slow one. */

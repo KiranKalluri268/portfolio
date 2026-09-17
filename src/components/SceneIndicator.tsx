@@ -6,6 +6,7 @@ import { useActiveSection, useScrollActions, type SectionId } from "@/context/Sm
 import { useAudio } from "@/context/AudioContextProvider";
 import { useCoarsePointer, useReducedMotion } from "@/hooks/useMediaQuery";
 import { useHoverLabel } from "@/hooks/useHoverLabel";
+import { ENTRY_DISMISS_MS } from "./entry-timing";
 import {
   PILL_GAP,
   PILL_SIZE_MS,
@@ -43,6 +44,25 @@ const LABEL_CLEARANCE = 10;
  *  tap. Below it nothing moves and the button's own click still fires. */
 const DRAG_THRESHOLD = 5;
 
+/** The entrance, in three beats: a plain circle around the current dot, that
+ *  circle growing into the full bar, and only then the rest of the dots and
+ *  the current name fading into it - so the bar arrives as a single object
+ *  finding its shape before it shows what is inside it, rather than as a row
+ *  of things popping in at once. */
+type Intro = "circle" | "expanding" | "done";
+
+/** How long the circle sits alone before it starts growing. */
+const INTRO_HOLD_MS = 350;
+/** How long the growth into the full bar takes. */
+const INTRO_EXPAND_MS = 550;
+/** How long the dots and the name take to fade in once the bar has its
+ *  shape. Opacity only - see FADE_EASE. */
+const INTRO_FADE_MS = 450;
+/** Every motion in the entrance rides this curve: eased well past its
+ *  midpoint before easing out, the same standard curve used for the site
+ *  menu's own transitions. */
+const INTRO_EASE = "cubic-bezier(0.4, 0, 0.2, 1)";
+
 /** How long after a drag a click is treated as that drag's own leftover. */
 const CLICK_AFTER_DRAG_MS = 400;
 
@@ -67,6 +87,25 @@ export default function SceneIndicator() {
   const [portalReady, setPortalReady] = useState(false);
   const isCoarsePointer = useCoarsePointer();
   const reduceMotion = useReducedMotion();
+
+  /** The bar sits well under the entry screen's own stacking order, so it is
+   *  already mounted and running behind it - the entrance below would finish
+   *  unseen if it started the moment Enter was pressed. Unlike the hero,
+   *  which only has to wait for the curtain to start opening (its content
+   *  sits where the opening starts, at the centre of the screen), the bar
+   *  sits at the very top - outside that opening for most of the flight - so
+   *  this waits for the curtain to be gone completely instead. Already true
+   *  at mount for a visitor arriving from elsewhere on the site, where there
+   *  is no curtain to wait for. */
+  const [curtainGone, setCurtainGone] = useState(hasEntered);
+  useEffect(() => {
+    if (curtainGone || !hasEntered) return;
+    const timer = window.setTimeout(
+      () => setCurtainGone(true),
+      reduceMotion ? 0 : ENTRY_DISMISS_MS,
+    );
+    return () => window.clearTimeout(timer);
+  }, [hasEntered, curtainGone, reduceMotion]);
 
   const tooltipRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
@@ -99,6 +138,11 @@ export default function SceneIndicator() {
    *  see LABEL_CLEARANCE. Zero when the dots are already far enough apart on
    *  their own (a wide bar with few scenes). */
   const [dotGap, setDotGap] = useState(0);
+  /** The row's own natural width - unaffected by the entrance constraining
+   *  the bar around it, since only `nav` is ever given an explicit width -
+   *  so the bar knows how wide "fully grown" actually is. */
+  const [rowWidth, setRowWidth] = useState(0);
+  const [intro, setIntro] = useState<Intro>("circle");
   /** Which dot the pill sits on. It follows the page: scroll to a section and
    *  the pill comes with you. Two things take it off that — a drag, where it
    *  follows the finger instead, and a pick, where it waits on the dot chosen
@@ -163,6 +207,11 @@ export default function SceneIndicator() {
 
       // Measured against the bar's outer edge, which is what the eye compares
       // the pill to — the row inside it excludes the border.
+      // The row's own width - it never shrinks to fit a narrower `nav` (see
+      // its `w-max` below), so this stays the bar's true full width even
+      // while the entrance is holding `nav` down to a small circle.
+      setRowWidth(row.getBoundingClientRect().width);
+
       const nav = navRef.current;
       if (!nav) return;
       const navHeight = nav.getBoundingClientRect().height;
@@ -225,6 +274,30 @@ export default function SceneIndicator() {
       row.removeEventListener("touchend", claim);
     };
   }, [portalReady, hasEntered]);
+
+  // The entrance: a circle, then the bar it grows into, then the rest of the
+  // dots and the name fading into it. Skipped for reduced motion, which
+  // starts already "done" rather than replaying the same three beats as a
+  // set of instant jumps.
+  useEffect(() => {
+    if (!portalReady || !curtainGone) return;
+    if (reduceMotion) {
+      // useReducedMotion() reports false for the very first client paint
+      // regardless of the visitor's actual preference, so this cannot be
+      // read once at mount - it has to catch up once the real value lands.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIntro("done");
+      return;
+    }
+    const holdTimer = window.setTimeout(() => setIntro("expanding"), INTRO_HOLD_MS);
+    return () => window.clearTimeout(holdTimer);
+  }, [portalReady, curtainGone, reduceMotion]);
+
+  useEffect(() => {
+    if (intro !== "expanding") return;
+    const expandTimer = window.setTimeout(() => setIntro("done"), INTRO_EXPAND_MS);
+    return () => window.clearTimeout(expandTimer);
+  }, [intro]);
 
   /** A dot the visitor picked, held until the page gets there. */
   const awaiting = useRef<number | null>(null);
@@ -357,18 +430,35 @@ export default function SceneIndicator() {
     PILL_GAP + pillWidth / 2 - (centers[0] ?? 0) - barBorder,
   );
 
+  // The entrance's own three widths: a small circle around just the current
+  // dot, the bar's true full width once grown, and nothing explicit at all
+  // once settled - an explicit width would otherwise keep fighting the
+  // trackPadding transition above for the rest of the visit.
+  const barFullWidth = rowWidth + trackPadding * 2 + barBorder * 2;
+  const circleSize = pill.idleHeight + PILL_GAP * 2;
+  const introWidth =
+    intro === "circle" ? circleSize : intro === "expanding" ? barFullWidth : undefined;
+
   return createPortal(
     <>
       <nav
         ref={navRef}
-        className="pointer-events-auto fixed bottom-[calc(3rem+env(safe-area-inset-bottom))] left-1/2 z-[1000] isolate -translate-x-1/2 rounded-full border border-white/10 bg-black/65 shadow-[0_6px_20px_rgba(0,0,0,0.4)] backdrop-blur-md sm:bottom-auto sm:top-8"
+        className={`pointer-events-auto fixed bottom-[calc(3rem+env(safe-area-inset-bottom))] left-1/2 z-[1000] isolate -translate-x-1/2 rounded-full border border-white/10 bg-black/65 shadow-[0_6px_20px_rgba(0,0,0,0.4)] backdrop-blur-md sm:bottom-auto sm:top-8 ${intro === "done" ? "" : "overflow-hidden"}`}
         style={{
           paddingLeft: trackPadding,
           paddingRight: trackPadding,
+          width: introWidth,
           // Matches the pill's own size transition, so the bar's curved ends
           // arrive around it rather than snapping to a new size while the
-          // pill inside is still growing or shrinking to meet them.
-          transition: reduceMotion ? "none" : `padding ${PILL_SIZE_MS}ms ease-out`,
+          // pill inside is still growing or shrinking to meet them. The
+          // entrance rides its own slower curve while it is still finding
+          // its width; once settled, only the everyday padding transition
+          // is left running.
+          transition: reduceMotion
+            ? "none"
+            : intro === "done"
+              ? `padding ${PILL_SIZE_MS}ms ease-out`
+              : `padding ${PILL_SIZE_MS}ms ease-out, width ${INTRO_EXPAND_MS}ms ${INTRO_EASE}`,
         }}
         aria-label="Scene navigation indicator"
         role="navigation"
@@ -384,7 +474,13 @@ export default function SceneIndicator() {
       >
         <div
           ref={rowRef}
-          className="relative flex flex-row items-center justify-between"
+          // w-max: its own content width always, never shrunk to fit a
+          // narrower `nav` - the entrance relies on that to measure the
+          // bar's true full width while `nav` is still held down to a
+          // circle (see barFullWidth), and on the overflow going somewhere
+          // sane (past the right edge, clipped by nav's own overflow-hidden)
+          // rather than every dot compressing into the small circle.
+          className="relative flex w-max flex-row items-center justify-between"
           // pan-y so the page still scrolls from a vertical swipe over the bar;
           // horizontal movement is the pill's. columnGap keeps the widest
           // label clear of the dots either side of it - see LABEL_CLEARANCE.
@@ -417,7 +513,14 @@ export default function SceneIndicator() {
                   cut off its own glow, which is meant to bleed past the edge. */}
               {!moving && (
                 <span className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-full">
-                  <span className="whitespace-nowrap text-xs font-semibold tracking-wide text-white sm:text-sm">
+                  <span
+                    className="whitespace-nowrap text-xs font-semibold tracking-wide text-white transition-opacity sm:text-sm"
+                    style={{
+                      opacity: intro === "done" ? 1 : 0,
+                      transitionDuration: `${INTRO_FADE_MS}ms`,
+                      transitionTimingFunction: INTRO_EASE,
+                    }}
+                  >
                     {scenes[pillIndex].name}
                   </span>
                 </span>
@@ -446,8 +549,21 @@ export default function SceneIndicator() {
             const isActive = activeSection === scene.id;
             const isHovered = hoveredIndex === scene.index;
 
+            // Every dot but the current one stays invisible until the bar has
+            // grown to its full width - popping in before there was room for
+            // them would just be the circle-to-bar growth happening twice.
+            const dotVisible = intro === "done" || scene.index === pillIndex;
+
             return (
-              <div key={scene.index} className="relative flex flex-col items-center">
+              <div
+                key={scene.index}
+                className="relative flex flex-col items-center transition-opacity"
+                style={{
+                  opacity: dotVisible ? 1 : 0,
+                  transitionDuration: `${INTRO_FADE_MS}ms`,
+                  transitionTimingFunction: INTRO_EASE,
+                }}
+              >
                 <button
                   ref={(element) => {
                     dotRefs.current[scene.index] = element;
@@ -463,16 +579,18 @@ export default function SceneIndicator() {
                   {/* One size for every dot — the colour carries which scene is
                       current, so it stays legible while the pill is elsewhere,
                       including mid-drag. Size is left to the pill.
-                      The active one fades out once the pill has settled and
-                      widened into that scene's name over it — the label says
-                      what the dot was saying, and the two together would just
-                      be the same fact twice, with the dot sitting inside the
-                      text. It returns the moment the pill moves off again. */}
+                      The active one fades out once the entrance has finished
+                      and the pill has settled and widened into that scene's
+                      name over it — the label says what the dot was saying,
+                      and the two together would just be the same fact twice,
+                      with the dot sitting inside the text. It returns the
+                      moment the pill moves off again, or stays for as long as
+                      the entrance itself is still only a circle around it. */}
                   <div
                     className="relative h-1 w-1 rounded-full transition-[background-color,box-shadow,opacity] duration-300 ease-out"
                     style={{
                       backgroundColor: isActive ? "var(--color-accent-soft)" : "white",
-                      opacity: isActive && !moving ? 0 : 1,
+                      opacity: isActive && !moving && intro === "done" ? 0 : 1,
                       boxShadow: isActive
                         ? "0 0 12px 3px color-mix(in oklab, var(--color-accent) 85%, transparent)"
                         : isHovered
