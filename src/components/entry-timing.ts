@@ -7,4 +7,4 @@
  * the stars do not draw at all until it is set, so the hole in the curtain
  * would look onto an empty void and then fill in.
  */
-export const ENTRY_RELEASE_MS = 2000;
+export const ENTRY_RELEASE_MS = 1200;
