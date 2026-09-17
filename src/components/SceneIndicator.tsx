@@ -8,6 +8,7 @@ import { useCoarsePointer, useReducedMotion } from "@/hooks/useMediaQuery";
 import { useHoverLabel } from "@/hooks/useHoverLabel";
 import {
   PILL_GAP,
+  PILL_SIZE_MS,
   PILL_TRAVEL_MS,
   PILL_CLASS,
   pillMetrics,
@@ -31,6 +32,12 @@ const scenes: SceneInfo[] = [
 ];
 
 const TOOLTIP_GAP = 20;
+
+/** The least space kept between the pill's edge and the dot next to it, on
+ *  either side, whichever scene's name is currently showing. Fixed rather
+ *  than recomputed per active dot, so it holds however the visitor navigates
+ *  and never depends on which name happens to be up. */
+const LABEL_CLEARANCE = 10;
 
 /** Movement, in px, before a press on the bar counts as a drag rather than a
  *  tap. Below it nothing moves and the button's own click still fires. */
@@ -83,8 +90,15 @@ export default function SceneIndicator() {
     idleHeight: 0,
     moveWidth: 0,
     moveHeight: 0,
-    trackPadding: 0,
   });
+  /** The bar's own border, needed to size its padding against the pill - see
+   *  the padding calculation near the render below. */
+  const [barBorder, setBarBorder] = useState(0);
+  /** Extra space added between every pair of dots, beyond their own natural
+   *  spacing, so the widest label never reaches whichever dot is next to it -
+   *  see LABEL_CLEARANCE. Zero when the dots are already far enough apart on
+   *  their own (a wide bar with few scenes). */
+  const [dotGap, setDotGap] = useState(0);
   /** Which dot the pill sits on. It follows the page: scroll to a section and
    *  the pill comes with you. Two things take it off that — a drag, where it
    *  follows the finger instead, and a pick, where it waits on the dot chosen
@@ -134,6 +148,19 @@ export default function SceneIndicator() {
       const labelWidthsNow = labels.map((label) => label.getBoundingClientRect().width);
       if (labelWidthsNow.length > 0) setLabelWidths(labelWidthsNow);
 
+      // A button's own width does not depend on any gap added between
+      // buttons, so this stays a stable baseline to measure the (separately
+      // stateful) gap against, however many times this re-runs.
+      const buttonWidth = buttons[0].getBoundingClientRect().width;
+      if (labelWidthsNow.length > 0) {
+        const widestLabel = Math.max(...labelWidthsNow);
+        // Two adjacent dots are `buttonWidth` apart with no added gap at all,
+        // since they sit edge to edge. The pill needs half the widest label
+        // plus the clearance on each side of whichever dot it is centred on.
+        const required = widestLabel / 2 + LABEL_CLEARANCE;
+        setDotGap(Math.max(0, required - buttonWidth));
+      }
+
       // Measured against the bar's outer edge, which is what the eye compares
       // the pill to — the row inside it excludes the border.
       const nav = navRef.current;
@@ -142,16 +169,8 @@ export default function SceneIndicator() {
       const border = parseFloat(getComputedStyle(nav).borderLeftWidth) || 0;
       const firstCenter = centersNow[0] ?? 0;
 
-      const metrics = pillMetrics(navHeight, border, firstCenter);
-      // The bar's own edge padding has to clear whichever pill is widest, not
-      // just the plain dot capsule - Hero or Contact showing their name is the
-      // case that would otherwise overflow past the bar's rounded corners,
-      // since the padding is normally sized for the small idle capsule alone.
-      const widestPill = Math.max(metrics.idleWidth, ...labelWidthsNow);
-      setPill({
-        ...metrics,
-        trackPadding: Math.max(0, PILL_GAP + widestPill / 2 - firstCenter - border),
-      });
+      setBarBorder(border);
+      setPill(pillMetrics(navHeight, border, firstCenter));
     };
 
     measure();
@@ -326,13 +345,31 @@ export default function SceneIndicator() {
   const pillCenter = drag ? drag.x : (centers[pillIndex] ?? 0);
   const moving = drag !== null || travelling;
   const labelIndex = drag ? drag.index : null;
+  const pillWidth = moving ? pill.moveWidth : (labelWidths[pillIndex] ?? pill.idleWidth);
+  // The bar's own width, rather than a constant sized for the longest name:
+  // it grows and shrinks with whichever pill is currently showing, the same
+  // way the pill itself does. Solving the pill's own containment for the
+  // current width — the amount of edge padding that keeps it PILL_GAP inside
+  // the bar if it were parked on the first dot — happens to also be the
+  // right amount for every other position, since none of them need more.
+  const trackPadding = Math.max(
+    0,
+    PILL_GAP + pillWidth / 2 - (centers[0] ?? 0) - barBorder,
+  );
 
   return createPortal(
     <>
       <nav
         ref={navRef}
         className="pointer-events-auto fixed bottom-[calc(3rem+env(safe-area-inset-bottom))] left-1/2 z-[1000] isolate -translate-x-1/2 rounded-full border border-white/10 bg-black/65 shadow-[0_6px_20px_rgba(0,0,0,0.4)] backdrop-blur-md sm:bottom-auto sm:top-8"
-        style={{ paddingLeft: pill.trackPadding, paddingRight: pill.trackPadding }}
+        style={{
+          paddingLeft: trackPadding,
+          paddingRight: trackPadding,
+          // Matches the pill's own size transition, so the bar's curved ends
+          // arrive around it rather than snapping to a new size while the
+          // pill inside is still growing or shrinking to meet them.
+          transition: reduceMotion ? "none" : `padding ${PILL_SIZE_MS}ms ease-out`,
+        }}
         aria-label="Scene navigation indicator"
         role="navigation"
         // A click that ended a drag would scroll a second time, to whichever
@@ -349,8 +386,9 @@ export default function SceneIndicator() {
           ref={rowRef}
           className="relative flex flex-row items-center justify-between"
           // pan-y so the page still scrolls from a vertical swipe over the bar;
-          // horizontal movement is the pill's.
-          style={{ touchAction: "pan-y" }}
+          // horizontal movement is the pill's. columnGap keeps the widest
+          // label clear of the dots either side of it - see LABEL_CLEARANCE.
+          style={{ touchAction: "pan-y", columnGap: dotGap }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={endDrag}
@@ -366,9 +404,9 @@ export default function SceneIndicator() {
               aria-hidden="true"
               className={PILL_CLASS}
               style={{
-                width: moving ? pill.moveWidth : (labelWidths[pillIndex] ?? pill.idleWidth),
+                width: pillWidth,
                 height: moving ? pill.moveHeight : pill.idleHeight,
-                transform: `translate3d(${pillCenter - (moving ? pill.moveWidth : (labelWidths[pillIndex] ?? pill.idleWidth)) / 2}px, -50%, 0)`,
+                transform: `translate3d(${pillCenter - pillWidth / 2}px, -50%, 0)`,
                 // A drag follows the finger, so its position must not be eased.
                 transition: pillTransition(reduceMotion, !drag),
               }}
