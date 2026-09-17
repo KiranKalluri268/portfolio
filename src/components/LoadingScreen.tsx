@@ -416,11 +416,16 @@ export default function LoadingScreen({
             p.speed = p.baseSpeed * (1 + (RELEASE_SPIN - 1) * t * t);
           });
         } else {
-          // Let go, and accelerating away along the tangent.
+          // Let go, carrying straight on at the speed they were already
+          // turning at - not re-accelerating from a stop. `t ** 1.8` used to
+          // sit here: its derivative is zero at t=0, so the instant they were
+          // released they visibly stopped and had to build speed back up
+          // again, right after the wind-up had them at their fastest. Linear
+          // in `t` means constant velocity from the first frame of release.
           const t = Math.min(1, (elapsed - SPIN_MS) / ESCAPE_MS);
           particles.forEach((p) => {
             p.release();
-            p.travel = flight.distance * t ** 1.8;
+            p.travel = flight.distance * t;
             p.tailLength = ESCAPE_TAIL;
           });
         }
