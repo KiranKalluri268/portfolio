@@ -1,20 +1,25 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useScrollActions } from "@/context/SmoothScrollContext";
 import { useAudio } from "@/context/AudioContextProvider";
 import { ENTRY_RELEASE_MS } from "./entry-timing";
 import { useReducedMotion } from "@/hooks/useMediaQuery";
 import HeroGreeting from "./HeroGreeting";
+import SweepText, { type SweepDirection, type SweepTextHandle } from "./SweepText";
+import { ROLE_HOLD_MS } from "./hero-sweep-timing";
 import hero from "@/data/hero.json";
+
+const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
 export default function Hero() {
   const { scrollNext, scrollToSection } = useScrollActions();
   const { hasEntered } = useAudio();
   const reduceMotion = useReducedMotion();
 
-  /** The headline types itself, and for the first couple of seconds after Enter
-   *  the entry screen is still over it — so it would perform to a closed
+  /** The headline sweeps itself in, and for the first couple of seconds after
+   *  Enter the entry screen is still over it — so it would perform to a closed
    *  curtain. It waits for the moment the curtain starts opening instead.
    *
    *  Only when the entry screen was actually used: arriving here from another
@@ -27,101 +32,79 @@ export default function Hero() {
     const timer = setTimeout(() => setCurtainOpening(true), reduceMotion ? 0 : ENTRY_RELEASE_MS);
     return () => clearTimeout(timer);
   }, [hasEntered, curtainOpening, reduceMotion]);
-  // The trailing dots are the typing affordance, not part of the job title, so
-  // they are added here rather than stored. The screen-reader line below used to
-  // strip them back off with a regex, which was the same information being put
-  // in and taken out again in two places.
-  const words = useMemo(() => hero.roles.map((role) => `${role}...`), []);
 
-  const typingSpeed = 100;
-  const deleteSpeed = 100;
-  const delayBeforeDeletingCurrent = 2000;
-
-  // Animation States
-  const [displayText, setDisplayText] = useState("");
-  const [currentWordIndex, setCurrentWordIndex] = useState(0);
-  const [secondLine, setSecondLine] = useState("");
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isFirstLineDone, setIsFirstLineDone] = useState(false);
-  const [showSecondCursor, setShowSecondCursor] = useState(false);
+  const [roleIndex, setRoleIndex] = useState(0);
+  const [roleText, setRoleText] = useState(hero.roles[0]);
 
   /** The greeting is the entry gate's payoff, so it is only spent on someone
    *  who went through the gate. `hasEntered` is already true at mount when the
    *  visitor is coming back to the home page from elsewhere on the site; that
    *  arrival starts at the name instead. (The old NAMASTE intro replayed on
    *  those returns; a four-and-a-half second one would be a toll booth.) */
-  const [h1State, setH1State] = useState<'greeting' | 'typing_name' | 'done'>(() =>
-    hasEntered ? 'typing_name' : 'greeting',
+  const [h1State, setH1State] = useState<'greeting' | 'entering' | 'done'>(() =>
+    hasEntered ? 'entering' : 'greeting',
   );
 
   const heroRef = useRef<HTMLDivElement>(null);
+  const namePrefixRef = useRef<SweepTextHandle>(null);
+  const nameRef = useRef<SweepTextHandle>(null);
+  const roleRef = useRef<SweepTextHandle>(null);
+  const rolesLoopStarted = useRef(false);
 
-  // One source for both presentations. The cinematic renders the same three
-  // facts against a falling camera; the copy itself does not fork.
-  const mainText = `${hero.namePrefix}\n${hero.name}`;
   const visibleH1State = reduceMotion ? "done" : h1State;
-  const visibleDisplayText = reduceMotion ? mainText : displayText;
-  const visibleSecondLine = reduceMotion ? words[0] : secondLine;
+  // The container's position and size settle the instant the name starts
+  // sweeping in, not once it finishes - so the letters land smoothly into a
+  // headline that is already moving to its place, rather than arriving
+  // centred at full size and only then resizing out from under themselves.
+  const nameSettled = reduceMotion || h1State !== 'greeting';
 
-  // H1 Animation Sequence
+  // Sweep the name in once, the moment the curtain has cleared it.
   useEffect(() => {
-    if (!curtainOpening || reduceMotion) return;
-    let timeout: NodeJS.Timeout;
+    if (!curtainOpening || reduceMotion || h1State !== 'entering') return;
+    let cancelled = false;
 
-    switch (h1State) {
-      case 'greeting':
-        // HeroGreeting owns its own clock and calls back when it has flown
-        // through the last letter. Nothing to schedule here.
-        break;
+    Promise.all([namePrefixRef.current?.enter('bottom'), nameRef.current?.enter('bottom')]).then(
+      () => {
+        if (!cancelled) setH1State('done');
+      },
+    );
 
-      case 'typing_name':
-        if (displayText.length < mainText.length) {
-          timeout = setTimeout(() => {
-            setDisplayText(mainText.slice(0, displayText.length + 1));
-          }, typingSpeed);
-        } else {
-          // Wait 1 second before starting H2
-          timeout = setTimeout(() => {
-            setH1State('done');
-            setIsFirstLineDone(true);
-            setShowSecondCursor(true);
-          }, 1000);
-        }
-        break;
+    return () => {
+      cancelled = true;
+    };
+  }, [curtainOpening, reduceMotion, h1State]);
 
-      case 'done':
-        // H1 animation complete
-        break;
+  // The role line loops: one role sweeps in, holds, sweeps back out the way it
+  // came, and the next takes its place — swapping direction each time, so a
+  // role that arrived from the bottom also leaves toward the bottom, and the
+  // next one plays the same beat from the top.
+  useEffect(() => {
+    if (!curtainOpening || reduceMotion || h1State !== 'done' || rolesLoopStarted.current) return;
+    rolesLoopStarted.current = true;
+    let cancelled = false;
+
+    async function loop() {
+      let index = 0;
+      while (!cancelled) {
+        const direction: SweepDirection = index % 2 === 0 ? 'bottom' : 'top';
+        setRoleIndex(index);
+        setRoleText(hero.roles[index]);
+        await nextFrame();
+        if (cancelled) return;
+        await roleRef.current?.enter(direction);
+        if (cancelled) return;
+        await wait(ROLE_HOLD_MS);
+        if (cancelled) return;
+        await roleRef.current?.exit(direction);
+        index = (index + 1) % hero.roles.length;
+      }
     }
 
-    return () => clearTimeout(timeout);
-  }, [displayText, h1State, mainText, reduceMotion, curtainOpening]);
-
-  // Second line typing
-  useEffect(() => {
-    if (!curtainOpening || reduceMotion) return;
-    if (!isFirstLineDone) return;
-    let timeout: NodeJS.Timeout;
-
-    if (!isDeleting && secondLine.length < words[currentWordIndex].length) {
-      timeout = setTimeout(() => {
-        setSecondLine(words[currentWordIndex].slice(0, secondLine.length + 1));
-      }, typingSpeed);
-    } else if (!isDeleting) {
-      timeout = setTimeout(() => setIsDeleting(true), delayBeforeDeletingCurrent);
-    } else if (isDeleting && secondLine.length > 0) {
-      timeout = setTimeout(() => {
-        setSecondLine((prev) => prev.slice(0, prev.length - 1));
-      }, deleteSpeed);
-    } else {
-      timeout = setTimeout(() => {
-        setIsDeleting(false);
-        setCurrentWordIndex((prev) => (prev + 1) % words.length);
-      }, 0);
-    }
-
-    return () => clearTimeout(timeout);
-  }, [secondLine, isDeleting, isFirstLineDone, currentWordIndex, words, reduceMotion, curtainOpening]);
+    loop();
+    return () => {
+      cancelled = true;
+    };
+  }, [curtainOpening, reduceMotion, h1State]);
 
   return (
     <section
@@ -135,52 +118,51 @@ export default function Hero() {
           full-bleed so the push through the final letter can grow past the
           edges of the screen, which the section's overflow clips. */}
       {curtainOpening && !reduceMotion && visibleH1State === 'greeting' && (
-        <HeroGreeting onDone={() => setH1State('typing_name')} />
+        <HeroGreeting onDone={() => setH1State('entering')} />
       )}
 
       <div className="relative w-full h-full text-white">
         <div
-          data-settled={visibleH1State === "done"}
-          className={`hero-copy absolute left-1/2 w-full max-w-5xl -translate-x-1/2 px-[clamp(1.25rem,7vw,4.5rem)] pt-8 text-left transition-all duration-1000 ease-in-out sm:px-8 sm:pt-0 lg:px-0 ${visibleH1State === 'done' ? 'top-[20dvh] translate-y-0' : 'top-1/2 -translate-y-1/2'
+          data-settled={nameSettled}
+          className={`hero-copy absolute left-1/2 w-full max-w-5xl -translate-x-1/2 px-[clamp(1.25rem,7vw,4.5rem)] pt-8 text-left transition-all duration-1000 ease-in-out sm:px-8 sm:pt-0 lg:px-0 ${nameSettled ? 'top-[20dvh] translate-y-0' : 'top-1/2 -translate-y-1/2'
             }`}
         >
           <h1
-            className="font-bold font-[family-name:var(--font-tektur)] whitespace-pre-line leading-none"
+            className="font-bold font-[family-name:var(--font-tektur)] leading-none overflow-hidden"
             style={{
               textShadow:
                 "0.1rem 0 0.3rem rgba(255, 255, 255, 0.8), 0 0 0.6rem rgba(224, 69, 10, 0.5)",
             }}
           >
-            {visibleDisplayText.split('\n').map((part, index) => (
-              <span
-                key={index}
-                className={`transition-all duration-1000 ease-in-out ${index === 0
-                  ? visibleH1State === 'done'
-                    ? "text-[clamp(2.1rem,9vw,4.5rem)]"
-                    : "text-[clamp(3rem,13vw,8rem)]"
-                  : visibleH1State === 'done'
-                    ? "text-[clamp(2.7rem,11vw,6rem)]"
-                    : "text-[clamp(3rem,13vw,8rem)]"
-                  }`}
-              >
-                {part}
-                {index === 0 && visibleDisplayText.includes('\n') && '\n'}
-              </span>
-            ))}
-            {visibleH1State === 'typing_name' && (
-              <span
-                className="animate-blink text-[clamp(2.5rem,13vw,8rem)] text-white"
-                aria-hidden="true"
-              >
-                |
-              </span>
-            )}
+            {/* The visible lines sweep in letter by letter; a screen reader gets
+                the whole name as plain, static text instead. */}
+            <span className="sr-only">{`${hero.namePrefix} ${hero.name}`}</span>
+            <span
+              className={`block transition-all duration-1000 ease-in-out ${nameSettled
+                ? "text-[clamp(2.1rem,9vw,4.5rem)]"
+                : "text-[clamp(3rem,13vw,8rem)]"
+                }`}
+            >
+              {reduceMotion ? (
+                hero.namePrefix
+              ) : (
+                <SweepText ref={namePrefixRef} text={hero.namePrefix} />
+              )}
+            </span>
+            <span
+              className={`block transition-all duration-1000 ease-in-out ${nameSettled
+                ? "text-[clamp(2.7rem,11vw,6rem)]"
+                : "text-[clamp(3rem,13vw,8rem)]"
+                }`}
+            >
+              {reduceMotion ? hero.name : <SweepText ref={nameRef} text={hero.name} />}
+            </span>
           </h1>
 
-          {/* The typed roles wrap between one and two lines as they cycle.
+          {/* The role line loops between one and two lines as it cycles.
               Reserving two lines keeps the CTA row below from bouncing. */}
           <h2
-            className="hero-role mt-4 min-h-[calc(2*clamp(2.15rem,10vw,7.5rem))] max-w-full break-words text-[clamp(2.15rem,10vw,7.5rem)] font-bold font-[family-name:var(--font-tektur)] leading-none"
+            className="hero-role mt-4 min-h-[calc(2*clamp(2.15rem,10vw,7.5rem))] max-w-full break-words text-[clamp(2.15rem,10vw,7.5rem)] font-bold font-[family-name:var(--font-tektur)] leading-none overflow-hidden"
             style={{
               // The name above can carry a white halo because white has 21:1 of
               // contrast to spend. The role line is coloured and has far less,
@@ -189,12 +171,17 @@ export default function Hero() {
               textShadow: "0 0 0.45rem rgba(224, 69, 10, 0.55)",
             }}
           >
-            {/* The visible line retypes character by character. Announcing that
-                live would fire on every keystroke, so assistive technology gets
-                the full set of roles as static text instead. */}
+            {/* The visible line sweeps in and out; assistive technology gets
+                the full set of roles as static text instead, so the loop does
+                not fire an announcement every time it turns over. */}
             <span className="sr-only">{hero.roles.join(", ")}</span>
-            <span className="text-accent" aria-hidden="true">{visibleSecondLine}</span>
-            {!reduceMotion && showSecondCursor && <span className="animate-blink text-accent" aria-hidden="true">|</span>}
+            <span className="text-accent">
+              {reduceMotion ? (
+                hero.roles[0]
+              ) : (
+                <SweepText key={roleIndex} ref={roleRef} text={roleText} />
+              )}
+            </span>
           </h2>
 
           <div
