@@ -25,3 +25,8 @@ export const SWEEP_EASE = "back.out(1.7)";
 /** How long a role sits fully in view before the loop moves on to the next
  *  one. */
 export const ROLE_HOLD_MS = 1600;
+
+/** When a role wraps onto two words/lines, how far ahead of the trailing one
+ *  the leading word starts - see SweepText's `groupByWord`. Short enough that
+ *  the two are still one continuous move, not two separate ones. */
+export const GROUP_STAGGER_MS = 80;

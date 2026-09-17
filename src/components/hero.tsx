@@ -33,8 +33,11 @@ export default function Hero() {
     return () => clearTimeout(timer);
   }, [hasEntered, curtainOpening, reduceMotion]);
 
-  const [roleIndex, setRoleIndex] = useState(0);
-  const [roleText, setRoleText] = useState(hero.roles[0]);
+  // Two slots rather than one, so the next role can sweep in while the
+  // current one is still sweeping out - the pause between them was the
+  // outgoing role's whole exit playing to completion before the incoming one
+  // was even asked to start.
+  const [slotTexts, setSlotTexts] = useState<[string, string]>([hero.roles[0], hero.roles[0]]);
 
   /** The greeting is the entry gate's payoff, so it is only spent on someone
    *  who went through the gate. `hasEntered` is already true at mount when the
@@ -48,7 +51,8 @@ export default function Hero() {
   const heroRef = useRef<HTMLDivElement>(null);
   const namePrefixRef = useRef<SweepTextHandle>(null);
   const nameRef = useRef<SweepTextHandle>(null);
-  const roleRef = useRef<SweepTextHandle>(null);
+  const roleRefA = useRef<SweepTextHandle>(null);
+  const roleRefB = useRef<SweepTextHandle>(null);
   const rolesLoopStarted = useRef(false);
 
   const visibleH1State = reduceMotion ? "done" : h1State;
@@ -74,29 +78,55 @@ export default function Hero() {
     };
   }, [curtainOpening, reduceMotion, h1State]);
 
-  // The role line loops: one role sweeps in, holds, sweeps back out the way it
-  // came, and the next takes its place — swapping direction each time, so a
-  // role that arrived from the bottom also leaves toward the bottom, and the
-  // next one plays the same beat from the top.
+  // The role line loops: one role sweeps in, holds, and the next sweeps in
+  // right on top of it while it sweeps back out the way it came - the two
+  // run together rather than one waiting for the other to finish, which is
+  // what made the swap read as a pause. A role's own exit always matches the
+  // direction it entered with (arrived from the bottom, leaves toward the
+  // bottom), and the direction flips on every swap - the outgoing role and
+  // the incoming one move in opposite semantic directions but the same way
+  // on screen (both sliding down, or both sliding up), which is what makes
+  // the overlap read as one continuous motion rather than two crossing.
   useEffect(() => {
     if (!curtainOpening || reduceMotion || h1State !== 'done' || rolesLoopStarted.current) return;
     rolesLoopStarted.current = true;
     let cancelled = false;
+    const roleRefs = [roleRefA, roleRefB] as const;
 
     async function loop() {
-      let index = 0;
+      let roleIndex = 0;
+      let active = 0;
+      let direction: SweepDirection = 'bottom';
+
+      await nextFrame();
+      if (cancelled) return;
+      await roleRefs[active].current?.enter(direction);
+
       while (!cancelled) {
-        const direction: SweepDirection = index % 2 === 0 ? 'bottom' : 'top';
-        setRoleIndex(index);
-        setRoleText(hero.roles[index]);
-        await nextFrame();
-        if (cancelled) return;
-        await roleRef.current?.enter(direction);
-        if (cancelled) return;
         await wait(ROLE_HOLD_MS);
         if (cancelled) return;
-        await roleRef.current?.exit(direction);
-        index = (index + 1) % hero.roles.length;
+
+        const exitDirection = direction;
+        const enterDirection: SweepDirection = direction === 'bottom' ? 'top' : 'bottom';
+        const next = active === 0 ? 1 : 0;
+        roleIndex = (roleIndex + 1) % hero.roles.length;
+        const nextRole = hero.roles[roleIndex];
+
+        setSlotTexts((previous) => {
+          const updated: [string, string] = [...previous];
+          updated[next] = nextRole;
+          return updated;
+        });
+        await nextFrame();
+        if (cancelled) return;
+
+        await Promise.all([
+          roleRefs[next].current?.enter(enterDirection),
+          roleRefs[active].current?.exit(exitDirection),
+        ]);
+
+        active = next;
+        direction = enterDirection;
       }
     }
 
@@ -162,7 +192,7 @@ export default function Hero() {
           {/* The role line loops between one and two lines as it cycles.
               Reserving two lines keeps the CTA row below from bouncing. */}
           <h2
-            className="hero-role mt-4 min-h-[calc(2*clamp(2.15rem,10vw,7.5rem))] max-w-full break-words text-[clamp(2.15rem,10vw,7.5rem)] font-bold font-[family-name:var(--font-tektur)] leading-none overflow-hidden"
+            className="hero-role mt-4 min-h-[calc(2*clamp(2.15rem,10vw,7.5rem))] max-w-full text-[clamp(2.15rem,10vw,7.5rem)] font-bold font-[family-name:var(--font-tektur)] leading-none overflow-hidden"
             style={{
               // The name above can carry a white halo because white has 21:1 of
               // contrast to spend. The role line is coloured and has far less,
@@ -175,13 +205,14 @@ export default function Hero() {
                 the full set of roles as static text instead, so the loop does
                 not fire an announcement every time it turns over. */}
             <span className="sr-only">{hero.roles.join(", ")}</span>
-            <span className="text-accent">
-              {reduceMotion ? (
-                hero.roles[0]
-              ) : (
-                <SweepText key={roleIndex} ref={roleRef} text={roleText} />
-              )}
-            </span>
+            {reduceMotion ? (
+              <span className="text-accent">{hero.roles[0]}</span>
+            ) : (
+              <span className="relative block w-full text-accent">
+                <SweepText ref={roleRefA} text={slotTexts[0]} groupByWord className="absolute left-0 top-0 w-full" />
+                <SweepText ref={roleRefB} text={slotTexts[1]} groupByWord className="absolute left-0 top-0 w-full" />
+              </span>
+            )}
           </h2>
 
           <div
