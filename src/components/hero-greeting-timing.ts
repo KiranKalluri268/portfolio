@@ -11,7 +11,7 @@
 /** Where along the sequence the eye is moving fastest, as a fraction of it.
  *  Before the halfway mark, so the deceleration is the longer half — that is
  *  the part anyone actually reads. */
-export const PEAK_AT = 0.45;
+export const PEAK_AT = 0.3;
 
 /** The shape, in relative terms. Only the ratios matter: the holds are scaled
  *  to fit GREETING_MS afterwards, so these say "the last word rests six times

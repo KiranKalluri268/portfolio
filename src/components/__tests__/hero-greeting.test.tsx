@@ -212,7 +212,7 @@ describe("the pacing curve", () => {
   });
 
   it("holds the budget until the floor forces it to stretch", () => {
-    for (const count of [3, 5, 8, 13, 17]) {
+    for (const count of [3, 5, 8, 13, 16]) {
       const total = holdsFor(count).reduce((sum, hold) => sum + hold, 0);
       // Rounding each hold to a whole millisecond is the only drift allowed.
       expect(Math.abs(total - GREETING_MS)).toBeLessThanOrEqual(count);
@@ -220,7 +220,7 @@ describe("the pacing curve", () => {
 
     // Past that the sequence gets longer rather than subliminal, and it does so
     // gradually - one more greeting is never a cliff.
-    const totals = [18, 21, 27, 34].map((count) =>
+    const totals = [17, 19, 21, 27].map((count) =>
       holdsFor(count).reduce((sum, hold) => sum + hold, 0),
     );
     expect(totals[0]).toBeGreaterThan(GREETING_MS);
