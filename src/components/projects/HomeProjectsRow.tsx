@@ -582,7 +582,29 @@ export default function HomeProjectsRow({
       gsap.ticker.add(frame);
       cleanups.push(() => gsap.ticker.remove(frame));
 
+      // Mobile Safari (and, to a lesser extent, Chrome) resizes the visual
+      // viewport by dozens of pixels as its address bar shows and hides -
+      // including mid-scroll, since the bar can auto-hide while a visitor is
+      // still moving through the page. That is not a layout change: it is
+      // the same device, asked to redraw a card size and, through it, this
+      // pin's own scroll length (`travelRef`, read by projects.tsx to size
+      // the ScrollTrigger). Recalculating and refreshing that while the pin
+      // is actively being scrolled through is what made the section's start
+      // and the "See all projects" reveal both jump - the boundary the
+      // visitor was scrolling against moved out from under them. A real
+      // width change, or a height change large enough to be a rotation
+      // rather than a toolbar, still goes through immediately.
+      let lastWidth = container.clientWidth;
+      let lastHeight = container.clientHeight;
+      const IGNORE_HEIGHT_DELTA = 150;
       const resizeObserver = new ResizeObserver(() => {
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        const widthChanged = width !== lastWidth;
+        const heightDelta = Math.abs(height - lastHeight);
+        lastWidth = width;
+        lastHeight = height;
+        if (!widthChanged && heightDelta < IGNORE_HEIGHT_DELTA) return;
         ready = resize();
       });
       resizeObserver.observe(container);
