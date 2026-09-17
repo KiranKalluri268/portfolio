@@ -7,6 +7,7 @@ import { useAudio } from "@/context/AudioContextProvider";
 import { useCoarsePointer, useReducedMotion } from "@/hooks/useMediaQuery";
 import { useHoverLabel } from "@/hooks/useHoverLabel";
 import {
+  PILL_GAP,
   PILL_TRAVEL_MS,
   PILL_CLASS,
   pillMetrics,
@@ -64,10 +65,19 @@ export default function SceneIndicator() {
   const navRef = useRef<HTMLElement>(null);
   const rowRef = useRef<HTMLDivElement>(null);
   const dotRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  /** One hidden span per scene, rendered off to the side purely to be
+   *  measured — see `labelWidths` below. */
+  const labelRefs = useRef<(HTMLSpanElement | null)[]>([]);
 
   /** Centre of each dot, in px from the left of the row. Measured rather than
    *  computed, because the dots are padded differently at each breakpoint. */
   const [centers, setCenters] = useState<number[]>([]);
+  /** How wide the pill needs to be to show each scene's name, measured from
+   *  real rendered text rather than estimated — the names are different
+   *  lengths and the font is loaded asynchronously. Indexed by scene, not by
+   *  the dot's position, so the label the pill grows into always matches
+   *  whichever dot it has settled on. */
+  const [labelWidths, setLabelWidths] = useState<number[]>([]);
   const [pill, setPill] = useState({
     idleWidth: 0,
     idleHeight: 0,
@@ -119,6 +129,11 @@ export default function SceneIndicator() {
         return rect.left - rowLeft + rect.width / 2;
       });
       setCenters(centersNow);
+
+      const labels = labelRefs.current.filter(Boolean) as HTMLSpanElement[];
+      const labelWidthsNow = labels.map((label) => label.getBoundingClientRect().width);
+      if (labelWidthsNow.length > 0) setLabelWidths(labelWidthsNow);
+
       // Measured against the bar's outer edge, which is what the eye compares
       // the pill to — the row inside it excludes the border.
       const nav = navRef.current;
@@ -127,7 +142,16 @@ export default function SceneIndicator() {
       const border = parseFloat(getComputedStyle(nav).borderLeftWidth) || 0;
       const firstCenter = centersNow[0] ?? 0;
 
-      setPill(pillMetrics(navHeight, border, firstCenter));
+      const metrics = pillMetrics(navHeight, border, firstCenter);
+      // The bar's own edge padding has to clear whichever pill is widest, not
+      // just the plain dot capsule - Hero or Contact showing their name is the
+      // case that would otherwise overflow past the bar's rounded corners,
+      // since the padding is normally sized for the small idle capsule alone.
+      const widestPill = Math.max(metrics.idleWidth, ...labelWidthsNow);
+      setPill({
+        ...metrics,
+        trackPadding: Math.max(0, PILL_GAP + widestPill / 2 - firstCenter - border),
+      });
     };
 
     measure();
@@ -333,20 +357,52 @@ export default function SceneIndicator() {
           onPointerCancel={endDrag}
         >
           {/* The pill: the only thing marking the active scene, which is why
-              the dots below stay uniform. */}
+              the dots below stay uniform. Idle, it widens into the current
+              scene's name instead of sitting on the dot as a plain blob -
+              travelling or dragged, it shrinks back to a small capsule with
+              no label, since it is not settled on anything yet to name. */}
           {centers.length > 0 && (
             <span
               aria-hidden="true"
               className={PILL_CLASS}
               style={{
-                width: moving ? pill.moveWidth : pill.idleWidth,
+                width: moving ? pill.moveWidth : (labelWidths[pillIndex] ?? pill.idleWidth),
                 height: moving ? pill.moveHeight : pill.idleHeight,
-                transform: `translate3d(${pillCenter - (moving ? pill.moveWidth : pill.idleWidth) / 2}px, -50%, 0)`,
+                transform: `translate3d(${pillCenter - (moving ? pill.moveWidth : (labelWidths[pillIndex] ?? pill.idleWidth)) / 2}px, -50%, 0)`,
                 // A drag follows the finger, so its position must not be eased.
                 transition: pillTransition(reduceMotion, !drag),
               }}
-            />
+            >
+              {/* Its own layer, clipped to the pill's growing box, so the name
+                  cannot poke out past the edge while the width is still
+                  animating up to it - clipping the pill itself instead would
+                  cut off its own glow, which is meant to bleed past the edge. */}
+              {!moving && (
+                <span className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-full">
+                  <span className="whitespace-nowrap text-xs font-semibold tracking-wide text-white sm:text-sm">
+                    {scenes[pillIndex].name}
+                  </span>
+                </span>
+              )}
+            </span>
           )}
+
+          {/* Off-screen copies of every name, in the same font the pill uses,
+              purely so their rendered width can be measured - the pill needs
+              to know how wide to grow before it is asked to show one. */}
+          <div aria-hidden="true" className="pointer-events-none absolute -z-10 opacity-0">
+            {scenes.map((scene) => (
+              <span
+                key={scene.index}
+                ref={(element) => {
+                  labelRefs.current[scene.index] = element;
+                }}
+                className="inline-block whitespace-nowrap px-3.5 text-xs font-semibold tracking-wide sm:text-sm"
+              >
+                {scene.name}
+              </span>
+            ))}
+          </div>
 
           {scenes.map((scene) => {
             const isActive = activeSection === scene.id;
@@ -368,11 +424,17 @@ export default function SceneIndicator() {
                 >
                   {/* One size for every dot — the colour carries which scene is
                       current, so it stays legible while the pill is elsewhere,
-                      including mid-drag. Size is left to the pill. */}
+                      including mid-drag. Size is left to the pill.
+                      The active one fades out once the pill has settled and
+                      widened into that scene's name over it — the label says
+                      what the dot was saying, and the two together would just
+                      be the same fact twice, with the dot sitting inside the
+                      text. It returns the moment the pill moves off again. */}
                   <div
-                    className="relative h-1 w-1 rounded-full transition-[background-color,box-shadow] duration-300 ease-out"
+                    className="relative h-1 w-1 rounded-full transition-[background-color,box-shadow,opacity] duration-300 ease-out"
                     style={{
                       backgroundColor: isActive ? "var(--color-accent-soft)" : "white",
+                      opacity: isActive && !moving ? 0 : 1,
                       boxShadow: isActive
                         ? "0 0 12px 3px color-mix(in oklab, var(--color-accent) 85%, transparent)"
                         : isHovered
