@@ -24,7 +24,7 @@ const WEIGHT_AT_REST = 4;
 export const GREETING_MS = 3480;
 
 /** The push through the final letter. */
-export const FLY_MS = 1100;
+export const FLY_MS = 660;
 
 /** The fly's easing, and the one line here worth checking against the spec
  *  rather than eyeballing.
