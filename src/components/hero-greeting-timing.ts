@@ -14,11 +14,11 @@
 export const PEAK_AT = 0.3;
 
 /** The shape, in relative terms. Only the ratios matter: the holds are scaled
- *  to fit GREETING_MS afterwards, so these say "the last word rests six times
- *  as long as the fastest one", not "600ms". */
+ *  to fit GREETING_MS afterwards, so these say "the last word rests about
+ *  three times as long as the fastest one", not "600ms". */
 const WEIGHT_AT_START = 3.4;
-const WEIGHT_AT_PEAK = 1;
-const WEIGHT_AT_REST = 6;
+const WEIGHT_AT_PEAK = 1.3;
+const WEIGHT_AT_REST = 4;
 
 /** How long the words take, before the fly-through. */
 export const GREETING_MS = 3480;
