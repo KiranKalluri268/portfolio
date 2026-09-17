@@ -51,7 +51,7 @@ test.describe("the site menu", () => {
  *  put that back on the way out, so the body kept `overflow: hidden` for the
  *  rest of the visit. That makes the body its own scroll container, which stops
  *  `position: sticky` working against the document — so About's panel scrolled
- *  away with the page instead of pinning, and the rest of its 500svh of runway
+ *  away with the page instead of pinning, and the rest of its 250svh of runway
  *  read as a long gap before Experience. */
 test.describe("the page is handed back when the menu and the entry screen overlap", () => {
   test.beforeEach(async ({ page }) => {
@@ -84,7 +84,10 @@ test.describe("the page is handed back when the menu and the entry screen overla
       );
       if (!panel) return null;
       const sectionTop = about.getBoundingClientRect().top + window.scrollY;
-      window.scrollTo(0, sectionTop + window.innerHeight * 2);
+      // Comfortably inside the pin range rather than at its edge: the
+      // section is 250svh, minus the 30svh lead-in and the 100svh sticky
+      // panel itself leaves about 1.2 viewport heights of actual pin room.
+      window.scrollTo(0, sectionTop + window.innerHeight * 0.6);
       await new Promise((resolve) => setTimeout(resolve, 400));
       return Math.round(panel.getBoundingClientRect().top);
     });
