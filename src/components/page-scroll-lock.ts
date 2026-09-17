@@ -17,7 +17,7 @@
  * A body stuck at `overflow: hidden` makes the body its own scroll container,
  * and `position: sticky` inside it has nothing to stick to any more, because
  * the thing actually scrolling is the document above it. The About section is
- * a sticky panel inside 500svh of runway, so it stopped pinning: the copy
+ * a sticky panel inside 250svh of runway, so it stopped pinning: the copy
  * scrolled away with the page and left the rest of the section as a long gap
  * before Experience.
  *
