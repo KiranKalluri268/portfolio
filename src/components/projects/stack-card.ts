@@ -202,7 +202,7 @@ export function drawSeeAllCard({
   context.fill();
 
   const label = "See all projects";
-  const fontSize = Math.round(56 * scale);
+  const fontSize = Math.round(76 * scale);
   context.textAlign = "center";
   context.textBaseline = "middle";
   context.fillStyle = "#ffffff";
