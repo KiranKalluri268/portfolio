@@ -181,7 +181,7 @@ export default function Hero() {
             </span>
             <span
               className={`block whitespace-nowrap transition-all duration-1000 ease-in-out ${nameSettled
-                ? "text-[clamp(2.7rem,11vw,6rem)]"
+                ? "text-[clamp(1.8rem,8vw,6rem)]"
                 : "text-[clamp(3rem,13vw,8rem)]"
                 }`}
             >
@@ -216,10 +216,11 @@ export default function Hero() {
           </h2>
 
           <div
-            className={`hero-cta mt-8 flex flex-row flex-wrap items-center gap-3 transition-[opacity,transform] duration-700 ease-out sm:gap-4 ${visibleH1State === 'done'
-              ? 'translate-y-0 opacity-100'
-              : 'pointer-events-none translate-y-3 opacity-0'
+            className={`hero-cta mt-8 flex flex-row flex-wrap items-center gap-3 transition-opacity duration-700 sm:gap-4 ${visibleH1State === 'done'
+              ? 'opacity-100'
+              : 'pointer-events-none opacity-0'
               }`}
+            style={{ transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)" }}
           >
             <button
               type="button"

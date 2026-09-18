@@ -52,7 +52,7 @@ export function monogram(title: string) {
 
 /** Canvas has no `color-mix`, so a colour taken from the stylesheet is given
  *  its alpha here. Handles the hex forms the grid actually uses. */
-function withAlpha(colour: string, alpha: number) {
+export function withAlpha(colour: string, alpha: number) {
   const hex = colour.trim();
   const short = /^#([0-9a-f])([0-9a-f])([0-9a-f])$/i.exec(hex);
   const long = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
@@ -145,6 +145,91 @@ function drawMonogramPanel(
   context.font = `600 ${Math.round(30 * scale)}px ${fontFamily}`;
   context.fillText(role.toUpperCase(), x + width / 2, y + height / 2 + 90 * scale);
   context.textAlign = "left";
+}
+
+export interface SeeAllCardDrawing {
+  fontFamily: string;
+  shape: CardShape;
+  /** The site's own accent, since this card is not any project's and so has
+   *  no origin colour of its own to draw its glow and edge in. */
+  accentColour: string;
+  resolution?: number;
+}
+
+/** The row's last panel: a card in the same shell as a project's - the same
+ *  glow, background and rounded edge - so it reads as one more thing to tap
+ *  rather than as a caption that wandered in among them. It carries no
+ *  image, title or skills, so it is the shell alone plus its own centred,
+ *  underlined line - the underline is the only thing marking it clickable,
+ *  since a project card has its whole self for that job and this has just
+ *  the words. */
+export function drawSeeAllCard({
+  fontFamily,
+  shape,
+  accentColour,
+  resolution = 1,
+}: SeeAllCardDrawing) {
+  const card = CARD_SHAPES[shape];
+  const texture = textureSizeFor(shape);
+  const textureWidth = card.width;
+  const textureHeight = card.height;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(texture.width * resolution);
+  canvas.height = Math.round(texture.height * resolution);
+  const context = canvas.getContext("2d");
+  if (!context) return canvas;
+
+  context.scale(resolution, resolution);
+  const scale = textureWidth / CARD_SHAPES.wide.width;
+  context.translate(texture.pad, texture.pad);
+  const radius = 28 * scale;
+
+  // The same glow-then-fill shell a project card draws, in the accent colour.
+  context.save();
+  context.shadowColor = withAlpha(accentColour, 0.3);
+  context.shadowBlur = 40 * scale * 1.46;
+  context.fillStyle = "#050505";
+  roundedRect(context, 0, 0, textureWidth, textureHeight, radius);
+  context.fill();
+  context.shadowColor = withAlpha(accentColour, 0.22);
+  context.shadowBlur = 2 * scale;
+  context.fill();
+  context.restore();
+
+  context.fillStyle = "#050505";
+  roundedRect(context, 0, 0, textureWidth, textureHeight, radius);
+  context.fill();
+
+  const label = "See all projects";
+  const fontSize = Math.round(76 * scale);
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillStyle = "#ffffff";
+  context.font = `700 ${fontSize}px ${fontFamily}`;
+  const centreX = textureWidth / 2;
+  const centreY = textureHeight / 2;
+  context.fillText(label, centreX, centreY);
+
+  // The underline, not the card, is what says this line is a link - a card
+  // is a link over its whole self, but this one is otherwise only its words.
+  const textWidth = context.measureText(label).width;
+  const underlineY = centreY + fontSize * 0.55;
+  context.strokeStyle = "#ffffff";
+  context.lineWidth = Math.max(2, 3 * scale);
+  context.beginPath();
+  context.moveTo(centreX - textWidth / 2, underlineY);
+  context.lineTo(centreX + textWidth / 2, underlineY);
+  context.stroke();
+  context.textAlign = "left";
+
+  const edge = 1;
+  context.lineWidth = edge;
+  context.strokeStyle = withAlpha(accentColour, 0.4);
+  roundedRect(context, edge / 2, edge / 2, textureWidth - edge, textureHeight - edge, radius);
+  context.stroke();
+
+  return canvas;
 }
 
 export interface CardDrawing {
