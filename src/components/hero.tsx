@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { flushSync } from "react-dom";
 import { useScrollActions } from "@/context/SmoothScrollContext";
 import { useAudio } from "@/context/AudioContextProvider";
 import { ENTRY_RELEASE_MS } from "./entry-timing";
@@ -125,12 +126,22 @@ export default function Hero() {
         roleIndex = (roleIndex + 1) % hero.roles.length;
         const nextRole = hero.roles[roleIndex];
 
-        setSlotTexts((previous) => {
-          const updated: [string, string] = [...previous];
-          updated[next] = nextRole;
-          return updated;
+        // Forced synchronous rather than the usual batched commit: enter()
+        // below reads letterRefs off the newly-mounted letters immediately
+        // after, and needs React to have actually attached them by then. A
+        // plain setState here only queues the render - on a busy main thread
+        // (this page runs a WebGL scene alongside it) React can take more
+        // than the one requestAnimationFrame this used to wait before
+        // committing, and whichever letters had not been ref'd yet were
+        // silently dropped from the tween and stayed at their default
+        // opacity-0 forever - not a stray frame, a letter that never arrives.
+        flushSync(() => {
+          setSlotTexts((previous) => {
+            const updated: [string, string] = [...previous];
+            updated[next] = nextRole;
+            return updated;
+          });
         });
-        await nextFrame();
         if (cancelled) return;
 
         await Promise.all([
