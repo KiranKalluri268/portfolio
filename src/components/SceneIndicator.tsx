@@ -536,20 +536,10 @@ export default function SceneIndicator() {
           // -inset-px: sits exactly where nav's own (transparent) border is,
           // so this layer's real border lands on nav's true outer edge
           // rather than one border-width further in.
-          className="pointer-events-none absolute -inset-px rounded-full border border-white/10 bg-black/65 backdrop-blur-md"
+          className="pointer-events-none absolute -inset-px rounded-full border border-white/10 bg-black/65 shadow-[0_6px_20px_rgba(0,0,0,0.4)] backdrop-blur-md"
           style={{
             opacity: intro === "dot" ? 0 : 1,
-            // The dark drop shadow alone leaves the outline almost unreadable
-            // while it is doing the most, mid-expansion - a soft white glow
-            // rides alongside it just for that beat, so the edge pushing
-            // outward is actually visible while it moves.
-            boxShadow:
-              intro === "expanding"
-                ? "0 6px 20px rgba(0,0,0,0.4), 0 0 14px 2px rgba(255,255,255,0.4)"
-                : "0 6px 20px rgba(0,0,0,0.4)",
-            transition: reduceMotion
-              ? "none"
-              : `opacity ${INTRO_CIRCLE_MS}ms ${INTRO_EASE}, box-shadow ${INTRO_EXPAND_MS}ms ${INTRO_EASE}`,
+            transition: reduceMotion ? "none" : `opacity ${INTRO_CIRCLE_MS}ms ${INTRO_EASE}`,
           }}
         />
         <div
