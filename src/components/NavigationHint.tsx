@@ -75,5 +75,19 @@ export default function NavigationHint({ projectCount }: { projectCount: number 
     hasEntered ? resolveHomepageHint({ section, carousel }) : null,
   );
 
-  return <HintPill text={hint ? hintText(hint, inputMode) : ""} visible={visible} />;
+  return (
+    <HintPill
+      text={hint ? hintText(hint, inputMode) : ""}
+      visible={visible}
+      // The hero sits lower and a size up from HintPill's own default - the
+      // hero has nothing else fixed near the bottom of the screen to share
+      // that corner with, so it can afford to sit closer to the edge and
+      // read a little larger than the hint does everywhere else.
+      className={
+        section === "hero"
+          ? "fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-1/2 text-sm sm:bottom-28"
+          : undefined
+      }
+    />
+  );
 }
