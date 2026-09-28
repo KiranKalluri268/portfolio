@@ -4,8 +4,8 @@ import React, { createContext, useContext, useEffect, useLayoutEffect, useRef, u
 interface AudioContextValue {
   audioEnabled: boolean;
   hasEntered: boolean;
-  /** True once the gate is known to have been skipped — restored from
-   *  sessionStorage rather than cleared by an Enter press this page load.
+  /** True when the loader was skipped — restored from
+   *  sessionStorage rather than completed on this page load.
    *  Anything gated on "did the entry screen actually play" (the hero
    *  greeting) reads this instead of `hasEntered`, since `hasEntered` alone
    *  cannot tell the two apart. */
@@ -42,7 +42,7 @@ export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
   const [audioEnabled, setAudioEnabled] = useState(false);
   // Starts false to match the server-rendered markup; synced from
   // sessionStorage in the layout effect below before the first paint, so
-  // there is no gate flash for a visitor who already entered this session.
+  // there is no loader flash for a visitor who already arrived this session.
   const [hasEntered, setHasEntered] = useState(false);
   const [entrySkipped, setEntrySkipped] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -71,12 +71,10 @@ export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
 
   const enterPortfolio = () => {
     setHasEntered(true);
-    setAudioEnabled(true);
     try {
       window.sessionStorage.setItem(ENTERED_KEY, "true");
     } catch {
-      // Storage may be unavailable (private mode, blocked); the gate simply
-      // replays next time, which is the existing behaviour.
+      // Storage may be unavailable; the loader will replay next time.
     }
   };
 

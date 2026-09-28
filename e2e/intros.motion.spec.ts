@@ -83,14 +83,34 @@ test.describe("the skill web assembles itself", () => {
 });
 
 test.describe("the entry screen", () => {
-  test("covers the home page until Enter, then hands it over", async ({ page }) => {
+  test("covers the home page while loading, then hands it over automatically", async ({ page }) => {
     await page.goto("/");
-    // The hero is behind the entry screen and must not be readable through it.
-    const enter = page.getByRole("button", { name: /enter portfolio/i });
-    await enter.waitFor({ state: "visible", timeout: 20_000 });
+    const loader = page.getByRole("dialog", { name: /portfolio loading/i });
 
     await enterSite(page);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(enter).toBeHidden();
+    await expect(loader).toBeHidden();
+    const audio = page.getByRole("button", { name: "Play audio playback" });
+    await expect(audio).toBeVisible();
+    await audio.hover();
+    await expect(page.getByText("Click to turn on audio")).toBeVisible();
+    await page.mouse.move(1100, 78);
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: "test-results/automatic-reveal-desktop.png" });
+    await audio.click();
+    await expect(page.getByRole("button", { name: "Pause audio playback" })).toBeVisible();
+  });
+
+  test("rebuilds the scene dots on a same-session reload", async ({ page }) => {
+    await page.goto("/");
+    await enterSite(page);
+    const nav = page.getByRole("navigation", { name: "Scene navigation indicator" });
+    await expect(nav).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole("dialog", { name: /portfolio loading/i })).toBeHidden();
+    await expect(nav).toBeVisible();
+    const initialWidth = await nav.evaluate((element) => element.getBoundingClientRect().width);
+    expect(initialWidth).toBeLessThan(100);
+    await expect.poll(() => nav.evaluate((element) => element.getBoundingClientRect().width)).toBeGreaterThan(200);
   });
 });

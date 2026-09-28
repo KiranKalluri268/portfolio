@@ -5,9 +5,11 @@ import Link from 'next/link';
 import AudioToggle from './AudioToggle';
 import SiteMenu from './nav/SiteMenu';
 import Tooltip from './Tooltip';
+import { useAudio } from '@/context/AudioContextProvider';
 
 export default function NavBar() {
   const [hoveredItem, setHoveredItem] = useHoverLabel<string>();
+  const { audioEnabled } = useAudio();
 
   return (
     <header
@@ -39,7 +41,7 @@ export default function NavBar() {
           </li>
         </ul>
       </nav>
-      <Tooltip text="Audio" isVisible={hoveredItem === "Audio"} />
+      <Tooltip text={audioEnabled ? "Click to turn off audio" : "Click to turn on audio"} isVisible={hoveredItem === "Audio"} />
     </header>
   );
 }
