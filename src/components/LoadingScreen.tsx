@@ -218,6 +218,15 @@ export default function LoadingScreen({
   const { hasEntered, enterPortfolio } = useAudio();
   const { lenis } = useScrollActions();
   const [dismissed, setDismissed] = useState(hasEntered);
+  // hasEntered starts false on every render (it is only known once the audio
+  // provider's own layout effect has read sessionStorage), so a visitor who
+  // already entered this session needs dismissed to catch up once it does.
+  // Syncs from the audio provider's own sessionStorage read, which lands
+  // after this component's first render, not derivable at render time.
+  useLayoutEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (hasEntered) setDismissed(true);
+  }, [hasEntered]);
   const [isExiting, setIsExiting] = useState(false);
   /** The entry screen has to cover the site header and the scene dots. Both sit
    *  in the document's own stacking context while the page is inside a z-10
