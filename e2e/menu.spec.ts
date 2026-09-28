@@ -59,11 +59,7 @@ test.describe("the page is handed back when the menu and the entry screen overla
     await page.getByRole("button", { name: /open menu/i }).click();
     await page.getByRole("dialog").getByRole("link", { name: "Home", exact: true }).click();
     await enterSite(page);
-    // enterSite returns as soon as the header is visible behind the entry
-    // screen, which is before its exit flight has finished. The page is still
-    // held still until it actually goes, so the assertions below have to wait
-    // for that or they read a lock that is legitimately still held.
-    await expect(page.getByRole("dialog", { name: /portfolio entry/i })).toBeHidden();
+    await expect(page.getByRole("dialog", { name: /portfolio loading/i })).toBeHidden();
   });
 
   test("the body is left scrollable", async ({ page }) => {

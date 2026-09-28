@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useAudio } from "@/context/AudioContextProvider";
 import { ENTRY_RELEASE_MS, ENTRY_ESCAPE_MS, ENTRY_DISMISS_MS } from "./entry-timing";
@@ -213,13 +213,12 @@ export default function LoadingScreen({
   const overlayRef = useRef<HTMLDivElement>(null);
   const particlesRef = useRef<LoadingParticle[]>([]);
   const animationFrameRef = useRef<number | null>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
   const exitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { hasEntered, entrySkipped, enterPortfolio } = useAudio();
   const { lenis } = useScrollActions();
   const [dismissed, setDismissed] = useState(hasEntered);
-  // entrySkipped, not hasEntered: hasEntered also flips true the moment
-  // Enter is pressed this load, and that case must play the exit flight in
+  // entrySkipped, not hasEntered: hasEntered also flips true when loading
+  // finishes this load, and that case must play the exit flight in
   // full rather than snap straight to dismissed. entrySkipped only ever
   // becomes true for a visitor restored from sessionStorage, which lands a
   // tick after this component's first render, not derivable at render time.
@@ -235,7 +234,7 @@ export default function LoadingScreen({
   const [portalReady, setPortalReady] = useState(false);
   /** Which of the two lines under the rings is showing. */
   const [loadingLine, setLoadingLine] = useState(0);
-  /** Set the moment Enter is pressed, read by the draw loop every frame. A ref
+  /** Set when loading finishes, read by the draw loop every frame. A ref
    *  rather than state, so starting it does not rebuild the loop. */
   const flightRef = useRef<ExitFlight | null>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
@@ -296,7 +295,7 @@ export default function LoadingScreen({
       if (cancelled || completed.has(key)) return;
       completed.add(key);
       setLoadingProgress((current) => Math.max(current, progress));
-      if (completed.size === 3) finish();
+      if (completed.size === 2) finish();
     };
 
     document.fonts.ready.then(() => complete("fonts", 30)).catch(() => complete("fonts", 30));
@@ -326,8 +325,7 @@ export default function LoadingScreen({
       }
     };
 
-    prepareMedia("[data-blackhole-video]", "video", 75, HTMLMediaElement.HAVE_CURRENT_DATA, "loadeddata");
-    prepareMedia("[data-portfolio-audio]", "audio", 100, HTMLMediaElement.HAVE_FUTURE_DATA, "canplay");
+    prepareMedia("[data-blackhole-video]", "video", 100, HTMLMediaElement.HAVE_CURRENT_DATA, "loadeddata");
 
     const fallbackTimer = setTimeout(() => {
       if (!cancelled) finish();
@@ -562,24 +560,14 @@ export default function LoadingScreen({
     if (!dismissed) overlayRef.current?.focus({ preventScroll: true });
   }, [dismissed, portalReady]);
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Enter" && !dismissed && !isExiting && isLoaded) buttonRef.current?.click();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [dismissed, isExiting, isLoaded]);
-
   useEffect(() => () => {
     if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
   }, []);
 
-  const handleEnter = () => {
+  const startReveal = useCallback(() => {
     if (!isLoaded || isExiting) return;
     setIsExiting(true);
 
-    // These calls stay inside the user interaction for strict autoplay policies.
-    document.querySelector<HTMLAudioElement>("[data-portfolio-audio]")?.play().catch(() => {});
     document.querySelector<HTMLVideoElement>("[data-blackhole-video]")?.play().catch(() => {});
     // Before the flight, not after: the hero types its headline off hasEntered,
     // so it is already coming in behind the black as this clears.
@@ -611,7 +599,14 @@ export default function LoadingScreen({
       () => setDismissed(true),
       reduced ? REDUCED_EXIT_MS : EXIT_MS,
     );
-  };
+  }, [isLoaded, isExiting, enterPortfolio, canvasSize]);
+
+  useEffect(() => {
+    if (isLoaded && !dismissed && !isExiting && !entrySkipped) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      startReveal();
+    }
+  }, [isLoaded, dismissed, isExiting, entrySkipped, startReveal]);
 
   if (dismissed || !portalReady) return null;
 
@@ -622,7 +617,7 @@ export default function LoadingScreen({
       className={`fixed inset-0 z-[9999] flex min-h-[100svh] items-center justify-center outline-none ${isExiting ? "pointer-events-none" : ""}`}
       role="dialog"
       aria-modal="true"
-      aria-label="Portfolio entry"
+      aria-label="Portfolio loading"
       aria-busy={!isLoaded}
     >
       {/* Its own layer, so the canvas can take the black over and cut the
@@ -647,26 +642,12 @@ export default function LoadingScreen({
         className={`relative z-10 flex h-[60px] flex-col items-center justify-center transition-opacity ease-out ${isExiting ? "opacity-0" : "opacity-100"}`}
         style={{ transitionDuration: `${SPIN_MS}ms` }}
       >
-          {!isLoaded ? (
-            <p
-              key="loading-text"
-              className="animate-fade-in text-2xl md:text-3xl font-bold font-mono"
-              style={{ color: color }}
-            >
-              <span aria-live="polite">{loadingProgress}%</span>
-            </p>
-          ) : (
-            <button
-              ref={buttonRef}
-              type="button"
-              onClick={handleEnter}
-              className="animate-pop-in cursor-pointer rounded bg-transparent p-4 text-2xl font-bold transition-transform duration-200 hover:scale-115 active:scale-95 md:text-3xl"
-              style={{ color }}
-              aria-label="Enter portfolio and enable audio"
-            >
-              Enter
-            </button>
-          )}
+          <p
+            className="animate-fade-in text-2xl md:text-3xl font-bold font-mono"
+            style={{ color }}
+          >
+            <span aria-live="polite">{loadingProgress}%</span>
+          </p>
       </div>
 
       {/* Under the rings, not inside them: the middle belongs to the count and
@@ -692,12 +673,6 @@ export default function LoadingScreen({
         ))}
       </div>
 
-      <p
-        className={`absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-0 w-full px-4 text-center text-xs font-light tracking-wider transition-opacity ease-out select-none sm:text-sm md:text-base ${isExiting ? "opacity-0" : "opacity-100"}`}
-        style={{ color: colorToRgba(color, 0.7), transitionDuration: `${SPIN_MS}ms` }}
-      >
-        Press Enter to open the portfolio with audio. You can mute it anytime from the top control.
-      </p>
     </div>,
     document.body,
   );

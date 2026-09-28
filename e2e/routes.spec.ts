@@ -11,7 +11,7 @@ test.describe("every route answers", () => {
     });
   }
 
-  test("/ opens once the entry screen is dismissed", async ({ page }) => {
+  test("/ opens once loading finishes", async ({ page }) => {
     const response = await page.goto("/");
     expect(response?.status()).toBe(200);
     await enterSite(page);

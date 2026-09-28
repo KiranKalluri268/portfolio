@@ -7,6 +7,9 @@ const AudioToggle = () => {
   const { audioEnabled, setAudioEnabled } = useAudio();
 
   const toggleAudioIndicator = () => {
+    if (!audioEnabled) {
+      document.querySelector<HTMLAudioElement>("[data-portfolio-audio]")?.play().catch(() => {});
+    }
     setAudioEnabled(!audioEnabled);
   };
 

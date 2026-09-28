@@ -14,7 +14,7 @@ import { useAudio } from "@/context/AudioContextProvider";
  *
  *  It only has to last until LoadingScreen is ready to take over, which is
  *  indistinguishable to a viewer since both are solid black. `hasEntered`
- *  flips the instant Enter is pressed, before the exit flight plays, so this
+ *  flips when loading finishes, before the exit flight plays, so this
  *  clears itself while LoadingScreen's own overlay is still opaque on top of
  *  it - never exposing the page underneath early. */
 export default function EntryCurtain() {

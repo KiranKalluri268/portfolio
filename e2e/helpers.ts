@@ -1,7 +1,6 @@
 import type { Page } from "@playwright/test";
 
-/** Every route that is not the home page. The home page is gated behind the
- *  entry screen and needs `enterSite` first. */
+/** Every route that is not the home page. */
 export const PAGES = ["/projects", "/skills", "/resume", "/cv"] as const;
 
 /**
@@ -38,11 +37,9 @@ export async function horizontalOverflow(page: Page) {
   });
 }
 
-/** Clicks through the entry screen and waits for the home page behind it.
- *  Under reduced motion the exit is 300ms rather than the full flight. */
+/** Waits for the automatic loading reveal to hand back the home page. */
 export async function enterSite(page: Page) {
-  const enter = page.getByRole("button", { name: /enter/i });
-  await enter.waitFor({ state: "visible", timeout: 20_000 });
-  await enter.click();
+  await page.waitForFunction(() => window.sessionStorage.getItem("portfolio:entered") === "true", null, { timeout: 20_000 });
+  await page.getByRole("dialog", { name: /portfolio loading/i }).waitFor({ state: "hidden", timeout: 20_000 });
   await page.getByRole("banner").waitFor({ state: "visible" });
 }
