@@ -68,13 +68,13 @@ const INTRO_EXPAND_MS = 550;
 /** How long the active dot's pill takes to appear once every dot has
  *  reached its place, and the name inside it once the pill has its shape.
  *  Opacity (and the pill's own entrance scale) only - see FADE_EASE. */
-const INTRO_FADE_MS = 450;
+const INTRO_FADE_MS = 280;
 /** How long the active dot itself takes to fade out once the pill has
  *  widened into its name, and back in once the pill moves off again. Kept
  *  short and separate from INTRO_FADE_MS so the handoff between the two
  *  reads as a sequence - one gone, then the other arriving - rather than a
  *  crossfade that shows both at once. */
-const DOT_FADE_MS = 200;
+const DOT_FADE_MS = 150;
 /** How long the label waits before it starts fading in - long enough that
  *  both the dot it is replacing (DOT_FADE_MS) and the pill's own entrance
  *  (INTRO_FADE_MS, its scale and opacity growing in around the first-ever
@@ -170,10 +170,6 @@ export default function SceneIndicator() {
    *  already sit with no extra space between them - see activeExtra below,
    *  near the render. */
   const [buttonWidth, setButtonWidth] = useState(0);
-  /** The row's own natural width - unaffected by the entrance constraining
-   *  the bar around it, since only `nav` is ever given an explicit width -
-   *  so the bar knows how wide "fully grown" actually is. */
-  const [rowWidth, setRowWidth] = useState(0);
   const [intro, setIntro] = useState<Intro>("dot");
   /** Which dot the pill sits on. It follows the page: scroll to a section and
    *  the pill comes with you. Two things take it off that — a drag, where it
@@ -228,13 +224,6 @@ export default function SceneIndicator() {
       // extra space between them - see activeExtra near the render, which
       // measures the local bulge the active dot's own pill needs against it.
       setButtonWidth(buttons[0].getBoundingClientRect().width);
-
-      // Measured against the bar's outer edge, which is what the eye compares
-      // the pill to — the row inside it excludes the border.
-      // The row's own width - it never shrinks to fit a narrower `nav` (see
-      // its `w-max` below), so this stays the bar's true full width even
-      // while the entrance is holding `nav` down to a small circle.
-      setRowWidth(row.getBoundingClientRect().width);
 
       const nav = navRef.current;
       if (!nav) return;
@@ -453,20 +442,16 @@ export default function SceneIndicator() {
 
   if (!portalReady || !hasEntered) return null;
 
-  const pillCenter = drag ? drag.x : (centers[pillIndex] ?? 0);
   const moving = drag !== null || travelling;
   const labelIndex = drag ? drag.index : null;
   const pillWidth = moving ? pill.moveWidth : (labelWidths[pillIndex] ?? pill.idleWidth);
 
-  // One constant governs every gap in the bar: half the distance between two
-  // ordinary dots, which is already exactly how far a plain dot's own centre
-  // sits from a neighbour or from the bar's edge - each button is its own
-  // symmetric box, so this falls out of the layout for free, with no padding
-  // or margin spent on it. Only the active dot's pill is wider than a plain
-  // dot, so only it ever needs more than that - and only by however much its
-  // own half-width already exceeds this same half-unit, whether what it is
-  // clearing is a neighbouring dot (as margin, split onto both its sides) or
-  // the bar's own edge (as padding, on whichever side it is parked against).
+  // One constant governs every dot-to-dot gap in the bar: half the distance
+  // between two ordinary dots, which is already exactly how far a plain
+  // dot's own centre sits from a neighbour - each button is its own
+  // symmetric box, so this falls out of the layout for free, with no margin
+  // spent on it. Only the active dot's pill is wider than a plain dot, so
+  // only it ever needs more than that, split as margin onto both its sides.
   const halfUnit = buttonWidth / 2;
   const extraFor = (width: number) => Math.max(0, width / 2 - halfUnit);
   // Zero while moving: a travelling pill is a plain capsule with no label to
@@ -475,23 +460,51 @@ export default function SceneIndicator() {
 
   const circleSize = pill.idleHeight + PILL_GAP * 2;
   const isCircular = intro === "dot" || intro === "circle" || intro === "flood";
+  const circleExtra = extraFor(circleSize);
+  // The bar's own edge is a different constant from a dot-to-dot gap: it is
+  // PILL_GAP, the same fixed clearance the sliding pill elsewhere in the
+  // codebase keeps from its own bar's edge, not half a dot's natural
+  // spacing - so it applies in full the moment anything is parked there,
+  // rather than only past whatever a plain dot already gets for free. A
+  // plain, inactive dot at that edge needs none of this - its own natural
+  // half-unit from the edge is already the last of the free spacing above.
+  const edgePad = (extra: number) => Math.max(0, extra + PILL_GAP - barBorder);
   // The circle centres itself on the first dot on both sides at once, unlike
   // the pill later, which only ever needs to clear whichever one side it is
   // actually parked against.
-  const circleExtra = extraFor(circleSize);
-  const leftPad = isCircular ? circleExtra : pillIndex === 0 ? activeExtra : 0;
+  const leftPad = isCircular ? edgePad(circleExtra) : pillIndex === 0 ? edgePad(activeExtra) : 0;
   const rightPad = isCircular
-    ? circleExtra
+    ? edgePad(circleExtra)
     : pillIndex === scenes.length - 1
-      ? activeExtra
+      ? edgePad(activeExtra)
       : 0;
 
-  // The bar's true full width: the row's own natural width - already
-  // reflecting whichever dot's local bulge is currently open, since it is
-  // measured off the row's actual, currently-margined layout - plus
-  // whichever edge is presently holding the pill's own overflow.
-  const barFullWidth = rowWidth + leftPad + rightPad + barBorder * 2;
+  // The row's own width, found the same way the browser itself lays the
+  // dots out - n of them, each buttonWidth wide, plus whichever of the
+  // active dot's own two margins actually borders another dot rather than
+  // the bar's edge (that side is edgePad's job instead) - rather than
+  // measured back off the live DOM, which only reports the width the CSS
+  // margin transition has reached partway through animating to it. Reading
+  // that measurement back while it is itself still catching up to a
+  // transition already in flight was the bar's width chasing its own tail:
+  // briefly behind the very margin driving it, the dots it was meant to
+  // contain drawn outside it.
+  const marginBefore = pillIndex > 0 ? activeExtra : 0;
+  const marginAfter = pillIndex < scenes.length - 1 ? activeExtra : 0;
+  const rowWidthNow = scenes.length * buttonWidth + marginBefore + marginAfter;
+  const barFullWidth = rowWidthNow + leftPad + rightPad + barBorder * 2;
   const barWidth = isCircular ? circleSize : barFullWidth;
+  // The active dot's own centre, found the same analytical way rather than
+  // measured - same reasoning as rowWidthNow above, and what the pill's own
+  // translateX is built from, so it cannot lag the margin transition moving
+  // the dot it is meant to be centred on either.
+  const analyticalCenterOf = (index: number) => {
+    const natural = index * buttonWidth + halfUnit;
+    if (index < pillIndex) return natural;
+    if (index === pillIndex) return natural + marginBefore;
+    return natural + marginBefore + marginAfter;
+  };
+  const pillCenter = drag ? drag.x : analyticalCenterOf(pillIndex);
   // Every dot but the first starts cramped this close to it, tightly spaced
   // rather than overlapping - see CRAMPED_GAP - and is pushed out to its own
   // real centre once the crowding starts expanding the bar around it.
@@ -556,11 +569,10 @@ export default function SceneIndicator() {
         <div
           ref={rowRef}
           // w-max: its own content width always, never shrunk to fit a
-          // narrower `nav` - the entrance relies on that to measure the
-          // bar's true full width while `nav` is still held down to a
-          // circle (see barFullWidth), and on the overflow going somewhere
-          // sane (past the right edge, clipped by nav's own overflow-hidden)
-          // rather than every dot compressing into the small circle.
+          // narrower `nav` - so the overflow while nav is held down to a
+          // small circle goes somewhere sane (past the right edge, clipped
+          // by nav's own overflow-hidden) rather than every dot compressing
+          // into that circle.
           className="relative flex w-max flex-row items-center justify-between"
           // pan-y so the page still scrolls from a vertical swipe over the
           // bar; horizontal movement is the pill's. No gap here - the space
