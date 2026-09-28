@@ -34,12 +34,6 @@ const scenes: SceneInfo[] = [
 
 const TOOLTIP_GAP = 20;
 
-/** The least space kept between the pill's edge and the dot next to it, on
- *  either side, whichever scene's name is currently showing. Fixed rather
- *  than recomputed per active dot, so it holds however the visitor navigates
- *  and never depends on which name happens to be up. */
-const LABEL_CLEARANCE = 10;
-
 /** Movement, in px, before a press on the bar counts as a drag rather than a
  *  tap. Below it nothing moves and the button's own click still fires. */
 const DRAG_THRESHOLD = 5;
@@ -81,6 +75,19 @@ const INTRO_FADE_MS = 450;
  *  reads as a sequence - one gone, then the other arriving - rather than a
  *  crossfade that shows both at once. */
 const DOT_FADE_MS = 200;
+/** How long the label waits before it starts fading in - long enough that
+ *  both the dot it is replacing (DOT_FADE_MS) and the pill's own entrance
+ *  (INTRO_FADE_MS, its scale and opacity growing in around the first-ever
+ *  active dot) have finished, whichever of the two actually applies. The two
+ *  run in parallel, not one after the other, so this is the larger of them
+ *  rather than their sum - the label is never shown against a pill that is
+ *  itself still arriving. */
+const LABEL_DELAY_MS = Math.max(DOT_FADE_MS, INTRO_FADE_MS);
+/** How long the bar's local widening around the active dot takes - the same
+ *  total window as the label waiting and then fading in, so the bar growing
+ *  the room for that label and the label itself arriving read as one motion
+ *  rather than two separately timed ones. */
+const BAR_GROW_MS = LABEL_DELAY_MS + INTRO_FADE_MS;
 /** Every motion in the entrance rides this curve: eased well past its
  *  midpoint before easing out, the same standard curve used for the site
  *  menu's own transitions. */
@@ -159,11 +166,10 @@ export default function SceneIndicator() {
   /** The bar's own border, needed to size its padding against the pill - see
    *  the padding calculation near the render below. */
   const [barBorder, setBarBorder] = useState(0);
-  /** Extra space added between every pair of dots, beyond their own natural
-   *  spacing, so the widest label never reaches whichever dot is next to it -
-   *  see LABEL_CLEARANCE. Zero when the dots are already far enough apart on
-   *  their own (a wide bar with few scenes). */
-  const [dotGap, setDotGap] = useState(0);
+  /** A button's own width, needed to know how far apart two adjacent dots
+   *  already sit with no extra space between them - see activeExtra below,
+   *  near the render. */
+  const [buttonWidth, setButtonWidth] = useState(0);
   /** The row's own natural width - unaffected by the entrance constraining
    *  the bar around it, since only `nav` is ever given an explicit width -
    *  so the bar knows how wide "fully grown" actually is. */
@@ -218,18 +224,10 @@ export default function SceneIndicator() {
       const labelWidthsNow = labels.map((label) => label.getBoundingClientRect().width);
       if (labelWidthsNow.length > 0) setLabelWidths(labelWidthsNow);
 
-      // A button's own width does not depend on any gap added between
-      // buttons, so this stays a stable baseline to measure the (separately
-      // stateful) gap against, however many times this re-runs.
-      const buttonWidth = buttons[0].getBoundingClientRect().width;
-      if (labelWidthsNow.length > 0) {
-        const widestLabel = Math.max(...labelWidthsNow);
-        // Two adjacent dots are `buttonWidth` apart with no added gap at all,
-        // since they sit edge to edge. The pill needs half the widest label
-        // plus the clearance on each side of whichever dot it is centred on.
-        const required = widestLabel / 2 + LABEL_CLEARANCE;
-        setDotGap(Math.max(0, required - buttonWidth));
-      }
+      // Two adjacent dots sit this far apart, centre to centre, with no
+      // extra space between them - see activeExtra near the render, which
+      // measures the local bulge the active dot's own pill needs against it.
+      setButtonWidth(buttons[0].getBoundingClientRect().width);
 
       // Measured against the bar's outer edge, which is what the eye compares
       // the pill to — the row inside it excludes the border.
@@ -459,35 +457,41 @@ export default function SceneIndicator() {
   const moving = drag !== null || travelling;
   const labelIndex = drag ? drag.index : null;
   const pillWidth = moving ? pill.moveWidth : (labelWidths[pillIndex] ?? pill.idleWidth);
-  // The bar's own width, rather than a constant sized for the longest name:
-  // it grows and shrinks with whichever pill is currently showing, the same
-  // way the pill itself does. Solving the pill's own containment for the
-  // current width — the amount of edge padding that keeps it PILL_GAP inside
-  // the bar if it were parked on the first dot — happens to also be the
-  // right amount for every other position, since none of them need more.
-  const finalTrackPadding = Math.max(
-    0,
-    PILL_GAP + pillWidth / 2 - (centers[0] ?? 0) - barBorder,
-  );
 
-  // The entrance's own two widths: a small circle around just the first dot,
-  // and the bar's true full width once every dot has pushed it out to its
-  // place - and, once settled, nothing explicit at all, since an explicit
-  // width would otherwise keep fighting the trackPadding transition for the
-  // rest of the visit.
-  const barFullWidth = rowWidth + finalTrackPadding * 2 + barBorder * 2;
+  // One constant governs every gap in the bar: half the distance between two
+  // ordinary dots, which is already exactly how far a plain dot's own centre
+  // sits from a neighbour or from the bar's edge - each button is its own
+  // symmetric box, so this falls out of the layout for free, with no padding
+  // or margin spent on it. Only the active dot's pill is wider than a plain
+  // dot, so only it ever needs more than that - and only by however much its
+  // own half-width already exceeds this same half-unit, whether what it is
+  // clearing is a neighbouring dot (as margin, split onto both its sides) or
+  // the bar's own edge (as padding, on whichever side it is parked against).
+  const halfUnit = buttonWidth / 2;
+  const extraFor = (width: number) => Math.max(0, width / 2 - halfUnit);
+  // Zero while moving: a travelling pill is a plain capsule with no label to
+  // clear anything for, so the bar has nothing to make room for either.
+  const activeExtra = moving ? 0 : extraFor(pillWidth);
+
   const circleSize = pill.idleHeight + PILL_GAP * 2;
-  // The circle is centred on the first dot the same way the pill centres
-  // itself on whichever dot it is parked over - see finalTrackPadding above,
-  // which this mirrors with the circle's own size standing in for the
-  // pill's width.
-  const circleTrackPadding = Math.max(
-    0,
-    PILL_GAP + circleSize / 2 - (centers[0] ?? 0) - barBorder,
-  );
   const isCircular = intro === "dot" || intro === "circle" || intro === "flood";
-  const trackPadding = isCircular ? circleTrackPadding : finalTrackPadding;
-  const introWidth = isCircular ? circleSize : intro === "expanding" ? barFullWidth : undefined;
+  // The circle centres itself on the first dot on both sides at once, unlike
+  // the pill later, which only ever needs to clear whichever one side it is
+  // actually parked against.
+  const circleExtra = extraFor(circleSize);
+  const leftPad = isCircular ? circleExtra : pillIndex === 0 ? activeExtra : 0;
+  const rightPad = isCircular
+    ? circleExtra
+    : pillIndex === scenes.length - 1
+      ? activeExtra
+      : 0;
+
+  // The bar's true full width: the row's own natural width - already
+  // reflecting whichever dot's local bulge is currently open, since it is
+  // measured off the row's actual, currently-margined layout - plus
+  // whichever edge is presently holding the pill's own overflow.
+  const barFullWidth = rowWidth + leftPad + rightPad + barBorder * 2;
+  const barWidth = isCircular ? circleSize : barFullWidth;
   // Every dot but the first starts cramped this close to it, tightly spaced
   // rather than overlapping - see CRAMPED_GAP - and is pushed out to its own
   // real centre once the crowding starts expanding the bar around it.
@@ -505,19 +509,20 @@ export default function SceneIndicator() {
         // to size the pill's containment against the bar's true outer edge.
         className={`pointer-events-auto fixed bottom-[calc(3rem+env(safe-area-inset-bottom))] left-1/2 z-[1000] isolate -translate-x-1/2 rounded-full border border-transparent sm:bottom-auto sm:top-8 ${intro === "done" ? "" : "overflow-hidden"}`}
         style={{
-          paddingLeft: trackPadding,
-          paddingRight: trackPadding,
-          width: introWidth,
-          // Matches the pill's own size transition, so the bar's curved ends
-          // arrive around it rather than snapping to a new size while the
-          // pill inside is still growing or shrinking to meet them. The
-          // entrance rides its own slower curve while it is still finding
-          // its width; once settled, only the everyday padding transition
-          // is left running.
+          paddingLeft: leftPad,
+          paddingRight: rightPad,
+          width: barWidth,
+          // Two different growths ride this: the entrance pushing the circle
+          // out into the full bar, and - once settled - the bar's local
+          // bulge opening and closing around whichever dot the pill is on.
+          // The former is tied to the dots' own push-out (INTRO_EXPAND_MS);
+          // the latter to the dot-fade-then-label-fade switch it now grows
+          // alongside (BAR_GROW_MS), so the bar finishes widening exactly
+          // when the label finishes fading in rather than on its own clock.
           transition: reduceMotion
             ? "none"
             : intro === "done"
-              ? `padding ${PILL_SIZE_MS}ms ease-out`
+              ? `padding ${BAR_GROW_MS}ms ${INTRO_EASE}, width ${BAR_GROW_MS}ms ${INTRO_EASE}`
               : `padding ${PILL_SIZE_MS}ms ease-out, width ${INTRO_EXPAND_MS}ms ${INTRO_EASE}`,
         }}
         aria-label="Scene navigation indicator"
@@ -557,10 +562,11 @@ export default function SceneIndicator() {
           // sane (past the right edge, clipped by nav's own overflow-hidden)
           // rather than every dot compressing into the small circle.
           className="relative flex w-max flex-row items-center justify-between"
-          // pan-y so the page still scrolls from a vertical swipe over the bar;
-          // horizontal movement is the pill's. columnGap keeps the widest
-          // label clear of the dots either side of it - see LABEL_CLEARANCE.
-          style={{ touchAction: "pan-y", columnGap: dotGap }}
+          // pan-y so the page still scrolls from a vertical swipe over the
+          // bar; horizontal movement is the pill's. No gap here - the space
+          // a label needs is opened locally, around whichever dot is active,
+          // as margin on that dot alone - see activeExtra.
+          style={{ touchAction: "pan-y" }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={endDrag}
@@ -603,8 +609,10 @@ export default function SceneIndicator() {
                   the pill settles on a new dot - a freshly mounted element
                   has no earlier frame to transition from, and would just
                   appear at full opacity the instant it settles. Delayed past
-                  DOT_FADE_MS so the dot it is replacing is gone first; seeing
-                  both at once is the same fact shown twice. */}
+                  LABEL_DELAY_MS so the dot it is replacing is fully gone and
+                  the pill itself has fully arrived first - showing the name
+                  against either one still arriving is the same fact told
+                  twice, once by something that is itself still unsettled. */}
               <span className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-full">
                 <span
                   className="whitespace-nowrap text-xs font-semibold tracking-wide text-white transition-opacity sm:text-sm"
@@ -612,7 +620,7 @@ export default function SceneIndicator() {
                     opacity: !moving && intro === "done" ? 1 : 0,
                     transitionDuration: `${INTRO_FADE_MS}ms`,
                     transitionTimingFunction: INTRO_EASE,
-                    transitionDelay: !moving && intro === "done" ? `${DOT_FADE_MS}ms` : "0ms",
+                    transitionDelay: !moving && intro === "done" ? `${LABEL_DELAY_MS}ms` : "0ms",
                   }}
                 >
                   {scenes[pillIndex].name}
@@ -647,6 +655,15 @@ export default function SceneIndicator() {
             // pushed out to its real place as the crowding grows the bar.
             const dotVisible = scene.index === 0 || intro === "flood" || pushedOut;
             const dotOffset = pushedOut ? 0 : crampedOffsetFor(scene.index);
+            // Only the active dot itself carries the local bulge, split
+            // evenly onto its own left and right margins - which reads as
+            // both of its neighbours being pushed away from it, without
+            // touching any of the other, unrelated gaps between dots. Left
+            // out at either end of the row, where there is no neighbour to
+            // push - the bar's own edge padding already covers that side.
+            const isPillHere = scene.index === pillIndex;
+            const marginLeft = isPillHere && scene.index > 0 ? activeExtra : 0;
+            const marginRight = isPillHere && scene.index < scenes.length - 1 ? activeExtra : 0;
 
             return (
               <div
@@ -655,9 +672,11 @@ export default function SceneIndicator() {
                 style={{
                   opacity: dotVisible ? 1 : 0,
                   transform: `translateX(${dotOffset}px)`,
+                  marginLeft,
+                  marginRight,
                   transition: reduceMotion
                     ? "none"
-                    : `opacity ${INTRO_FLOOD_FADE_MS}ms ${INTRO_EASE}, transform ${INTRO_EXPAND_MS}ms ${INTRO_EASE}`,
+                    : `opacity ${INTRO_FLOOD_FADE_MS}ms ${INTRO_EASE}, transform ${INTRO_EXPAND_MS}ms ${INTRO_EASE}, margin ${BAR_GROW_MS}ms ${INTRO_EASE}`,
                 }}
               >
                 <button
@@ -675,21 +694,18 @@ export default function SceneIndicator() {
                   {/* One size for every dot — the colour carries which scene is
                       current, so it stays legible while the pill is elsewhere,
                       including mid-drag. Size is left to the pill.
-                      The active one fades out once the entrance has finished
-                      and the pill has settled and widened into that scene's
-                      name over it — the label says what the dot was saying,
-                      and the two together would just be the same fact twice,
-                      with the dot sitting inside the text. It returns the
-                      moment the pill moves off again, or stays for as long as
-                      the entrance itself is still only a circle around it.
-                      Its own opacity is delayed rather than crossfading with
-                      the label: it waits for the label to be fully gone
-                      before coming back, the same way the label waits for it
-                      to be fully gone before appearing - see DOT_FADE_MS. The
-                      colour and glow stay on their own quick, undelayed
-                      transition, since a hover highlight should never lag. */}
+                      The active one fades out once the pill has arrived and
+                      widened into that scene's name over it — the label says
+                      what the dot was saying, and the two together would just
+                      be the same fact twice, with the dot sitting inside the
+                      text. It returns the moment the pill moves off again,
+                      plainly and at once - only the arrival gets a sequenced
+                      handoff (see LABEL_DELAY_MS on the label below); timing
+                      the departure the same way as well chases the pill's own
+                      travel time, which varies with distance, for no benefit
+                      an instant swap does not already give. */}
                   <div
-                    className="relative h-1 w-1 rounded-full"
+                    className="relative h-1 w-1 rounded-full transition-[background-color,box-shadow,opacity] duration-300 ease-out"
                     style={{
                       backgroundColor: isActive ? "var(--color-accent-soft)" : "white",
                       opacity: isActive && !moving && intro === "done" ? 0 : 1,
@@ -698,13 +714,6 @@ export default function SceneIndicator() {
                         : isHovered
                           ? "0 0 10px 2px rgba(255, 255, 255, 0.8)"
                           : "0 0 6px rgba(255, 255, 255, 0.35)",
-                      transitionProperty: "background-color, box-shadow, opacity",
-                      transitionDuration: `300ms, 300ms, ${DOT_FADE_MS}ms`,
-                      transitionTimingFunction: "ease-out, ease-out, ease-out",
-                      transitionDelay:
-                        isActive && !moving && intro === "done"
-                          ? "0ms, 0ms, 0ms"
-                          : `0ms, 0ms, ${INTRO_FADE_MS}ms`,
                     }}
                   />
                 </button>
