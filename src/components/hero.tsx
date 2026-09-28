@@ -15,7 +15,7 @@ const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() 
 
 export default function Hero() {
   const { scrollNext, scrollToSection } = useScrollActions();
-  const { hasEntered } = useAudio();
+  const { hasEntered, entrySkipped } = useAudio();
   const reduceMotion = useReducedMotion();
 
   /** The headline sweeps itself in, and for the first couple of seconds after
@@ -28,10 +28,10 @@ export default function Hero() {
   const [curtainOpening, setCurtainOpening] = useState(hasEntered);
 
   useEffect(() => {
-    if (curtainOpening || !hasEntered) return;
+    if (curtainOpening || !hasEntered || entrySkipped) return;
     const timer = setTimeout(() => setCurtainOpening(true), reduceMotion ? 0 : ENTRY_RELEASE_MS);
     return () => clearTimeout(timer);
-  }, [hasEntered, curtainOpening, reduceMotion]);
+  }, [hasEntered, curtainOpening, reduceMotion, entrySkipped]);
 
   // Two slots rather than one, so the next role can sweep in while the
   // current one is still sweeping out - the pause between them was the
@@ -47,6 +47,19 @@ export default function Hero() {
   const [h1State, setH1State] = useState<'greeting' | 'entering' | 'done'>(() =>
     hasEntered ? 'entering' : 'greeting',
   );
+
+  /** `entrySkipped` lands one tick after mount — sessionStorage cannot be
+   *  read during render — so it always arrives after h1State's own lazy
+   *  initializer above already committed to 'greeting'. This is the
+   *  correction: a gate that never played has nothing for the greeting to
+   *  be the payoff of, so it is skipped exactly like a same-session return
+   *  to Home. */
+  useEffect(() => {
+    if (!entrySkipped) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCurtainOpening(true);
+    setH1State((current) => (current === 'greeting' ? 'entering' : current));
+  }, [entrySkipped]);
 
   const heroRef = useRef<HTMLDivElement>(null);
   const namePrefixRef = useRef<SweepTextHandle>(null);
