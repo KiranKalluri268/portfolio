@@ -75,6 +75,12 @@ const INTRO_EXPAND_MS = 550;
  *  reached its place, and the name inside it once the pill has its shape.
  *  Opacity (and the pill's own entrance scale) only - see FADE_EASE. */
 const INTRO_FADE_MS = 450;
+/** How long the active dot itself takes to fade out once the pill has
+ *  widened into its name, and back in once the pill moves off again. Kept
+ *  short and separate from INTRO_FADE_MS so the handoff between the two
+ *  reads as a sequence - one gone, then the other arriving - rather than a
+ *  crossfade that shows both at once. */
+const DOT_FADE_MS = 200;
 /** Every motion in the entrance rides this curve: eased well past its
  *  midpoint before easing out, the same standard curve used for the site
  *  menu's own transitions. */
@@ -591,21 +597,27 @@ export default function SceneIndicator() {
               {/* Its own layer, clipped to the pill's growing box, so the name
                   cannot poke out past the edge while the width is still
                   animating up to it - clipping the pill itself instead would
-                  cut off its own glow, which is meant to bleed past the edge. */}
-              {!moving && (
-                <span className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-full">
-                  <span
-                    className="whitespace-nowrap text-xs font-semibold tracking-wide text-white transition-opacity sm:text-sm"
-                    style={{
-                      opacity: intro === "done" ? 1 : 0,
-                      transitionDuration: `${INTRO_FADE_MS}ms`,
-                      transitionTimingFunction: INTRO_EASE,
-                    }}
-                  >
-                    {scenes[pillIndex].name}
-                  </span>
+                  cut off its own glow, which is meant to bleed past the edge.
+                  Kept mounted even while moving, rather than unmounted and
+                  remounted, so its own fade is a real transition every time
+                  the pill settles on a new dot - a freshly mounted element
+                  has no earlier frame to transition from, and would just
+                  appear at full opacity the instant it settles. Delayed past
+                  DOT_FADE_MS so the dot it is replacing is gone first; seeing
+                  both at once is the same fact shown twice. */}
+              <span className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-full">
+                <span
+                  className="whitespace-nowrap text-xs font-semibold tracking-wide text-white transition-opacity sm:text-sm"
+                  style={{
+                    opacity: !moving && intro === "done" ? 1 : 0,
+                    transitionDuration: `${INTRO_FADE_MS}ms`,
+                    transitionTimingFunction: INTRO_EASE,
+                    transitionDelay: !moving && intro === "done" ? `${DOT_FADE_MS}ms` : "0ms",
+                  }}
+                >
+                  {scenes[pillIndex].name}
                 </span>
-              )}
+              </span>
             </span>
           )}
 
@@ -669,9 +681,15 @@ export default function SceneIndicator() {
                       and the two together would just be the same fact twice,
                       with the dot sitting inside the text. It returns the
                       moment the pill moves off again, or stays for as long as
-                      the entrance itself is still only a circle around it. */}
+                      the entrance itself is still only a circle around it.
+                      Its own opacity is delayed rather than crossfading with
+                      the label: it waits for the label to be fully gone
+                      before coming back, the same way the label waits for it
+                      to be fully gone before appearing - see DOT_FADE_MS. The
+                      colour and glow stay on their own quick, undelayed
+                      transition, since a hover highlight should never lag. */}
                   <div
-                    className="relative h-1 w-1 rounded-full transition-[background-color,box-shadow,opacity] duration-300 ease-out"
+                    className="relative h-1 w-1 rounded-full"
                     style={{
                       backgroundColor: isActive ? "var(--color-accent-soft)" : "white",
                       opacity: isActive && !moving && intro === "done" ? 0 : 1,
@@ -680,6 +698,13 @@ export default function SceneIndicator() {
                         : isHovered
                           ? "0 0 10px 2px rgba(255, 255, 255, 0.8)"
                           : "0 0 6px rgba(255, 255, 255, 0.35)",
+                      transitionProperty: "background-color, box-shadow, opacity",
+                      transitionDuration: `300ms, 300ms, ${DOT_FADE_MS}ms`,
+                      transitionTimingFunction: "ease-out, ease-out, ease-out",
+                      transitionDelay:
+                        isActive && !moving && intro === "done"
+                          ? "0ms, 0ms, 0ms"
+                          : `0ms, 0ms, ${INTRO_FADE_MS}ms`,
                     }}
                   />
                 </button>
