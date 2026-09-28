@@ -44,19 +44,36 @@ const LABEL_CLEARANCE = 10;
  *  tap. Below it nothing moves and the button's own click still fires. */
 const DRAG_THRESHOLD = 5;
 
-/** The entrance, in three beats: a plain circle around the current dot, that
- *  circle growing into the full bar, and only then the rest of the dots and
- *  the current name fading into it - so the bar arrives as a single object
- *  finding its shape before it shows what is inside it, rather than as a row
- *  of things popping in at once. */
-type Intro = "circle" | "expanding" | "done";
+/** The entrance shows the bar being built, in five beats: a single dot, a
+ *  circle drawn around it, the rest of the dots flooding into that same
+ *  small circle cramped together, that crowding pushing the circle out into
+ *  the full bar as every dot reaches its real place, and only then the
+ *  active one's pill appearing around it - so the bar arrives as something
+ *  assembled rather than something that was just revealed. */
+type Intro = "dot" | "circle" | "flood" | "expanding" | "done";
 
-/** How long the circle sits alone before it starts growing. */
-const INTRO_HOLD_MS = 350;
-/** How long the growth into the full bar takes. */
+/** How long the lone dot sits before the circle is drawn around it. */
+const INTRO_DOT_MS = 250;
+/** How long the circle holds, drawn but still empty, before the rest of the
+ *  dots flood into it. Also how long its own fade-in takes - see the
+ *  background layer's opacity transition - so the circle has fully arrived
+ *  before anything floods into it. */
+const INTRO_CIRCLE_MS = 350;
+/** How long the flooded dots sit cramped together before their crowding
+ *  pushes the circle out into the bar. */
+const INTRO_FLOOD_MS = 250;
+/** How long each dot takes to pop in when it floods - quick, since flooding
+ *  in is a crowding, not an arrival worth lingering on. */
+const INTRO_FLOOD_FADE_MS = 200;
+/** How far apart the flooded dots sit, cramped, before they are pushed out
+ *  to their real spacing - close enough to read as crowded, far enough that
+ *  they are still five distinct dots rather than one smear. */
+const CRAMPED_GAP = 10;
+/** How long the crowding takes to push the circle out into the full bar. */
 const INTRO_EXPAND_MS = 550;
-/** How long the dots and the name take to fade in once the bar has its
- *  shape. Opacity only - see FADE_EASE. */
+/** How long the active dot's pill takes to appear once every dot has
+ *  reached its place, and the name inside it once the pill has its shape.
+ *  Opacity (and the pill's own entrance scale) only - see FADE_EASE. */
 const INTRO_FADE_MS = 450;
 /** Every motion in the entrance rides this curve: eased well past its
  *  midpoint before easing out, the same standard curve used for the site
@@ -80,7 +97,7 @@ interface DragState {
 }
 
 export default function SceneIndicator() {
-  const { hasEntered } = useAudio();
+  const { hasEntered, entrySkipped } = useAudio();
   const activeSection = useActiveSection();
   const { scrollToSection, toggleProjectsEndpoint } = useScrollActions();
   const [hoveredIndex, setHoveredIndex] = useHoverLabel<number>();
@@ -96,16 +113,19 @@ export default function SceneIndicator() {
    *  sits at the very top - outside that opening for most of the flight - so
    *  this waits for the curtain to be gone completely instead. Already true
    *  at mount for a visitor arriving from elsewhere on the site, where there
-   *  is no curtain to wait for. */
+   *  is no curtain to wait for. entrySkipped restores hasEntered a tick after
+   *  mount rather than at mount, same as a fresh Enter press mid-session
+   *  would - but there is no curtain playing in that case either, so it
+   *  gets the same zero wait reduced motion does. */
   const [curtainGone, setCurtainGone] = useState(hasEntered);
   useEffect(() => {
     if (curtainGone || !hasEntered) return;
     const timer = window.setTimeout(
       () => setCurtainGone(true),
-      reduceMotion ? 0 : ENTRY_DISMISS_MS,
+      reduceMotion || entrySkipped ? 0 : ENTRY_DISMISS_MS,
     );
     return () => window.clearTimeout(timer);
-  }, [hasEntered, curtainGone, reduceMotion]);
+  }, [hasEntered, curtainGone, reduceMotion, entrySkipped]);
 
   const tooltipRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
@@ -142,7 +162,7 @@ export default function SceneIndicator() {
    *  the bar around it, since only `nav` is ever given an explicit width -
    *  so the bar knows how wide "fully grown" actually is. */
   const [rowWidth, setRowWidth] = useState(0);
-  const [intro, setIntro] = useState<Intro>("circle");
+  const [intro, setIntro] = useState<Intro>("dot");
   /** Which dot the pill sits on. It follows the page: scroll to a section and
    *  the pill comes with you. Two things take it off that — a drag, where it
    *  follows the finger instead, and a pick, where it waits on the dot chosen
@@ -275,13 +295,15 @@ export default function SceneIndicator() {
     };
   }, [portalReady, hasEntered]);
 
-  // The entrance: a circle, then the bar it grows into, then the rest of the
-  // dots and the name fading into it. Skipped for reduced motion, which
-  // starts already "done" rather than replaying the same three beats as a
-  // set of instant jumps.
+  // The entrance: a dot, a circle drawn around it, the rest of the dots
+  // flooding into that circle cramped together, that crowding pushing the
+  // circle out into the bar, and only then the active dot's pill appearing.
+  // Skipped for reduced motion or a session that skipped the gate itself,
+  // both of which start already "done" rather than replaying the five beats
+  // as a set of instant jumps.
   useEffect(() => {
     if (!portalReady || !curtainGone) return;
-    if (reduceMotion) {
+    if (reduceMotion || entrySkipped) {
       // useReducedMotion() reports false for the very first client paint
       // regardless of the visitor's actual preference, so this cannot be
       // read once at mount - it has to catch up once the real value lands.
@@ -289,14 +311,26 @@ export default function SceneIndicator() {
       setIntro("done");
       return;
     }
-    const holdTimer = window.setTimeout(() => setIntro("expanding"), INTRO_HOLD_MS);
-    return () => window.clearTimeout(holdTimer);
-  }, [portalReady, curtainGone, reduceMotion]);
+    const timer = window.setTimeout(() => setIntro("circle"), INTRO_DOT_MS);
+    return () => window.clearTimeout(timer);
+  }, [portalReady, curtainGone, reduceMotion, entrySkipped]);
+
+  useEffect(() => {
+    if (intro !== "circle") return;
+    const timer = window.setTimeout(() => setIntro("flood"), INTRO_CIRCLE_MS);
+    return () => window.clearTimeout(timer);
+  }, [intro]);
+
+  useEffect(() => {
+    if (intro !== "flood") return;
+    const timer = window.setTimeout(() => setIntro("expanding"), INTRO_FLOOD_MS);
+    return () => window.clearTimeout(timer);
+  }, [intro]);
 
   useEffect(() => {
     if (intro !== "expanding") return;
-    const expandTimer = window.setTimeout(() => setIntro("done"), INTRO_EXPAND_MS);
-    return () => window.clearTimeout(expandTimer);
+    const timer = window.setTimeout(() => setIntro("done"), INTRO_EXPAND_MS);
+    return () => window.clearTimeout(timer);
   }, [intro]);
 
   /** A dot the visitor picked, held until the page gets there. */
@@ -425,25 +459,45 @@ export default function SceneIndicator() {
   // current width — the amount of edge padding that keeps it PILL_GAP inside
   // the bar if it were parked on the first dot — happens to also be the
   // right amount for every other position, since none of them need more.
-  const trackPadding = Math.max(
+  const finalTrackPadding = Math.max(
     0,
     PILL_GAP + pillWidth / 2 - (centers[0] ?? 0) - barBorder,
   );
 
-  // The entrance's own three widths: a small circle around just the current
-  // dot, the bar's true full width once grown, and nothing explicit at all
-  // once settled - an explicit width would otherwise keep fighting the
-  // trackPadding transition above for the rest of the visit.
-  const barFullWidth = rowWidth + trackPadding * 2 + barBorder * 2;
+  // The entrance's own two widths: a small circle around just the first dot,
+  // and the bar's true full width once every dot has pushed it out to its
+  // place - and, once settled, nothing explicit at all, since an explicit
+  // width would otherwise keep fighting the trackPadding transition for the
+  // rest of the visit.
+  const barFullWidth = rowWidth + finalTrackPadding * 2 + barBorder * 2;
   const circleSize = pill.idleHeight + PILL_GAP * 2;
-  const introWidth =
-    intro === "circle" ? circleSize : intro === "expanding" ? barFullWidth : undefined;
+  // The circle is centred on the first dot the same way the pill centres
+  // itself on whichever dot it is parked over - see finalTrackPadding above,
+  // which this mirrors with the circle's own size standing in for the
+  // pill's width.
+  const circleTrackPadding = Math.max(
+    0,
+    PILL_GAP + circleSize / 2 - (centers[0] ?? 0) - barBorder,
+  );
+  const isCircular = intro === "dot" || intro === "circle" || intro === "flood";
+  const trackPadding = isCircular ? circleTrackPadding : finalTrackPadding;
+  const introWidth = isCircular ? circleSize : intro === "expanding" ? barFullWidth : undefined;
+  // Every dot but the first starts cramped this close to it, tightly spaced
+  // rather than overlapping - see CRAMPED_GAP - and is pushed out to its own
+  // real centre once the crowding starts expanding the bar around it.
+  const crampedOffsetFor = (index: number) =>
+    index === 0 ? 0 : (centers[0] ?? 0) + index * CRAMPED_GAP - (centers[index] ?? 0);
+  const pushedOut = intro === "expanding" || intro === "done";
 
   return createPortal(
     <>
       <nav
         ref={navRef}
-        className={`pointer-events-auto fixed bottom-[calc(3rem+env(safe-area-inset-bottom))] left-1/2 z-[1000] isolate -translate-x-1/2 rounded-full border border-white/10 bg-black/65 shadow-[0_6px_20px_rgba(0,0,0,0.4)] backdrop-blur-md sm:bottom-auto sm:top-8 ${intro === "done" ? "" : "overflow-hidden"}`}
+        // border-transparent: invisible, but keeps nav's own border-box the
+        // same thickness as the background layer's real border below, since
+        // the measurement effect reads this border's width off nav itself
+        // to size the pill's containment against the bar's true outer edge.
+        className={`pointer-events-auto fixed bottom-[calc(3rem+env(safe-area-inset-bottom))] left-1/2 z-[1000] isolate -translate-x-1/2 rounded-full border border-transparent sm:bottom-auto sm:top-8 ${intro === "done" ? "" : "overflow-hidden"}`}
         style={{
           paddingLeft: trackPadding,
           paddingRight: trackPadding,
@@ -472,6 +526,22 @@ export default function SceneIndicator() {
           event.stopPropagation();
         }}
       >
+        {/* The bar's own visual chrome, on its own layer behind the row so it
+            can fade in on its own - the circle drawn around the lone first
+            dot, which is already there before this ever appears. Its shape
+            always matches `nav`'s own clip exactly, so clipping it too would
+            change nothing; it is not given `overflow-hidden` of its own. */}
+        <div
+          aria-hidden="true"
+          // -inset-px: sits exactly where nav's own (transparent) border is,
+          // so this layer's real border lands on nav's true outer edge
+          // rather than one border-width further in.
+          className="pointer-events-none absolute -inset-px rounded-full border border-white/10 bg-black/65 shadow-[0_6px_20px_rgba(0,0,0,0.4)] backdrop-blur-md"
+          style={{
+            opacity: intro === "dot" ? 0 : 1,
+            transition: reduceMotion ? "none" : `opacity ${INTRO_CIRCLE_MS}ms ${INTRO_EASE}`,
+          }}
+        />
         <div
           ref={rowRef}
           // w-max: its own content width always, never shrunk to fit a
@@ -502,9 +572,20 @@ export default function SceneIndicator() {
               style={{
                 width: pillWidth,
                 height: moving ? pill.moveHeight : pill.idleHeight,
-                transform: `translate3d(${pillCenter - pillWidth / 2}px, -50%, 0)`,
-                // A drag follows the finger, so its position must not be eased.
-                transition: pillTransition(reduceMotion, !drag),
+                // Scales in from the active dot once every dot has reached
+                // its place - the pill is the last thing built, not
+                // something that was there all along under a closed circle.
+                transform: `translate3d(${pillCenter - pillWidth / 2}px, -50%, 0) scale(${
+                  intro === "done" ? 1 : 0.5
+                })`,
+                opacity: intro === "done" ? 1 : 0,
+                // A drag follows the finger, so its position must not be
+                // eased - but the entrance's own opacity and scale always
+                // are, even then, since a drag cannot start until the pill
+                // has already finished appearing.
+                transition: reduceMotion
+                  ? "none"
+                  : `${pillTransition(false, !drag)}, opacity ${INTRO_FADE_MS}ms ${INTRO_EASE}`,
               }}
             >
               {/* Its own layer, clipped to the pill's growing box, so the name
@@ -549,19 +630,22 @@ export default function SceneIndicator() {
             const isActive = activeSection === scene.id;
             const isHovered = hoveredIndex === scene.index;
 
-            // Every dot but the current one stays invisible until the bar has
-            // grown to its full width - popping in before there was room for
-            // them would just be the circle-to-bar growth happening twice.
-            const dotVisible = intro === "done" || scene.index === pillIndex;
+            // The first dot is there from the very start - everything else
+            // floods in cramped once the circle has been drawn, then is
+            // pushed out to its real place as the crowding grows the bar.
+            const dotVisible = scene.index === 0 || intro === "flood" || pushedOut;
+            const dotOffset = pushedOut ? 0 : crampedOffsetFor(scene.index);
 
             return (
               <div
                 key={scene.index}
-                className="relative flex flex-col items-center transition-opacity"
+                className="relative flex flex-col items-center"
                 style={{
                   opacity: dotVisible ? 1 : 0,
-                  transitionDuration: `${INTRO_FADE_MS}ms`,
-                  transitionTimingFunction: INTRO_EASE,
+                  transform: `translateX(${dotOffset}px)`,
+                  transition: reduceMotion
+                    ? "none"
+                    : `opacity ${INTRO_FLOOD_FADE_MS}ms ${INTRO_EASE}, transform ${INTRO_EXPAND_MS}ms ${INTRO_EASE}`,
                 }}
               >
                 <button
