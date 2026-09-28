@@ -358,7 +358,7 @@ export default function SceneIndicator() {
                   ref={(element) => {
                     dotRefs.current[scene.index] = element;
                   }}
-                  className="relative z-10 flex min-h-9 min-w-9 cursor-pointer items-center justify-center border-none bg-transparent p-3 outline-none sm:min-h-12 sm:min-w-12 sm:p-6"
+                  className="relative z-10 flex min-h-9 min-w-9 cursor-pointer items-center justify-center rounded-full border-none bg-transparent p-3 outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:min-h-12 sm:min-w-12 sm:p-6"
                   aria-label={`Go to ${scene.name} section${isActive ? " (current)" : ""}`}
                   aria-current={isActive ? "page" : undefined}
                   onClick={() => handleDotClick(scene.index, scene.id)}
