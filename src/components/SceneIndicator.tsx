@@ -51,6 +51,11 @@ const DRAG_THRESHOLD = 5;
  *  of things popping in at once. */
 type Intro = "circle" | "expanding" | "done";
 
+/** How long the bar takes to fade and scale into view, before the circle
+ *  even starts its hold - the entrance's own first beat, so the whole thing
+ *  arrives as a reveal rather than popping into existence at full opacity
+ *  the instant the curtain clears. */
+const INTRO_REVEAL_MS = 400;
 /** How long the circle sits alone before it starts growing. */
 const INTRO_HOLD_MS = 350;
 /** How long the growth into the full bar takes. */
@@ -143,6 +148,10 @@ export default function SceneIndicator() {
    *  so the bar knows how wide "fully grown" actually is. */
   const [rowWidth, setRowWidth] = useState(0);
   const [intro, setIntro] = useState<Intro>("circle");
+  /** Fades and scales the whole bar into view once the curtain is gone, ahead
+   *  of the circle-to-bar growth below - see INTRO_REVEAL_MS. Reduced motion
+   *  skips it entirely rather than replaying it as an instant jump. */
+  const [revealed, setRevealed] = useState(false);
   /** Which dot the pill sits on. It follows the page: scroll to a section and
    *  the pill comes with you. Two things take it off that — a drag, where it
    *  follows the finger instead, and a pick, where it waits on the dot chosen
@@ -275,6 +284,16 @@ export default function SceneIndicator() {
     };
   }, [portalReady, hasEntered]);
 
+  // The reveal: fades and scales the bar in before the circle-to-bar growth
+  // starts, so the whole entrance arrives as one continuous motion rather
+  // than the bar appearing at full opacity out of nowhere. Reduced motion
+  // shows it already revealed - there is nothing to fade from.
+  useEffect(() => {
+    if (!portalReady || !curtainGone) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setRevealed(true);
+  }, [portalReady, curtainGone]);
+
   // The entrance: a circle, then the bar it grows into, then the rest of the
   // dots and the name fading into it. Skipped for reduced motion, which
   // starts already "done" rather than replaying the same three beats as a
@@ -289,7 +308,7 @@ export default function SceneIndicator() {
       setIntro("done");
       return;
     }
-    const holdTimer = window.setTimeout(() => setIntro("expanding"), INTRO_HOLD_MS);
+    const holdTimer = window.setTimeout(() => setIntro("expanding"), INTRO_REVEAL_MS + INTRO_HOLD_MS);
     return () => window.clearTimeout(holdTimer);
   }, [portalReady, curtainGone, reduceMotion]);
 
@@ -418,7 +437,16 @@ export default function SceneIndicator() {
   const pillCenter = drag ? drag.x : (centers[pillIndex] ?? 0);
   const moving = drag !== null || travelling;
   const labelIndex = drag ? drag.index : null;
-  const pillWidth = moving ? pill.moveWidth : (labelWidths[pillIndex] ?? pill.idleWidth);
+  // Stays a plain lozenge until the entrance has finished, rather than the
+  // current label's own width: growing straight to the label's width would
+  // overflow the small circle nav is held down to for most of the entrance,
+  // clipped unevenly by its rounded edge instead of the clean dot the first
+  // beat is meant to show.
+  const pillWidth = moving
+    ? pill.moveWidth
+    : intro === "done"
+      ? (labelWidths[pillIndex] ?? pill.idleWidth)
+      : pill.idleWidth;
   // The bar's own width, rather than a constant sized for the longest name:
   // it grows and shrinks with whichever pill is currently showing, the same
   // way the pill itself does. Solving the pill's own containment for the
@@ -443,11 +471,17 @@ export default function SceneIndicator() {
     <>
       <nav
         ref={navRef}
-        className={`pointer-events-auto fixed bottom-[calc(3rem+env(safe-area-inset-bottom))] left-1/2 z-[1000] isolate -translate-x-1/2 rounded-full border border-white/10 bg-black/65 shadow-[0_6px_20px_rgba(0,0,0,0.4)] backdrop-blur-md sm:bottom-auto sm:top-8 ${intro === "done" ? "" : "overflow-hidden"}`}
+        className={`pointer-events-auto fixed bottom-[calc(3rem+env(safe-area-inset-bottom))] left-1/2 z-[1000] isolate rounded-full border border-white/10 bg-black/65 shadow-[0_6px_20px_rgba(0,0,0,0.4)] backdrop-blur-md sm:bottom-auto sm:top-8 ${intro === "done" ? "" : "overflow-hidden"}`}
         style={{
           paddingLeft: trackPadding,
           paddingRight: trackPadding,
           width: introWidth,
+          opacity: reduceMotion || revealed ? 1 : 0,
+          // The horizontal centering this replaces -translate-x-1/2 for, plus
+          // the reveal's own scale - both live on the one property, so they
+          // have to be set together rather than split across a class and
+          // this style.
+          transform: `translateX(-50%) scale(${reduceMotion || revealed ? 1 : 0.6})`,
           // Matches the pill's own size transition, so the bar's curved ends
           // arrive around it rather than snapping to a new size while the
           // pill inside is still growing or shrinking to meet them. The
@@ -456,9 +490,11 @@ export default function SceneIndicator() {
           // is left running.
           transition: reduceMotion
             ? "none"
-            : intro === "done"
-              ? `padding ${PILL_SIZE_MS}ms ease-out`
-              : `padding ${PILL_SIZE_MS}ms ease-out, width ${INTRO_EXPAND_MS}ms ${INTRO_EASE}`,
+            : `opacity ${INTRO_REVEAL_MS}ms ${INTRO_EASE}, transform ${INTRO_REVEAL_MS}ms ${INTRO_EASE}, ${
+                intro === "done"
+                  ? `padding ${PILL_SIZE_MS}ms ease-out`
+                  : `padding ${PILL_SIZE_MS}ms ease-out, width ${INTRO_EXPAND_MS}ms ${INTRO_EASE}`
+              }`,
         }}
         aria-label="Scene navigation indicator"
         role="navigation"
