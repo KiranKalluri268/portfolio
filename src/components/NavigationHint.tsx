@@ -75,5 +75,20 @@ export default function NavigationHint({ projectCount }: { projectCount: number 
     hasEntered ? resolveHomepageHint({ section, carousel }) : null,
   );
 
-  return <HintPill text={hint ? hintText(hint, inputMode) : ""} visible={visible} />;
+  return (
+    <HintPill
+      text={hint ? hintText(hint, inputMode) : ""}
+      visible={visible}
+      // The hero sits lower and a size up from HintPill's own default - but
+      // only on desktop, where the scene dots move to the top and leave the
+      // whole bottom edge free. On a phone they stay at the bottom, and at
+      // text-base this line wraps to two, tall enough to run straight into
+      // them; text-sm keeps it to one line with room to spare above the dots.
+      className={
+        section === "hero"
+          ? "fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-1/2 text-sm sm:bottom-16 sm:text-base"
+          : undefined
+      }
+    />
+  );
 }

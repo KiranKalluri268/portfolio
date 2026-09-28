@@ -215,9 +215,18 @@ export default function LoadingScreen({
   const animationFrameRef = useRef<number | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const exitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { hasEntered, enterPortfolio } = useAudio();
+  const { hasEntered, entrySkipped, enterPortfolio } = useAudio();
   const { lenis } = useScrollActions();
   const [dismissed, setDismissed] = useState(hasEntered);
+  // entrySkipped, not hasEntered: hasEntered also flips true the moment
+  // Enter is pressed this load, and that case must play the exit flight in
+  // full rather than snap straight to dismissed. entrySkipped only ever
+  // becomes true for a visitor restored from sessionStorage, which lands a
+  // tick after this component's first render, not derivable at render time.
+  useLayoutEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (entrySkipped) setDismissed(true);
+  }, [entrySkipped]);
   const [isExiting, setIsExiting] = useState(false);
   /** The entry screen has to cover the site header and the scene dots. Both sit
    *  in the document's own stacking context while the page is inside a z-10
