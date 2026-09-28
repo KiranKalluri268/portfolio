@@ -46,6 +46,21 @@ export function validateSkill(value: unknown, source: string): SkillContent {
   for (const field of ["resumeLabel", "resumeGroup"] as const) {
     if (value[field] !== undefined) assertString(value[field], field, source);
   }
+  // showInResumeAi is optional, mirroring showInResume above, so the many
+  // skill files that opt into neither résumé variant, one, or the other don't
+  // all need updating for this to exist.
+  if (value.showInResumeAi !== undefined && typeof value.showInResumeAi !== "boolean") {
+    throw new Error(`${source}: "showInResumeAi" must be a boolean`);
+  }
+  if (value.showInResumeAi) {
+    assertString(value.resumeAiGroup, "resumeAiGroup", source);
+  }
+  for (const field of ["resumeAiLabel", "resumeAiGroup"] as const) {
+    if (value[field] !== undefined) assertString(value[field], field, source);
+  }
+  if (value.resumeAiOrder !== undefined && typeof value.resumeAiOrder !== "number") {
+    throw new Error(`${source}: "resumeAiOrder" must be a number`);
+  }
   if (value.resumeOrder !== undefined && typeof value.resumeOrder !== "number") {
     throw new Error(`${source}: "resumeOrder" must be a number`);
   }

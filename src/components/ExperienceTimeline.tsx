@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
@@ -244,6 +244,26 @@ function ExperienceRow({ experience, index, dotRef }: ExperienceRowProps) {
     ? "md:grid-cols-[minmax(0,1.28fr)_64px_minmax(0,0.72fr)]"
     : "md:grid-cols-[minmax(0,0.72fr)_64px_minmax(0,1.28fr)]";
 
+  // Some roles list enough highlights that showing all of them up front is a
+  // wall of bullets before the next role even arrives. Clamped to four lines
+  // until asked to grow; a role short enough to already fit skips the button
+  // entirely rather than offering to expand nothing.
+  const [expanded, setExpanded] = useState(false);
+  const [canExpand, setCanExpand] = useState(false);
+  const highlightsRef = useRef<HTMLUListElement>(null);
+
+  useLayoutEffect(() => {
+    const list = highlightsRef.current;
+    if (!list || expanded) return;
+    const measure = () => setCanExpand(list.scrollHeight - list.clientHeight > 1);
+    measure();
+    // The four-line clamp holds a different amount of text at every
+    // breakpoint, so whether a role even needs the button can change with it.
+    const observer = new ResizeObserver(measure);
+    observer.observe(list);
+    return () => observer.disconnect();
+  }, [expanded, experience.highlights]);
+
   return (
     <article
       className={`experience-row relative grid grid-cols-[32px_minmax(0,1fr)] gap-x-3 gap-y-4 ${desktopColumns} md:items-stretch md:gap-x-5 md:gap-y-0 ${rowShift}`}
@@ -312,7 +332,10 @@ function ExperienceRow({ experience, index, dotRef }: ExperienceRowProps) {
           <h4 className="mb-4 text-sm font-semibold uppercase tracking-widest text-gray-400">
             Highlights
           </h4>
-          <ul className="space-y-3 text-sm leading-relaxed text-gray-300 sm:text-base">
+          <ul
+            ref={highlightsRef}
+            className={`space-y-3 text-sm leading-relaxed text-gray-300 sm:text-base ${expanded ? "" : "line-clamp-4"}`}
+          >
             {experience.highlights.map((item) => (
               <li key={item} className="flex gap-3">
                 <span className="mt-[0.65em] h-1.5 w-1.5 shrink-0 rounded-full bg-accent-soft" aria-hidden="true" />
@@ -320,6 +343,16 @@ function ExperienceRow({ experience, index, dotRef }: ExperienceRowProps) {
               </li>
             ))}
           </ul>
+          {canExpand && (
+            <button
+              type="button"
+              onClick={() => setExpanded((value) => !value)}
+              aria-expanded={expanded}
+              className="mt-3 text-sm font-semibold text-accent-soft transition-colors hover:text-white"
+            >
+              {expanded ? "View less" : "View more"}
+            </button>
+          )}
         </div>
       </div>
     </article>

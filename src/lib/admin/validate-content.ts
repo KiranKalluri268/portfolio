@@ -49,7 +49,9 @@ export function validateContentForPath(relativePath: string, value: unknown): vo
     return;
   }
 
-  if (relativePath === "resume.json") {
+  if (relativePath === "resume.json" || relativePath === "resume-ai.json") {
+    // Both résumé variants share exactly the same shape, so the one
+    // validator covers either file.
     validateResumeJson(value, relativePath);
     return;
   }

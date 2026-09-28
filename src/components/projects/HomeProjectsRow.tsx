@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type RefObject } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Camera, Mesh, Plane, Program, Renderer, Texture, Transform } from "ogl";
 import gsap from "gsap";
@@ -9,7 +10,7 @@ import { useMediaQuery, useReducedMotion } from "@/hooks/useMediaQuery";
 import { SkillMark } from "@/components/skills/skill-icons";
 import type { ProjectContent, SkillContent } from "@/lib/content/types";
 import gridStyles from "./projects-grid.module.css";
-import { CARD_SHAPES, drawCard, textureSizeFor } from "./stack-card";
+import { CARD_SHAPES, drawCard, drawSeeAllCard, textureSizeFor } from "./stack-card";
 import { homeProjectsLayout, homeProjectsOverlayOffset } from "./home-projects-layout";
 
 /** The home page's projects carousel, drawn on the GPU.
@@ -159,7 +160,8 @@ interface HomeProjectsRowProps {
   entries: HomeRowEntry[];
   /** Index of the last panel. Panel 0 is the empty lead-in that gives the
    *  section title somewhere to travel before the first card arrives, and the
-   *  last panel is "See all projects", which is markup rather than a card. */
+   *  last panel is the row's own "See all projects" card, appended after the
+   *  real ones. */
   lastPanelIndex: number;
   /** Written by the pin each frame: 0 to 1 through the carousel. Read here
    *  rather than passed as state, so nothing re-renders per frame. */
@@ -232,6 +234,7 @@ export default function HomeProjectsRow({
       const fontFamily =
         getComputedStyle(document.body).getPropertyValue("--font-tektur").trim() ||
         "system-ui, sans-serif";
+      const quotedFontFamily = `${fontFamily}, system-ui, sans-serif`;
 
       // The grid's stylesheet owns what each origin's colour is; reading it
       // back from a hidden swatch means the views cannot drift apart.
@@ -240,8 +243,11 @@ export default function HomeProjectsRow({
         if (!swatch) return "#ffffff";
         return getComputedStyle(swatch).getPropertyValue("--origin-colour").trim() || "#ffffff";
       };
+      const accentColour =
+        getComputedStyle(document.documentElement).getPropertyValue("--color-accent-soft").trim() ||
+        "#ff7a18";
 
-      const textures = await Promise.all(
+      const projectTextures = await Promise.all(
         entries.map(async ({ project, origin }) => {
           const image = project.image ? await loadImage(project.image) : null;
           const marks = iconSource.querySelectorAll<SVGElement>(
@@ -258,13 +264,26 @@ export default function HomeProjectsRow({
             // Already quoted by next/font. Quoting it again makes the whole
             // `ctx.font` shorthand invalid, and canvas silently keeps its 10px
             // default rather than reporting anything.
-            fontFamily: `${fontFamily}, system-ui, sans-serif`,
+            fontFamily: quotedFontFamily,
             shape,
             originColour: originColour(origin),
           });
         }),
       );
       if (disposed) return;
+
+      // The row's last panel, appended as one more texture rather than left
+      // as a gap the row travels through - it moves and bends exactly like a
+      // project card because, from here down, it is treated as one: same
+      // mesh, same geometry, same spacing. The panel maths below already
+      // brings the panel *after* the last project to centre exactly when the
+      // pin's own scroll range ends (see SCROLL_MULTIPLIER's caller), so
+      // giving that panel a card is what lets the visitor see it arrive
+      // before the page hands off to ordinary vertical scroll.
+      const textures = [
+        ...projectTextures,
+        drawSeeAllCard({ fontFamily: quotedFontFamily, shape, accentColour }),
+      ];
 
       const renderer = new Renderer({
         canvas,
@@ -355,9 +374,8 @@ export default function HomeProjectsRow({
         cardWidth = layout.cardWidth;
         cardHeight = layout.cardHeight;
         spacing = cardWidth + Math.max(28, width * 0.08);
-        // Panel 0 is empty and the last is the "See all" markup, so the row
-        // travels the full run of panels even though only the middle ones
-        // carry a card.
+        // Panel 0 is empty, so the row travels one panel further than there
+        // are cards to reach it before the first one arrives.
         const travel = spacing * lastPanelIndex;
         if (travel !== travelRef.current) {
           travelRef.current = travel;
@@ -454,7 +472,10 @@ export default function HomeProjectsRow({
           (mesh) => Math.abs(mesh.position.x - worldX) <= cardWidth / 2,
         );
         if (hit === -1) return;
-        router.push(`/projects/${entries[hit].project.slug}`);
+        // The last mesh is the row's own "see all" card, one past the real
+        // projects rather than one of them.
+        if (hit === entries.length) router.push("/projects");
+        else router.push(`/projects/${entries[hit].project.slug}`);
       };
 
       container.addEventListener("pointerdown", onPointerDown);
@@ -469,6 +490,22 @@ export default function HomeProjectsRow({
         // spending a frame's work to be ignored — and about not reading back
         // sizes from a renderer whose context is gone.
         if (contextLost || !visible) return;
+        try {
+          drawFrame();
+        } catch (error) {
+          // A context can be lost between the check above and the GL calls
+          // below - the browser's own event for that fires asynchronously, so
+          // a frame can still be mid-render when it happens. OGL's bookkeeping
+          // assumes a live context and throws rather than no-op'ing, which
+          // otherwise escaped the ticker uncaught and took the whole page down
+          // with it. Treated the same as the watched event: stop drawing and
+          // wait for a restore to rebuild the scene.
+          contextLost = true;
+          if (process.env.NODE_ENV !== "production") console.error(error);
+        }
+      };
+
+      const drawFrame = () => {
         if (!ready) {
           ready = resize();
           if (!ready) return;
@@ -566,7 +603,29 @@ export default function HomeProjectsRow({
       gsap.ticker.add(frame);
       cleanups.push(() => gsap.ticker.remove(frame));
 
+      // Mobile Safari (and, to a lesser extent, Chrome) resizes the visual
+      // viewport by dozens of pixels as its address bar shows and hides -
+      // including mid-scroll, since the bar can auto-hide while a visitor is
+      // still moving through the page. That is not a layout change: it is
+      // the same device, asked to redraw a card size and, through it, this
+      // pin's own scroll length (`travelRef`, read by projects.tsx to size
+      // the ScrollTrigger). Recalculating and refreshing that while the pin
+      // is actively being scrolled through is what made the section's start
+      // and the "See all projects" reveal both jump - the boundary the
+      // visitor was scrolling against moved out from under them. A real
+      // width change, or a height change large enough to be a rotation
+      // rather than a toolbar, still goes through immediately.
+      let lastWidth = container.clientWidth;
+      let lastHeight = container.clientHeight;
+      const IGNORE_HEIGHT_DELTA = 150;
       const resizeObserver = new ResizeObserver(() => {
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        const widthChanged = width !== lastWidth;
+        const heightDelta = Math.abs(height - lastHeight);
+        lastWidth = width;
+        lastHeight = height;
+        if (!widthChanged && heightDelta < IGNORE_HEIGHT_DELTA) return;
         ready = resize();
       });
       resizeObserver.observe(container);
@@ -594,7 +653,17 @@ export default function HomeProjectsRow({
       data-home-projects-row
       className="absolute inset-0 z-10 cursor-pointer"
     >
-      <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
+      {/* Keyed so crossing the `narrow` breakpoint or recovering from a lost
+          context (`generation`) mounts a fresh canvas rather than reusing the
+          old one. Both tear the scene down and build a new one on the same
+          effect run, calling WEBGL_lose_context.loseContext() on the outgoing
+          context and creating a new one in the same tick - and a fresh
+          getContext() call on a canvas whose previous context is still being
+          torn down can come back looking valid while every GL call on it
+          silently fails, which is what a shader "failing to compile" with a
+          null info log actually means. A new element sidesteps the race
+          instead of trying to win it. */}
+      <canvas key={`${narrow ? "n" : "w"}-${generation}`} ref={canvasRef} className="absolute inset-0 h-full w-full" />
 
       {/* The cards are pixels on the GPU and carry no text a crawler or a
           screen reader can reach, so the same content is published here as real
@@ -627,6 +696,9 @@ export default function HomeProjectsRow({
               </ul>
             </li>
           ))}
+          <li>
+            <Link href="/projects">See all projects</Link>
+          </li>
         </ul>
       </div>
     </div>

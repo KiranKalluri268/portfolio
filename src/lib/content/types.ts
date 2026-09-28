@@ -47,6 +47,11 @@ export interface ProjectContent {
   /** Opt in to the one-page résumé. The CV always includes everything. */
   showInResume: boolean;
   resume?: ProjectResumeEntry;
+  /** Opt in to the AI/ML-focused résumé variant at /resume/ai, independent of
+   *  showInResume/resume — a project can appear on one résumé, the other,
+   *  both, or neither. */
+  showInResumeAi?: boolean;
+  resumeAi?: ProjectResumeEntry;
   /** Optional: internal and client work often has no shareable screenshot, in
    *  which case the UI falls back to a generated monogram panel. */
   image?: string;
@@ -170,8 +175,12 @@ export interface CvRole {
   location?: string;
   workMode?: string;
   summary: string;
+  overview: string[];
   workItems: CvWorkItem[];
   technologies: string[];
+  outcomes: ProjectOutcome[];
+  lessonsLearned: string[];
+  recommendations: ExperienceRecommendation[];
 }
 
 export interface CvProject {
@@ -179,16 +188,51 @@ export interface CvProject {
   title: string;
   role: string;
   summary: string;
+  overview: string[];
+  problem?: string;
+  solution?: string;
+  howItWorks: ProjectProcessItem[];
+  buildingProcess: ProjectProcessItem[];
+  challenges: ProjectChallenge[];
   highlights: string[];
   outcomes: ProjectOutcome[];
+  lessonsLearned: string[];
   technologies: string[];
   repositoryUrl?: string;
   liveUrl?: string;
 }
 
+export interface CvSkill {
+  name: string;
+  shortDescription: string;
+  whatItIs: string[];
+  howILearned: string[];
+  howIUseIt: string[];
+  concepts: string[];
+  lessonsLearned: string[];
+  resources: SkillResource[];
+}
+
 export interface CvSkillGroup {
   label: string;
-  skills: Array<{ name: string; shortDescription: string }>;
+  skills: CvSkill[];
+}
+
+/** One résumé variant's own curation on top of the CV data — its basics,
+ *  objective, and editorial choices, carried as-is so a résumé-tailoring tool
+ *  can tell the lanes apart without re-deriving them. A new resume-*.json
+ *  file only needs an entry in RESUME_LANES (cv.ts) to show up here. */
+export interface CvResumeLane {
+  id: string;
+  label: string;
+  source: string;
+  basics: ResumeBasics;
+  objective: string;
+  education: ResumeEducation;
+  skillGroupOrder: string[];
+  certifications: string[];
+  languages: string[];
+  strengths: string[];
 }
 
 export interface CvData {
@@ -212,6 +256,7 @@ export interface CvData {
   certifications: string[];
   languages: string[];
   strengths: string[];
+  resumeLanes: CvResumeLane[];
 }
 
 export interface SkillCategoryContent {
@@ -247,6 +292,13 @@ export interface SkillContent {
   resumeGroup?: string;
   resumeLabel?: string;
   resumeOrder?: number;
+  /** Opt in to the AI/ML-focused résumé variant at /resume/ai, with its own
+   *  grouping and ordering independent of resumeGroup/resumeLabel/resumeOrder
+   *  so the two résumés can each curate the same skill graph differently. */
+  showInResumeAi?: boolean;
+  resumeAiGroup?: string;
+  resumeAiLabel?: string;
+  resumeAiOrder?: number;
   whatItIs: string[];
   howILearned: string[];
   howIUseIt: string[];

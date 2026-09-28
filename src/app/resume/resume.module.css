@@ -148,6 +148,12 @@
   font-weight: 700;
 }
 
+.projectLink {
+  color: #b8380a;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .technologies,
 .period {
   font-style: italic;

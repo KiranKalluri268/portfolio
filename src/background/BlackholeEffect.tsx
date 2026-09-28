@@ -43,8 +43,14 @@ export default function Blackhole() {
           transform: 'rotateX(0deg) rotateY(0deg) rotateZ(-20deg)',
         }}
       >
-        <source src="/images/optimized_safari.mov" type="video/quicktime" />
-        <source src="/images/optimized.webm" type="video/webm" />
+        <source
+          src="https://res.cloudinary.com/dytobweya/video/upload/v1789667466/optimized_safari.mov"
+          type="video/quicktime"
+        />
+        <source
+          src="https://res.cloudinary.com/dytobweya/video/upload/v1789667463/optimized.webm"
+          type="video/webm"
+        />
         Your browser does not support transparent video.
       </video>
     </div>

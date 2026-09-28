@@ -11,6 +11,9 @@
   "showInResume": true,
   "resumeGroup": "Databases",
   "resumeOrder": 1,
+  "showInResumeAi": true,
+  "resumeAiGroup": "Databases",
+  "resumeAiOrder": 1,
   "whatItIs": [
     "MongoDB stores data as document-oriented collections."
   ],

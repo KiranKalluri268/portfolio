@@ -9,6 +9,9 @@
   "showInSkillsSection": false,
   "skillsSectionOrder": 30,
   "showInResume": false,
+  "showInResumeAi": true,
+  "resumeAiGroup": "AI/ML",
+  "resumeAiOrder": 5,
   "whatItIs": [
     "Keras provides composable APIs for defining, training, and evaluating neural networks."
   ],

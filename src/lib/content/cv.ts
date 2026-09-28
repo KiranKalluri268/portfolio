@@ -1,18 +1,29 @@
 import "server-only";
 
 import resume from "@/data/resume.json";
+import resumeAi from "@/data/resume-ai.json";
 import { getAllExperiences } from "./experience";
 import { getAllProjects } from "./projects";
 import { getAllSkillCategories, getAllSkills } from "./skills";
 import type {
   CvData,
   CvProject,
+  CvResumeLane,
   CvRole,
   CvSkillGroup,
   ExperienceContent,
   ProjectContent,
+  ResumeJson,
   SkillContent,
 } from "./types";
+
+/** Every résumé variant this data model knows about. A new resume-*.json
+ *  variant shows up in the CV's lanes manifest by adding one entry here —
+ *  nothing else needs to change. */
+const RESUME_LANES: { id: string; label: string; source: string; data: ResumeJson }[] = [
+  { id: "fullstack", label: "Full-Stack", source: "resume.json", data: resume },
+  { id: "ai-ml", label: "AI/ML", source: "resume-ai.json", data: resumeAi },
+];
 
 /** Human-readable period, e.g. "August 2025 – January 2026". */
 function formatPeriod(experience: ExperienceContent) {
@@ -42,6 +53,7 @@ function toCvRole(
     location: experience.location,
     workMode: experience.workMode,
     summary: experience.summary,
+    overview: experience.overview,
     workItems: experience.workItems.map((item) => ({
       title: item.title,
       description: item.description,
@@ -53,6 +65,9 @@ function toCvRole(
         : undefined,
     })),
     technologies: toNames(experience.skills, skillsBySlug),
+    outcomes: experience.outcomes,
+    lessonsLearned: experience.lessonsLearned,
+    recommendations: experience.recommendations,
   };
 }
 
@@ -65,8 +80,15 @@ function toCvProject(
     title: project.title,
     role: project.role,
     summary: project.summary,
+    overview: project.overview,
+    problem: project.problem,
+    solution: project.solution,
+    howItWorks: project.howItWorks,
+    buildingProcess: project.buildingProcess,
+    challenges: project.challenges,
     highlights: project.highlights,
     outcomes: project.outcomes,
+    lessonsLearned: project.lessonsLearned,
     technologies: toNames(project.skills, skillsBySlug),
     repositoryUrl: project.repositoryUrl,
     liveUrl: project.liveUrl,
@@ -79,9 +101,33 @@ function buildSkillGroups(skills: SkillContent[]): CvSkillGroup[] {
       label: category.label,
       skills: skills
         .filter((skill) => skill.category === category.slug)
-        .map((skill) => ({ name: skill.name, shortDescription: skill.shortDescription })),
+        .map((skill) => ({
+          name: skill.name,
+          shortDescription: skill.shortDescription,
+          whatItIs: skill.whatItIs,
+          howILearned: skill.howILearned,
+          howIUseIt: skill.howIUseIt,
+          concepts: skill.concepts,
+          lessonsLearned: skill.lessonsLearned,
+          resources: skill.resources,
+        })),
     }))
     .filter((group) => group.skills.length > 0);
+}
+
+function buildResumeLanes(): CvResumeLane[] {
+  return RESUME_LANES.map(({ id, label, source, data }) => ({
+    id,
+    label,
+    source,
+    basics: data.basics,
+    objective: data.objective,
+    education: data.education,
+    skillGroupOrder: data.skillGroupOrder,
+    certifications: data.certifications,
+    languages: data.languages,
+    strengths: data.strengths,
+  }));
 }
 
 /** Everything the CV renders, in one serializable payload. */
@@ -115,5 +161,6 @@ export function getCvData(): CvData {
     certifications: resume.certifications,
     languages: resume.languages,
     strengths: resume.strengths,
+    resumeLanes: buildResumeLanes(),
   };
 }

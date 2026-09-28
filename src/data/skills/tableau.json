@@ -8,7 +8,7 @@
   "iconText": "Tab",
   "showInSkillsSection": true,
   "skillsSectionOrder": 27,
-  "showInResume": true,
+  "showInResume": false,
   "resumeGroup": "Other Tools",
   "resumeOrder": 4,
   "whatItIs": [

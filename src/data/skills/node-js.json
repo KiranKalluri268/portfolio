@@ -11,6 +11,9 @@
   "showInResume": true,
   "resumeGroup": "Web/Frameworks",
   "resumeOrder": 3,
+  "showInResumeAi": true,
+  "resumeAiGroup": "Web/Frameworks",
+  "resumeAiOrder": 2,
   "whatItIs": [
     "Node.js runs JavaScript outside the browser and provides APIs for backend and tooling work."
   ],

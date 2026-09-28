@@ -49,6 +49,7 @@ export function validateResumeJson(value: unknown, source: string): ResumeJson {
 export interface ResumeProject {
   slug: string;
   name: string;
+  liveUrl?: string;
   technologies: string;
   highlights: string[];
 }
@@ -72,6 +73,7 @@ export function getResumeProjects(): ResumeProject[] {
     .map((project) => ({
       slug: project.slug,
       name: project.title,
+      liveUrl: project.liveUrl,
       technologies: project.resume!.technologies,
       highlights: project.resume!.highlights,
     }));

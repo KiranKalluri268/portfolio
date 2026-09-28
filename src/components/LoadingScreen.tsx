@@ -2,7 +2,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useAudio } from "@/context/AudioContextProvider";
-import { ENTRY_RELEASE_MS } from "./entry-timing";
+import { ENTRY_RELEASE_MS, ENTRY_ESCAPE_MS, ENTRY_DISMISS_MS } from "./entry-timing";
 import { lockPageScroll } from "./page-scroll-lock";
 import { useScrollActions } from "@/context/SmoothScrollContext";
 
@@ -117,8 +117,8 @@ const LOADING_QUIP_MS = 2500;
 const SPIN_MS = ENTRY_RELEASE_MS;
 
 /** How long they take to clear the screen once they are free. */
-const ESCAPE_MS = 750;
-const EXIT_MS = SPIN_MS + ESCAPE_MS;
+const ESCAPE_MS = ENTRY_ESCAPE_MS;
+const EXIT_MS = ENTRY_DISMISS_MS;
 
 /** Without an orbit to watch there is nothing to time a fade to, so reduced
  *  motion gets a short one instead of a slow one. */
@@ -425,11 +425,16 @@ export default function LoadingScreen({
             p.speed = p.baseSpeed * (1 + (RELEASE_SPIN - 1) * t * t);
           });
         } else {
-          // Let go, and accelerating away along the tangent.
+          // Let go, carrying straight on at the speed they were already
+          // turning at - not re-accelerating from a stop. `t ** 1.8` used to
+          // sit here: its derivative is zero at t=0, so the instant they were
+          // released they visibly stopped and had to build speed back up
+          // again, right after the wind-up had them at their fastest. Linear
+          // in `t` means constant velocity from the first frame of release.
           const t = Math.min(1, (elapsed - SPIN_MS) / ESCAPE_MS);
           particles.forEach((p) => {
             p.release();
-            p.travel = flight.distance * t ** 1.8;
+            p.travel = flight.distance * t;
             p.tailLength = ESCAPE_TAIL;
           });
         }

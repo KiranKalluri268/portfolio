@@ -65,7 +65,9 @@ export default function CvPages({ blocks, label }: { blocks: CvBlock[]; label: s
           while (current.length > 0 && blocks[current[current.length - 1]]?.keepWithNext) {
             held.unshift(current.pop() as number);
           }
-          next.push(current);
+          // A heading held down on its own leaves nothing to finish this page
+          // with — pushing it anyway would render as a blank sheet.
+          if (current.length > 0) next.push(current);
           current = held;
           pageTop = children[held[0] ?? index].offsetTop;
         }
