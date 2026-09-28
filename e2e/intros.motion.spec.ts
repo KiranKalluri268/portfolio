@@ -101,4 +101,16 @@ test.describe("the entry screen", () => {
     await expect(page.getByRole("button", { name: "Pause audio playback" })).toBeVisible();
   });
 
+  test("rebuilds the scene dots on a same-session reload", async ({ page }) => {
+    await page.goto("/");
+    await enterSite(page);
+    const nav = page.getByRole("navigation", { name: "Scene navigation indicator" });
+    await expect(nav).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole("dialog", { name: /portfolio loading/i })).toBeHidden();
+    await expect(nav).toBeVisible();
+    const initialWidth = await nav.evaluate((element) => element.getBoundingClientRect().width);
+    expect(initialWidth).toBeLessThan(100);
+    await expect.poll(() => nav.evaluate((element) => element.getBoundingClientRect().width)).toBeGreaterThan(200);
+  });
 });

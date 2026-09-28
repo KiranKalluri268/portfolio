@@ -291,12 +291,11 @@ export default function SceneIndicator() {
   // The entrance: a dot, a circle drawn around it, the rest of the dots
   // flooding into that circle cramped together, that crowding pushing the
   // circle out into the bar, and only then the active dot's pill appearing.
-  // Skipped for reduced motion or a session that skipped the gate itself,
-  // both of which start already "done" rather than replaying the five beats
-  // as a set of instant jumps.
+  // Repeat visits still play the build. Only reduced motion starts at "done"
+  // rather than replaying the five beats as instant jumps.
   useEffect(() => {
     if (!portalReady || !curtainGone) return;
-    if (reduceMotion || entrySkipped) {
+    if (reduceMotion) {
       // useReducedMotion() reports false for the very first client paint
       // regardless of the visitor's actual preference, so this cannot be
       // read once at mount - it has to catch up once the real value lands.
@@ -306,7 +305,7 @@ export default function SceneIndicator() {
     }
     const timer = window.setTimeout(() => setIntro("circle"), INTRO_DOT_MS);
     return () => window.clearTimeout(timer);
-  }, [portalReady, curtainGone, reduceMotion, entrySkipped]);
+  }, [portalReady, curtainGone, reduceMotion]);
 
   useEffect(() => {
     if (intro !== "circle") return;
