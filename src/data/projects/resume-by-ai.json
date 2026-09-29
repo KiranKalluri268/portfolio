@@ -5,7 +5,7 @@
   "summary": "A Next.js application that uses GPT-4 Turbo to generate ATS-oriented résumés and integrates Razorpay for paid access.",
   "status": "published",
   "featured": false,
-  "showInProjectsSection": true,
+  "showInProjectsSection": false,
   "projectsSectionOrder": 4,
   "showInResume": false,
   "role": "Full-stack development",

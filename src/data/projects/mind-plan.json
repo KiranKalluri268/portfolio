@@ -5,7 +5,7 @@
   "summary": "A Flutter productivity application for managing goals, prioritizing work with the Eisenhower Matrix, and reviewing daily productivity.",
   "status": "published",
   "featured": false,
-  "showInProjectsSection": true,
+  "showInProjectsSection": false,
   "projectsSectionOrder": 5,
   "showInResume": false,
   "role": "Mobile application development",
