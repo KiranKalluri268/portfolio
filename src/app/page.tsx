@@ -4,7 +4,6 @@ import ProjectsSection from '@/components/projects';
 import ExperienceTimeline from '@/components/ExperienceTimeline';
 import SkillsCarousel from '@/components/SkillsCarousel';
 import ContactSection from '@/components/Contact';
-import LoadingScreen from '@/components/LoadingScreen';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import SkipLink from '@/components/SkipLink';
 import SceneIndicator from '@/components/SceneIndicator';
@@ -32,10 +31,6 @@ export default function Home() {
 
   return (
     <>
-      <ErrorBoundary>
-        <LoadingScreen />
-      </ErrorBoundary>
-
       <div id="portfolio-content">
         <SkipLink href="#main-content">Skip to main content</SkipLink>
         <SkipLink href="#about">Skip to about</SkipLink>

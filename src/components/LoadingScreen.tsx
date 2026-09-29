@@ -1,6 +1,5 @@
 "use client";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { useAudio } from "@/context/AudioContextProvider";
 import { ENTRY_RELEASE_MS, ENTRY_ESCAPE_MS, ENTRY_DISMISS_MS } from "./entry-timing";
 import { lockPageScroll } from "./page-scroll-lock";
@@ -227,11 +226,10 @@ export default function LoadingScreen({
     if (entrySkipped) setDismissed(true);
   }, [entrySkipped]);
   const [isExiting, setIsExiting] = useState(false);
-  /** The entry screen has to cover the site header and the scene dots. Both sit
-   *  in the document's own stacking context while the page is inside a z-10
-   *  wrapper, so no z-index here can reach over them from where this renders —
-   *  it goes to the body instead. */
-  const [portalReady, setPortalReady] = useState(false);
+  /** The CSS orbit is visible in server HTML until the measured canvas has
+   *  painted its first frame. */
+  const [canvasMeasured, setCanvasMeasured] = useState(false);
+  const [canvasReady, setCanvasReady] = useState(false);
   /** Which of the two lines under the rings is showing. */
   const [loadingLine, setLoadingLine] = useState(0);
   /** Set when loading finishes, read by the draw loop every frame. A ref
@@ -261,13 +259,12 @@ export default function LoadingScreen({
         parent.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
 
       setCanvasSize({ width, height });
+      setCanvasMeasured(true);
     }
     updateCanvasSize();
     window.addEventListener("resize", updateCanvasSize);
     return () => window.removeEventListener("resize", updateCanvasSize);
-    // portalReady: the canvas does not exist until the overlay has been
-    // portalled, and measuring a ref that is still null does nothing at all.
-  }, [portalReady]);
+  }, []);
 
   // Prepare only assets needed for the first frame and entry experience.
   useLayoutEffect(() => {
@@ -362,7 +359,7 @@ export default function LoadingScreen({
   }, [dismissed, lenis]);
 
   useEffect(() => {
-    if (dismissed) return; // don't run animation if hidden
+    if (dismissed || !canvasMeasured) return;
 
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
@@ -535,20 +532,21 @@ export default function LoadingScreen({
         ctx.shadowBlur = 0;
       });
 
+      if (!hasDrawn) {
+        hasDrawn = true;
+        setCanvasReady(true);
+      }
+
       animationFrameRef.current = requestAnimationFrame(draw);
     }
 
+    let hasDrawn = false;
     animationFrameRef.current = requestAnimationFrame(draw);
 
     return () => {
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
-  }, [canvasSize, color, thickness, speed, numParticles, orbitRadii, particleRadius, tailLength, dismissed, portalReady]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPortalReady(true);
-  }, []);
+  }, [canvasSize, color, thickness, speed, numParticles, orbitRadii, particleRadius, tailLength, dismissed, canvasMeasured]);
 
   useEffect(() => {
     if (isLoaded) return;
@@ -558,7 +556,7 @@ export default function LoadingScreen({
 
   useEffect(() => {
     if (!dismissed) overlayRef.current?.focus({ preventScroll: true });
-  }, [dismissed, portalReady]);
+  }, [dismissed]);
 
   useEffect(() => () => {
     if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
@@ -608,18 +606,20 @@ export default function LoadingScreen({
     }
   }, [isLoaded, dismissed, isExiting, entrySkipped, startReveal]);
 
-  if (dismissed || !portalReady) return null;
+  if (dismissed) return null;
 
-  return createPortal(
+  return (
     <div
+      id="portfolio-loading-screen"
       ref={overlayRef}
       tabIndex={-1}
-      className={`fixed inset-0 z-[9999] flex min-h-[100svh] items-center justify-center outline-none ${isExiting ? "pointer-events-none" : ""}`}
+      className={`fixed inset-0 z-[9999] flex min-h-[100svh] items-center justify-center outline-none ${isExiting ? "entry-loader-exiting pointer-events-none" : ""}`}
       role="dialog"
       aria-modal="true"
       aria-label="Portfolio loading"
       aria-busy={!isLoaded}
     >
+      <noscript><style>{"#portfolio-loading-screen{display:none!important}"}</style></noscript>
       {/* Its own layer, so the canvas can take the black over and cut the
           opening into it. Only reduced motion fades this. */}
       <div
@@ -635,15 +635,20 @@ export default function LoadingScreen({
           clip the corners and leave the page showing through them. */}
       <canvas
         ref={canvasRef}
-        className="pointer-events-none absolute top-0 left-0 h-[100dvh] w-screen bg-transparent"
+        className={`entry-loader-canvas pointer-events-none absolute top-0 left-0 h-[100dvh] w-screen bg-transparent ${canvasReady ? "entry-loader-canvas-ready" : ""}`}
       />
 
+      <div className={`entry-loader-fallback ${canvasReady ? "entry-loader-fallback-hidden" : ""}`} aria-hidden="true">
+        <span className="entry-loader-orbit entry-loader-orbit-outer" />
+        <span className="entry-loader-orbit entry-loader-orbit-inner" />
+      </div>
+
       <div
-        className={`relative z-10 flex h-[60px] flex-col items-center justify-center transition-opacity ease-out ${isExiting ? "opacity-0" : "opacity-100"}`}
+        className={`entry-loader-label relative z-10 flex h-[60px] flex-col items-center justify-center transition-opacity ease-out ${isExiting ? "opacity-0" : "opacity-100"}`}
         style={{ transitionDuration: `${SPIN_MS}ms` }}
       >
           <p
-            className="animate-fade-in text-2xl md:text-3xl font-bold font-mono"
+            className="text-2xl md:text-3xl font-bold font-mono"
             style={{ color }}
           >
             <span aria-live="polite">{loadingProgress}%</span>
@@ -657,7 +662,7 @@ export default function LoadingScreen({
           nothing already read moves when it lands. Neither is announced: the
           count above already says what is happening. */}
       <div
-        className="entry-lines pointer-events-none absolute top-1/2 left-1/2 w-full -translate-x-1/2 translate-y-[7.5rem] px-6 text-center select-none"
+        className="entry-lines pointer-events-none absolute w-full px-6 text-center select-none"
         aria-hidden="true"
       >
         {LOADING_LINES.map((line, index) => (
@@ -673,7 +678,6 @@ export default function LoadingScreen({
         ))}
       </div>
 
-    </div>,
-    document.body,
+    </div>
   );
 }

@@ -41,8 +41,8 @@ function readHasEntered() {
 export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
   const [audioEnabled, setAudioEnabled] = useState(false);
   // Starts false to match the server-rendered markup; synced from
-  // sessionStorage in the layout effect below before the first paint, so
-  // there is no loader flash for a visitor who already arrived this session.
+  // sessionStorage in the layout effect below. The server-rendered loader
+  // remains visible until then, including when JavaScript arrives slowly.
   const [hasEntered, setHasEntered] = useState(false);
   const [entrySkipped, setEntrySkipped] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
