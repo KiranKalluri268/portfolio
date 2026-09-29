@@ -17,6 +17,7 @@
     ],
     "order": 3
   },
+  "image": null,
   "role": "Full-stack development and site engineering",
   "skills": [
     "next-js",
@@ -99,7 +100,10 @@
     "That a status document written for the builder is more honest than one written for an audience.",
     "How much of 'it feels slow' turns out to be one measurable thing, once you stop guessing."
   ],
-  "gallery": [],
+  "gallery": {
+    "image-1": null,
+    "image-2": null
+  },
   "repositoryUrl": "https://github.com/KiranKalluri268/portfolio",
   "liveUrl": "https://www.saikirankalluri.dev/",
   "seo": {

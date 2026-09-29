@@ -8,6 +8,7 @@
   "showInProjectsSection": false,
   "projectsSectionOrder": 9,
   "showInResume": false,
+  "image": null,
   "role": "Full-stack development",
   "skills": [
     "next-js",
@@ -80,7 +81,10 @@
     "How to design a system that spans a phone, a relay, and a desktop agent without any of them being able to assume the others are reachable.",
     "That keeping a human able to intervene mid-run is a design requirement for automation, not an extra."
   ],
-  "gallery": [],
+  "gallery": {
+    "image-1": null,
+    "image-2": null
+  },
   "seo": {
     "title": "Axion Project Case Study",
     "description": "Mobile-driven desktop automation built from a Next.js web app, a MERN cloud relay, and a Python desktop agent with live step visibility and mid-run steering."

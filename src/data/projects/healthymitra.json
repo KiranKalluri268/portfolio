@@ -8,6 +8,7 @@
   "showInProjectsSection": false,
   "projectsSectionOrder": 10,
   "showInResume": false,
+  "image": null,
   "role": "Full-stack development and cloud deployment",
   "skills": [
     "next-js",
@@ -92,7 +93,10 @@
     "How role structure inside a care circle drives nearly every permission decision in the product.",
     "That privacy controls in a health context need to be granular enough to match how families actually share."
   ],
-  "gallery": [],
+  "gallery": {
+    "image-1": null,
+    "image-2": null
+  },
   "seo": {
     "title": "HealthyMitra Project Case Study",
     "description": "A Next.js caregiving platform with care circles, appointment and diagnostics booking, WebRTC consultations, per-post visibility, and Razorpay payments, deployed on AWS ECS with GitHub Actions CI/CD."

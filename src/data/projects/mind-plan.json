@@ -8,6 +8,7 @@
   "showInProjectsSection": false,
   "projectsSectionOrder": 5,
   "showInResume": false,
+  "image": null,
   "role": "Mobile application development",
   "skills": [
     "flutter",
@@ -66,7 +67,10 @@
     "How to structure a multi-step mobile productivity workflow.",
     "How Flutter and Dart support reusable cross-platform interfaces."
   ],
-  "gallery": [],
+  "gallery": {
+    "image-1": null,
+    "image-2": null
+  },
   "seo": {
     "title": "MindPlan Project Case Study",
     "description": "How I built a Flutter productivity application around goals and prioritization."

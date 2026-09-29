@@ -76,7 +76,10 @@
     "How to prepare structured inputs for a neural network.",
     "How to turn a trained model into an interactive application."
   ],
-  "gallery": [],
+  "gallery": {
+    "image-1": null,
+    "image-2": null
+  },
   "repositoryUrl": "https://github.com/KiranKalluri268/MS_AI_IPL-Score-Predictor",
   "seo": {
     "title": "IPL Score Predictor Project Case Study",

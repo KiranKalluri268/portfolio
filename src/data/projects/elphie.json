@@ -8,6 +8,7 @@
   "showInProjectsSection": false,
   "projectsSectionOrder": 8,
   "showInResume": false,
+  "image": null,
   "role": "C++ cloud video integration and web application development",
   "skills": [
     "cpp",
@@ -88,7 +89,10 @@
     "How to work inside an unfamiliar native C++ codebase and extend it with cloud services.",
     "How live streaming changes what a clinical tool can be used for, including teaching and family visibility."
   ],
-  "gallery": [],
+  "gallery": {
+    "image-1": null,
+    "image-2": null
+  },
   "seo": {
     "title": "Elphie Project Case Study",
     "description": "Dental imaging with AWS S3 video storage and AWS IVS live streaming written into a C++ desktop application, plus a Next.js web app on AWS Amplify for recordings, appointments, and diagnoses."

@@ -8,6 +8,7 @@
   "showInProjectsSection": false,
   "projectsSectionOrder": 7,
   "showInResume": false,
+  "image": null,
   "role": "Feature development and cloud deployment",
   "skills": [
     "react",
@@ -70,7 +71,10 @@
     "How speech interfaces change the design of a data-entry-heavy clinical workflow.",
     "How to take a project from local development to monitored production infrastructure."
   ],
-  "gallery": [],
+  "gallery": {
+    "image-1": null,
+    "image-2": null
+  },
   "seo": {
     "title": "Digichikitsak Project Case Study",
     "description": "A MERN electronic prescription platform with ElevenLabs and Bhashini voice input, deployed on AWS ECS with GitHub Actions CI/CD and CloudWatch alerting."

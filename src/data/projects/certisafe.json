@@ -94,7 +94,10 @@
     "How to separate structured data storage from media delivery.",
     "How deployment requirements shape full-stack implementation decisions."
   ],
-  "gallery": [],
+  "gallery": {
+    "image-1": null,
+    "image-2": null
+  },
   "repositoryUrl": "https://github.com/KiranKalluri268/CMS_PRO",
   "liveUrl": "https://certisafe.saikirankalluri.dev/",
   "seo": {

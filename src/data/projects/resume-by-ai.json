@@ -8,6 +8,7 @@
   "showInProjectsSection": false,
   "projectsSectionOrder": 4,
   "showInResume": false,
+  "image": null,
   "role": "Full-stack development",
   "skills": [
     "next-js",
@@ -64,7 +65,10 @@
     "How to structure an AI-assisted product workflow.",
     "How payment state interacts with access to generated content."
   ],
-  "gallery": [],
+  "gallery": {
+    "image-1": null,
+    "image-2": null
+  },
   "seo": {
     "title": "ResumeByAI Project Case Study",
     "description": "How I built a Next.js résumé generator using GPT-4 Turbo and Razorpay."

@@ -4,7 +4,9 @@ import {
   getAllProjects,
   getFeaturedProjects,
   getHomepageProjects,
+  getProjectGalleryImages,
   getProjectBySlug,
+  validateProject,
 } from "../projects";
 
 describe("getAllProjects", () => {
@@ -77,6 +79,18 @@ describe("getHomepageProjects", () => {
 });
 
 describe("project imagery", () => {
+  it("keeps a null screenshot as a monogram placeholder and requires alt text for a URL", () => {
+    const project = getProjectBySlug("third-eye-ai");
+    expect(project).toBeDefined();
+    expect(validateProject({ ...project, image: null }, "third-eye-ai.json").image).toBeNull();
+    expect(() =>
+      validateProject(
+        { ...project, image: "https://res.cloudinary.com/dytobweya/image/upload/v1/example.png", imageAlt: undefined },
+        "third-eye-ai.json",
+      ),
+    ).toThrow('"imageAlt" must be a non-empty string');
+  });
+
   it("allows a project to omit its screenshot", () => {
     // Client and internal work often has nothing shareable to show; the UI
     // falls back to a generated monogram panel instead.
@@ -91,5 +105,29 @@ describe("project imagery", () => {
         expect(project.imageAlt?.trim()).not.toBe("");
       }
     }
+  });
+
+  it("orders filled gallery slots numerically and skips placeholders", () => {
+    const project = getProjectBySlug("third-eye-ai");
+    expect(project).toBeDefined();
+    const gallery = {
+      "image-10": { src: "/images/ten.png", alt: "Tenth image" },
+      "image-2": null,
+      "image-1": { src: "/images/one.png", alt: "First image" },
+      "image-3": { src: "/images/three.png", alt: "Third image", caption: "Detail" },
+    };
+    const validated = validateProject({ ...project, gallery }, "third-eye-ai.json");
+    expect(getProjectGalleryImages(validated).map((image) => image.alt)).toEqual([
+      "First image", "Third image", "Tenth image",
+    ]);
+  });
+
+  it("rejects gallery URLs without alt text and invalid numbered keys", () => {
+    const project = getProjectBySlug("third-eye-ai");
+    expect(project).toBeDefined();
+    expect(() => validateProject({ ...project, gallery: { "image-1": { src: "/a.png" } } }, "third-eye-ai.json"))
+      .toThrow('"alt" must be a non-empty string');
+    expect(() => validateProject({ ...project, gallery: { first: null } }, "third-eye-ai.json"))
+      .toThrow('must use image-1, image-2');
   });
 });
