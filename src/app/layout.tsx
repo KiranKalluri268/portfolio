@@ -14,7 +14,8 @@ import StarsBackground from "@/background/StarsBackground";
 import { AudioProvider } from "@/context/AudioContextProvider";
 import { SmoothScrollProvider } from "@/context/SmoothScrollContext";
 import NavBar from "@/components/NavBar1";
-import EntryCurtain from "@/components/EntryCurtain";
+import HomeLoadingScreen from "@/components/HomeLoadingScreen";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -166,6 +167,16 @@ const jsonLd = {
   ]
 };
 
+/** The first paint must show the loader before the app stylesheet or JavaScript
+ * arrives. Keep this small and independent of fonts, images, and client code. */
+const entryLoaderCriticalCss = `
+#portfolio-loading-screen{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;min-height:100svh;background:#000;color:#fff;font-family:ui-monospace,monospace}
+#portfolio-loading-screen.entry-loader-exiting{background:transparent}
+#portfolio-loading-screen .entry-loader-canvas{position:absolute;inset:0;width:100%;height:100%;opacity:0}
+#portfolio-loading-screen.entry-loader-exiting .entry-loader-canvas{opacity:1}
+#portfolio-loading-screen .entry-loader-label{position:relative;z-index:1;font-size:1.5rem;font-weight:700}
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -173,6 +184,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${tektur.variable} ${notoDevanagari.variable} ${notoTamil.variable} ${notoKannada.variable} ${notoMalayalam.variable} ${notoTelugu.variable}`}>
+      <head>
+        <style dangerouslySetInnerHTML={{ __html: entryLoaderCriticalCss }} />
+      </head>
       <body className="relative bg-black">
         <script
           type="application/ld+json"
@@ -190,9 +204,9 @@ export default function RootLayout({
                     way to reach anything else. */}
                 <NavBar />
 
-                {/* Stands in for LoadingScreen's own backdrop until its portal
-                    is ready - see EntryCurtain for why the gap is real. */}
-                <EntryCurtain />
+                <ErrorBoundary>
+                  <HomeLoadingScreen />
+                </ErrorBoundary>
 
                 {/* Your main content */}
                 <div className="relative z-10">

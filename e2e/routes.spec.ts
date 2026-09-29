@@ -19,6 +19,44 @@ test.describe("every route answers", () => {
   });
 });
 
+test("the first HTML paints a visible loader before hydration", async ({ page }) => {
+  await page.route("**/_next/static/**/*.js", (route) => route.abort());
+  const response = await page.goto("/");
+  expect(response?.status()).toBe(200);
+  const loader = page.getByRole("dialog", { name: "Portfolio loading" });
+  await expect(loader).toBeVisible();
+  await expect(loader.locator(".entry-loader-label")).toHaveText("Loading");
+  await expect(loader).toHaveText("Loading");
+  await expect(loader).not.toContainText("%");
+  await expect(loader.locator(".entry-loader-orbit")).toHaveCount(0);
+  await expect(loader.locator("canvas")).toHaveCSS("opacity", "0");
+  const label = loader.locator(".entry-loader-label");
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(viewport);
+    const bounds = await label.boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(Math.abs(bounds!.x + bounds!.width / 2 - viewport.width / 2)).toBeLessThan(2);
+    expect(Math.abs(bounds!.y + bounds!.height / 2 - viewport.height / 2)).toBeLessThan(2);
+    await page.screenshot({ path: `test-results/loading-text-${viewport.width}.png` });
+  }
+});
+
+test("a warm reload keeps the visible shell until hydration", async ({ page }) => {
+  await page.addInitScript(() => sessionStorage.setItem("portfolio:entered", "true"));
+  await page.route("**/_next/static/**/*.js", (route) => route.abort());
+  await page.goto("/");
+  await expect(page.getByRole("dialog", { name: "Portfolio loading" })).toBeVisible();
+});
+
+test("the home page remains readable without JavaScript", async ({ browser }) => {
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  const page = await context.newPage();
+  await page.goto("/");
+  await expect(page.locator("#portfolio-loading-screen")).toBeHidden();
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await context.close();
+});
+
 test.describe("addresses that are not pages", () => {
   // These are the pages with no test coverage at all until now, and the ones a
   // visitor is most likely to reach by accident.
