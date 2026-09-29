@@ -72,6 +72,10 @@
     "image-1": null,
     "image-2": null
   },
+  "repositoryUrl": null,
+  "landingPageUrl": null,
+  "appUrl": null,
+  "liveUrl": null,
   "seo": {
     "title": "MindPlan Project Case Study",
     "description": "How I built a Flutter productivity application around goals and prioritization."

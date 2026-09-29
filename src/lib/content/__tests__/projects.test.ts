@@ -134,3 +134,14 @@ describe("project imagery", () => {
       .toThrow('"image-1" must be a non-empty string');
   });
 });
+
+describe("project links", () => {
+  it("accepts null placeholders and rejects empty link values", () => {
+    const project = getProjectBySlug("third-eye-ai");
+    expect(project).toBeDefined();
+    expect(validateProject({ ...project, repositoryUrl: null, landingPageUrl: null, appUrl: null, liveUrl: null }, "third-eye-ai.json").appUrl)
+      .toBeNull();
+    expect(() => validateProject({ ...project, appUrl: "" }, "third-eye-ai.json"))
+      .toThrow('"appUrl" must be a non-empty string');
+  });
+});

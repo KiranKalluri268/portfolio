@@ -70,6 +70,10 @@
     "image-1": null,
     "image-2": null
   },
+  "repositoryUrl": null,
+  "landingPageUrl": null,
+  "appUrl": null,
+  "liveUrl": null,
   "seo": {
     "title": "ResumeByAI Project Case Study",
     "description": "How I built a Next.js résumé generator using GPT-4 Turbo and Razorpay."

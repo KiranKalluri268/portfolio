@@ -81,6 +81,9 @@
     "image-2": null
   },
   "repositoryUrl": "https://github.com/KiranKalluri268/MS_AI_IPL-Score-Predictor",
+  "landingPageUrl": null,
+  "appUrl": null,
+  "liveUrl": null,
   "seo": {
     "title": "IPL Score Predictor Project Case Study",
     "description": "How I built a Keras neural network that predicts IPL innings scores."

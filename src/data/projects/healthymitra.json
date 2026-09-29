@@ -98,6 +98,10 @@
     "image-1": null,
     "image-2": null
   },
+  "repositoryUrl": null,
+  "landingPageUrl": null,
+  "appUrl": null,
+  "liveUrl": null,
   "seo": {
     "title": "HealthyMitra Project Case Study",
     "description": "A Next.js caregiving platform with care circles, appointment and diagnostics booking, WebRTC consultations, per-post visibility, and Razorpay payments, deployed on AWS ECS with GitHub Actions CI/CD."

@@ -100,6 +100,8 @@
   },
   "repositoryUrl": "https://github.com/KiranKalluri268/CMS_PRO",
   "liveUrl": "https://certisafe.saikirankalluri.dev/",
+  "landingPageUrl": null,
+  "appUrl": null,
   "seo": {
     "title": "CertiSafe Project Case Study",
     "description": "How I led and built a deployed certificate-management platform."

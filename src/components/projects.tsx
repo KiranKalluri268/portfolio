@@ -18,6 +18,7 @@ import {
   type SwipeAxis,
 } from "./projects-swipe";
 import { desktopProjectsTitleCentre } from "./projects/home-projects-layout";
+import { getProjectActionLinks } from "@/lib/content/project-links";
 
 export default function ProjectsSection({ entries }: { entries: HomeRowEntry[] }) {
   const { lenis } = useScrollActions();
@@ -347,16 +348,11 @@ export default function ProjectsSection({ entries }: { entries: HomeRowEntry[] }
             <p className="line-clamp-3 text-sm leading-relaxed text-white/80 sm:text-base">
               {centred.project.summary}
             </p>
-            {/* Only when there is something to put in it. Two of the projects
-                shown here have neither a repository nor a live site, and with
-                the case study now reached by the card itself their row would be
-                an empty landmark carrying a label about links it has none of. */}
-            {(centred.project.repositoryUrl || centred.project.liveUrl) && (
             <nav
               className="mt-4 flex flex-wrap justify-center gap-3 group-data-[settled=true]:pointer-events-auto"
               aria-label={`Links for ${centred.project.title}`}
             >
-              {centred.project.repositoryUrl && (
+              {centred.project.repositoryUrl ? (
                 <a
                   href={centred.project.repositoryUrl}
                   target="_blank"
@@ -366,20 +362,28 @@ export default function ProjectsSection({ entries }: { entries: HomeRowEntry[] }
                 >
                   View source <span aria-hidden="true">↗</span>
                 </a>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  className="cursor-not-allowed rounded-full border border-white/10 bg-black/35 px-5 py-2.5 text-xs font-semibold text-white/45 sm:text-sm"
+                >
+                  Private repo
+                </button>
               )}
-              {centred.project.liveUrl && (
+              {getProjectActionLinks(centred.project).map((link) => (
                 <a
-                  href={centred.project.liveUrl}
+                  key={link.label}
+                  href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="rounded-full border border-white/20 bg-white px-5 py-2.5 text-xs font-semibold text-black transition-colors hover:bg-accent-soft sm:text-sm"
-                  aria-label={`Visit ${centred.project.title} live demo (opens in new tab)`}
+                  aria-label={`${link.label} for ${centred.project.title} (opens in new tab)`}
                 >
-                  Live project <span aria-hidden="true">↗</span>
+                  {link.label} <span aria-hidden="true">↗</span>
                 </a>
-              )}
+              ))}
             </nav>
-            )}
             </div>
           </div>
         )}

@@ -61,8 +61,10 @@ export interface ProjectContent {
   imageAlt?: string;
   role: string;
   year?: number;
-  repositoryUrl?: string;
-  liveUrl?: string;
+  repositoryUrl?: string | null;
+  landingPageUrl?: string | null;
+  appUrl?: string | null;
+  liveUrl?: string | null;
   skills: string[];
   overview: string[];
   problem?: string;

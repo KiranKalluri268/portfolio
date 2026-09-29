@@ -86,6 +86,10 @@
     "image-1": null,
     "image-2": null
   },
+  "repositoryUrl": null,
+  "landingPageUrl": null,
+  "appUrl": null,
+  "liveUrl": null,
   "seo": {
     "title": "Axion Project Case Study",
     "description": "Mobile-driven desktop automation built from a Next.js web app, a MERN cloud relay, and a Python desktop agent with live step visibility and mid-run steering."

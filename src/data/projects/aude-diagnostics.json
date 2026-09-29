@@ -90,6 +90,10 @@
     "image-1": null,
     "image-2": null
   },
+  "repositoryUrl": null,
+  "landingPageUrl": null,
+  "appUrl": null,
+  "liveUrl": null,
   "seo": {
     "title": "Aude Diagnostics Dashboard Case Study",
     "description": "An internal data-integrity dashboard with per-client checks, deep-linkable investigations, and reuse of the product's existing single sign-on."

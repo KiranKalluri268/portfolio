@@ -79,6 +79,11 @@ export function validateProject(value: unknown, source: string): ProjectContent 
   if (!Array.isArray(value.challenges) || !Array.isArray(value.outcomes)) {
     throw new Error(`${source}: challenges and outcomes must be arrays`);
   }
+  for (const field of ["repositoryUrl", "landingPageUrl", "appUrl", "liveUrl"]) {
+    if (value[field] !== undefined && value[field] !== null) {
+      assertString(value[field], field, source);
+    }
+  }
   assertRecord(value.gallery, `${source}.gallery`);
   for (const [key, image] of Object.entries(value.gallery)) {
     if (!/^image-[1-9]\d*$/.test(key)) {

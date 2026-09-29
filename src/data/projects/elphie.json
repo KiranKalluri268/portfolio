@@ -94,6 +94,10 @@
     "image-1": null,
     "image-2": null
   },
+  "repositoryUrl": null,
+  "landingPageUrl": null,
+  "appUrl": null,
+  "liveUrl": null,
   "seo": {
     "title": "Elphie Project Case Study",
     "description": "Dental imaging with AWS S3 video storage and AWS IVS live streaming written into a C++ desktop application, plus a Next.js web app on AWS Amplify for recordings, appointments, and diagnoses."

@@ -64,6 +64,18 @@ project automatically receives `/projects/[slug]`. Set `showInProjectsSection`
 to control the homepage carousel, `featured` to control the projects listing,
 and `projectsSectionOrder` to control ordering.
 
+#### Project links
+
+Every project has `repositoryUrl`, `landingPageUrl`, `appUrl`, and `liveUrl`
+slots. Leave unknown or unpublished links as `null`; only URLs produce navigable buttons.
+`repositoryUrl` shows **View source** independently; when it is `null`, a
+disabled **Private repo** button appears instead. Set `landingPageUrl` and
+`appUrl` to show **Landing page** and **Open app** buttons together. When both
+are `null`, `liveUrl` shows a single **Live project** button. If either the
+landing page or app URL is set, `liveUrl` is hidden on the homepage and case
+study to avoid a duplicate destination. Keep the JSON valid; comments belong
+in this guide rather than the project files.
+
 #### Project screenshots
 
 Every project JSON has a primary `image` and a numbered `gallery`. A `null`
