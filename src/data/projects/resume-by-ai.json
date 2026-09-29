@@ -8,7 +8,7 @@
   "showInProjectsSection": false,
   "projectsSectionOrder": 4,
   "showInResume": false,
-  "image": null,
+  "image": "https://res.cloudinary.com/dytobweya/image/upload/v1790669154/ca87155a-c954-4198-802d-22e4ce18efa4.png",
   "imageAlt": "ResumeByAI application screenshot",
   "role": "Full-stack development",
   "skills": [
@@ -70,9 +70,9 @@
     "image-1": null,
     "image-2": null
   },
-  "repositoryUrl": null,
+  "repositoryUrl": "https://github.com/KiranKalluri268/ResumeByAI",
   "landingPageUrl": null,
-  "appUrl": null,
+  "appUrl": "https://resumebyai.saikirankalluri.dev",
   "liveUrl": null,
   "seo": {
     "title": "ResumeByAI Project Case Study",

@@ -16,7 +16,7 @@
     ],
     "order": 2
   },
-  "image": "/images/project1.png",
+  "image": "https://res.cloudinary.com/dytobweya/image/upload/v1790666369/project1.png",
   "imageAlt": "CertiSafe certificate management dashboard",
   "role": "Team lead and full-stack development",
   "skills": [

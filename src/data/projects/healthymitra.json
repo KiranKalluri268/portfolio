@@ -8,7 +8,7 @@
   "showInProjectsSection": false,
   "projectsSectionOrder": 10,
   "showInResume": false,
-  "image": null,
+  "image": "https://res.cloudinary.com/dytobweya/image/upload/v1790667581/ed4c7ecc-eea1-4d1a-9678-b406408abee6.png",
   "imageAlt": "HealthyMitra remote caregiving screenshot",
   "role": "Full-stack development and cloud deployment",
   "skills": [
@@ -99,8 +99,8 @@
     "image-2": null
   },
   "repositoryUrl": null,
-  "landingPageUrl": null,
-  "appUrl": null,
+  "landingPageUrl": "https://healthymitra.com",
+  "appUrl": "https://www.healthymitra.com",
   "liveUrl": null,
   "seo": {
     "title": "HealthyMitra Project Case Study",

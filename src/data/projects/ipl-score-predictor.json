@@ -17,7 +17,7 @@
     ],
     "order": 2
   },
-  "image": "/images/project2.png",
+  "image": "https://res.cloudinary.com/dytobweya/image/upload/v1790666377/project2.png",
   "imageAlt": "IPL score predictor interface",
   "role": "Machine learning development",
   "skills": [

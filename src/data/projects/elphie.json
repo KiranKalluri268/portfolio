@@ -8,7 +8,7 @@
   "showInProjectsSection": false,
   "projectsSectionOrder": 8,
   "showInResume": false,
-  "image": null,
+  "image": "https://res.cloudinary.com/dytobweya/image/upload/v1790667454/4a2cbfd0-442b-4b14-94b0-6cc50a6dda0c.png",
   "imageAlt": "Elphie dental imaging screenshot",
   "role": "C++ cloud video integration and web application development",
   "skills": [
@@ -97,7 +97,7 @@
   "repositoryUrl": null,
   "landingPageUrl": null,
   "appUrl": null,
-  "liveUrl": null,
+  "liveUrl": "https://elphie.healyantra.com",
   "seo": {
     "title": "Elphie Project Case Study",
     "description": "Dental imaging with AWS S3 video storage and AWS IVS live streaming written into a C++ desktop application, plus a Next.js web app on AWS Amplify for recordings, appointments, and diagnoses."

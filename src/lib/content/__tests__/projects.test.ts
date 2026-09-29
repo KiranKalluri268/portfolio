@@ -92,10 +92,11 @@ describe("project imagery", () => {
   });
 
   it("allows a project to omit its screenshot", () => {
-    // Client and internal work often has nothing shareable to show; the UI
-    // falls back to a generated monogram panel instead.
-    const projects = getAllProjects({ includeDrafts: true });
-    expect(projects.some((project) => !project.image)).toBe(true);
+    const project = getProjectBySlug("third-eye-ai");
+    expect(project).toBeDefined();
+    const withoutImage = { ...project };
+    delete withoutImage.image;
+    expect(validateProject(withoutImage, "third-eye-ai.json").image).toBeUndefined();
   });
 
   it("requires alt text whenever an image is present", () => {
