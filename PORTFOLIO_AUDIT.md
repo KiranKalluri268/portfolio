@@ -1,5 +1,15 @@
 # Portfolio Audit — saikirankalluri.dev
 
+## Follow-up — 2026-09-29
+
+- **Entry gate:** Resolved. The loading screen now runs its reveal automatically when the first-frame visual assets are ready. Audio remains an explicit choice at the header control; same-session reloads skip the loader.
+- **Scene navigation focus:** Resolved. The dot buttons have a visible keyboard focus ring.
+- **Homepage project selection:** ResumeByAI and MindPlan are no longer in the homepage carousel. Four projects remain; CertiSafe and IPL Score Predictor have images, while ThirdEyeAI and the portfolio still use monograms. Both removed projects remain on `/projects` and retain their case-study routes.
+- **ThirdEyeAI screenshot:** Pending a screenshot of the actual app. Its public URL reaches the login page, but on 2026-09-29 Chrome rejected the `/api/auth/me` request: the backend allowed `https://thirdeyeai.vercel.app` as its CORS origin instead of `https://thirdeyeai.saikirankalluri.dev`. The server configuration is a separate follow-up.
+- **Project links:** The existing ThirdEyeAI, CertiSafe, portfolio, and linked GitHub URLs returned HTTP 200 on 2026-09-29. A response alone does not prove that a demo works beyond its landing page. ResumeByAI has a public, pinned GitHub repository but no `repositoryUrl` in its portfolio data. No public MindPlan repository was confirmed from the account's repository list.
+
+The findings below are the original audit snapshot. Counts and implementation details there describe the site before these follow-up changes.
+
 First 10 seconds: name, role ("MERN Developer"), and two CTAs are all visible immediately on the hero — that part works. But before any of that, every visitor (including repeat visitors) hits a full-screen "Enter" gate with a loading spinner and an audio prompt. That's the biggest issue on the site.
 
 ## Top 5 fixes, ranked by impact
