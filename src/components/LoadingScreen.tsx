@@ -97,17 +97,10 @@ interface LoadingScreenProps {
 
 const DEFAULT_ORBIT_RADII = [80, 90];
 
-/** What sits under the rings while the portfolio loads, and when it changes.
- *  The first line is what every loading screen says; the second is what this
- *  one has to say about it. */
-const LOADING_LINES = [
-  "Loading",
-  "Yeah kinda sucks, can't help but worth the wait",
-];
+/** Optional aside if the first-frame assets take longer to arrive. */
+const LOADING_QUIP = "Yeah kinda sucks, can't help but worth the wait";
 
-/** How long the plain line holds alone before the second one joins it under.
- *  Long enough that a fast connection never sees the joke, which is the right
- *  way round. */
+/** A fast connection never sees the aside. */
 const LOADING_QUIP_MS = 2500;
 
 /** The word fades while the orbit winds up, and the particles are let go at
@@ -231,7 +224,7 @@ export default function LoadingScreen({
   const [canvasMeasured, setCanvasMeasured] = useState(false);
   const [canvasReady, setCanvasReady] = useState(false);
   /** Which of the two lines under the rings is showing. */
-  const [loadingLine, setLoadingLine] = useState(0);
+  const [showLoadingQuip, setShowLoadingQuip] = useState(false);
   /** Set when loading finishes, read by the draw loop every frame. A ref
    *  rather than state, so starting it does not rebuild the loop. */
   const flightRef = useRef<ExitFlight | null>(null);
@@ -239,8 +232,7 @@ export default function LoadingScreen({
   /** Whether this exit is the flight or the plain fade reduced motion gets. */
   const [isFlying, setIsFlying] = useState(false);
 
-  // Loading progress state
-  const [loadingProgress, setLoadingProgress] = useState(0);
+  // Readiness only; two asset checks do not provide a meaningful percentage.
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Responsive canvas size
@@ -283,33 +275,30 @@ export default function LoadingScreen({
       const minimumDelay = Math.max(0, 700 - (performance.now() - startedAt));
       readyTimer = setTimeout(() => {
         if (cancelled) return;
-        setLoadingProgress(100);
         setIsLoaded(true);
       }, minimumDelay);
     };
 
-    const complete = (key: string, progress: number) => {
+    const complete = (key: string) => {
       if (cancelled || completed.has(key)) return;
       completed.add(key);
-      setLoadingProgress((current) => Math.max(current, progress));
       if (completed.size === 2) finish();
     };
 
-    document.fonts.ready.then(() => complete("fonts", 30)).catch(() => complete("fonts", 30));
+    document.fonts.ready.then(() => complete("fonts")).catch(() => complete("fonts"));
 
     const prepareMedia = (
       selector: string,
       key: string,
-      progress: number,
       readyState: number,
       eventName: "loadeddata" | "canplay",
     ) => {
       const media = document.querySelector<HTMLMediaElement>(selector);
       if (!media) {
-        complete(key, progress);
+        complete(key);
         return;
       }
-      const handleReady = () => complete(key, progress);
+      const handleReady = () => complete(key);
       if (media.readyState >= readyState) handleReady();
       else {
         media.addEventListener(eventName, handleReady, { once: true });
@@ -322,7 +311,7 @@ export default function LoadingScreen({
       }
     };
 
-    prepareMedia("[data-blackhole-video]", "video", 100, HTMLMediaElement.HAVE_CURRENT_DATA, "loadeddata");
+    prepareMedia("[data-blackhole-video]", "video", HTMLMediaElement.HAVE_CURRENT_DATA, "loadeddata");
 
     const fallbackTimer = setTimeout(() => {
       if (!cancelled) finish();
@@ -550,7 +539,7 @@ export default function LoadingScreen({
 
   useEffect(() => {
     if (isLoaded) return;
-    const timer = window.setTimeout(() => setLoadingLine(1), LOADING_QUIP_MS);
+    const timer = window.setTimeout(() => setShowLoadingQuip(true), LOADING_QUIP_MS);
     return () => window.clearTimeout(timer);
   }, [isLoaded]);
 
@@ -651,7 +640,7 @@ export default function LoadingScreen({
             className="text-2xl md:text-3xl font-bold font-mono"
             style={{ color }}
           >
-            <span aria-live="polite">{loadingProgress}%</span>
+            <span>Loading</span>
           </p>
       </div>
 
@@ -665,17 +654,14 @@ export default function LoadingScreen({
         className="entry-lines pointer-events-none absolute w-full px-6 text-center select-none"
         aria-hidden="true"
       >
-        {LOADING_LINES.map((line, index) => (
-          <p
-            key={line}
-            className={`text-xs font-light tracking-wider transition-opacity duration-500 ease-out sm:text-sm ${
-              index > 0 ? "mt-2" : ""
-            } ${!isLoaded && loadingLine >= index ? "opacity-100" : "opacity-0"}`}
-            style={{ color: colorToRgba(color, 0.55) }}
-          >
-            {line}
-          </p>
-        ))}
+        <p
+          className={`text-xs font-light tracking-wider transition-opacity duration-500 ease-out sm:text-sm ${
+            !isLoaded && showLoadingQuip ? "opacity-100" : "opacity-0"
+          }`}
+          style={{ color: colorToRgba(color, 0.55) }}
+        >
+          {LOADING_QUIP}
+        </p>
       </div>
 
     </div>

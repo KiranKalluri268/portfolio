@@ -19,7 +19,7 @@ Do not create another Lenis instance, independent request-animation-frame loop, 
 
 ### Entry screen
 
-The loader canvas draws orbiting particles independently from the percentage state, so progress updates do not restart the orbit. When the first-frame assets are ready (or the fallback timer fires), the existing exit flight begins automatically and starts the hero sequence. Audio stays off until the visitor uses the header control.
+The CSS orbit is present in the first HTML response. The loader canvas replaces it after drawing its first frame, then animates orbiting particles. The screen says "Loading" while fonts and the hero video's first frame become ready. When they are ready (or the fallback timer fires), the existing exit flight begins automatically and starts the hero sequence. Audio stays off until the visitor uses the header control.
 
 ### Hero
 

@@ -25,7 +25,8 @@ test("the first HTML paints a visible loader before hydration", async ({ page })
   expect(response?.status()).toBe(200);
   const loader = page.getByRole("dialog", { name: "Portfolio loading" });
   await expect(loader).toBeVisible();
-  await expect(loader.getByText("Loading")).toBeVisible();
+  await expect(loader.locator(".entry-loader-label")).toHaveText("Loading");
+  await expect(loader).not.toContainText("%");
   await expect(loader.locator(".entry-loader-fallback")).toBeVisible();
 });
 
