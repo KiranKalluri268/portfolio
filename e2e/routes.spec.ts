@@ -26,8 +26,19 @@ test("the first HTML paints a visible loader before hydration", async ({ page })
   const loader = page.getByRole("dialog", { name: "Portfolio loading" });
   await expect(loader).toBeVisible();
   await expect(loader.locator(".entry-loader-label")).toHaveText("Loading");
+  await expect(loader).toHaveText("Loading");
   await expect(loader).not.toContainText("%");
-  await expect(loader.locator(".entry-loader-fallback")).toBeVisible();
+  await expect(loader.locator(".entry-loader-orbit")).toHaveCount(0);
+  await expect(loader.locator("canvas")).toHaveCSS("opacity", "0");
+  const label = loader.locator(".entry-loader-label");
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(viewport);
+    const bounds = await label.boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(Math.abs(bounds!.x + bounds!.width / 2 - viewport.width / 2)).toBeLessThan(2);
+    expect(Math.abs(bounds!.y + bounds!.height / 2 - viewport.height / 2)).toBeLessThan(2);
+    await page.screenshot({ path: `test-results/loading-text-${viewport.width}.png` });
+  }
 });
 
 test("a warm reload keeps the visible shell until hydration", async ({ page }) => {

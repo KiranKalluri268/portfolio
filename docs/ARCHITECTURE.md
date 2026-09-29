@@ -71,7 +71,7 @@ The video pauses when the tab is hidden, before entry, or when reduced motion is
 
 ## Entry and audio lifecycle
 
-The homepage loader is rendered at the layout level, outside the page's stacking context. Its HTML and critical CSS show the orbit and loading text before hydration; client code then takes over the same overlay, prepares fonts and the first black-hole frame, and runs the reveal automatically. While it is active, scrolling is locked and the portfolio content is inert. On a same-session reload, the visible shell remains until hydration restores the entered state, then disappears without replaying the wait or exit flight. Audio remains an explicit choice at the header control.
+The homepage loader is rendered at the layout level, outside the page's stacking context. Its HTML and critical CSS show the loading text before hydration; client code then takes over the same overlay, prepares fonts and the first black-hole frame, and runs the reveal automatically. While it is active, scrolling is locked and the portfolio content is inert. On a same-session reload, the visible shell remains until hydration restores the entered state, then disappears without replaying the wait or exit flight. Audio remains an explicit choice at the header control.
 
 `AudioContextProvider` owns entry state and soundtrack playback. It pauses audio when the document becomes hidden and preserves the provider across application routes so navigation to `/resume` or `/projects` does not recreate playback state.
 

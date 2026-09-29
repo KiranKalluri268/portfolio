@@ -97,12 +97,6 @@ interface LoadingScreenProps {
 
 const DEFAULT_ORBIT_RADII = [80, 90];
 
-/** Optional aside if the first-frame assets take longer to arrive. */
-const LOADING_QUIP = "Yeah kinda sucks, can't help but worth the wait";
-
-/** A fast connection never sees the aside. */
-const LOADING_QUIP_MS = 2500;
-
 /** The word fades while the orbit winds up, and the particles are let go at
  *  the end of it. Long enough to watch it speed up, which is the point of it.
  *  Shared with the hero, which waits for it before it starts typing. */
@@ -219,12 +213,7 @@ export default function LoadingScreen({
     if (entrySkipped) setDismissed(true);
   }, [entrySkipped]);
   const [isExiting, setIsExiting] = useState(false);
-  /** The CSS orbit is visible in server HTML until the measured canvas has
-   *  painted its first frame. */
   const [canvasMeasured, setCanvasMeasured] = useState(false);
-  const [canvasReady, setCanvasReady] = useState(false);
-  /** Which of the two lines under the rings is showing. */
-  const [showLoadingQuip, setShowLoadingQuip] = useState(false);
   /** Set when loading finishes, read by the draw loop every frame. A ref
    *  rather than state, so starting it does not rebuild the loop. */
   const flightRef = useRef<ExitFlight | null>(null);
@@ -521,27 +510,15 @@ export default function LoadingScreen({
         ctx.shadowBlur = 0;
       });
 
-      if (!hasDrawn) {
-        hasDrawn = true;
-        setCanvasReady(true);
-      }
-
       animationFrameRef.current = requestAnimationFrame(draw);
     }
 
-    let hasDrawn = false;
     animationFrameRef.current = requestAnimationFrame(draw);
 
     return () => {
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
   }, [canvasSize, color, thickness, speed, numParticles, orbitRadii, particleRadius, tailLength, dismissed, canvasMeasured]);
-
-  useEffect(() => {
-    if (isLoaded) return;
-    const timer = window.setTimeout(() => setShowLoadingQuip(true), LOADING_QUIP_MS);
-    return () => window.clearTimeout(timer);
-  }, [isLoaded]);
 
   useEffect(() => {
     if (!dismissed) overlayRef.current?.focus({ preventScroll: true });
@@ -624,46 +601,20 @@ export default function LoadingScreen({
           clip the corners and leave the page showing through them. */}
       <canvas
         ref={canvasRef}
-        className={`entry-loader-canvas pointer-events-none absolute top-0 left-0 h-[100dvh] w-screen bg-transparent ${canvasReady ? "entry-loader-canvas-ready" : ""}`}
+        className="entry-loader-canvas pointer-events-none absolute top-0 left-0 h-[100dvh] w-screen bg-transparent"
       />
-
-      <div className={`entry-loader-fallback ${canvasReady ? "entry-loader-fallback-hidden" : ""}`} aria-hidden="true">
-        <span className="entry-loader-orbit entry-loader-orbit-outer" />
-        <span className="entry-loader-orbit entry-loader-orbit-inner" />
-      </div>
 
       <div
         className={`entry-loader-label relative z-10 flex h-[60px] flex-col items-center justify-center transition-opacity ease-out ${isExiting ? "opacity-0" : "opacity-100"}`}
         style={{ transitionDuration: `${SPIN_MS}ms` }}
       >
-          <p
-            className="text-2xl md:text-3xl font-bold font-mono"
-            style={{ color }}
-          >
-            <span>Loading</span>
-          </p>
-      </div>
-
-      {/* Under the rings, not inside them: the middle belongs to the count and
-          then to the word. The second line arrives beneath the first rather
-          than in place of it — the remark is about the wait, so the wait has to
-          still be on screen for it to be a remark. They stack downward, so
-          nothing already read moves when it lands. Neither is announced: the
-          count above already says what is happening. */}
-      <div
-        className="entry-lines pointer-events-none absolute w-full px-6 text-center select-none"
-        aria-hidden="true"
-      >
         <p
-          className={`text-xs font-light tracking-wider transition-opacity duration-500 ease-out sm:text-sm ${
-            !isLoaded && showLoadingQuip ? "opacity-100" : "opacity-0"
-          }`}
-          style={{ color: colorToRgba(color, 0.55) }}
+          className="text-2xl md:text-3xl font-bold font-mono"
+          style={{ color }}
         >
-          {LOADING_QUIP}
+          <span>Loading</span>
         </p>
       </div>
-
     </div>
   );
 }

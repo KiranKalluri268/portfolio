@@ -172,18 +172,9 @@ const jsonLd = {
 const entryLoaderCriticalCss = `
 #portfolio-loading-screen{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;min-height:100svh;background:#000;color:#fff;font-family:ui-monospace,monospace}
 #portfolio-loading-screen.entry-loader-exiting{background:transparent}
-#portfolio-loading-screen .entry-loader-canvas{position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity .15s}
-#portfolio-loading-screen .entry-loader-canvas.entry-loader-canvas-ready{opacity:1}
-#portfolio-loading-screen .entry-loader-fallback{position:absolute;top:50%;left:50%;width:180px;height:180px;transform:translate(-50%,-50%);transition:opacity .15s}
-#portfolio-loading-screen .entry-loader-fallback.entry-loader-fallback-hidden,#portfolio-loading-screen.entry-loader-exiting .entry-loader-fallback{opacity:0}
-#portfolio-loading-screen .entry-loader-orbit{position:absolute;border:1px solid rgba(255,255,255,.28);border-radius:50%;animation:entry-orbit-spin 2.5s linear infinite}
-#portfolio-loading-screen .entry-loader-orbit::after{content:"";position:absolute;top:-3px;left:50%;width:6px;height:6px;border-radius:50%;background:#fff;box-shadow:0 0 12px #fff}
-#portfolio-loading-screen .entry-loader-orbit-outer{inset:0}
-#portfolio-loading-screen .entry-loader-orbit-inner{inset:10px;animation-direction:reverse;animation-duration:2s}
+#portfolio-loading-screen .entry-loader-canvas{position:absolute;inset:0;width:100%;height:100%;opacity:0}
+#portfolio-loading-screen.entry-loader-exiting .entry-loader-canvas{opacity:1}
 #portfolio-loading-screen .entry-loader-label{position:relative;z-index:1;font-size:1.5rem;font-weight:700}
-#portfolio-loading-screen .entry-lines{position:absolute;top:calc(50% + 7.5rem);left:50%;width:100%;transform:translateX(-50%);padding:0 1.5rem;text-align:center;box-sizing:border-box}
-@keyframes entry-orbit-spin{to{transform:rotate(360deg)}}
-@media(prefers-reduced-motion:reduce){#portfolio-loading-screen .entry-loader-orbit{animation:none}}
 `;
 
 export default function RootLayout({
