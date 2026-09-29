@@ -78,19 +78,18 @@ After uploading a screenshot to the `dytobweya` Cloudinary account, replace
 ```
 
 The gallery appears only in the project case study. Each numbered entry can
-stay `null` until an image is ready. Replace it with an object containing the
-URL and descriptive alt text; `caption` is optional:
+stay `null` until an image is ready. Replace it directly with a Cloudinary URL:
 
 ```json
 "gallery": {
-  "image-1": {
-    "src": "https://res.cloudinary.com/dytobweya/image/upload/v1234567890/projects/dashboard.png",
-    "alt": "Analytics dashboard with engagement trends",
-    "caption": "Instructor dashboard"
-  },
+  "image-1": "https://res.cloudinary.com/dytobweya/image/upload/v1234567890/projects/dashboard.png",
   "image-2": null
 }
 ```
+
+The site generates alt text from the project title and image number for URL
+strings. To give an image a more useful description or a visible caption, use
+an object instead: `"image-1": { "src": "https://...", "alt": "Engagement heatmap", "caption": "Instructor dashboard" }`.
 
 Add `image-3`, `image-4`, and so on as needed. Filled entries display in
 numeric order, even if their JSON keys are rearranged or some entries remain
@@ -99,9 +98,11 @@ hidden when no entries are filled. JSON does not support comments, so keep
 these instructions here rather than inside the project files.
 
 Use the URL of the uploaded asset, not the example URL above. Keep the image
-and alt text together: a non-null `image` without `imageAlt`, or a filled
-gallery entry without `alt`, fails content validation. The Cloudinary path is
-allowed in `next.config.ts` for Next.js images. The homepage carousel and both `/projects` views also draw primary screenshots
+and alt text together: a non-null primary `image` without `imageAlt`, or a
+gallery object without `alt`, fails content validation. Cloudinary screenshots
+are delivered directly by Cloudinary rather than through the Next.js image
+optimizer. The Cloudinary path is also allowed in `next.config.ts` for Next.js
+images. The homepage carousel and both `/projects` views draw primary screenshots
 into canvases, so check the new URL in all three views; the delivery response
 must permit cross-origin image loading. If the image uses another Cloudinary
 account or path, update the narrow `remotePatterns` entry first.

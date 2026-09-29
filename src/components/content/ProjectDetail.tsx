@@ -109,6 +109,7 @@ export default function ProjectDetail({
                         src={image.src}
                         alt={image.alt}
                         fill
+                        unoptimized={image.src.startsWith("https://res.cloudinary.com/")}
                         sizes="(max-width: 768px) calc(100vw - 4rem), 520px"
                         className="object-cover"
                       />

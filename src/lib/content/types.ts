@@ -28,7 +28,7 @@ export interface ProjectGalleryItem {
 }
 
 /** Numbered keys define display order. Null entries reserve a future slot. */
-export type ProjectGallery = Record<string, ProjectGalleryItem | null>;
+export type ProjectGallery = Record<string, string | ProjectGalleryItem | null>;
 
 /** Résumé-specific presentation for a project. The résumé is a one-page brief,
  *  so it often needs tighter wording than the case study carries. */

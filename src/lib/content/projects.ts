@@ -12,7 +12,13 @@ import type { ProjectContent, ProjectGalleryItem } from "./types";
 export function getProjectGalleryImages(project: ProjectContent): ProjectGalleryItem[] {
   return Object.entries(project.gallery)
     .sort(([first], [second]) => Number(first.slice(6)) - Number(second.slice(6)))
-    .flatMap(([, image]) => image ? [image] : []);
+    .flatMap(([key, image]) => {
+      if (image === null) return [];
+      if (typeof image === "string") {
+        return [{ src: image, alt: `${project.title} screenshot ${key.slice(6)}` }];
+      }
+      return [image];
+    });
 }
 
 export function validateProject(value: unknown, source: string): ProjectContent {
@@ -79,6 +85,10 @@ export function validateProject(value: unknown, source: string): ProjectContent 
       throw new Error(`${source}.gallery: "${key}" must use image-1, image-2, ...`);
     }
     if (image === null) continue;
+    if (typeof image === "string") {
+      assertString(image, key, `${source}.gallery`);
+      continue;
+    }
     assertRecord(image, `${source}.gallery.${key}`);
     assertString(image.src, "src", `${source}.gallery.${key}`);
     assertString(image.alt, "alt", `${source}.gallery.${key}`);

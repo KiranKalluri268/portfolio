@@ -33,6 +33,7 @@ export default function ProjectThumbnail({
         fill
         priority={priority}
         quality={90}
+        unoptimized={project.image.startsWith("https://res.cloudinary.com/")}
         sizes={sizes}
         className={className}
       />
