@@ -9,6 +9,7 @@
   "projectsSectionOrder": 5,
   "showInResume": false,
   "image": null,
+  "imageAlt": "MindPlan application screenshot",
   "role": "Mobile application development",
   "skills": [
     "flutter",

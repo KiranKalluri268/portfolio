@@ -9,6 +9,7 @@
   "projectsSectionOrder": 4,
   "showInResume": false,
   "image": null,
+  "imageAlt": "ResumeByAI application screenshot",
   "role": "Full-stack development",
   "skills": [
     "next-js",
