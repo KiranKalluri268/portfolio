@@ -5,9 +5,11 @@
   "summary": "A Next.js application that uses GPT-4 Turbo to generate ATS-oriented résumés and integrates Razorpay for paid access.",
   "status": "published",
   "featured": false,
-  "showInProjectsSection": true,
+  "showInProjectsSection": false,
   "projectsSectionOrder": 4,
   "showInResume": false,
+  "image": "https://res.cloudinary.com/dytobweya/image/upload/v1790669154/ca87155a-c954-4198-802d-22e4ce18efa4.png",
+  "imageAlt": "ResumeByAI application screenshot",
   "role": "Full-stack development",
   "skills": [
     "next-js",
@@ -64,7 +66,14 @@
     "How to structure an AI-assisted product workflow.",
     "How payment state interacts with access to generated content."
   ],
-  "gallery": [],
+  "gallery": {
+    "image-1": null,
+    "image-2": null
+  },
+  "repositoryUrl": "https://github.com/KiranKalluri268/ResumeByAI",
+  "landingPageUrl": null,
+  "appUrl": "https://resumebyai.saikirankalluri.dev",
+  "liveUrl": null,
   "seo": {
     "title": "ResumeByAI Project Case Study",
     "description": "How I built a Next.js résumé generator using GPT-4 Turbo and Razorpay."

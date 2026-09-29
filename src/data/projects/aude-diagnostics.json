@@ -8,6 +8,8 @@
   "showInProjectsSection": false,
   "projectsSectionOrder": 6,
   "showInResume": false,
+  "image": "https://res.cloudinary.com/dytobweya/image/upload/v1790669737/Gemini_Generated_Image_pxl3i4pxl3i4pxl3.png",
+  "imageAlt": "Aude Diagnostics dashboard screenshot",
   "role": "Design, development, and deployment",
   "skills": [
     "next-js",
@@ -84,7 +86,14 @@
     "That deep-linkable state turns an investigation into something a team can share and reproduce.",
     "How deployment topology can resolve an authentication constraint without adding a second identity system."
   ],
-  "gallery": [],
+  "gallery": {
+    "image-1": null,
+    "image-2": null
+  },
+  "repositoryUrl": null,
+  "landingPageUrl": null,
+  "appUrl": null,
+  "liveUrl": null,
   "seo": {
     "title": "Aude Diagnostics Dashboard Case Study",
     "description": "An internal data-integrity dashboard with per-client checks, deep-linkable investigations, and reuse of the product's existing single sign-on."

@@ -90,8 +90,8 @@ function toCvProject(
     outcomes: project.outcomes,
     lessonsLearned: project.lessonsLearned,
     technologies: toNames(project.skills, skillsBySlug),
-    repositoryUrl: project.repositoryUrl,
-    liveUrl: project.liveUrl,
+    repositoryUrl: project.repositoryUrl ?? undefined,
+    liveUrl: project.liveUrl ?? undefined,
   };
 }
 

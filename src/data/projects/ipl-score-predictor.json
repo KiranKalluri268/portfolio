@@ -17,7 +17,7 @@
     ],
     "order": 2
   },
-  "image": "/images/project2.png",
+  "image": "https://res.cloudinary.com/dytobweya/image/upload/v1790666377/project2.png",
   "imageAlt": "IPL score predictor interface",
   "role": "Machine learning development",
   "skills": [
@@ -76,8 +76,14 @@
     "How to prepare structured inputs for a neural network.",
     "How to turn a trained model into an interactive application."
   ],
-  "gallery": [],
+  "gallery": {
+    "image-1": null,
+    "image-2": null
+  },
   "repositoryUrl": "https://github.com/KiranKalluri268/MS_AI_IPL-Score-Predictor",
+  "landingPageUrl": null,
+  "appUrl": null,
+  "liveUrl": null,
   "seo": {
     "title": "IPL Score Predictor Project Case Study",
     "description": "How I built a Keras neural network that predicts IPL innings scores."

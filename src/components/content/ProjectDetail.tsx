@@ -1,5 +1,8 @@
 import Link from "next/link";
+import Image from "next/image";
 import BackNavigationButton from "@/components/BackNavigationButton";
+import { getProjectGalleryImages } from "@/lib/content/projects";
+import { getProjectActionLinks } from "@/lib/content/project-links";
 import ProjectThumbnail from "./ProjectThumbnail";
 import SkillLink from "./SkillLink";
 import type { ProjectContent, SkillContent } from "@/lib/content/types";
@@ -40,6 +43,8 @@ export default function ProjectDetail({
   project: ProjectContent;
   skills: SkillContent[];
 }) {
+  const galleryImages = getProjectGalleryImages(project);
+  const actionLinks = getProjectActionLinks(project);
   return (
     <main className="relative z-10 min-h-[100svh] px-4 pt-24 pb-8 text-white sm:px-6 sm:pt-28 sm:pb-12">
       <article className="mx-auto max-w-6xl">
@@ -58,17 +63,18 @@ export default function ProjectDetail({
             {project.summary}
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
-            {project.liveUrl && (
+            {actionLinks.map((link) => (
               <a
-                href={project.liveUrl}
+                key={link.label}
+                href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black hover:bg-accent-tint"
               >
-                Open live project <span aria-hidden="true">↗</span>
+                {link.label} <span aria-hidden="true">↗</span>
               </a>
-            )}
-            {project.repositoryUrl && (
+            ))}
+            {project.repositoryUrl ? (
               <a
                 href={project.repositoryUrl}
                 target="_blank"
@@ -77,6 +83,14 @@ export default function ProjectDetail({
               >
                 View source <span aria-hidden="true">↗</span>
               </a>
+            ) : (
+              <button
+                type="button"
+                disabled
+                className="cursor-not-allowed rounded-full border border-white/10 bg-black/35 px-5 py-2.5 text-sm font-semibold text-gray-400"
+              >
+                Private repo
+              </button>
             )}
           </div>
         </header>
@@ -95,6 +109,28 @@ export default function ProjectDetail({
               {project.overview.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
             </div>
           </Section>
+
+          {galleryImages.length > 0 && (
+            <Section title="Gallery">
+              <div className="grid gap-6 md:grid-cols-2">
+                {galleryImages.map((image) => (
+                  <figure key={image.src} className="overflow-hidden rounded-2xl border border-white/10 bg-black/55">
+                    <div className="relative aspect-video">
+                      <Image
+                        src={image.src}
+                        alt={image.alt}
+                        fill
+                        unoptimized={image.src.startsWith("https://res.cloudinary.com/")}
+                        sizes="(max-width: 768px) calc(100vw - 4rem), 520px"
+                        className="object-cover"
+                      />
+                    </div>
+                    {image.caption && <figcaption className="px-4 py-3 text-sm text-gray-300">{image.caption}</figcaption>}
+                  </figure>
+                ))}
+              </div>
+            </Section>
+          )}
 
           {(project.problem || project.solution) && (
             <Section title="Problem and approach">

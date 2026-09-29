@@ -29,6 +29,8 @@
     ],
     "order": 1
   },
+  "image": "https://res.cloudinary.com/dytobweya/image/upload/v1790662727/Screenshot_373.png",
+  "imageAlt": "ThirdEyeAI application screenshot",
   "role": "Full-stack and machine learning development",
   "skills": [
     "react",
@@ -107,9 +109,16 @@
     "How to connect machine-learning output to an understandable product experience.",
     "How retrieval can make structured analytics accessible through natural language."
   ],
-  "gallery": [],
+  "gallery": {
+    "image-1": "https://res.cloudinary.com/dytobweya/image/upload/v1790662436/Screenshot_253.png",
+    "image-2": "https://res.cloudinary.com/dytobweya/image/upload/v1790662436/Screenshot_254.png",
+    "image-3": "https://res.cloudinary.com/dytobweya/image/upload/v1790662436/Screenshot_313.png",
+    "image-4": "https://res.cloudinary.com/dytobweya/image/upload/v1790662436/Screenshot_312.png"
+  },
   "repositoryUrl": "https://github.com/KiranKalluri268/ThirdEye_Client",
   "liveUrl": "https://thirdeyeai.saikirankalluri.dev/",
+  "landingPageUrl": null,
+  "appUrl": null,
   "seo": {
     "title": "ThirdEyeAI Project Case Study",
     "description": "How I built a privacy-first engagement detection and WebRTC meeting platform."

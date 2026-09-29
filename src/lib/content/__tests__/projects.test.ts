@@ -4,7 +4,9 @@ import {
   getAllProjects,
   getFeaturedProjects,
   getHomepageProjects,
+  getProjectGalleryImages,
   getProjectBySlug,
+  validateProject,
 } from "../projects";
 
 describe("getAllProjects", () => {
@@ -77,11 +79,24 @@ describe("getHomepageProjects", () => {
 });
 
 describe("project imagery", () => {
+  it("keeps a null screenshot as a monogram placeholder and requires alt text for a URL", () => {
+    const project = getProjectBySlug("third-eye-ai");
+    expect(project).toBeDefined();
+    expect(validateProject({ ...project, image: null }, "third-eye-ai.json").image).toBeNull();
+    expect(() =>
+      validateProject(
+        { ...project, image: "https://res.cloudinary.com/dytobweya/image/upload/v1/example.png", imageAlt: undefined },
+        "third-eye-ai.json",
+      ),
+    ).toThrow('"imageAlt" must be a non-empty string');
+  });
+
   it("allows a project to omit its screenshot", () => {
-    // Client and internal work often has nothing shareable to show; the UI
-    // falls back to a generated monogram panel instead.
-    const projects = getAllProjects({ includeDrafts: true });
-    expect(projects.some((project) => !project.image)).toBe(true);
+    const project = getProjectBySlug("third-eye-ai");
+    expect(project).toBeDefined();
+    const withoutImage = { ...project };
+    delete withoutImage.image;
+    expect(validateProject(withoutImage, "third-eye-ai.json").image).toBeUndefined();
   });
 
   it("requires alt text whenever an image is present", () => {
@@ -91,5 +106,43 @@ describe("project imagery", () => {
         expect(project.imageAlt?.trim()).not.toBe("");
       }
     }
+  });
+
+  it("orders filled gallery slots numerically and skips placeholders", () => {
+    const project = getProjectBySlug("third-eye-ai");
+    expect(project).toBeDefined();
+    const gallery = {
+      "image-10": "/images/ten.png",
+      "image-2": null,
+      "image-1": "/images/one.png",
+      "image-3": { src: "/images/three.png", alt: "Third image", caption: "Detail" },
+    };
+    const validated = validateProject({ ...project, gallery }, "third-eye-ai.json");
+    expect(getProjectGalleryImages(validated).map((image) => image.src)).toEqual([
+      "/images/one.png", "/images/three.png", "/images/ten.png",
+    ]);
+    expect(getProjectGalleryImages(validated)[0].alt).toContain("screenshot 1");
+  });
+
+  it("rejects gallery URLs without alt text and invalid numbered keys", () => {
+    const project = getProjectBySlug("third-eye-ai");
+    expect(project).toBeDefined();
+    expect(() => validateProject({ ...project, gallery: { "image-1": { src: "/a.png" } } }, "third-eye-ai.json"))
+      .toThrow('"alt" must be a non-empty string');
+    expect(() => validateProject({ ...project, gallery: { first: null } }, "third-eye-ai.json"))
+      .toThrow('must use image-1, image-2');
+    expect(() => validateProject({ ...project, gallery: { "image-1": "" } }, "third-eye-ai.json"))
+      .toThrow('"image-1" must be a non-empty string');
+  });
+});
+
+describe("project links", () => {
+  it("accepts null placeholders and rejects empty link values", () => {
+    const project = getProjectBySlug("third-eye-ai");
+    expect(project).toBeDefined();
+    expect(validateProject({ ...project, repositoryUrl: null, landingPageUrl: null, appUrl: null, liveUrl: null }, "third-eye-ai.json").appUrl)
+      .toBeNull();
+    expect(() => validateProject({ ...project, appUrl: "" }, "third-eye-ai.json"))
+      .toThrow('"appUrl" must be a non-empty string');
   });
 });

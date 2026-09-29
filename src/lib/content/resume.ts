@@ -73,7 +73,7 @@ export function getResumeProjects(): ResumeProject[] {
     .map((project) => ({
       slug: project.slug,
       name: project.title,
-      liveUrl: project.liveUrl,
+      liveUrl: project.liveUrl ?? undefined,
       technologies: project.resume!.technologies,
       highlights: project.resume!.highlights,
     }));

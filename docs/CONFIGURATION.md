@@ -64,6 +64,61 @@ project automatically receives `/projects/[slug]`. Set `showInProjectsSection`
 to control the homepage carousel, `featured` to control the projects listing,
 and `projectsSectionOrder` to control ordering.
 
+#### Project links
+
+Every project has `repositoryUrl`, `landingPageUrl`, `appUrl`, and `liveUrl`
+slots. Leave unknown or unpublished links as `null`; only URLs produce navigable buttons.
+`repositoryUrl` shows **View source** independently; when it is `null`, a
+disabled **Private repo** button appears instead. Set `landingPageUrl` and
+`appUrl` to show **Landing page** and **Open app** buttons together. When both
+are `null`, `liveUrl` shows a single **Live project** button. If either the
+landing page or app URL is set, `liveUrl` is hidden on the homepage and case
+study to avoid a duplicate destination. Keep the JSON valid; comments belong
+in this guide rather than the project files.
+
+#### Project screenshots
+
+Every project JSON has a primary `image` and a numbered `gallery`. A `null`
+primary image shows the existing monogram until a real screenshot is ready.
+After uploading a screenshot to the `dytobweya` Cloudinary account, replace
+`null` with its public, versioned HTTPS delivery URL and add a concise
+`imageAlt` describing what the screenshot actually shows:
+
+```json
+"image": "https://res.cloudinary.com/dytobweya/image/upload/v1234567890/projects/example.png",
+"imageAlt": "Project dashboard showing the main analytics view"
+```
+
+The gallery appears only in the project case study. Each numbered entry can
+stay `null` until an image is ready. Replace it directly with a Cloudinary URL:
+
+```json
+"gallery": {
+  "image-1": "https://res.cloudinary.com/dytobweya/image/upload/v1234567890/projects/dashboard.png",
+  "image-2": null
+}
+```
+
+The site generates alt text from the project title and image number for URL
+strings. To give an image a more useful description or a visible caption, use
+an object instead: `"image-1": { "src": "https://...", "alt": "Engagement heatmap", "caption": "Instructor dashboard" }`.
+
+Add `image-3`, `image-4`, and so on as needed. Filled entries display in
+numeric order, even if their JSON keys are rearranged or some entries remain
+`null`. Delete an unused placeholder if desired; the gallery section stays
+hidden when no entries are filled. JSON does not support comments, so keep
+these instructions here rather than inside the project files.
+
+Use the URL of the uploaded asset, not the example URL above. Keep the image
+and alt text together: a non-null primary `image` without `imageAlt`, or a
+gallery object without `alt`, fails content validation. Cloudinary screenshots
+are delivered directly by Cloudinary rather than through the Next.js image
+optimizer. The Cloudinary path is also allowed in `next.config.ts` for Next.js
+images. The homepage carousel and both `/projects` views draw primary screenshots
+into canvases, so check the new URL in all three views; the delivery response
+must permit cross-origin image loading. If the image uses another Cloudinary
+account or path, update the narrow `remotePatterns` entry first.
+
 Each skill is one JSON file in:
 
 - `src/data/skills/`
@@ -96,7 +151,7 @@ Set `showInSkillsSection` to control marquee visibility and
 `skillsSectionOrder` to control ordering. Optional icons should use a public URL
 such as `/icons/skills/react.svg`; `iconText` is used as the fallback.
 
-All image and icon paths are relative to `public`, so use `/images/example.jpg`
+Local image and icon paths are relative to `public`, so use `/images/example.jpg`
 rather than `public/images/example.jpg`. Draft entries remain editable but are
 excluded from generated pages until `status` is changed to `published`.
 
@@ -112,7 +167,7 @@ Filenames are for organization; the `slug` field controls the URL and receives
 `/experience/[slug]`. `showInTimeline` and `showInResume` are independent —
 a role can appear on the homepage timeline, the résumé, both, or neither.
 
-Use optimized images from `public/images` and provide specific repository/demo URLs where available.
+Use optimized local or approved Cloudinary images and provide specific repository/demo URLs where available.
 
 ## Content admin
 

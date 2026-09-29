@@ -8,6 +8,8 @@
   "showInProjectsSection": false,
   "projectsSectionOrder": 10,
   "showInResume": false,
+  "image": "https://res.cloudinary.com/dytobweya/image/upload/v1790667581/ed4c7ecc-eea1-4d1a-9678-b406408abee6.png",
+  "imageAlt": "HealthyMitra remote caregiving screenshot",
   "role": "Full-stack development and cloud deployment",
   "skills": [
     "next-js",
@@ -92,7 +94,14 @@
     "How role structure inside a care circle drives nearly every permission decision in the product.",
     "That privacy controls in a health context need to be granular enough to match how families actually share."
   ],
-  "gallery": [],
+  "gallery": {
+    "image-1": null,
+    "image-2": null
+  },
+  "repositoryUrl": null,
+  "landingPageUrl": "https://healthymitra.com",
+  "appUrl": "https://www.healthymitra.com",
+  "liveUrl": null,
   "seo": {
     "title": "HealthyMitra Project Case Study",
     "description": "A Next.js caregiving platform with care circles, appointment and diagnostics booking, WebRTC consultations, per-post visibility, and Razorpay payments, deployed on AWS ECS with GitHub Actions CI/CD."

@@ -7,7 +7,19 @@ import {
   assertUniqueSlugs,
   readJsonDirectory,
 } from "./read-content";
-import type { ProjectContent } from "./types";
+import type { ProjectContent, ProjectGalleryItem } from "./types";
+
+export function getProjectGalleryImages(project: ProjectContent): ProjectGalleryItem[] {
+  return Object.entries(project.gallery)
+    .sort(([first], [second]) => Number(first.slice(6)) - Number(second.slice(6)))
+    .flatMap(([key, image]) => {
+      if (image === null) return [];
+      if (typeof image === "string") {
+        return [{ src: image, alt: `${project.title} screenshot ${key.slice(6)}` }];
+      }
+      return [image];
+    });
+}
 
 export function validateProject(value: unknown, source: string): ProjectContent {
   assertRecord(value, source);
@@ -16,7 +28,7 @@ export function validateProject(value: unknown, source: string): ProjectContent 
     assertString(value[field], field, source);
   }
   // A screenshot is optional, but an image must always carry alt text.
-  if (value.image !== undefined) {
+  if (value.image !== undefined && value.image !== null) {
     assertString(value.image, "image", source);
     assertString(value.imageAlt, "imageAlt", source);
   }
@@ -64,8 +76,30 @@ export function validateProject(value: unknown, source: string): ProjectContent 
   if (!Array.isArray(value.howItWorks) || !Array.isArray(value.buildingProcess)) {
     throw new Error(`${source}: process fields must be arrays`);
   }
-  if (!Array.isArray(value.challenges) || !Array.isArray(value.outcomes) || !Array.isArray(value.gallery)) {
-    throw new Error(`${source}: detail fields must be arrays`);
+  if (!Array.isArray(value.challenges) || !Array.isArray(value.outcomes)) {
+    throw new Error(`${source}: challenges and outcomes must be arrays`);
+  }
+  for (const field of ["repositoryUrl", "landingPageUrl", "appUrl", "liveUrl"]) {
+    if (value[field] !== undefined && value[field] !== null) {
+      assertString(value[field], field, source);
+    }
+  }
+  assertRecord(value.gallery, `${source}.gallery`);
+  for (const [key, image] of Object.entries(value.gallery)) {
+    if (!/^image-[1-9]\d*$/.test(key)) {
+      throw new Error(`${source}.gallery: "${key}" must use image-1, image-2, ...`);
+    }
+    if (image === null) continue;
+    if (typeof image === "string") {
+      assertString(image, key, `${source}.gallery`);
+      continue;
+    }
+    assertRecord(image, `${source}.gallery.${key}`);
+    assertString(image.src, "src", `${source}.gallery.${key}`);
+    assertString(image.alt, "alt", `${source}.gallery.${key}`);
+    if (image.caption !== undefined) {
+      assertString(image.caption, "caption", `${source}.gallery.${key}`);
+    }
   }
   assertRecord(value.seo, `${source}.seo`);
   assertString(value.seo.title, "title", `${source}.seo`);

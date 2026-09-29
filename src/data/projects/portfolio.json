@@ -17,6 +17,8 @@
     ],
     "order": 3
   },
+  "image": "https://res.cloudinary.com/dytobweya/image/upload/v1790665080/Screenshot_316.png",
+  "imageAlt": "portfolio hero screenshot",
   "role": "Full-stack development and site engineering",
   "skills": [
     "next-js",
@@ -90,7 +92,7 @@
       "label": "iPad frame time, down from 83ms"
     },
     {
-      "value": "266",
+      "value": "300+",
       "label": "automated tests gated in CI"
     }
   ],
@@ -99,9 +101,17 @@
     "That a status document written for the builder is more honest than one written for an audience.",
     "How much of 'it feels slow' turns out to be one measurable thing, once you stop guessing."
   ],
-  "gallery": [],
+  "gallery": {
+    "image-1": "https://res.cloudinary.com/dytobweya/image/upload/v1790670428/76ba2219-b710-48de-9079-d6cd093d0051.png",
+    "image-2": "https://res.cloudinary.com/dytobweya/image/upload/v1790670438/2b1d983f-bbe4-4bdc-9e3b-32dcd8704ab7.png",
+    "image-3": "https://res.cloudinary.com/dytobweya/image/upload/v1790670402/db040c97-405e-4562-b934-61e4e0b5f03a.png",
+    "image-4": "https://res.cloudinary.com/dytobweya/image/upload/v1790670503/31e81330-cfd4-4c23-9ddd-601549ffd66f.png",
+    "image-5": "https://res.cloudinary.com/dytobweya/image/upload/v1790670561/17d53e4f-2293-4fde-b1f5-0c89bb3226d6.png"
+  },
   "repositoryUrl": "https://github.com/KiranKalluri268/portfolio",
   "liveUrl": "https://www.saikirankalluri.dev/",
+  "landingPageUrl": null,
+  "appUrl": null,
   "seo": {
     "title": "Personal Portfolio Case Study",
     "description": "How this site is built and verified: content-driven pages, CI-gated tests, and a measured performance fix."

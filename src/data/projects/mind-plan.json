@@ -5,9 +5,11 @@
   "summary": "A Flutter productivity application for managing goals, prioritizing work with the Eisenhower Matrix, and reviewing daily productivity.",
   "status": "published",
   "featured": false,
-  "showInProjectsSection": true,
+  "showInProjectsSection": false,
   "projectsSectionOrder": 5,
   "showInResume": false,
+  "image": "https://res.cloudinary.com/dytobweya/image/upload/v1790669616/Gemini_Generated_Image_tdcrdvtdcrdvtdcr.png",
+  "imageAlt": "MindPlan application screenshot",
   "role": "Mobile application development",
   "skills": [
     "flutter",
@@ -66,7 +68,14 @@
     "How to structure a multi-step mobile productivity workflow.",
     "How Flutter and Dart support reusable cross-platform interfaces."
   ],
-  "gallery": [],
+  "gallery": {
+    "image-1": null,
+    "image-2": null
+  },
+  "repositoryUrl": null,
+  "landingPageUrl": null,
+  "appUrl": null,
+  "liveUrl": null,
   "seo": {
     "title": "MindPlan Project Case Study",
     "description": "How I built a Flutter productivity application around goals and prioritization."

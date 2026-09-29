@@ -16,7 +16,7 @@
     ],
     "order": 2
   },
-  "image": "/images/project1.png",
+  "image": "https://res.cloudinary.com/dytobweya/image/upload/v1790666369/project1.png",
   "imageAlt": "CertiSafe certificate management dashboard",
   "role": "Team lead and full-stack development",
   "skills": [
@@ -94,9 +94,14 @@
     "How to separate structured data storage from media delivery.",
     "How deployment requirements shape full-stack implementation decisions."
   ],
-  "gallery": [],
+  "gallery": {
+    "image-1": null,
+    "image-2": null
+  },
   "repositoryUrl": "https://github.com/KiranKalluri268/CMS_PRO",
   "liveUrl": "https://certisafe.saikirankalluri.dev/",
+  "landingPageUrl": null,
+  "appUrl": null,
   "seo": {
     "title": "CertiSafe Project Case Study",
     "description": "How I led and built a deployed certificate-management platform."

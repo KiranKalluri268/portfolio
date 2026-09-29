@@ -27,6 +27,9 @@ export interface ProjectGalleryItem {
   caption?: string;
 }
 
+/** Numbered keys define display order. Null entries reserve a future slot. */
+export type ProjectGallery = Record<string, string | ProjectGalleryItem | null>;
+
 /** Résumé-specific presentation for a project. The résumé is a one-page brief,
  *  so it often needs tighter wording than the case study carries. */
 export interface ProjectResumeEntry {
@@ -52,14 +55,16 @@ export interface ProjectContent {
    *  both, or neither. */
   showInResumeAi?: boolean;
   resumeAi?: ProjectResumeEntry;
-  /** Optional: internal and client work often has no shareable screenshot, in
-   *  which case the UI falls back to a generated monogram panel. */
-  image?: string;
+  /** Null is an explicit screenshot placeholder; absent or null uses the
+   *  generated monogram panel until a shareable image is available. */
+  image?: string | null;
   imageAlt?: string;
   role: string;
   year?: number;
-  repositoryUrl?: string;
-  liveUrl?: string;
+  repositoryUrl?: string | null;
+  landingPageUrl?: string | null;
+  appUrl?: string | null;
+  liveUrl?: string | null;
   skills: string[];
   overview: string[];
   problem?: string;
@@ -71,7 +76,7 @@ export interface ProjectContent {
   highlights: string[];
   outcomes: ProjectOutcome[];
   lessonsLearned: string[];
-  gallery: ProjectGalleryItem[];
+  gallery: ProjectGallery;
   seo: ContentSeo;
 }
 
