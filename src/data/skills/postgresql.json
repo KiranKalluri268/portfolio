@@ -10,7 +10,7 @@
   "skillsSectionOrder": 18,
   "showInResume": true,
   "resumeGroup": "Databases",
-  "resumeOrder": 3,
+  "resumeOrder": 4,
   "whatItIs": [
     "PostgreSQL is an open-source relational database with strong standards support and extensibility."
   ],

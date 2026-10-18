@@ -8,7 +8,9 @@
   "iconText": "RTC",
   "showInSkillsSection": false,
   "skillsSectionOrder": 29,
-  "showInResume": false,
+  "showInResume": true,
+  "resumeGroup": "Web & Backend",
+  "resumeOrder": 6,
   "whatItIs": [
     "WebRTC enables real-time media and data communication between browsers."
   ],

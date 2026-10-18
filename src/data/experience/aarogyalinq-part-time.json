@@ -20,6 +20,11 @@
     "Implemented Razorpay payments and an admin dashboard covering the platform.",
     "Containerised it with Docker and deployed it to AWS ECS with CI/CD through GitHub Actions."
   ],
+  "resume": {
+    "highlights": [
+      "Shipped a Next.js caregiving platform (HealthyMitra) with WebRTC calling, Razorpay payments, and an admin dashboard, containerized with Docker and deployed to AWS ECS via GitHub Actions CI/CD."
+    ]
+  },
   "overview": [
     "HealthyMitra is a Next.js monolith that lets caregivers look after patients digitally through care circles, which users join as patient or caregiver.",
     "Caregivers book appointments and diagnostic reports for their patient, patients reach doctors through chat and calls, and every post to a circle carries its own visibility."

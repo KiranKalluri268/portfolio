@@ -8,7 +8,9 @@
   "iconText": "C++",
   "showInSkillsSection": true,
   "skillsSectionOrder": 37,
-  "showInResume": false,
+  "showInResume": true,
+  "resumeGroup": "Languages",
+  "resumeOrder": 4,
   "whatItIs": [
     "C++ is a compiled systems language that gives direct control over memory and performance, which is why it tends to sit close to hardware."
   ],

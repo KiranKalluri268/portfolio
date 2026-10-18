@@ -10,7 +10,7 @@
   "skillsSectionOrder": 4,
   "showInResume": true,
   "resumeGroup": "Languages",
-  "resumeOrder": 3,
+  "resumeOrder": 2,
   "whatItIs": [
     "TypeScript adds compile-time type checking and expressive data models to JavaScript."
   ],

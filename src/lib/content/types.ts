@@ -33,6 +33,9 @@ export type ProjectGallery = Record<string, string | ProjectGalleryItem | null>;
 /** Résumé-specific presentation for a project. The résumé is a one-page brief,
  *  so it often needs tighter wording than the case study carries. */
 export interface ProjectResumeEntry {
+  /** The résumé's own heading for the project, when it differs from the case
+   *  study title. Falls back to the project title. */
+  title?: string;
   technologies: string;
   highlights: string[];
   order?: number;
@@ -136,8 +139,12 @@ export interface ExperienceContent {
   location?: string;
   workMode?: "On-site" | "Hybrid" | "Remote";
   summary: string;
-  /** Bullets shown on the homepage timeline card and in the résumé. */
+  /** Bullets shown on the homepage timeline card, and in the résumé unless
+   *  `resume` gives it its own. */
   highlights: string[];
+  /** Résumé-specific wording, for when the one-page résumé needs a different
+   *  title or tighter bullets than the timeline card carries. */
+  resume?: ExperienceResumeEntry;
   overview: string[];
   workItems: ExperienceWorkItem[];
   skills: string[];
@@ -145,6 +152,11 @@ export interface ExperienceContent {
   lessonsLearned: string[];
   recommendations: ExperienceRecommendation[];
   seo: ContentSeo;
+}
+
+export interface ExperienceResumeEntry {
+  role?: string;
+  highlights: string[];
 }
 
 /** Serializable projection of a role for the résumé page and its PDF renderer,
@@ -377,10 +389,19 @@ export interface ResumeJson {
   basics: ResumeBasics;
   objective: string;
   skillGroupOrder: string[];
+  /** Résumé skill lines that are not skills in their own right (a practice
+   *  such as CI/CD), so they have no skill file and no skill page. */
+  skillExtras?: ResumeSkillExtra[];
   education: ResumeEducation;
   certifications: string[];
   languages: string[];
   strengths: string[];
+}
+
+export interface ResumeSkillExtra {
+  group: string;
+  label: string;
+  order: number;
 }
 
 export interface AboutSegment {

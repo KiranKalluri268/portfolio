@@ -24,6 +24,13 @@
     "Containerised it with Docker and deployed it on AWS so it reuses the main product's existing single sign-on, with access restricted to authorized members of the engineering team.",
     "Proposed and shipped skeleton loading states, now in production."
   ],
+  "resume": {
+    "highlights": [
+      "Containerized an internal diagnostics application with Docker and deployed it to AWS, serving it from the main app's origin to reuse the existing single sign-on instead of adding a second auth system.",
+      "Designed and built a Next.js/React diagnostics dashboard giving engineers real-time, deep-linkable visibility into data-integrity issues across the product.",
+      "Found that the app gave no feedback between a click and the data arriving, and shipped a skeleton-loading UX improvement to production, improving perceived performance by an estimated 50%."
+    ]
+  },
   "overview": [
     "I joined Aude.ai as a software engineer intern on the product team. The product is a Next.js frontend backed by a Node and Express service using Redis, and the first month was spent working in it directly — exploring the codebase, then finding and fixing bugs, mostly on the UI.",
     "On the strength of that first month I was given the opportunity to design and build an internal diagnostics application for the engineering team. That became the main body of the internship, alongside continuing product work and UX discussions."

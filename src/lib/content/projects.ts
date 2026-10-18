@@ -61,6 +61,9 @@ export function validateProject(value: unknown, source: string): ProjectContent 
     assertRecord(value.resume, `${source}.resume`);
     assertString(value.resume.technologies, "technologies", `${source}.resume`);
     assertStringArray(value.resume.highlights, "highlights", `${source}.resume`);
+    if (value.resume.title !== undefined) {
+      assertString(value.resume.title, "title", `${source}.resume`);
+    }
   }
   // showInResumeAi is optional (most projects appear on neither, one, or the
   // other résumé) so existing files without it are still valid; when present

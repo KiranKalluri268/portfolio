@@ -110,6 +110,14 @@ export function validateExperience(value: unknown, source: string): ExperienceCo
     (item, index) => validateRecommendation(item, `${source}.recommendations[${index}]`),
   );
 
+  if (value.resume !== undefined) {
+    assertRecord(value.resume, `${source}.resume`);
+    assertStringArray(value.resume.highlights, "highlights", `${source}.resume`);
+    if (value.resume.role !== undefined) {
+      assertString(value.resume.role, "role", `${source}.resume`);
+    }
+  }
+
   assertRecord(value.seo, `${source}.seo`);
   assertString(value.seo.title, "title", `${source}.seo`);
   assertString(value.seo.description, "description", `${source}.seo`);
@@ -176,9 +184,9 @@ export function getResumeInternships(): ResumeInternship[] {
   return getAllExperiences()
     .filter((experience) => experience.showInResume)
     .map((experience) => ({
-      role: experience.role,
+      role: experience.resume?.role ?? experience.role,
       company: experience.company,
       period: experience.resumePeriod,
-      highlights: experience.highlights,
+      highlights: experience.resume?.highlights ?? experience.highlights,
     }));
 }

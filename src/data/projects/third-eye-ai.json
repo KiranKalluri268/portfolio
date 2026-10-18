@@ -9,14 +9,12 @@
   "projectsSectionOrder": 1,
   "showInResume": true,
   "resume": {
-    "technologies": "MERN, WebRTC, TensorFlow.js",
+    "title": "ThirdEyeAI – Real-Time Engagement Detection Platform",
+    "technologies": "React, Node.js, Python, WebRTC",
     "highlights": [
-      "Built a full WebRTC video-conferencing platform from scratch — a Google Meet-style app supporting real-time multi-participant classes.",
-      "Designed and shipped a real-time analytics dashboard giving instructors live engagement visualizations during a session.",
-      "Integrated a browser-side machine-learning model for engagement scoring, achieving 94.25% accuracy, with all inference running client-side so no participant video left the browser.",
-      "Built a natural-language query layer so instructors can ask questions directly about session data."
+      "Built a WebRTC meeting platform with privacy-first, client-side engagement inference (TensorFlow.js), trained on a hybrid CNN/ResNet ensemble reaching 94.25% accuracy."
     ],
-    "order": 1
+    "order": 3
   },
   "showInResumeAi": true,
   "resumeAi": {

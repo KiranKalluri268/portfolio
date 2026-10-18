@@ -23,6 +23,13 @@
     "Worked inside a C++ desktop application to add AWS S3 video storage and AWS IVS live streaming, and built its companion Next.js web application from scratch.",
     "Built Axion, a mobile-driven desktop automation system — a Next.js web app, a MERN cloud relay, and a Python desktop agent — controllable by prompt or voice with live step-by-step visibility."
   ],
+  "resume": {
+    "role": "Forward Deployed Engineer Intern",
+    "highlights": [
+      "Implemented voice input (ElevenLabs, Bhashini APIs) for prescription creation on a MERN platform (Digichikitsak), cutting form-filling time by an estimated 3x versus manual entry; containerized it with Docker and deployed to AWS ECS with CI/CD via GitHub Actions and CloudWatch monitoring.",
+      "Replaced local video storage (previously ~3 minutes to save and access, depending on file size) with direct-to-cloud capture and live streaming (AWS S3, AWS IVS) inside a production C++ desktop application, cutting footage availability to under 30 seconds."
+    ]
+  },
   "overview": [
     "As a forward deployed engineer the work sat close to the client: gathering requirements directly, then implementing against them across the company's products.",
     "It spanned three products and a wide range of the stack — a MERN prescription platform, a C++ desktop application for dental imaging with a Next.js front end, and a desktop automation tool."

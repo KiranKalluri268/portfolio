@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import resume from "@/data/resume.json";
 import { getCvData } from "../cv";
 import { getAllProjects } from "../projects";
 import { getResumeData, getResumeProjects, getResumeSkillGroups } from "../resume";
@@ -23,6 +24,7 @@ describe("getResumeProjects", () => {
     const bySlug = new Map(getAllProjects().map((project) => [project.slug, project]));
     for (const project of getResumeProjects()) {
       const source = bySlug.get(project.slug);
+      expect(project.name).toBe(source?.resume?.title ?? source?.title);
       expect(project.technologies).toBe(source?.resume?.technologies);
       expect(project.highlights).toEqual(source?.resume?.highlights);
     }
@@ -37,11 +39,25 @@ describe("getResumeProjects", () => {
   });
 });
 
+/** Every résumé skill line with its group and order: the opted-in skills plus
+ *  resume.json's extras, which are not skills with a page of their own. */
+function expectedSkillLines() {
+  return [
+    ...getAllSkills()
+      .filter((skill) => skill.showInResume)
+      .map((skill) => ({
+        group: skill.resumeGroup,
+        label: skill.resumeLabel ?? skill.name,
+        order: skill.resumeOrder ?? skill.skillsSectionOrder,
+      })),
+    ...(resume.skillExtras ?? []),
+  ];
+}
+
 describe("getResumeSkillGroups", () => {
-  it("includes only skills opted in to the résumé", () => {
-    const optedIn = getAllSkills().filter((skill) => skill.showInResume);
+  it("includes only skills opted in to the résumé, plus the résumé's extras", () => {
     const listed = getResumeSkillGroups().flatMap((group) => group.items);
-    expect(listed.length).toBe(optedIn.length);
+    expect([...listed].sort()).toEqual(expectedSkillLines().map((line) => line.label).sort());
   });
 
   it("renders each skill's résumé label when it has one", () => {
@@ -54,19 +70,18 @@ describe("getResumeSkillGroups", () => {
   it("groups every listed skill under its declared résumé group", () => {
     for (const group of getResumeSkillGroups()) {
       expect(group.items.length).toBeGreaterThan(0);
-      const expected = getAllSkills()
-        .filter((skill) => skill.showInResume && skill.resumeGroup === group.category)
-        .map((skill) => skill.resumeLabel ?? skill.name);
+      const expected = expectedSkillLines()
+        .filter((line) => line.group === group.category)
+        .map((line) => line.label);
       expect([...group.items].sort()).toEqual([...expected].sort());
     }
   });
 
   it("orders skills within a group by their résumé order", () => {
     for (const group of getResumeSkillGroups()) {
-      const orders = group.items.map((item) => {
-        const skill = getAllSkills().find((s) => (s.resumeLabel ?? s.name) === item);
-        return skill?.resumeOrder ?? skill?.skillsSectionOrder ?? 0;
-      });
+      const orders = group.items.map(
+        (item) => expectedSkillLines().find((line) => line.label === item)?.order ?? 0,
+      );
       expect(orders).toEqual([...orders].sort((a, b) => a - b));
     }
   });

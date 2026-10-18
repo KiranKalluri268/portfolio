@@ -8,9 +8,9 @@
   "iconText": "DDB",
   "showInSkillsSection": true,
   "skillsSectionOrder": 20,
-  "showInResume": false,
+  "showInResume": true,
   "resumeGroup": "Databases",
-  "resumeOrder": 5,
+  "resumeOrder": 2,
   "whatItIs": [
     "DynamoDB is a managed key-value and document database on AWS."
   ],

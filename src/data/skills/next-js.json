@@ -9,7 +9,7 @@
   "showInSkillsSection": true,
   "skillsSectionOrder": 2,
   "showInResume": true,
-  "resumeGroup": "Web/Frameworks",
+  "resumeGroup": "Web & Backend",
   "resumeOrder": 2,
   "whatItIs": [
     "Next.js combines React with routing, server rendering, data loading, and production build tooling."

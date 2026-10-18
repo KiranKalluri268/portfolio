@@ -9,12 +9,12 @@
   "projectsSectionOrder": 2,
   "showInResume": true,
   "resume": {
-    "technologies": "MERN, AWS, DynamoDB",
+    "title": "CertiSafe – Certificate Management System",
+    "technologies": "React, Node.js, AWS, DynamoDB, Cloudinary",
     "highlights": [
-      "Led a 4-member team to build and deploy a certificate management platform for my institute.",
-      "Integrated AWS DynamoDB and Cloudinary for secure data and media handling; onboarded 95+ users."
+      "Led a four-member team to build and deploy an institutional certificate-management platform, storing structured records in DynamoDB and media through Cloudinary; onboarded 95+ users."
     ],
-    "order": 2
+    "order": 1
   },
   "image": "https://res.cloudinary.com/dytobweya/image/upload/v1790666369/project1.png",
   "imageAlt": "CertiSafe certificate management dashboard",

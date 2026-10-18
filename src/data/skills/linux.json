@@ -9,8 +9,8 @@
   "showInSkillsSection": true,
   "skillsSectionOrder": 24,
   "showInResume": true,
-  "resumeGroup": "Other Tools",
-  "resumeOrder": 1,
+  "resumeGroup": "Cloud & DevOps",
+  "resumeOrder": 5,
   "whatItIs": [
     "Linux provides the environment behind much of modern server and developer infrastructure."
   ],

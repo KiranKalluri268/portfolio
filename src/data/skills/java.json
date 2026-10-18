@@ -8,9 +8,9 @@
   "iconText": "Java",
   "showInSkillsSection": true,
   "skillsSectionOrder": 11,
-  "showInResume": false,
+  "showInResume": true,
   "resumeGroup": "Languages",
-  "resumeOrder": 3,
+  "resumeOrder": 5,
   "whatItIs": [
     "Java is a compiled language with a mature runtime and strong object-oriented foundations."
   ],
