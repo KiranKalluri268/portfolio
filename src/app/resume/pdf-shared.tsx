@@ -1,6 +1,7 @@
 "use client";
 
 import { Font, Text } from "@react-pdf/renderer";
+import "@/lib/pdf-hyphenation";
 import { splitEmphasis } from "./emphasis";
 
 /** The family both résumé PDFs set their text in: the same CMU Serif subset
