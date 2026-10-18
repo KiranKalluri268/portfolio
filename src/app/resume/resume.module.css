@@ -64,120 +64,191 @@
   box-shadow: 0 18px 55px rgb(0 0 0 / 45%);
 }
 
+/* Computer Modern, as the printed résumé is typeset. A Latin subset of CMU
+   Serif, renamed as its licence requires - see public/fonts/resume-serif. The
+   PDF documents register the same files, so page and download match. */
+@font-face {
+  font-family: "Resume Serif";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/resume-serif/resume-serif-regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Resume Serif";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/resume-serif/resume-serif-bold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Resume Serif";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/resume-serif/resume-serif-italic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Resume Serif";
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/resume-serif/resume-serif-bold-italic.woff2") format("woff2");
+}
+
 .paper {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   width: 210mm;
   min-height: 297mm;
   margin: 0 auto;
-  padding: 9mm 10mm;
+  padding: 8mm 12mm;
   background: #fff;
-  color: #111;
-  font-family: "Times New Roman", Times, serif;
+  color: #000;
+  font-family: "Resume Serif", "Latin Modern Roman", "Times New Roman", serif;
   font-size: 10.5pt;
-  line-height: 1.27;
+  line-height: 1.22;
   text-align: left;
 }
 
+.paper a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 0.5pt;
+  text-underline-offset: 1.5pt;
+}
+
+.header {
+  text-align: center;
+}
+
 .name {
-  margin: 0 0 1px;
-  font-size: 12pt;
-  font-weight: 700;
+  margin: 0;
+  font-size: 24pt;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+}
+
+.headline,
+.location,
+.contactLine {
+  margin: 0;
+  font-size: 8.5pt;
+  line-height: 1.3;
 }
 
 .headline {
-  margin: 0 0 1px;
-  font-weight: 700;
+  font-style: italic;
+}
+
+.contactLine {
+  margin-top: 1pt;
 }
 
 /* "CGPA:" and its value are two words either side of a space, so an ordinary
-   line wrap can split them — the label stranded at the end of one line, the
-   number alone at the start of the next. Keeps the pair as one unit so the
-   wrap, if it happens, happens before "CGPA", not inside it. */
+   line wrap can split them. Keeps the pair as one unit. */
 .noBreak {
   white-space: nowrap;
 }
 
-.contactLine,
-.links,
 .paragraph,
 .skill,
-.education,
 .footerLine {
   margin: 0;
 }
 
-.links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 5px;
-}
-
-.links a {
-  color: #b8380a;
-  text-decoration: underline;
-  text-underline-offset: 1px;
-}
-
-.contactLink {
-  color: inherit;
-  text-decoration: none;
-}
-
 .separator {
-  color: #333;
+  color: inherit;
 }
 
 .section {
-  margin-top: 3px;
+  margin-top: 7pt;
 }
 
 .sectionTitle {
-  margin: 0 0 2px;
-  border-top: 1px solid #999;
-  padding-top: 3px;
-  font-size: 11pt;
+  margin: 0 0 3pt;
+  border-bottom: 0.6pt solid #000;
+  padding-bottom: 0.5pt;
+  font-size: 12.5pt;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.entry + .entry {
+  margin-top: 2.5pt;
+}
+
+.entryRow,
+.entrySubRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12pt;
+  margin: 0;
+}
+
+.entryRow {
   font-weight: 700;
 }
 
-.entryTitle {
-  margin: 1px 0 0;
-  font-size: 10.5pt;
-  font-weight: 700;
-}
-
-.projectLink {
-  color: #b8380a;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.technologies,
-.period {
+.entrySubRow {
+  font-size: 9.75pt;
   font-style: italic;
+}
+
+.entryRight {
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.paper .projectLink {
   font-weight: 700;
+  text-decoration: none;
+}
+
+.technologies {
+  font-size: 9.75pt;
+  font-style: italic;
+  font-weight: 400;
 }
 
 .list {
-  margin: 1px 0 2px 19px;
-  padding-left: 12px;
+  margin: 1pt 0 0;
+  padding-left: 22pt;
+  font-size: 9.75pt;
+  list-style: none;
 }
 
 .list li {
-  padding-left: 3px;
+  position: relative;
 }
 
-.skillLabel,
-.footerLabel {
+.list li::before {
+  position: absolute;
+  left: -10pt;
+  content: "\2022";
+}
+
+.list strong {
   font-weight: 700;
 }
 
-.footer {
-  margin-top: 3px;
-  border-top: 1px solid #999;
-  padding-top: 3px;
+.skills {
+  padding-left: 7pt;
+  font-size: 9.75pt;
+}
+
+.skillLabel {
+  font-weight: 700;
+}
+
+.footerLine {
+  margin-top: 1pt;
+  font-size: 9.75pt;
 }
 
 @media (max-width: 640px) {
