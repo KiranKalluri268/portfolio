@@ -1,0 +1,60 @@
+{
+  "slug": "aarogyalinq-part-time",
+  "role": "Forward Deployed Engineer (Part-Time)",
+  "company": "AarogyalinQ Private Limited",
+  "status": "published",
+  "showInTimeline": true,
+  "showInResume": true,
+  "timelineOrder": 1,
+  "employmentType": "Part-time",
+  "period": {
+    "startLabel": "August 2026",
+    "startDate": "2026-08",
+    "endLabel": "Present"
+  },
+  "resumePeriod": "Aug 2026 – Present",
+  "summary": "Returned to AarogyalinQ part-time to build HealthyMitra, a Next.js remote caregiving platform built around care circles, through to deployment on AWS ECS.",
+  "highlights": [
+    "Built HealthyMitra, a Next.js caregiving platform where users join care circles as patient or caregiver, with appointment and diagnostic-report booking and instant updates from doctors and diagnostic centres.",
+    "Added chat with WebRTC audio and video calls, so patients can reach doctors at any time.",
+    "Implemented Razorpay payments and an admin dashboard covering the platform.",
+    "Containerised it with Docker and deployed it to AWS ECS with CI/CD through GitHub Actions."
+  ],
+  "overview": [
+    "HealthyMitra is a Next.js monolith that lets caregivers look after patients digitally through care circles, which users join as patient or caregiver.",
+    "Caregivers book appointments and diagnostic reports for their patient, patients reach doctors through chat and calls, and every post to a circle carries its own visibility."
+  ],
+  "workItems": [
+    {
+      "title": "HealthyMitra — remote caregiving platform",
+      "description": "A Next.js monolith letting caregivers look after patients digitally through care circles, which users join as patient or caregiver. Caregivers book appointments and diagnostic reports for their patient and get instant updates from doctors and diagnostic centres; patients can reach doctors any time through chat with WebRTC audio and video calls. Users post updates to their circle with per-post visibility — everyone, caregivers only, doctors, or a selected few. I also implemented Razorpay payments and an admin dashboard covering the platform, and containerised it with Docker for deployment on AWS ECS with CI/CD through GitHub Actions.",
+      "kind": "feature",
+      "projectSlug": "healthymitra",
+      "skills": [
+        "next-js",
+        "react",
+        "webrtc",
+        "razorpay",
+        "docker",
+        "aws",
+        "git"
+      ]
+    }
+  ],
+  "skills": [
+    "next-js",
+    "react",
+    "webrtc",
+    "razorpay",
+    "docker",
+    "aws",
+    "git"
+  ],
+  "outcomes": [],
+  "recommendations": [],
+  "lessonsLearned": [],
+  "seo": {
+    "title": "Forward Deployed Engineer (Part-Time) at AarogyalinQ",
+    "description": "Building HealthyMitra, a Next.js remote caregiving platform with WebRTC calls, Razorpay payments, and an admin dashboard, deployed on AWS ECS."
+  }
+}
