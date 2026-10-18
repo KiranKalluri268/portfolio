@@ -12,7 +12,7 @@
     "title": "ThirdEyeAI – Real-Time Engagement Detection Platform",
     "technologies": "React, Node.js, Python, WebRTC",
     "highlights": [
-      "Built a WebRTC meeting platform with privacy-first, client-side engagement inference (TensorFlow.js), trained on a hybrid CNN/ResNet ensemble reaching 94.25% accuracy."
+      "Built a WebRTC meeting platform with privacy-first, client-side engagement inference (TensorFlow.js), trained on a hybrid CNN/ResNet ensemble reaching **94.25%** accuracy."
     ],
     "order": 3
   },
