@@ -3,6 +3,12 @@
 /* `static` so every token lands in the stylesheet even when no utility
    references it — GSAP and inline styles read several of these at runtime. */
 @theme static {
+  /* Running text in Inter; Tektur is the display face and the body default.
+     font-display is for a label that happens to be a <p> inside a
+     .body-text section — an eyebrow, a company name — and should keep it. */
+  --font-body: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-tektur), sans-serif;
+
   /* One accent family, taken from the accretion disc burning behind the hero,
      so every accented thing on the site reads as the same colour.
        accent      — fills, dots, lines: the deep red-orange of the disc edge
@@ -38,6 +44,21 @@ html {
 
 body {
   font-family: var(--font-tektur), sans-serif;
+}
+
+/* Sentences inside a section that opts in are set in Inter; its headings,
+   labels and buttons keep Tektur. Opt-in rather than a rule on every <p>:
+   the cinematic scene, the menu and the résumé and CV sheets set type of their
+   own, and an element selector would override what they inherit.
+   Paragraphs and quotes only. A list item is often a whole card — a number, a
+   badge, a heading, a link — and a font set on the <li> would be inherited by
+   all of it, so bullet text opts in on its own with `font-body`.
+   In the base layer at zero specificity, so a font utility on an element still
+   wins. */
+@layer base {
+  :where(.body-text) :where(p, blockquote) {
+    font-family: var(--font-body);
+  }
 }
 
 /* Ensure canvas is visible */

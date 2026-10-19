@@ -170,7 +170,7 @@ export default function ExperienceTimeline({
     <section
       id="experience"
       ref={sectionRef}
-      className="relative z-10 min-h-[100svh] overflow-hidden px-4 py-20 text-white sm:px-6 sm:py-24 lg:px-8"
+      className="body-text relative z-10 min-h-[100svh] overflow-hidden px-4 py-20 text-white sm:px-6 sm:py-24 lg:px-8"
       aria-label="Experience timeline section"
     >
       <div className="relative mx-auto w-full max-w-[1080px] lg:-left-[6vw]">
@@ -279,7 +279,7 @@ function ExperienceRow({ experience, index, dotRef }: ExperienceRowProps) {
           <h3 className="mb-3 text-xl font-bold tracking-wide sm:text-2xl">
             {experience.role}
           </h3>
-          <p className="mb-4 font-medium text-accent-soft">{experience.company}</p>
+          <p className="font-display mb-4 font-medium text-accent-soft">{experience.company}</p>
           <dl className="space-y-3 text-sm text-gray-300">
             <div>
               <dt className="text-xs uppercase tracking-wider text-gray-500">Period</dt>
@@ -339,7 +339,7 @@ function ExperienceRow({ experience, index, dotRef }: ExperienceRowProps) {
             {experience.highlights.map((item) => (
               <li key={item} className="flex gap-3">
                 <span className="mt-[0.65em] h-1.5 w-1.5 shrink-0 rounded-full bg-accent-soft" aria-hidden="true" />
-                <span>{item}</span>
+                <span className="font-body">{item}</span>
               </li>
             ))}
           </ul>

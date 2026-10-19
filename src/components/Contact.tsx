@@ -131,7 +131,7 @@ export default function ContactSection({
   return (
     <section
       id="contact"
-      className="contact-section relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-4 py-24 text-center text-white sm:px-6 sm:py-28 lg:px-8"
+      className="body-text contact-section relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-4 py-24 text-center text-white sm:px-6 sm:py-28 lg:px-8"
       style={{ zIndex: 10 }}
     >
       {recommendations.length > 0 && (

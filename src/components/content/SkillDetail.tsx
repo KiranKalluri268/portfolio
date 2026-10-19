@@ -32,7 +32,7 @@ export default function SkillDetail({
   projects: ProjectContent[];
 }) {
   return (
-    <main className="relative z-10 min-h-[100svh] px-4 pt-24 pb-8 text-white sm:px-6 sm:pt-28 sm:pb-12">
+    <main className="body-text relative z-10 min-h-[100svh] px-4 pt-24 pb-8 text-white sm:px-6 sm:pt-28 sm:pb-12">
       <div className="mx-auto max-w-6xl">
         <BackNavigationButton className="mb-10 rounded-full border border-white/15 bg-black/55 px-4 py-2 text-sm text-gray-200 backdrop-blur-md transition-colors hover:border-accent-soft/40 hover:text-white">
           <span aria-hidden="true">←</span> Back
@@ -43,7 +43,7 @@ export default function SkillDetail({
             <SkillMark skill={skill} className="h-16 w-16" imageSize={72} />
           </div>
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-accent-soft">
+            <p className="font-display text-sm font-semibold uppercase tracking-[0.24em] text-accent-soft">
               {category.label}{skill.proficiency ? ` · ${skill.proficiency}` : ""}
             </p>
             <h1 className="mt-3 text-4xl font-bold tracking-tight sm:text-6xl">{skill.name}</h1>
@@ -73,7 +73,7 @@ export default function SkillDetail({
         </div>
 
         <section className="py-12 sm:py-16">
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-accent-soft">Applied experience</p>
+          <p className="font-display text-sm font-semibold uppercase tracking-[0.24em] text-accent-soft">Applied experience</p>
           <h2 className="mt-3 text-3xl font-bold">Projects using {skill.name}</h2>
           {projects.length > 0 ? (
             <div className="mt-7 grid gap-5 md:grid-cols-2 lg:grid-cols-3">

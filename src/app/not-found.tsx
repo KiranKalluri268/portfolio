@@ -15,11 +15,11 @@ export const metadata: Metadata = {
  *  only the page. */
 export default function NotFound() {
   return (
-    <main className="relative z-10 flex min-h-dvh flex-col items-center justify-center px-6 text-center">
+    <main className="body-text relative z-10 flex min-h-dvh flex-col items-center justify-center px-6 text-center">
       <PageScrim />
 
       <div className="relative flex flex-col items-center">
-        <p className="text-sm font-semibold tracking-[0.32em] text-accent-soft uppercase">404</p>
+        <p className="font-display text-sm font-semibold tracking-[0.32em] text-accent-soft uppercase">404</p>
 
         <h1 className="mt-4 max-w-3xl text-4xl font-bold tracking-tight text-white sm:text-5xl">
           There is nothing at this address

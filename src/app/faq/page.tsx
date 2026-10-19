@@ -18,10 +18,10 @@ export const metadata: Metadata = {
 
 export default function FaqPage() {
   return (
-    <main className="relative z-10 min-h-[100svh] overflow-hidden px-4 pt-24 pb-8 text-white sm:px-6 sm:pt-28 sm:pb-12 lg:px-10">
+    <main className="body-text relative z-10 min-h-[100svh] overflow-hidden px-4 pt-24 pb-8 text-white sm:px-6 sm:pt-28 sm:pb-12 lg:px-10">
       <div className="mx-auto w-full max-w-4xl">
         <header className="mb-14 sm:mb-20">
-          <p className="mb-4 text-sm font-semibold uppercase tracking-[0.28em] text-accent-soft">Questions I get</p>
+          <p className="font-display mb-4 text-sm font-semibold uppercase tracking-[0.28em] text-accent-soft">Questions I get</p>
           <h1 className="text-4xl font-bold leading-none tracking-tight sm:text-6xl">
             FAQ
           </h1>
