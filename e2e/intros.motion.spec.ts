@@ -114,3 +114,34 @@ test.describe("the entry screen", () => {
     await expect.poll(() => nav.evaluate((element) => element.getBoundingClientRect().width)).toBeGreaterThan(200);
   });
 });
+
+test.describe("the hero's title line on a landscape phone", () => {
+  test("has room for the looping title, so it is not clipped away", async ({ page }) => {
+    // Both role slots are absolutely positioned so they can cross, which gives
+    // the line no height of its own. The landscape rule once set min-height: 0
+    // and the line collapsed: its overflow clip hid the title entirely, while
+    // every letter still reported itself as faded in.
+    await page.setViewportSize({ width: 844, height: 390 });
+    await page.goto("/");
+    await enterSite(page);
+
+    const role = page.locator(".hero-role");
+    // Wait for the loop to bring a title in.
+    await expect
+      .poll(() =>
+        role.evaluate(
+          (el) =>
+            [...el.querySelectorAll<HTMLElement>("span.inline-block span.inline-block")].filter(
+              (letter) => Number(getComputedStyle(letter).opacity) > 0.5,
+            ).length,
+        ),
+      )
+      .toBeGreaterThan(0);
+
+    const { height, fontSize } = await role.evaluate((el) => ({
+      height: el.getBoundingClientRect().height,
+      fontSize: parseFloat(getComputedStyle(el).fontSize),
+    }));
+    expect(height).toBeGreaterThanOrEqual(fontSize - 1);
+  });
+});
