@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { flushSync } from "react-dom";
 import { useScrollActions } from "@/context/SmoothScrollContext";
 import { useAudio } from "@/context/AudioContextProvider";
@@ -239,8 +240,21 @@ export default function Hero() {
             )}
           </h2>
 
+          {/* Where I am and whether I'm looking, in the sentence face rather
+              than the display one, and arriving with the buttons so the
+              headline still lands on its own first. */}
+          <p
+            className={`hero-availability mt-6 font-body text-sm text-white/75 transition-opacity duration-700 sm:text-base ${visibleH1State === 'done'
+              ? 'opacity-100'
+              : 'opacity-0'
+              }`}
+            style={{ transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)" }}
+          >
+            {hero.availability}
+          </p>
+
           <div
-            className={`hero-cta mt-8 flex flex-row flex-wrap items-center gap-3 transition-opacity duration-700 sm:gap-4 ${visibleH1State === 'done'
+            className={`hero-cta mt-5 flex flex-row flex-wrap items-center gap-3 transition-opacity duration-700 sm:gap-4 ${visibleH1State === 'done'
               ? 'opacity-100'
               : 'pointer-events-none opacity-0'
               }`}
@@ -260,6 +274,12 @@ export default function Hero() {
             >
               Get in touch
             </button>
+            <Link
+              href="/resume"
+              className="rounded-full border border-white/25 bg-black/40 px-6 py-3 text-center text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:border-accent hover:text-accent-soft sm:text-base"
+            >
+              Résumé
+            </Link>
           </div>
         </div>
       </div>

@@ -113,8 +113,12 @@ canvas {
     min-height: 0;
   }
 
+  .hero-availability {
+    margin-top: 0.75rem;
+  }
+
   .hero-cta {
-    margin-top: 1rem;
+    margin-top: 0.75rem;
     flex-direction: row;
     gap: 0.75rem;
   }
@@ -160,8 +164,12 @@ canvas {
     font-size: clamp(2.15rem, 7dvh, 4.5rem);
   }
 
+  .hero-availability {
+    margin-top: 0.75rem;
+  }
+
   .hero-cta {
-    margin-top: 1rem;
+    margin-top: 0.75rem;
   }
 }
 
