@@ -156,16 +156,17 @@ const jsonLd = {
   "name": "Sai Kiran Kalluri",
   "alternateName": ["Kiran Kalluri", "Sai Kiran", "Saikiran Kalluri"],
   "url": SITE_URL,
-  "jobTitle": "Software Engineer Intern",
+  "jobTitle": "Forward Deployed Engineer",
   "address": {
     "@type": "PostalAddress",
-    "addressLocality": "Telangana",
+    "addressLocality": "Hyderabad",
+    "addressRegion": "Telangana",
     "addressCountry": "India"
   },
   "knowsAbout": ["AWS", "React", "Next.js", "Node.js", "Java", "Python", "C++", "MERN Stack", "DevOps", "Git", "GitHub", "Docker", "Linux", "CI/CD"],
   "worksFor": {
     "@type": "Organization",
-    "name": "Aude.ai"
+    "name": "AarogyalinQ Private Limited"
   },
   "image": {
     "@type": "ImageObject",
