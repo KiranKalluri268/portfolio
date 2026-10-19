@@ -149,8 +149,9 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
   const shape = narrow ? "portrait" : "wide";
   const { generation, watchContext, releaseContext } = useGlRecovery();
   // Building the textures means eleven full-size canvases, every project image
-  // decoded and every brand mark rasterised. The grid is the default view, so
-  // none of that is paid for until the list is actually asked for once.
+  // decoded and every brand mark rasterised. The list is the default view, but
+  // a visitor whose remembered choice is the grid never pays for any of that
+  // until they ask for the list once.
   const [everActive, setEverActive] = useState(active);
 
   useEffect(() => {

@@ -49,7 +49,7 @@ progress rail to settle on and a swipe may stop between panels.
 
 ### Projects — list view (the card stack)
 
-`/projects` has two views. The grid is DOM; the list is a single WebGL canvas
+`/projects` has two views and opens on the list. The grid is DOM; the list is a single WebGL canvas
 (OGL) drawing every card as a textured plane, and it is the one place on the
 site that does **not** scroll the document.
 
