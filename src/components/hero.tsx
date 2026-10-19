@@ -179,7 +179,7 @@ export default function Hero() {
       <div className="relative w-full h-full text-white">
         <div
           data-settled={nameSettled}
-          className={`hero-copy absolute left-1/2 w-full max-w-5xl -translate-x-1/2 px-[clamp(1.25rem,7vw,4.5rem)] pt-8 text-left transition-all duration-1000 ease-in-out sm:px-8 sm:pt-0 lg:px-0 ${nameSettled ? 'top-[20dvh] translate-y-0' : 'top-1/2 -translate-y-1/2'
+          className={`hero-copy @container absolute left-1/2 w-full max-w-5xl -translate-x-1/2 px-[clamp(1.25rem,7vw,4.5rem)] pt-8 text-left transition-all duration-1000 ease-in-out sm:px-8 sm:pt-0 lg:px-0 ${nameSettled ? 'top-[20dvh] translate-y-0' : 'top-1/2 -translate-y-1/2'
             }`}
         >
           <h1
@@ -214,10 +214,14 @@ export default function Hero() {
             </span>
           </h1>
 
-          {/* The role line loops between one and two lines as it cycles.
-              Reserving two lines keeps the CTA row below from bouncing. */}
+          {/* Sized to the line's own width (the copy block is the container) so
+              the longest role, FULL-STACK DEVELOPER at about 11.7em, sits on
+              one row: two rows held for it left a row of empty space under
+              every shorter role. The height is not reserved here at all; it
+              comes from the invisible copies of every role below, so a longer
+              role added later reserves two rows rather than being clipped. */}
           <h2
-            className="hero-role mt-4 min-h-[calc(2*clamp(2.15rem,10vw,7.5rem))] max-w-full text-[clamp(2.15rem,10vw,7.5rem)] font-bold font-[family-name:var(--font-tektur)] leading-none overflow-hidden"
+            className="hero-role mt-4 max-w-full text-[min(7.5rem,calc(100cqw/11.9))] font-bold font-[family-name:var(--font-tektur)] leading-none overflow-hidden"
             style={{
               // The name above can carry a white halo because white has 21:1 of
               // contrast to spend. The role line is coloured and has far less,
@@ -233,7 +237,14 @@ export default function Hero() {
             {reduceMotion ? (
               <span className="text-accent">{hero.roles[0]}</span>
             ) : (
-              <span className="relative block w-full text-accent">
+              <span className="relative grid w-full text-accent">
+                {/* Every role, laid out invisibly in one cell, so the line is as
+                    tall as the tallest of them. The two animated slots are
+                    absolutely positioned so they can cross, and give the line
+                    no height of their own. */}
+                {hero.roles.map((role) => (
+                  <SweepText key={role} text={role} groupByWord className="invisible col-start-1 row-start-1" />
+                ))}
                 <SweepText ref={roleRefA} text={slotTexts[0]} groupByWord className="absolute left-0 top-0 w-full" />
                 <SweepText ref={roleRefB} text={slotTexts[1]} groupByWord className="absolute left-0 top-0 w-full" />
               </span>
@@ -250,7 +261,14 @@ export default function Hero() {
               }`}
             style={{ transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)" }}
           >
-            {hero.availability}
+            {/* Each part kept whole, so a phone wraps between parts rather
+                than at the hyphen in "On-site". */}
+            {hero.availability.split(" · ").map((part, index) => (
+              <span key={part}>
+                {index > 0 && " · "}
+                <span className="whitespace-nowrap">{part}</span>
+              </span>
+            ))}
           </p>
 
           <div
