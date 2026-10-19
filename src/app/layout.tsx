@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import {
-  Inter,
+  Chakra_Petch,
   Tektur,
   Noto_Sans_Devanagari,
   Noto_Sans_Tamil,
@@ -39,16 +39,21 @@ const tektur = Tektur({
 /* Running text — case studies, the timeline, the About statement, answers and
    recommendations. Tektur is a display face: at paragraph length its squared
    letters tire the eye, so it stays on headings, labels and the scene's own
-   type, and sentences are set in Inter wherever a section opts in with
-   `.body-text` (globals.css). Served from this site like every next/font face,
-   so no request goes to Google. */
-const inter = Inter({
-  variable: "--font-inter",
+   type, and sentences are set in Chakra Petch wherever a section opts in with
+   `.body-text` (globals.css). Its cut corners keep the sentences in the same
+   family of shapes as Tektur, where a neutral sans read as a different site.
+   Served from this site like every next/font face, so no request goes to
+   Google. */
+const chakraPetch = Chakra_Petch({
+  variable: "--font-chakra-petch",
   // Latin only. Every subset listed is preloaded on every page, and nothing set
-  // in Inter uses Latin Extended — the one place it occurs, the greeting's
-  // "Cześć", is Tektur — so latin-ext was 83KB of every visit for no glyph.
+  // in it uses Latin Extended — the one place it occurs, the greeting's
+  // "Cześć", is Tektur.
   subsets: ["latin"],
   display: "swap",
+  // Not a variable font, so each weight is its own file: 400 for sentences,
+  // 700 for the <strong> labels inside them, 600 for the form confirmations.
+  weight: ["400", "600", "700"],
 });
 
 /* The entry greeting says hello in four Indian scripts, and Tektur covers none
@@ -189,7 +194,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${tektur.variable} ${inter.variable} ${notoDevanagari.variable} ${notoTamil.variable} ${notoKannada.variable} ${notoMalayalam.variable} ${notoTelugu.variable}`}>
+    <html lang="en" className={`${tektur.variable} ${chakraPetch.variable} ${notoDevanagari.variable} ${notoTamil.variable} ${notoKannada.variable} ${notoMalayalam.variable} ${notoTelugu.variable}`}>
       <body className="relative bg-black">
         <script
           type="application/ld+json"

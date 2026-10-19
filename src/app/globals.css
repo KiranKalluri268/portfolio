@@ -3,10 +3,10 @@
 /* `static` so every token lands in the stylesheet even when no utility
    references it — GSAP and inline styles read several of these at runtime. */
 @theme static {
-  /* Running text in Inter; Tektur is the display face and the body default.
+  /* Running text in Chakra Petch; Tektur is the display face and the body default.
      font-display is for a label that happens to be a <p> inside a
      .body-text section — an eyebrow, a company name — and should keep it. */
-  --font-body: var(--font-inter), system-ui, sans-serif;
+  --font-body: var(--font-chakra-petch), system-ui, sans-serif;
   --font-display: var(--font-tektur), sans-serif;
 
   /* One accent family, taken from the accretion disc burning behind the hero,
@@ -46,7 +46,7 @@ body {
   font-family: var(--font-tektur), sans-serif;
 }
 
-/* Sentences inside a section that opts in are set in Inter; its headings,
+/* Sentences inside a section that opts in are set in Chakra Petch; its headings,
    labels and buttons keep Tektur. Opt-in rather than a rule on every <p>:
    the cinematic scene, the menu and the résumé and CV sheets set type of their
    own, and an element selector would override what they inherit.
