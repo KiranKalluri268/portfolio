@@ -33,6 +33,20 @@ export function validateResumeJson(value: unknown, source: string): ResumeJson {
 
   assertString(value.objective, "objective", source);
   assertStringArray(value.skillGroupOrder, "skillGroupOrder", source);
+  if (value.skillExtras !== undefined) {
+    if (!Array.isArray(value.skillExtras)) {
+      throw new Error(`${source}: "skillExtras" must be an array`);
+    }
+    value.skillExtras.forEach((extra, index) => {
+      const extraSource = `${source}.skillExtras[${index}]`;
+      assertRecord(extra, extraSource);
+      assertString(extra.group, "group", extraSource);
+      assertString(extra.label, "label", extraSource);
+      if (typeof extra.order !== "number") {
+        throw new Error(`${extraSource}: "order" must be a number`);
+      }
+    });
+  }
 
   assertRecord(value.education, `${source}.education`);
   for (const field of ["degree", "institution", "period", "cgpa"]) {
@@ -72,7 +86,7 @@ export function getResumeProjects(): ResumeProject[] {
     .sort((a, b) => (a.resume?.order ?? 0) - (b.resume?.order ?? 0))
     .map((project) => ({
       slug: project.slug,
-      name: project.title,
+      name: project.resume!.title ?? project.title,
       liveUrl: project.liveUrl ?? undefined,
       technologies: project.resume!.technologies,
       highlights: project.resume!.highlights,
@@ -83,27 +97,35 @@ export function getResumeProjects(): ResumeProject[] {
  *  comes from resume.json so the ordering stays an editorial decision in one
  *  place rather than being spread across every skill file. */
 export function getResumeSkillGroups(): ResumeSkillGroup[] {
-  const skills = getAllSkills().filter((skill) => skill.showInResume);
+  const entries = [
+    ...getAllSkills()
+      .filter((skill) => skill.showInResume)
+      .map((skill) => ({
+        group: skill.resumeGroup as string,
+        label: skill.resumeLabel ?? skill.name,
+        order: skill.resumeOrder ?? skill.skillsSectionOrder,
+      })),
+    // Lines such as CI/CD that belong on the résumé but are not skills with a
+    // page of their own.
+    ...((resume as ResumeJson).skillExtras ?? []),
+  ];
   const declaredOrder: string[] = resume.skillGroupOrder;
 
   const groupNames = [
-    ...declaredOrder.filter((name) => skills.some((s) => s.resumeGroup === name)),
+    ...declaredOrder.filter((name) => entries.some((entry) => entry.group === name)),
     // Any group a skill declares but resume.json has not ordered still shows,
     // rather than silently disappearing from the résumé.
-    ...[...new Set(skills.map((s) => s.resumeGroup as string))]
+    ...[...new Set(entries.map((entry) => entry.group))]
       .filter((name) => !declaredOrder.includes(name))
       .sort(),
   ];
 
   return groupNames.map((category) => ({
     category,
-    items: skills
-      .filter((skill) => skill.resumeGroup === category)
-      .sort(
-        (a, b) =>
-          (a.resumeOrder ?? a.skillsSectionOrder) - (b.resumeOrder ?? b.skillsSectionOrder),
-      )
-      .map((skill) => skill.resumeLabel ?? skill.name),
+    items: entries
+      .filter((entry) => entry.group === category)
+      .sort((a, b) => a.order - b.order)
+      .map((entry) => entry.label),
   }));
 }
 

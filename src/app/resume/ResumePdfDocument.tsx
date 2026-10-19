@@ -11,6 +11,8 @@ import {
 import resume from "@/data/resume.json";
 import type { ResumeInternship } from "@/lib/content/types";
 import type { ResumeProject, ResumeSkillGroup } from "@/lib/content/resume";
+import { plainText } from "./emphasis";
+import { PdfEmphasised, RESUME_PDF_FONT } from "./pdf-shared";
 
 // The Page below leaves react-pdf's default `wrap` behaviour (true) rather
 // than disabling it. `wrap={false}` does not just stop pagination — it lets
@@ -25,57 +27,52 @@ import type { ResumeProject, ResumeSkillGroup } from "@/lib/content/resume";
 // Verified both directions by rendering with @react-pdf/renderer directly
 // and reading the result back with `pdfinfo`, not by trusting the component
 // tree.
+//
+// Sizes mirror resume.module.css, so the download is the sheet on screen.
+// Every style with a lineHeight also sets its fontSize: react-pdf resolves a
+// unitless lineHeight against its own 18pt default when the size is only
+// inherited, which double-spaced the summary and pushed Education onto a
+// second page.
 const styles = StyleSheet.create({
   page: {
     width: 595.28,
     height: 841.89,
-    paddingTop: 13,
-    paddingRight: 28,
-    paddingBottom: 13,
-    paddingLeft: 28,
+    paddingTop: 22.7,
+    paddingRight: 34,
+    paddingBottom: 22.7,
+    paddingLeft: 34,
     backgroundColor: "#ffffff",
-    color: "#111111",
-    fontFamily: "Times-Roman",
+    color: "#000000",
+    fontFamily: RESUME_PDF_FONT,
     fontSize: 10.5,
-    lineHeight: 1.2,
   },
-  content: {
-    flexGrow: 1,
-    justifyContent: "space-between",
-  },
-  name: { fontFamily: "Times-Bold", fontSize: 12, marginBottom: 1 },
-  headline: { fontFamily: "Times-Bold", fontSize: 10.5, marginBottom: 0.5 },
-  contact: { flexDirection: "row", flexWrap: "wrap" },
-  contactLink: { color: "#111111", textDecoration: "none" },
-  links: { flexDirection: "row", flexWrap: "wrap", gap: 4 },
-  link: { color: "#0563c1", textDecoration: "underline" },
-  section: { marginTop: 1.25 },
+  header: { alignItems: "center" },
+  name: { fontSize: 24, letterSpacing: 0.5, lineHeight: 1.1 },
+  small: { fontSize: 8.5, lineHeight: 1.3 },
+  headline: { fontSize: 8.5, lineHeight: 1.3, fontStyle: "italic" },
+  contact: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", marginTop: 1 },
+  link: { color: "#000000", textDecoration: "underline" },
+  section: { marginTop: 7 },
   sectionTitle: {
-    borderTopWidth: 0.6,
-    borderTopColor: "#8b8b8b",
-    paddingTop: 1.25,
-    marginBottom: 0.75,
-    fontFamily: "Times-Bold",
-    fontSize: 11,
+    borderBottomWidth: 0.6,
+    borderBottomColor: "#000000",
+    paddingBottom: 0.5,
+    marginBottom: 3,
+    fontSize: 12.5,
+    fontWeight: 700,
   },
-  entry: { marginTop: 0.4 },
-  entryTitle: { fontFamily: "Times-Bold", fontSize: 10.5 },
-  projectLink: { color: "#0563c1", textDecoration: "underline" },
-  italic: { fontFamily: "Times-BoldItalic" },
-  skillLine: { flexDirection: "row", flexWrap: "wrap" },
-  bold: { fontFamily: "Times-Bold" },
-  list: { marginTop: 0.4, marginBottom: 0.75, paddingLeft: 23 },
+  paragraph: { fontSize: 10.5, lineHeight: 1.22 },
+  entry: { marginBottom: 2.5 },
+  row: { flexDirection: "row", justifyContent: "space-between", fontSize: 10.5, fontWeight: 700, lineHeight: 1.22 },
+  subRow: { flexDirection: "row", justifyContent: "space-between", fontSize: 9.75, fontStyle: "italic", lineHeight: 1.22 },
+  projectLink: { color: "#000000", textDecoration: "none" },
+  technologies: { fontSize: 9.75, fontStyle: "italic", fontWeight: 400 },
+  list: { marginTop: 1, paddingLeft: 12, fontSize: 9.75, lineHeight: 1.22 },
   listItem: { flexDirection: "row" },
   bullet: { width: 10 },
-  listText: { flex: 1 },
-  footer: {
-    borderTopWidth: 0.6,
-    borderTopColor: "#8b8b8b",
-    paddingTop: 1.25,
-    marginTop: 1.25,
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
+  skills: { paddingLeft: 7, fontSize: 9.75, lineHeight: 1.22 },
+  bold: { fontWeight: 700 },
+  footer: { fontSize: 9.75, lineHeight: 1.22, marginTop: 1 },
 });
 
 function PdfSection({ title, children }: { title: string; children: React.ReactNode }) {
@@ -91,9 +88,9 @@ function BulletList({ items }: { items: string[] }) {
   return (
     <View style={styles.list}>
       {items.map((item) => (
-        <View style={styles.listItem} key={item}>
+        <View style={styles.listItem} key={plainText(item)}>
           <Text style={styles.bullet}>•</Text>
-          <Text style={styles.listText}>{item}</Text>
+          <PdfEmphasised text={item} />
         </View>
       ))}
     </View>
@@ -109,94 +106,95 @@ export default function ResumePdfDocument({
   projects: ResumeProject[];
   skillGroups: ResumeSkillGroup[];
 }) {
-  const phoneUrl = `tel:${resume.basics.phone.replace(/[^+\d]/g, "")}`;
+  const { basics, education } = resume;
+  const contacts = [
+    { label: basics.phone, url: `tel:${basics.phone.replace(/[^+\d]/g, "")}` },
+    { label: basics.email, url: `mailto:${basics.email}` },
+    ...basics.links,
+  ];
 
   return (
     <Document
-      title={`${resume.basics.name} Resume`}
-      author={resume.basics.name}
+      title={`${basics.name} Resume`}
+      author={basics.name}
       subject="Professional Resume"
     >
       <Page size={{ width: 595.28, height: 841.89 }} style={styles.page}>
-        <View style={styles.content}>
-          <View>
-          <Text style={styles.name}>{resume.basics.name}</Text>
-          <Text style={styles.headline}>{resume.basics.headline}</Text>
-          <View style={styles.contact}>
-            <Text>{resume.basics.location} | </Text>
-            <Link src={phoneUrl} style={styles.contactLink}>{resume.basics.phone}</Link>
-            <Text> | </Text>
-            <Link src={`mailto:${resume.basics.email}`} style={styles.contactLink}>
-              {resume.basics.email}
-            </Link>
-          </View>
-          <View style={styles.links}>
-            {resume.basics.links.map((link, index) => (
-              <View key={link.url} style={{ flexDirection: "row" }}>
-                <Link src={link.url} style={styles.link}>{link.label}</Link>
-                {index < resume.basics.links.length - 1 && <Text> |</Text>}
+        <View style={styles.header}>
+          <Text style={styles.name}>{basics.name}</Text>
+          <Text style={styles.headline}>{basics.headline}</Text>
+          <Text style={styles.small}>{basics.location}</Text>
+          <View style={[styles.small, styles.contact]}>
+            {contacts.map((contact, index) => (
+              <View key={contact.url} style={{ flexDirection: "row" }}>
+                {/* Leading spaces are trimmed from a Text, so the first is non-breaking. */}
+                {index > 0 && <Text>{" | "}</Text>}
+                <Link src={contact.url} style={styles.link}>{contact.label}</Link>
               </View>
             ))}
-          </View>
-          </View>
-
-          <PdfSection title="Summary">
-            <Text>{resume.objective}</Text>
-          </PdfSection>
-
-          <PdfSection title="Experience">
-            {internships.map((internship) => (
-              <View style={styles.entry} key={`${internship.company}-${internship.role}`}>
-                <Text style={styles.entryTitle}>
-                  {internship.role} – {internship.company}{" "}
-                  <Text style={styles.italic}>({internship.period})</Text>
-                </Text>
-                <BulletList items={internship.highlights} />
-              </View>
-            ))}
-          </PdfSection>
-
-          <PdfSection title="Projects">
-            {projects.map((project) => (
-              <View style={styles.entry} key={project.slug}>
-                <Text style={styles.entryTitle}>
-                  {project.liveUrl ? (
-                    <Link src={project.liveUrl} style={styles.projectLink}>{project.name}</Link>
-                  ) : (
-                    project.name
-                  )}{" "}
-                  <Text style={styles.italic}>({project.technologies})</Text>
-                </Text>
-                <BulletList items={project.highlights} />
-              </View>
-            ))}
-          </PdfSection>
-
-          <PdfSection title="Core Skills">
-            {skillGroups.map((skill) => (
-              <View style={styles.skillLine} key={skill.category}>
-                <Text style={styles.bold}>{skill.category}: </Text>
-                <Text>{skill.items.join(", ")}</Text>
-              </View>
-            ))}
-          </PdfSection>
-
-          <PdfSection title="Education">
-            <Text>
-              {resume.education.degree} | {resume.education.institution} | {resume.education.period} |{" "}
-              {/* A non-breaking space keeps "CGPA:" and its value from
-                  splitting across a wrap. */}
-              CGPA:{" "}{resume.education.cgpa}
-            </Text>
-          </PdfSection>
-
-          <View style={styles.footer}>
-            <Text style={styles.bold}>Languages: </Text>
-            <Text>{resume.languages.join(", ")} | </Text>
-            <Text style={styles.bold}>Strengths: </Text>
-            <Text>{resume.strengths.join(", ")}</Text>
           </View>
         </View>
+
+        <PdfSection title="Summary">
+          <Text style={styles.paragraph}>{resume.objective}</Text>
+        </PdfSection>
+
+        <PdfSection title="Experience">
+          {internships.map((internship) => (
+            <View style={styles.entry} key={`${internship.company}-${internship.role}`}>
+              <View style={styles.row}>
+                <Text>{internship.company}</Text>
+                <Text>{internship.period}</Text>
+              </View>
+              <View style={styles.subRow}>
+                <Text>{internship.role}</Text>
+              </View>
+              <BulletList items={internship.highlights} />
+            </View>
+          ))}
+        </PdfSection>
+
+        <PdfSection title="Projects">
+          {projects.map((project) => (
+            <View style={styles.entry} key={project.slug}>
+              <Text style={styles.row}>
+                {project.liveUrl ? (
+                  <Link src={project.liveUrl} style={styles.projectLink}>{project.name}</Link>
+                ) : (
+                  project.name
+                )}{" "}
+                <Text style={styles.technologies}>({project.technologies})</Text>
+              </Text>
+              <BulletList items={project.highlights} />
+            </View>
+          ))}
+        </PdfSection>
+
+        <PdfSection title="Core Skills">
+          <View style={styles.skills}>
+            {skillGroups.map((skill) => (
+              <Text key={skill.category}>
+                <Text style={styles.bold}>{skill.category}: </Text>
+                {skill.items.join(", ")}
+              </Text>
+            ))}
+          </View>
+        </PdfSection>
+
+        <PdfSection title="Education">
+          <View style={styles.row}>
+            <Text>{education.institution}</Text>
+            <Text>{education.period}</Text>
+          </View>
+          <View style={styles.subRow}>
+            <Text>{education.degree}</Text>
+            {/* A non-breaking space keeps "CGPA:" and its value together. */}
+            <Text>CGPA:{" "}{education.cgpa}</Text>
+          </View>
+          <Text style={styles.footer}>
+            Languages: {resume.languages.join(", ")} | Strengths: {resume.strengths.join(", ")}
+          </Text>
+        </PdfSection>
       </Page>
     </Document>
   );

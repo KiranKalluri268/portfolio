@@ -20,6 +20,13 @@ describe("CvPdfDocument", () => {
     expect(countPages(pdf)).toBeGreaterThan(1);
   }, 60_000);
 
+  it("keeps words whole instead of hyphenating them at line ends", async () => {
+    // The CV PDF can be the first one rendered in a session, so it must
+    // register the callback itself rather than rely on the résumé having done so.
+    const { Font } = await import("@react-pdf/renderer");
+    expect(Font.getHyphenationCallback()?.("containerizing")).toEqual(["containerizing"]);
+  });
+
   it("does not set lineHeight on the Page, which would drop the page-number footer", async () => {
     // react-pdf 4.x silently stops rendering `fixed` absolutely-positioned
     // children when the Page carries a lineHeight. The footer disappears with

@@ -8,7 +8,7 @@
   "iconText": "TW",
   "showInSkillsSection": true,
   "skillsSectionOrder": 7,
-  "showInResume": true,
+  "showInResume": false,
   "resumeGroup": "Web/Frameworks",
   "resumeOrder": 5,
   "whatItIs": [

@@ -8,9 +8,9 @@
   "iconText": "SQL",
   "showInSkillsSection": true,
   "skillsSectionOrder": 17,
-  "showInResume": false,
+  "showInResume": true,
   "resumeGroup": "Databases",
-  "resumeOrder": 2,
+  "resumeOrder": 3,
   "whatItIs": [
     "MySQL stores structured data in related tables queried with SQL."
   ],

@@ -106,16 +106,24 @@ describe("getTimelineExperiences", () => {
 
 describe("getResumeInternships", () => {
   it("only includes roles flagged for the résumé", () => {
-    const resumeSlugs = new Set(
-      getAllExperiences()
-        .filter((experience) => experience.showInResume)
-        .map((experience) => experience.role),
-    );
+    const resumeRoles = getAllExperiences()
+      .filter((experience) => experience.showInResume)
+      .map((experience) => `${experience.company}|${experience.resume?.role ?? experience.role}`);
     const internships = getResumeInternships();
-    expect(internships.length).toBe(resumeSlugs.size);
-    for (const internship of internships) {
-      expect(resumeSlugs.has(internship.role)).toBe(true);
-    }
+    expect(internships.map((internship) => `${internship.company}|${internship.role}`)).toEqual(
+      resumeRoles,
+    );
+  });
+
+  it("prefers a role's résumé wording over its timeline wording", () => {
+    const internships = getResumeInternships();
+    const roles = getAllExperiences().filter((experience) => experience.showInResume);
+    roles.forEach((experience, index) => {
+      expect(internships[index].role).toBe(experience.resume?.role ?? experience.role);
+      expect(internships[index].highlights).toEqual(
+        experience.resume?.highlights ?? experience.highlights,
+      );
+    });
   });
 
   it("projects each role into the flat shape the résumé and PDF render", () => {

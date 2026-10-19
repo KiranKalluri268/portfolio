@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from "@react-pdf/renderer";
+import "@/lib/pdf-hyphenation";
 import type { CvData, CvProject, CvRole } from "@/lib/content/types";
 
 const styles = StyleSheet.create({

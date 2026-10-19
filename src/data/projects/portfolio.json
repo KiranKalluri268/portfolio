@@ -9,13 +9,12 @@
   "projectsSectionOrder": 11,
   "showInResume": true,
   "resume": {
-    "technologies": "Next.js, TypeScript, GSAP, Vitest, Playwright",
+    "title": "Portfolio – Content-Driven Case-Study Platform",
+    "technologies": "Next.js, TypeScript, Git",
     "highlights": [
-      "Content-driven site built from typed JSON, with 229 unit tests and 37 real-browser tests gated in CI alongside lint and type checks.",
-      "Diagnosed a frame-time regression on iPad by measuring rather than guessing — isolated backdrop-filter across 125 cards as the entire cost, taking frames from 83ms to 16.7ms.",
-      "Maintain a public status document recording known defects and deferred work, including the limits of my own code."
+      "Built a CI pipeline gating every change on lint, type checks, unit tests, and a Playwright browser-test suite (**266 tests**) against a production build before it reaches the live site."
     ],
-    "order": 3
+    "order": 2
   },
   "image": "https://res.cloudinary.com/dytobweya/image/upload/v1790665080/Screenshot_316.png",
   "imageAlt": "portfolio hero screenshot",
