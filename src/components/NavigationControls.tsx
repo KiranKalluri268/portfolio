@@ -165,8 +165,8 @@ const ArrowButton = ({
                 ? "cursor-pointer"
                 : "opacity-30 cursor-not-allowed"
                 } ${isPressed
-                    ? "bg-white border-white shadow-[0_0_15px_rgba(255,255,255,0.8)] scale-90"
-                    : "bg-black/50 border-white/30 shadow-lg hover:bg-white/20 active:bg-white/20"
+                    ? "bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.8)] scale-90"
+                    : "bg-black/50 text-white border-white/30 shadow-lg hover:bg-white/20 active:bg-white/20"
                 } ${className}`}
             onClick={() => enabled && onPress(direction)}
             onMouseEnter={onMouseEnter}

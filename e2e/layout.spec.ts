@@ -174,3 +174,19 @@ test("the compact scene controls stay beside Experience at 1280x720", async ({ p
 
   expect(controls.x).toBeGreaterThanOrEqual(highlight.x + highlight.width);
 });
+
+test("the arrow pad draws its arrows in a colour that shows on the dark buttons", async ({ page }) => {
+  // The icons stroke with currentColor. The body sets no text colour, so a
+  // button that did not set its own inherited black and drew black arrows on a
+  // black button — the pad read as empty boxes.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  await enterSite(page);
+
+  const strokes = await page
+    .locator("[data-navigation-controls] button path")
+    .evaluateAll((paths) => paths.map((path) => getComputedStyle(path).stroke));
+
+  expect(strokes.length).toBeGreaterThan(0);
+  for (const stroke of strokes) expect(stroke).toBe("rgb(255, 255, 255)");
+});
