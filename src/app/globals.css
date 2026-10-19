@@ -109,8 +109,14 @@ canvas {
 
   .hero-role {
     margin-top: 0.5rem;
-    /* Height is at a premium here, so let the role line size itself. */
-    min-height: 0;
+    /* Height is at a premium here, so the line reserves one row instead of
+       two, at a size a 360-430px-tall screen can afford. It cannot size itself:
+       both role slots are absolutely positioned so they can cross, which gives
+       the line no height of its own, and with min-height: 0 it collapsed to
+       nothing and its overflow clip hid the title entirely. At this size the
+       longest role fits on one row at every landscape phone width from 568px. */
+    font-size: clamp(1.5rem, 9dvh, 2.75rem);
+    min-height: 1em;
   }
 
   .hero-availability {

@@ -190,3 +190,22 @@ test("the arrow pad draws its arrows in a colour that shows on the dark buttons"
   expect(strokes.length).toBeGreaterThan(0);
   for (const stroke of strokes) expect(stroke).toBe("rgb(255, 255, 255)");
 });
+
+test("the hero's title and buttons fit a landscape phone", async ({ page }) => {
+  // With reduced motion the title is plain text rather than the looping pair,
+  // so it has a height of its own. At the portrait size (10vw, 84px here) it
+  // pushed the buttons to 437px on a 390px-tall screen. The motion half of the
+  // same bug, the line collapsing to nothing, is in intros.motion.spec.ts.
+  await page.setViewportSize({ width: 844, height: 390 });
+  await page.goto("/");
+  await enterSite(page);
+
+  const role = page.locator(".hero-role");
+  const box = (await role.boundingBox())!;
+  const fontSize = await role.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+  expect(box.height).toBeGreaterThanOrEqual(fontSize - 1);
+
+  const cta = (await page.locator(".hero-cta").boundingBox())!;
+  expect(cta.y).toBeGreaterThanOrEqual(box.y + box.height);
+  expect(cta.y + cta.height).toBeLessThanOrEqual(390);
+});
