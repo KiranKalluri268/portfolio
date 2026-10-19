@@ -23,11 +23,11 @@ export default function RouteError({
   }, [error]);
 
   return (
-    <main className="relative z-10 flex min-h-dvh flex-col items-center justify-center px-6 text-center">
+    <main className="body-text relative z-10 flex min-h-dvh flex-col items-center justify-center px-6 text-center">
       <PageScrim />
 
       <div className="relative flex flex-col items-center">
-        <p className="text-sm font-semibold tracking-[0.32em] text-accent-soft uppercase">
+        <p className="font-display text-sm font-semibold tracking-[0.32em] text-accent-soft uppercase">
           Something broke
         </p>
 

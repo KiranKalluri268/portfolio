@@ -177,7 +177,7 @@ export default function AboutSection() {
     <section
       ref={sectionRef}
       id="about"
-      className="relative min-h-[190svh] text-white"
+      className="body-text relative min-h-[190svh] text-white"
       aria-label={about.ariaLabel}
     >
       <div className="h-[30svh]" aria-hidden="true" />

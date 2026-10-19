@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import {
+  Inter,
   Tektur,
   Noto_Sans_Devanagari,
   Noto_Sans_Tamil,
@@ -33,6 +34,21 @@ const tektur = Tektur({
   subsets: ["latin", "latin-ext", "cyrillic", "greek", "vietnamese"],
   display: 'swap',
   weight: ["400", "500", "600", "700"],
+});
+
+/* Running text — case studies, the timeline, the About statement, answers and
+   recommendations. Tektur is a display face: at paragraph length its squared
+   letters tire the eye, so it stays on headings, labels and the scene's own
+   type, and sentences are set in Inter wherever a section opts in with
+   `.body-text` (globals.css). Served from this site like every next/font face,
+   so no request goes to Google. */
+const inter = Inter({
+  variable: "--font-inter",
+  // Latin only. Every subset listed is preloaded on every page, and nothing set
+  // in Inter uses Latin Extended — the one place it occurs, the greeting's
+  // "Cześć", is Tektur — so latin-ext was 83KB of every visit for no glyph.
+  subsets: ["latin"],
+  display: "swap",
 });
 
 /* The entry greeting says hello in four Indian scripts, and Tektur covers none
@@ -172,7 +188,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${tektur.variable} ${notoDevanagari.variable} ${notoTamil.variable} ${notoKannada.variable} ${notoMalayalam.variable} ${notoTelugu.variable}`}>
+    <html lang="en" className={`${tektur.variable} ${inter.variable} ${notoDevanagari.variable} ${notoTamil.variable} ${notoKannada.variable} ${notoMalayalam.variable} ${notoTelugu.variable}`}>
       <body className="relative bg-black">
         <script
           type="application/ld+json"

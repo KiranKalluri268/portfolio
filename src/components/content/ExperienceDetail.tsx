@@ -39,7 +39,7 @@ function TextList({ items }: { items: string[] }) {
       {items.map((item) => (
         <li key={item} className="flex gap-3 leading-relaxed">
           <span className="mt-[0.7em] h-1.5 w-1.5 shrink-0 rounded-full bg-accent-soft" aria-hidden="true" />
-          <span>{item}</span>
+          <span className="font-body">{item}</span>
         </li>
       ))}
     </ul>
@@ -193,20 +193,20 @@ export default function ExperienceDetail({
   const projectsBySlug = new Map(projects.map((project) => [project.slug, project]));
 
   return (
-    <main className="relative z-10 min-h-[100svh] px-4 pt-24 pb-8 text-white sm:px-6 sm:pt-28 sm:pb-12">
+    <main className="body-text relative z-10 min-h-[100svh] px-4 pt-24 pb-8 text-white sm:px-6 sm:pt-28 sm:pb-12">
       <article className="mx-auto max-w-5xl">
         <BackNavigationButton className="mb-10 rounded-full border border-white/15 bg-black/55 px-4 py-2 text-sm text-gray-200 backdrop-blur-md transition-colors hover:border-accent-soft/40 hover:text-white">
           <span aria-hidden="true">←</span> Back
         </BackNavigationButton>
 
         <header className="mb-10 max-w-4xl sm:mb-14">
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-accent-soft">
+          <p className="font-display text-sm font-semibold uppercase tracking-[0.24em] text-accent-soft">
             Experience{experience.employmentType ? ` · ${experience.employmentType}` : ""}
           </p>
           <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight sm:text-6xl">
             {experience.role}
           </h1>
-          <p className="mt-3 text-xl font-medium text-accent-soft sm:text-2xl">
+          <p className="font-display mt-3 text-xl font-medium text-accent-soft sm:text-2xl">
             {experience.companyUrl ? (
               <a
                 href={experience.companyUrl}
