@@ -184,6 +184,7 @@ export default function AboutSection() {
       <div className="sticky top-0 flex h-[100svh] items-center px-5 py-20 sm:px-10 lg:px-20">
         <div
           ref={copyRef}
+          data-blackhole-dim
           className="relative top-[clamp(1.5rem,4svh,3rem)] mx-auto w-full max-w-5xl sm:-left-[3vw] lg:-left-[5vw]"
         >
           <h2 className="mb-5 text-sm font-semibold uppercase tracking-[0.24em] text-white/55 sm:mb-8 sm:text-base">

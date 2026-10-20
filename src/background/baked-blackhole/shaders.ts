@@ -34,6 +34,10 @@
  *  more than the 1/255 the comparison already allows. */
 export const MAX_CROSSINGS = 3;
 
+/** How many blocks of text the black hole can dim behind at once. Only the
+ *  blocks on screen are passed; a screen rarely holds more than a handful. */
+export const MAX_DIM_RECTS = 12;
+
 // ── The bake's format ──
 // Every value is a 16-bit fraction, five 32-bit words a pixel — 20 bytes, where
 // float32 for four crossings was 64. At a phone's 2x that was 180MB of GPU
@@ -308,7 +312,35 @@ uniform sampler2D bloomTexture;
 // scaled about the centre, so the approach stays continuous rather than
 // stepping from bake to bake.
 uniform float zoom;
+// Where the page's text sits, so the black hole can step back behind it. The
+// canvas is turned and slid by CSS, so each pixel is first carried to where it
+// lands on screen: canvasCenter and canvasSize in CSS pixels, canvasTurn the
+// cosine and sine of its rotation. dimRects are screen rectangles, also in CSS
+// pixels, as left, top, right, bottom. Only the pixels behind them are dimmed,
+// to dimFloor of their brightness, with an edge dimFeather pixels wide.
+uniform vec2 canvasCenter;
+uniform vec2 canvasSize;
+uniform vec2 canvasTurn;
+uniform vec4 dimRects[${MAX_DIM_RECTS}];
+uniform int dimCount;
+uniform float dimFloor;
+uniform float dimFeather;
 out vec4 outColor;
+float behindText() {
+  vec2 local = (vec2(vUv.x, 1.0 - vUv.y) - 0.5) * canvasSize;
+  vec2 screen = canvasCenter + vec2(
+    local.x * canvasTurn.x - local.y * canvasTurn.y,
+    local.x * canvasTurn.y + local.y * canvasTurn.x);
+  float covered = 0.0;
+  for (int i = 0; i < dimCount; i++) {
+    vec4 rect = dimRects[i];
+    vec2 half_size = 0.5 * (rect.zw - rect.xy);
+    vec2 q = abs(screen - 0.5 * (rect.xy + rect.zw)) - half_size;
+    float outside = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0);
+    covered = max(covered, 1.0 - smoothstep(0.0, dimFeather, outside));
+  }
+  return covered;
+}
 void main() {
   vec2 uv = (vUv - 0.5) / zoom + 0.5;
   vec4 scene = texture(sceneTexture, uv);
@@ -321,6 +353,8 @@ void main() {
   float keep = smoothstep(0.0, 0.1, min(edge.x, edge.y));
   vec3 bloom = texture(bloomTexture, uv).rgb * keep;
   // Premultiplied: rgb with alpha 0 is added over what is behind the canvas.
-  outColor = vec4(min(scene.rgb + bloom, vec3(1.0)), scene.a);
+  // The shadow stays as dark as it is; only the light is taken down.
+  float light = mix(1.0, dimFloor, behindText());
+  outColor = vec4(min(scene.rgb + bloom, vec3(1.0)) * light, scene.a);
 }
 `;

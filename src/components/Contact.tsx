@@ -141,11 +141,12 @@ export default function ContactSection({
         >
           <h2
             id="recommendations-heading"
+            data-blackhole-dim
             className="mb-2 text-center text-sm font-semibold uppercase tracking-[0.22em] text-accent-soft"
           >
             Recommendations
           </h2>
-          <p className="mx-auto mb-8 max-w-xl text-center text-sm text-gray-400">
+          <p data-blackhole-dim className="mx-auto mb-8 max-w-xl text-center text-sm text-gray-400">
             From the people who managed me.
           </p>
           <div className="grid gap-5 md:grid-cols-2">
@@ -163,13 +164,13 @@ export default function ContactSection({
         data-scroll-target="contact"
         className="contact-panel relative flex w-full max-w-md scroll-mt-24 flex-col items-center sm:max-w-lg"
       >
-        <div>
+        <div data-blackhole-dim>
           <h2 className="contact-heading text-3xl font-bold sm:mb-4 mb-2">Contact Me</h2>
           <p className="contact-intro text-gray-400 mb-8">Feel free to reach out!</p>
         </div>
 
         {submitted ? (
-          <div className="animate-fade-in mb-8 flex flex-col items-center gap-5">
+          <div data-blackhole-dim className="animate-fade-in mb-8 flex flex-col items-center gap-5">
             <p className="font-semibold text-green-500" role="status" aria-live="polite">
               Thanks for reaching out! I will get back to you soon.
             </p>
@@ -182,7 +183,7 @@ export default function ContactSection({
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} noValidate className="contact-form flex w-full flex-col gap-4 text-left sm:gap-6" aria-label="Contact form">
+          <form data-blackhole-dim onSubmit={handleSubmit} noValidate className="contact-form flex w-full flex-col gap-4 text-left sm:gap-6" aria-label="Contact form">
             <div>
               <label htmlFor="name" className="block text-sm font-medium mb-1">
                 Name <span className="text-red-500">*</span>
@@ -254,7 +255,7 @@ export default function ContactSection({
           </form>
         )}
 
-        <div className="contact-socials mt-8 flex w-full justify-center gap-8 text-gray-200 sm:mt-20 sm:gap-16">
+        <div data-blackhole-dim className="contact-socials mt-8 flex w-full justify-center gap-8 text-gray-200 sm:mt-20 sm:gap-16">
           {socialLinks.map(({ name, url, svg }) => (
             <a
               key={name}

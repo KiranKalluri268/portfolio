@@ -5,6 +5,7 @@ import {
   FINAL_FRAGMENT,
   FULLSCREEN_VERTEX,
   HIGH_PASS_FRAGMENT,
+  MAX_DIM_RECTS,
   blurFragment,
 } from "./shaders";
 
@@ -28,6 +29,21 @@ export interface BakedBlackholeOptions {
   exposure?: number;
 }
 
+/** Where the canvas sits on screen and the text it should dim behind, all in
+ *  CSS pixels. The canvas is turned about its centre by `angleDeg`, clockwise,
+ *  as CSS's rotateZ turns it. */
+export interface BlackholeDimming {
+  center: [number, number];
+  size: [number, number];
+  angleDeg: number;
+  /** Screen rectangles as left, top, right, bottom. At most MAX_DIM_RECTS. */
+  rects: [number, number, number, number][];
+  /** What is left of the light behind text, from 0 to 1. */
+  floor: number;
+  /** How wide the soft edge around each rectangle is. */
+  feather: number;
+}
+
 export interface BakedBlackhole {
   /** Size in device pixels. Re-runs the bake when it changes. */
   resize(width: number, height: number): void;
@@ -38,6 +54,8 @@ export interface BakedBlackhole {
   /** Advances any bake by one strip and draws a frame once there is a finished
    *  bake to draw from. Returns true when a frame was drawn. */
   render(timeSeconds: number): boolean;
+  /** Dims the black hole behind the given text from the next frame on. */
+  setDimming(dimming: BlackholeDimming | null): void;
   /** 0 to 1, for the first bake. */
   readonly bakeProgress: number;
   /** True while a bake is still being integrated — for the first frame, or a
@@ -406,14 +424,30 @@ export function createBakedBlackhole(
       texture(0, scene!.textures[0], u("sceneTexture"));
       texture(1, horizontal[0].textures[0], u("bloomTexture"));
       gl!.uniform1f(u("zoom"), apparentScale(shown.camera, camera));
+      const count = dimming ? Math.min(dimming.rects.length, MAX_DIM_RECTS) : 0;
+      gl!.uniform1i(u("dimCount"), count);
+      if (dimming && count > 0) {
+        const angle = (dimming.angleDeg * Math.PI) / 180;
+        gl!.uniform2fv(u("canvasCenter"), dimming.center);
+        gl!.uniform2fv(u("canvasSize"), dimming.size);
+        gl!.uniform2f(u("canvasTurn"), Math.cos(angle), Math.sin(angle));
+        gl!.uniform4fv(u("dimRects"), dimming.rects.slice(0, count).flat());
+        gl!.uniform1f(u("dimFloor"), dimming.floor);
+        gl!.uniform1f(u("dimFeather"), Math.max(dimming.feather, 1e-3));
+      }
       draw();
     }
   }
+
+  let dimming: BlackholeDimming | null = null;
 
   return {
     resize,
     setCamera(next) {
       camera = next;
+    },
+    setDimming(next) {
+      dimming = next;
     },
     render(timeSeconds) {
       if (gl!.isContextLost() || (!front && !back)) return false;

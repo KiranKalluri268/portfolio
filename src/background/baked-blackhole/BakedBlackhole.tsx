@@ -1,6 +1,11 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { createBakedBlackhole, type BakedBlackholeOptions, type BlackholeCamera } from "./renderer";
+import {
+  createBakedBlackhole,
+  type BakedBlackholeOptions,
+  type BlackholeCamera,
+  type BlackholeDimming,
+} from "./renderer";
 
 /** The cinematic's settled black-hole frame: the bloom it ends the approach on.
  *  main.js lerps strength to 0.2 and threshold to 0.1 across the fall, from a
@@ -43,6 +48,16 @@ export const DEFAULT_SCROLL_PATH: ScrollPath = {
  *  a 2x or 3x ratio would have paid for pixels nobody sees. */
 const MAX_PIXEL_RATIO = 1.5;
 const MAX_BAKE_PIXELS = 1_000_000;
+
+/** Text the black hole steps back behind. Any element carrying this attribute
+ *  dims the light under it, and only under it: the rest of the disk keeps its
+ *  full brightness. Put it on a block of reading — a paragraph, a form, a row
+ *  of links — rather than a whole section, or the whole black hole dims. */
+export const DIM_BEHIND_ATTRIBUTE = "data-blackhole-dim";
+
+/** Behind text the light drops to this fraction, starting PAD pixels outside
+ *  the block and fading in over FEATHER more, so there is no visible box. */
+const DIM = { floor: 0.35, pad: 16, feather: 48 };
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const smoothstep = (t: number) => t * t * (3 - 2 * t);
@@ -104,17 +119,46 @@ export default function BakedBlackhole({
     });
 
     let lastTransform = "";
+    // Where place() last put the canvas: its slide, in vw and vh as CSS holds
+    // it so a resize keeps it right, and its turn.
+    const placed = { x: 0, y: 0, rollDeg: 0 };
+    const shiftPx = () => [(placed.x * window.innerWidth) / 100, (placed.y * window.innerHeight) / 100];
     const place = (t: number) => {
       const { rollDeg, shift } = pathRef.current;
       const x = lerp(shift[0][0], shift[1][0], t);
       const y = lerp(shift[0][1], shift[1][1], t);
-      const transform = `translate3d(${x.toFixed(3)}vw, ${y.toFixed(3)}vh, 0) rotateZ(${lerp(rollDeg[0], rollDeg[1], t).toFixed(3)}deg)`;
+      const roll = lerp(rollDeg[0], rollDeg[1], t);
+      placed.x = x;
+      placed.y = y;
+      placed.rollDeg = roll;
+      const transform = `translate3d(${x.toFixed(3)}vw, ${y.toFixed(3)}vh, 0) rotateZ(${roll.toFixed(3)}deg)`;
       if (transform !== lastTransform) {
         wrapper.style.transform = transform;
         lastTransform = transform;
       }
     };
     place(progress());
+
+    // Reads where the text and the canvas are, before this frame writes
+    // anything, so the reads cost no extra layout. The canvas's centre is
+    // measured as it was last placed and then moved by however far place() is
+    // about to slide it; a square turned about its centre keeps the centre of
+    // its bounding box there.
+    const measureText = () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const rects: BlackholeDimming["rects"] = [];
+      for (const element of document.querySelectorAll(`[${DIM_BEHIND_ATTRIBUTE}]`)) {
+        const box = element.getBoundingClientRect();
+        if (box.width === 0 || box.height === 0) continue;
+        if (box.bottom < -DIM.feather || box.top > height + DIM.feather) continue;
+        if (box.right < -DIM.feather || box.left > width + DIM.feather) continue;
+        rects.push([box.left - DIM.pad, box.top - DIM.pad, box.right + DIM.pad, box.bottom + DIM.pad]);
+      }
+      const box = wrapper.getBoundingClientRect();
+      const [x, y] = shiftPx();
+      return { rects, center: [box.left + box.width / 2 - x, box.top + box.height / 2 - y] };
+    };
 
     const image = new Image();
     image.src = "/textures/accretion_disk.png";
@@ -143,12 +187,14 @@ export default function BakedBlackhole({
       let drewStill = false;
       let shown = false;
       let lastProgress = -1;
+      let lastDimming = "";
       const tick = () => {
         frame = requestAnimationFrame(tick);
         if (!renderer) return;
         // display: none while the cinematic journey runs over the top of it.
         if (canvas.clientWidth === 0) return;
 
+        const text = measureText();
         const t = progress();
         const scrolled = t !== lastProgress;
         if (scrolled) {
@@ -157,11 +203,29 @@ export default function BakedBlackhole({
           renderer.setCamera(cameraAt(t));
         }
 
+        // Text moves without the page scrolling too — the carousel settling, a
+        // section revealing — so a change here is a reason to draw on its own.
+        const [shiftX, shiftY] = shiftPx();
+        const dimming: BlackholeDimming = {
+          center: [text.center[0] + shiftX, text.center[1] + shiftY],
+          size: [canvas.clientWidth, canvas.clientHeight],
+          angleDeg: placed.rollDeg,
+          rects: text.rects,
+          floor: DIM.floor,
+          feather: DIM.feather,
+        };
+        const signature = JSON.stringify([dimming.center, dimming.size, dimming.angleDeg, dimming.rects]);
+        const textMoved = signature !== lastDimming;
+        if (textMoved) {
+          lastDimming = signature;
+          renderer.setDimming(dimming);
+        }
+
         // Still while the visitor has not entered, while the tab is hidden, and
         // for anyone who asked for less motion — the video paused in all three.
         // A scroll still redraws it, so the approach follows the page.
         const spinning = enabledRef.current && !document.hidden && !reducedMotion.matches;
-        const settling = scrolled || renderer.busy;
+        const settling = scrolled || textMoved || renderer.busy;
         if (!spinning && !settling && drewStill) return;
         const drew = renderer.render(spinning ? (performance.now() - start) / 1000 : 0);
         if (drew) {

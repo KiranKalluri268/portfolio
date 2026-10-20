@@ -174,7 +174,7 @@ export default function ExperienceTimeline({
       aria-label="Experience timeline section"
     >
       <div className="relative mx-auto w-full max-w-[1080px] lg:-left-[6vw]">
-        <h2 className="mb-14 text-center text-3xl font-bold sm:text-4xl">
+        <h2 data-blackhole-dim className="mb-14 text-center text-3xl font-bold sm:text-4xl">
           Experience Timeline
         </h2>
 
@@ -274,6 +274,7 @@ function ExperienceRow({ experience, index, dotRef }: ExperienceRowProps) {
       >
         <Link
           href={`/experience/${experience.slug}`}
+          data-blackhole-dim
           className="group block h-full rounded-2xl border border-white/10 bg-black/55 p-5 shadow-xl backdrop-blur-sm transition-[background-color,border-color,box-shadow] duration-300 hover:border-accent-soft/25 hover:bg-white/5 hover:shadow-accent/10 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:p-6"
         >
           <h3 className="mb-3 text-xl font-bold tracking-wide sm:text-2xl">
@@ -328,7 +329,7 @@ function ExperienceRow({ experience, index, dotRef }: ExperienceRowProps) {
       <div
         className={`experience-card-scale relative z-10 will-change-[transform,opacity] col-start-2 row-start-2 origin-center ${descriptionColumn} md:row-start-1 ${isReversed ? "md:origin-right" : "md:origin-left"}`}
       >
-        <div className="h-full rounded-2xl border border-white/10 bg-black/55 p-5 shadow-xl backdrop-blur-sm transition-[background-color,border-color,box-shadow] duration-300 hover:border-purple-400/25 hover:bg-white/5 hover:shadow-purple-500/10 sm:p-6">
+        <div data-blackhole-dim className="h-full rounded-2xl border border-white/10 bg-black/55 p-5 shadow-xl backdrop-blur-sm transition-[background-color,border-color,box-shadow] duration-300 hover:border-purple-400/25 hover:bg-white/5 hover:shadow-purple-500/10 sm:p-6">
           <h4 className="mb-4 text-sm font-semibold uppercase tracking-widest text-gray-400">
             Highlights
           </h4>
