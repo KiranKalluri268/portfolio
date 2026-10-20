@@ -162,7 +162,7 @@ export default function ContactSection({
 
       <div
         data-scroll-target="contact"
-        className="contact-panel relative flex w-full max-w-md scroll-mt-24 flex-col items-center sm:max-w-lg lg:ml-[6vw] lg:self-start"
+        className="contact-panel relative flex w-full max-w-md scroll-mt-24 flex-col items-center sm:max-w-lg lg:ml-[max(6vw,calc(25vw-15rem))] lg:self-start"
       >
         <div data-blackhole-dim="text">
           <h2 className="contact-heading text-3xl font-bold sm:mb-4 mb-2">Contact Me</h2>
