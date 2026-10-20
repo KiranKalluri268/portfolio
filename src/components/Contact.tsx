@@ -141,12 +141,12 @@ export default function ContactSection({
         >
           <h2
             id="recommendations-heading"
-            data-blackhole-dim
+            data-blackhole-dim="text"
             className="mb-2 text-center text-sm font-semibold uppercase tracking-[0.22em] text-accent-soft"
           >
             Recommendations
           </h2>
-          <p data-blackhole-dim className="mx-auto mb-8 max-w-xl text-center text-sm text-gray-400">
+          <p data-blackhole-dim="text" className="mx-auto mb-8 max-w-xl text-center text-sm text-gray-400">
             From the people who managed me.
           </p>
           <div className="grid gap-5 md:grid-cols-2">
@@ -164,26 +164,27 @@ export default function ContactSection({
         data-scroll-target="contact"
         className="contact-panel relative flex w-full max-w-md scroll-mt-24 flex-col items-center sm:max-w-lg"
       >
-        <div data-blackhole-dim>
+        <div data-blackhole-dim="text">
           <h2 className="contact-heading text-3xl font-bold sm:mb-4 mb-2">Contact Me</h2>
           <p className="contact-intro text-gray-400 mb-8">Feel free to reach out!</p>
         </div>
 
         {submitted ? (
-          <div data-blackhole-dim className="animate-fade-in mb-8 flex flex-col items-center gap-5">
+          <div data-blackhole-dim="text" className="animate-fade-in mb-8 flex flex-col items-center gap-5">
             <p className="font-semibold text-green-500" role="status" aria-live="polite">
               Thanks for reaching out! I will get back to you soon.
             </p>
             <button
               type="button"
               onClick={() => setSubmitted(false)}
+              data-blackhole-dim="box"
               className="rounded-full border border-white/25 bg-black/40 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:border-accent hover:text-accent-soft"
             >
               Send another message
             </button>
           </div>
         ) : (
-          <form data-blackhole-dim onSubmit={handleSubmit} noValidate className="contact-form flex w-full flex-col gap-4 text-left sm:gap-6" aria-label="Contact form">
+          <form data-blackhole-dim="text" onSubmit={handleSubmit} noValidate className="contact-form flex w-full flex-col gap-4 text-left sm:gap-6" aria-label="Contact form">
             <div>
               <label htmlFor="name" className="block text-sm font-medium mb-1">
                 Name <span className="text-red-500">*</span>
@@ -192,6 +193,7 @@ export default function ContactSection({
                 id="name"
                 name="name"
                 type="text"
+                data-blackhole-dim="box"
                 value={form.name}
                 onChange={handleChange}
                 className={fieldClasses(Boolean(errors.name))}
@@ -210,6 +212,7 @@ export default function ContactSection({
                 id="email"
                 name="email"
                 type="email"
+                data-blackhole-dim="box"
                 value={form.email}
                 onChange={handleChange}
                 className={fieldClasses(Boolean(errors.email))}
@@ -228,6 +231,7 @@ export default function ContactSection({
                 id="message"
                 name="message"
                 rows={4}
+                data-blackhole-dim="box"
                 value={form.message}
                 onChange={handleChange}
                 className={`${fieldClasses(Boolean(errors.message))} contact-message`}
@@ -255,7 +259,7 @@ export default function ContactSection({
           </form>
         )}
 
-        <div data-blackhole-dim className="contact-socials mt-8 flex w-full justify-center gap-8 text-gray-200 sm:mt-20 sm:gap-16">
+        <div className="contact-socials mt-8 flex w-full justify-center gap-8 text-gray-200 sm:mt-20 sm:gap-16">
           {socialLinks.map(({ name, url, svg }) => (
             <a
               key={name}

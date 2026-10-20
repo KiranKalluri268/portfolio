@@ -34,9 +34,9 @@
  *  more than the 1/255 the comparison already allows. */
 export const MAX_CROSSINGS = 3;
 
-/** How many blocks of text the black hole can dim behind at once. Only the
- *  blocks on screen are passed; a screen rarely holds more than a handful. */
-export const MAX_DIM_RECTS = 12;
+/** How many shapes the black hole can dim behind at once: a line of text is
+ *  one, a card or a form field is one. Only the shapes on screen are passed. */
+export const MAX_DIM_RECTS = 48;
 
 // ── The bake's format ──
 // Every value is a 16-bit fraction, five 32-bit words a pixel — 20 bytes, where
@@ -355,24 +355,27 @@ uniform vec2 rollTurn;       // cos and sin of shown roll minus target roll
 // Where the page's text sits, so the black hole can step back behind it.
 // canvasOrigin and canvasSize place the canvas on screen in CSS pixels;
 // dimRects are screen rectangles, also in CSS pixels, as left, top, right,
-// bottom. Only the pixels behind them are dimmed, to dimFloor of their
-// brightness, with an edge dimFeather pixels wide.
+// bottom, and dimShapes their corner radius and the half-width of their soft
+// edge, centred on the outline. Only the pixels inside them are dimmed, to
+// dimFloor of their brightness: nothing spills out around them.
 uniform vec2 canvasOrigin;
 uniform vec2 canvasSize;
 uniform vec4 dimRects[${MAX_DIM_RECTS}];
+uniform vec2 dimShapes[${MAX_DIM_RECTS}];
 uniform int dimCount;
 uniform float dimFloor;
-uniform float dimFeather;
 out vec4 outColor;
 float behindText() {
   vec2 screen = canvasOrigin + vec2(vUv.x, 1.0 - vUv.y) * canvasSize;
   float covered = 0.0;
   for (int i = 0; i < dimCount; i++) {
     vec4 rect = dimRects[i];
+    float radius = min(dimShapes[i].x, 0.5 * min(rect.z - rect.x, rect.w - rect.y));
+    float soft = dimShapes[i].y;
     vec2 half_size = 0.5 * (rect.zw - rect.xy);
-    vec2 q = abs(screen - 0.5 * (rect.xy + rect.zw)) - half_size;
-    float outside = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0);
-    covered = max(covered, 1.0 - smoothstep(0.0, dimFeather, outside));
+    vec2 q = abs(screen - 0.5 * (rect.xy + rect.zw)) - half_size + radius;
+    float outside = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
+    covered = max(covered, 1.0 - smoothstep(-soft, soft, outside));
   }
   return covered;
 }

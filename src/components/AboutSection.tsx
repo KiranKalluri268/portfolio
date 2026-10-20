@@ -184,7 +184,7 @@ export default function AboutSection() {
       <div className="sticky top-0 flex h-[100svh] items-center px-5 py-20 sm:px-10 lg:px-20">
         <div
           ref={copyRef}
-          data-blackhole-dim
+          data-blackhole-dim="text"
           className="relative top-[clamp(1.5rem,4svh,3rem)] mx-auto w-full max-w-5xl sm:-left-[3vw] lg:-left-[5vw]"
         >
           <h2 className="mb-5 text-sm font-semibold uppercase tracking-[0.24em] text-white/55 sm:mb-8 sm:text-base">
@@ -210,6 +210,7 @@ export default function AboutSection() {
           </p>
           <Link
             ref={resumeLinkRef}
+            data-blackhole-dim="box"
             href="/resume"
             className="pointer-events-none mt-7 inline-flex items-center rounded-full border border-accent-soft/50 bg-accent/10 px-4 py-2 text-sm font-semibold tracking-wide text-white opacity-[0.08] shadow-[0_0_22px_rgba(255,122,24,0.12)] transition-[background-color,border-color,box-shadow] hover:border-accent-soft hover:bg-accent/20 hover:shadow-[0_0_28px_rgba(255,122,24,0.25)] sm:mt-9 sm:text-base"
           >

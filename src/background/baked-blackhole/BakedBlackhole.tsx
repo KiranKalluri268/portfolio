@@ -91,15 +91,75 @@ export function cameraBetween(start: BlackholeCamera, end: BlackholeCamera, t: n
 const MAX_PIXEL_RATIO = 1.5;
 const MAX_BAKE_PIXELS = 1_000_000;
 
-/** Text the black hole steps back behind. Any element carrying this attribute
- *  dims the light under it, and only under it: the rest of the disk keeps its
- *  full brightness. Put it on a block of reading — a paragraph, a form, a row
- *  of links — rather than a whole section, or the whole black hole dims. */
+/** What the black hole steps back behind, and only exactly behind: nothing
+ *  dims around it, because a dark patch in open space reads as a shadow with
+ *  nothing to fall on.
+ *
+ *  - `data-blackhole-dim="text"` dims under each line of the element's text,
+ *    hugging the words, not the block they sit in.
+ *  - `data-blackhole-dim="box"` dims the element's own outline, rounded
+ *    corners included, as if the box were tinted glass. For things drawn as
+ *    boxes: cards, form fields, buttons. */
 export const DIM_BEHIND_ATTRIBUTE = "data-blackhole-dim";
 
-/** Behind text the light drops to this fraction, starting PAD pixels outside
- *  the block and fading in over FEATHER more, so there is no visible box. */
-const DIM = { floor: 0.35, pad: 16, feather: 48 };
+/** Behind text the light drops to this fraction. A line of text is widened by
+ *  `textPad` and given a `textSoft` edge either side of that, so the dark
+ *  follows the words without a hard rule; a box keeps its exact outline with
+ *  `boxSoft` of antialiasing. */
+const DIM = { floor: 0.35, textPad: 2, textSoft: 3, boxSoft: 0.75 };
+
+type DimShape = BlackholeDimming["rects"][number];
+
+/** A text element's lines, relative to its own top-left corner. Measured once
+ *  and kept until the element's size or text changes: a paragraph split into a
+ *  span a word is a hundred rectangles to read, and the lines only move with
+ *  the element, which is one read a frame. */
+const lineCache = new WeakMap<Element, { key: string; lines: [number, number, number, number][] }>();
+
+function textLines(element: Element, box: DOMRect) {
+  const key = `${box.width.toFixed(1)}x${box.height.toFixed(1)}:${element.textContent?.length ?? 0}`;
+  const cached = lineCache.get(element);
+  if (cached?.key === key) return cached.lines;
+
+  const range = document.createRange();
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+  const lines: [number, number, number, number][] = [];
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (!node.textContent?.trim()) continue;
+    const parent = node.parentElement;
+    if (parent && (parent.closest(".sr-only") || getComputedStyle(parent).visibility === "hidden")) continue;
+    range.selectNodeContents(node);
+    for (const r of range.getClientRects()) {
+      if (r.width === 0 || r.height === 0) continue;
+      // The same line if the two overlap by most of the shorter one's height.
+      const line = lines.find(
+        (l) => Math.min(l[3], r.bottom) - Math.max(l[1], r.top) > 0.5 * Math.min(l[3] - l[1], r.height),
+      );
+      if (line) {
+        line[0] = Math.min(line[0], r.left);
+        line[1] = Math.min(line[1], r.top);
+        line[2] = Math.max(line[2], r.right);
+        line[3] = Math.max(line[3], r.bottom);
+      } else {
+        lines.push([r.left, r.top, r.right, r.bottom]);
+      }
+    }
+  }
+  const relative = lines.map(([l, t, r, b]) => [l - box.left, t - box.top, r - box.left, b - box.top] as [number, number, number, number]);
+  lineCache.set(element, { key, lines: relative });
+  return relative;
+}
+
+const radiusCache = new WeakMap<Element, number>();
+
+function cornerRadius(element: Element) {
+  let radius = radiusCache.get(element);
+  if (radius === undefined) {
+    radius = parseFloat(getComputedStyle(element).borderTopLeftRadius) || 0;
+    radiusCache.set(element, radius);
+  }
+  return radius;
+}
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const smoothstep = (t: number) => t * t * (3 - 2 * t);
@@ -163,13 +223,22 @@ export default function BakedBlackhole({
     const measureText = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
-      const rects: BlackholeDimming["rects"] = [];
+      const rects: DimShape[] = [];
       for (const element of document.querySelectorAll(`[${DIM_BEHIND_ATTRIBUTE}]`)) {
         const box = element.getBoundingClientRect();
         if (box.width === 0 || box.height === 0) continue;
-        if (box.bottom < -DIM.feather || box.top > height + DIM.feather) continue;
-        if (box.right < -DIM.feather || box.left > width + DIM.feather) continue;
-        rects.push([box.left - DIM.pad, box.top - DIM.pad, box.right + DIM.pad, box.bottom + DIM.pad]);
+        if (box.bottom < 0 || box.top > height || box.right < 0 || box.left > width) continue;
+        if (element.getAttribute(DIM_BEHIND_ATTRIBUTE) === "box") {
+          rects.push([box.left, box.top, box.right, box.bottom, cornerRadius(element), DIM.boxSoft]);
+          continue;
+        }
+        const pad = DIM.textPad;
+        for (const [l, t, r, b] of textLines(element, box)) {
+          const top = box.top + t;
+          const bottom = box.top + b;
+          if (bottom < 0 || top > height) continue;
+          rects.push([box.left + l - pad, top - pad, box.left + r + pad, bottom + pad, (bottom - top) / 2, DIM.textSoft]);
+        }
       }
       const box = canvas.getBoundingClientRect();
       return { rects, origin: [box.left, box.top] as [number, number] };
@@ -227,7 +296,6 @@ export default function BakedBlackhole({
           size: [canvas.clientWidth, canvas.clientHeight],
           rects: text.rects,
           floor: DIM.floor,
-          feather: DIM.feather,
         };
         const signature = JSON.stringify([dimming.origin, dimming.size, dimming.rects]);
         const textMoved = signature !== lastDimming;

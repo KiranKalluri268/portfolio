@@ -38,12 +38,12 @@ export interface BlackholeDimming {
   /** The canvas's top-left corner. */
   origin: [number, number];
   size: [number, number];
-  /** Screen rectangles as left, top, right, bottom. At most MAX_DIM_RECTS. */
-  rects: [number, number, number, number][];
+  /** Screen rectangles as left, top, right, bottom, then the corner radius
+   *  and the half-width of the soft edge on the outline. At most
+   *  MAX_DIM_RECTS. */
+  rects: [number, number, number, number, number, number][];
   /** What is left of the light behind text, from 0 to 1. */
   floor: number;
-  /** How wide the soft edge around each rectangle is. */
-  feather: number;
 }
 
 export interface BakedBlackhole {
@@ -449,9 +449,10 @@ export function createBakedBlackhole(
       if (dimming && count > 0) {
         gl!.uniform2fv(u("canvasOrigin"), dimming.origin);
         gl!.uniform2fv(u("canvasSize"), dimming.size);
-        gl!.uniform4fv(u("dimRects"), dimming.rects.slice(0, count).flat());
+        const shown = dimming.rects.slice(0, count);
+        gl!.uniform4fv(u("dimRects"), shown.flatMap((r) => r.slice(0, 4)));
+        gl!.uniform2fv(u("dimShapes"), shown.flatMap((r) => [r[4], Math.max(r[5], 1e-3)]));
         gl!.uniform1f(u("dimFloor"), dimming.floor);
-        gl!.uniform1f(u("dimFeather"), Math.max(dimming.feather, 1e-3));
       }
       draw();
     }
