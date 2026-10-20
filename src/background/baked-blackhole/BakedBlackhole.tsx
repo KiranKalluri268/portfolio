@@ -163,16 +163,52 @@ function cornerRadius(element: Element) {
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
-/** How long the black hole takes to move to a new stop. Long enough that a big
- *  approach stays smooth while the bakes catch up, short enough to be over by
- *  the time the visitor is reading the section it moved for. */
+/** How long a move of a fifth of the path takes from rest — one section on the
+ *  home page. Long enough that a big approach stays smooth while the bakes
+ *  catch up, short enough to be over by the time the visitor is reading the
+ *  section it moved for. */
 export const STOP_MOVE_MS = 1400;
+const STOP_MOVE_SPAN = 0.2;
+/** Longer moves take longer, but far less than in proportion: five sections at
+ *  once is about 2.5s, not 7, so it never trails far behind the page. */
+const STOP_MOVE_GROWTH = 0.35;
+/** Even a move back to almost where it is gets this long to turn round in. */
+const STOP_MOVE_MIN_MS = 300;
 
-/** How far through a move to a new stop it is, eased in and out so it neither
- *  starts nor lands with a jolt. */
-export function moveEase(elapsedMs: number) {
-  const t = Math.min(1, Math.max(0, elapsedMs / STOP_MOVE_MS));
-  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+/** One move along the path: a cubic from `from` to `to` over `ms`, leaving at
+ *  `slope` (its speed, in path per move) and arriving at rest. */
+export interface Glide {
+  from: number;
+  to: number;
+  slope: number;
+  at: number;
+  ms: number;
+}
+
+export const restingAt = (stop: number): Glide => ({ from: stop, to: stop, slope: 0, at: 0, ms: 1 });
+
+/** Where a glide is at `now`, and how fast it is going, in path per ms. */
+export function glideAt(glide: Glide, now: number) {
+  const s = Math.min(1, Math.max(0, (now - glide.at) / glide.ms));
+  const span = glide.to - glide.from;
+  const x = glide.from + glide.slope * (s - 2 * s * s + s * s * s) + span * (3 * s * s - 2 * s * s * s);
+  const v = s >= 1 ? 0 : (glide.slope * (1 - 4 * s + 3 * s * s) + span * (6 * s - 6 * s * s)) / glide.ms;
+  return { x, v };
+}
+
+/** A new stop, taken from wherever the black hole is and at the speed it is
+ *  already going, so a change mid-move never stalls it. Further the same way,
+ *  it glides on and lands once, at the new stop. Back the other way, it eases
+ *  to a halt, turns and heads back. */
+export function retarget(glide: Glide, now: number, to: number): Glide {
+  const { x, v } = glideAt(glide, now);
+  const span = to - x;
+  let ms = Math.max(STOP_MOVE_MIN_MS, STOP_MOVE_MS * Math.pow(Math.abs(span) / STOP_MOVE_SPAN, STOP_MOVE_GROWTH));
+  // Already heading there: never so long that the speed it has would carry it
+  // past the stop and back. A cubic leaving at more than three times its
+  // average speed overshoots.
+  if (v * span > 0) ms = Math.min(ms, (3 * Math.abs(span)) / Math.abs(v));
+  return { from: x, to, slope: v * ms, at: now, ms };
 }
 
 export default function BakedBlackhole({
@@ -186,7 +222,7 @@ export default function BakedBlackhole({
   className: string;
   path?: CameraPath;
   /** Where along the path to rest, from 0 at its start to 1 at its end. A new
-   *  stop is moved to over STOP_MOVE_MS, and the black hole holds still there
+   *  stop is glided to — see retarget — and the black hole holds still there
    *  until the next. */
   stop?: number;
   /** Whether it should be moving — the same gate the video plays on. */
@@ -219,24 +255,20 @@ export default function BakedBlackhole({
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const wide = window.matchMedia("(min-width: 640px)");
 
-    // Where along the path it is. It moves from wherever it was when the stop
-    // changed, so a stop that changes again mid-move turns it round smoothly
-    // rather than jumping back to the last stop first. Held at the start for
-    // anyone who asked for less motion.
-    const move = { from: stopRef.current, to: stopRef.current, at: 0 };
+    // Where along the path it is. Held at the start for anyone who asked for
+    // less motion.
+    let glide = restingAt(stopRef.current);
     let shown = false;
     const progress = () => {
       if (reducedMotion.matches) return 0;
       const now = performance.now();
       const target = stopRef.current;
-      if (target !== move.to) {
+      if (target !== glide.to) {
         // Until the first frame is on screen there is nothing to move from: a
         // page opened part-way down starts at its own stop.
-        move.from = shown ? lerp(move.from, move.to, moveEase(now - move.at)) : target;
-        move.to = target;
-        move.at = now;
+        glide = shown ? retarget(glide, now, target) : restingAt(target);
       }
-      return lerp(move.from, move.to, moveEase(now - move.at));
+      return glideAt(glide, now).x;
     };
     const cameraAt = (t: number): BlackholeCamera => {
       const { start, end } = pathRef.current({

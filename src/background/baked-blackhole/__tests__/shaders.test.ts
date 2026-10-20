@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { fragmentShader as cinematic } from "@/cinematic/scene/graphics/fragmentShader";
 import { BAKE_FRAGMENT, DISK_FRAGMENT } from "../shaders";
 import { cameraVectors } from "../renderer";
-import { HOME_PATH, STILL_PATH, STOP_MOVE_MS, cameraBetween, moveEase } from "../BakedBlackhole";
+import { HOME_PATH, STILL_PATH, STOP_MOVE_MS, cameraBetween, glideAt, restingAt, retarget, type Glide } from "../BakedBlackhole";
 
 /** Whitespace is free to differ between the two; nothing else is. */
 const squash = (source: string) => source.replace(/\s+/g, "");
@@ -156,24 +156,67 @@ describe("the home page's path", () => {
   });
 });
 
-describe("moving between stops", () => {
-  it("starts and lands still, and is over in STOP_MOVE_MS", () => {
-    expect(moveEase(0)).toBe(0);
-    expect(moveEase(STOP_MOVE_MS)).toBe(1);
-    expect(moveEase(STOP_MOVE_MS * 2)).toBe(1);
-    expect(moveEase(-100)).toBe(0);
-    expect(moveEase(STOP_MOVE_MS / 2)).toBeCloseTo(0.5);
-    // Eased in and out: slow at both ends, so no jolt on leaving or arriving.
-    const step = STOP_MOVE_MS / 100;
-    expect(moveEase(step)).toBeLessThan(0.001);
-    expect(1 - moveEase(STOP_MOVE_MS - step)).toBeLessThan(0.001);
+describe("gliding between stops", () => {
+  const sample = (glide: Glide, from: number, to: number) => {
+    const out = [];
+    for (let t = from; t <= to; t += 5) out.push({ t, ...glideAt(glide, t) });
+    return out;
+  };
+
+  it("takes STOP_MOVE_MS for one section from rest, leaving and landing still", () => {
+    const glide = retarget(restingAt(0), 0, 0.2);
+    expect(glide.ms).toBeCloseTo(STOP_MOVE_MS);
+    expect(glideAt(glide, 0)).toEqual({ x: 0, v: 0 });
+    expect(glideAt(glide, glide.ms).x).toBeCloseTo(0.2, 12);
+    expect(glideAt(glide, glide.ms).v).toBe(0);
+    expect(glideAt(glide, glide.ms * 3).x).toBeCloseTo(0.2, 12);
   });
 
-  it("never runs backwards", () => {
-    let last = 0;
-    for (let ms = 0; ms <= STOP_MOVE_MS; ms += 10) {
-      expect(moveEase(ms)).toBeGreaterThanOrEqual(last);
-      last = moveEase(ms);
-    }
+  it("takes longer for a longer move, but far less than in proportion", () => {
+    const whole = retarget(restingAt(0), 0, 1).ms;
+    expect(whole).toBeGreaterThan(STOP_MOVE_MS);
+    expect(whole).toBeLessThan(STOP_MOVE_MS * 2);
+  });
+
+  it("carries on without slowing when a further stop arrives mid-move", () => {
+    const first = retarget(restingAt(0), 0, 0.2);
+    const switchAt = first.ms / 2;
+    const before = glideAt(first, switchAt);
+    const second = retarget(first, switchAt, 0.4);
+    const after = glideAt(second, switchAt);
+    expect(after.x).toBeCloseTo(before.x, 12);
+    expect(after.v).toBeCloseTo(before.v, 12);
+    const path = sample(second, switchAt, switchAt + second.ms);
+    // No stall: it holds at least the speed it had until it starts to land.
+    const landing = switchAt + second.ms * 0.4;
+    expect(path.filter((p) => p.t < landing).every((p) => p.v >= before.v * 0.99)).toBe(true);
+    // Always forwards, and it lands on the new stop without overshooting.
+    path.slice(1).forEach((p, i) => expect(p.x).toBeGreaterThanOrEqual(path[i].x - 1e-12));
+    expect(Math.max(...path.map((p) => p.x))).toBeLessThanOrEqual(0.4 + 1e-12);
+    expect(glideAt(second, switchAt + second.ms).x).toBeCloseTo(0.4, 12);
+  });
+
+  it("turns round smoothly when the stop goes back the other way", () => {
+    const first = retarget(restingAt(0.2), 0, 0.4);
+    const switchAt = first.ms / 2;
+    const before = glideAt(first, switchAt);
+    const back = retarget(first, switchAt, 0.2);
+    expect(glideAt(back, switchAt).v).toBeCloseTo(before.v, 12);
+    const path = sample(back, switchAt, switchAt + back.ms);
+    // It eases on a little the way it was going, then heads back and lands on
+    // the stop without passing it.
+    expect(Math.max(...path.map((p) => p.x))).toBeGreaterThan(before.x);
+    expect(Math.min(...path.map((p) => p.x))).toBeGreaterThanOrEqual(0.2 - 1e-12);
+    expect(glideAt(back, switchAt + back.ms).x).toBeCloseTo(0.2, 12);
+    expect(glideAt(back, switchAt + back.ms).v).toBe(0);
+  });
+
+  it("never overshoots however fast it is going when a near stop arrives", () => {
+    const fast = retarget(restingAt(0), 0, 1);
+    const switchAt = fast.ms / 2;
+    const { x } = glideAt(fast, switchAt);
+    const near = retarget(fast, switchAt, x + 0.01);
+    const path = sample(near, switchAt, switchAt + near.ms);
+    expect(Math.max(...path.map((p) => p.x))).toBeLessThanOrEqual(x + 0.01 + 1e-12);
   });
 });
