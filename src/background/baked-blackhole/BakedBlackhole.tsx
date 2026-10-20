@@ -102,11 +102,11 @@ const MAX_BAKE_PIXELS = 1_000_000;
  *    boxes: cards, form fields, buttons. */
 export const DIM_BEHIND_ATTRIBUTE = "data-blackhole-dim";
 
-/** Behind text the light drops to this fraction. A line of text is widened by
- *  `textPad` and given a `textSoft` edge either side of that, so the dark
- *  follows the words without a hard rule; a box keeps its exact outline with
- *  `boxSoft` of antialiasing. */
-const DIM = { floor: 0.35, textPad: 2, textSoft: 3, boxSoft: 0.75 };
+/** Behind text the light drops to this fraction. Each shape fades in from its
+ *  outline over its soft width, so no edge is drawn where the dimming starts.
+ *  A line of text is widened by `textPad` to give its fade room; a box fades
+ *  in over `boxSoft` inside its own outline. */
+const DIM = { floor: 0.35, textPad: 8, textSoft: 12, boxSoft: 24 };
 
 type DimShape = BlackholeDimming["rects"][number];
 

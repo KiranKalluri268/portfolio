@@ -355,9 +355,10 @@ uniform vec2 rollTurn;       // cos and sin of shown roll minus target roll
 // Where the page's text sits, so the black hole can step back behind it.
 // canvasOrigin and canvasSize place the canvas on screen in CSS pixels;
 // dimRects are screen rectangles, also in CSS pixels, as left, top, right,
-// bottom, and dimShapes their corner radius and the half-width of their soft
-// edge, centred on the outline. Only the pixels inside them are dimmed, to
-// dimFloor of their brightness: nothing spills out around them.
+// bottom, and dimShapes their corner radius and the width of their soft
+// edge. The dimming fades in from nothing at the outline to dimFloor of the
+// brightness that far inside it: nothing spills out around them, and no hard
+// edge traces the outline.
 uniform vec2 canvasOrigin;
 uniform vec2 canvasSize;
 uniform vec4 dimRects[${MAX_DIM_RECTS}];
@@ -375,7 +376,7 @@ float behindText() {
     vec2 half_size = 0.5 * (rect.zw - rect.xy);
     vec2 q = abs(screen - 0.5 * (rect.xy + rect.zw)) - half_size + radius;
     float outside = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
-    covered = max(covered, 1.0 - smoothstep(-soft, soft, outside));
+    covered = max(covered, 1.0 - smoothstep(-soft, 0.0, outside));
   }
   return covered;
 }
