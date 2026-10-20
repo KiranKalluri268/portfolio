@@ -152,7 +152,13 @@ export function cameraVectors({ distance, elevationDeg, rollDeg }: BlackholeCame
   ];
   const r = (rollDeg * Math.PI) / 180;
   up = up.map((v, i) => v * Math.cos(r) + right[i] * Math.sin(r));
-  return { position, dir, up };
+  // The cinematic's Observer is always in orbit, and at orbit angle 0 its
+  // velocity is (-cos(elevation) * angularVelocity, 0, 0) — written as it is
+  // there, angular velocity standing in for speed — with angularVelocity at its
+  // orbital ceiling, 1 / sqrt(2(r - 1)) / r.
+  const angularVelocity = 1 / Math.sqrt(2 * (distance - 1)) / distance;
+  const velocity = [-Math.cos(e) * angularVelocity, 0, 0];
+  return { position, dir, up, velocity };
 }
 
 /** How much bigger the black hole looks from `to` than from `from`, for the
@@ -327,7 +333,7 @@ export function createBakedBlackhole(
 
   function bakeStrip(bake: Bake) {
     const rows = Math.max(1, Math.floor(stripPixels / width));
-    const { position, dir, up } = cameraVectors(bake.camera);
+    const { position, dir, up, velocity } = cameraVectors(bake.camera);
     const { p, u } = programs.bake;
     bind(bake.target);
     gl!.useProgram(p);
@@ -335,6 +341,7 @@ export function createBakedBlackhole(
     gl!.uniform3fv(u("cam_pos"), position);
     gl!.uniform3fv(u("cam_dir"), dir);
     gl!.uniform3fv(u("cam_up"), up);
+    gl!.uniform3fv(u("cam_vel"), velocity);
     gl!.uniform1f(u("fov"), bake.camera.fovDeg);
     gl!.enable(gl!.SCISSOR_TEST);
     gl!.scissor(0, bake.rows, width, Math.min(rows, height - bake.rows));

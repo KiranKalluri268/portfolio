@@ -47,10 +47,13 @@ export const MAX_DIM_RECTS = 12;
 //   v        disk texture v, 1/65534 steps; 0xFFFF means "no crossing here"
 //   doppler  the disk's Doppler factor, mapped from [0.5, 1.5]; the physical
 //            range at the disk's inner edge is about 0.88 to 1.26
+//   ray      the ray's own Doppler factor from the camera's motion, 15 bits
+//            over the same [0.5, 1.5]; exactly 1 for a camera that is not
+//            moving
 //
 //   word 0: angle0 | v0 << 16      word 1: doppler0 | angle1 << 16
 //   word 2: v1 | doppler1 << 16    word 3: angle2 | v2 << 16
-//   word 4: doppler2 | horizon << 16
+//   word 4: doppler2 | ray << 16 | horizon << 31
 //
 // Words 0-3 are one RGBA32UI target, word 4 an R32UI one. Integer targets are
 // renderable in every WebGL2, where float ones needed an extension.
@@ -81,6 +84,9 @@ uniform vec3 cam_pos;
 uniform vec3 cam_dir;
 uniform vec3 cam_up;
 uniform float fov;
+// The observer's orbital velocity, as the cinematic's Observer sets it. Zero
+// would be a camera hanging still beside the hole; the cinematic's never is.
+uniform vec3 cam_vel;
 
 const float DISK_IN = 2.0;
 const float DISK_WIDTH = 4.0;
@@ -94,6 +100,19 @@ layout(location = 1) out uint lastWord;
 uint angle16(float turns) { return uint(fract(turns) * 65536.0 + 0.5) & 0xFFFFu; }
 uint v16(float v) { return uint(clamp(v, 0.0, 1.0) * 65534.0 + 0.5); }
 uint doppler16(float d) { return uint(clamp((d - DOPPLER_MIN) / DOPPLER_SPAN, 0.0, 1.0) * 65535.0 + 0.5); }
+uint doppler15(float d) { return uint(clamp((d - DOPPLER_MIN) / DOPPLER_SPAN, 0.0, 1.0) * 32767.0 + 0.5); }
+
+// The cinematic's, unchanged.
+vec3 lorentz_transform_velocity(vec3 u, vec3 v){
+  float speed = length(v);
+  if (speed > 0.0){
+    float gamma = 1.0/sqrt(1.0-dot(v,v));
+    float denominator = 1.0 - dot(v,u);
+    vec3 new_u = (u/gamma - v + (gamma/(gamma+1.0)) * dot(u,v)*v)/denominator;
+    return new_u;
+  }
+  return u;
+}
 
 void main() {
   // The cinematic's projection with its compose shift left out: the shift
@@ -109,6 +128,11 @@ void main() {
   up = cross(nright, forward);
   vec3 pixel_pos = cam_pos + forward + nright * uv.x * uvfov + up * uv.y * uvfov;
   vec3 ray_dir = normalize(pixel_pos - cam_pos);
+  // Light aberration: a moving camera sees every ray arrive from further
+  // ahead. With the ray's own Doppler factor, the cinematic's, unchanged.
+  ray_dir = lorentz_transform_velocity(ray_dir, cam_vel);
+  float ray_gamma = inversesqrt(1.0 - dot(cam_vel, cam_vel));
+  float ray_doppler_factor = ray_gamma * (1.0 + dot(ray_dir, -cam_vel));
 
   uint angle[3] = uint[3](0u, 0u, 0u);
   uint v[3] = uint[3](NO_CROSSING, NO_CROSSING, NO_CROSSING);
@@ -167,7 +191,7 @@ void main() {
     doppler[0] | (angle[1] << 16),
     v[1] | (doppler[1] << 16),
     angle[2] | (v[2] << 16));
-  lastWord = doppler[2] | (horizon << 16);
+  lastWord = doppler[2] | (doppler15(ray_doppler_factor) << 16) | (horizon << 31);
 }
 `;
 
@@ -188,13 +212,12 @@ ${PACKING}
 
 out vec4 outColor;
 
-vec3 shade(uint angle, uint v, uint doppler) {
+vec3 shade(uint angle, uint v, uint doppler, float ray_doppler_factor) {
   if (v == NO_CROSSING) return vec3(0.0);
   // The cinematic: phi -= time; mod(phi, 2pi) / 2pi. As fractions of a turn.
   vec2 tex_coord = vec2(fract(float(angle) / 65536.0 - turn), float(v) / 65534.0);
   float ddf = DOPPLER_MIN + DOPPLER_SPAN * float(doppler) / 65535.0;
-  // ray_doppler_factor is 1 for a still camera, so it drops out of these.
-  vec4 disk_color = texture(disk_texture, tex_coord) / ddf;
+  vec4 disk_color = texture(disk_texture, tex_coord) / (ray_doppler_factor * ddf);
   float disk_alpha = clamp(dot(disk_color,disk_color)/4.5,0.0,1.0);
   disk_alpha /= (ddf * ddf * ddf);
   return disk_color.rgb * disk_tint * disk_alpha;
@@ -205,17 +228,21 @@ void main() {
   uvec4 w = texelFetch(bakeWords, p, 0);
   uint last = texelFetch(bakeLastWord, p, 0).r;
   const uint LOW = 0xFFFFu;
+  float rdf = DOPPLER_MIN + DOPPLER_SPAN * float((last >> 16) & 0x7FFFu) / 32767.0;
 
-  vec3 glow = shade(w.x & LOW, w.x >> 16, w.y & LOW)
-            + shade(w.y >> 16, w.z & LOW, w.z >> 16)
-            + shade(w.w & LOW, w.w >> 16, last & LOW);
-  float horizon = float(last >> 16);
+  vec3 glow = shade(w.x & LOW, w.x >> 16, w.y & LOW, rdf)
+            + shade(w.y >> 16, w.z & LOW, w.z >> 16, rdf)
+            + shade(w.w & LOW, w.w >> 16, last & LOW, rdf);
+  float horizon = float(last >> 31);
 
   // The cinematic's background is black here (no sky on this canvas), and the
   // composer's target clamps to [0, 1] before the bloom reads it. Alpha marks
   // the shadow: it is the one part of the frame that should hide the page's
   // stars behind the canvas rather than add light over them.
-  outColor = vec4(clamp(glow * exposure, 0.0, 1.0), horizon);
+  // Beaming from the camera's own motion, over the whole pixel: the
+  // cinematic's ray_intensity, 1 / rdf^3, applied as it is there at the end.
+  float ray_intensity = 1.0 / (rdf * rdf * rdf);
+  outColor = vec4(clamp(glow * ray_intensity * exposure, 0.0, 1.0), horizon);
 }
 `;
 
@@ -351,7 +378,13 @@ void main() {
   // framed well inside that band, so only the haze is touched.
   vec2 edge = min(vUv, 1.0 - vUv);
   float keep = smoothstep(0.0, 0.1, min(edge.x, edge.y));
-  vec3 bloom = texture(bloomTexture, uv).rgb * keep;
+  // UnrealBloomPass adds its composite over the scene with three's
+  // AdditiveBlending on a material that is not premultiplied: blendFunc(
+  // SRC_ALPHA, ONE). The composite's alpha is the same weighted sum as its
+  // colour, every blur mip carrying alpha 1 — strength 0.2 times factors that
+  // add to 3.0 at radius 1, so 0.6 — and the glow lands at 0.6 of its colour.
+  vec4 glow = texture(bloomTexture, uv);
+  vec3 bloom = glow.rgb * glow.a * keep;
   // Premultiplied: rgb with alpha 0 is added over what is behind the canvas.
   // The shadow stays as dark as it is; only the light is taken down.
   float light = mix(1.0, dimFloor, behindText());

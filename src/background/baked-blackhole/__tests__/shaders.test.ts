@@ -27,6 +27,10 @@ const GEODESIC = [
   "float disk_doppler_factor = disk_gamma*(1.0+dot(ray_dir/distance, disk_velocity));",
   "const float DISK_IN = 2.0;",
   "const float DISK_WIDTH = 4.0;",
+  "vec3 new_u = (u/gamma - v + (gamma/(gamma+1.0)) * dot(u,v)*v)/denominator;",
+  "ray_dir = lorentz_transform_velocity(ray_dir, cam_vel);",
+  "float ray_gamma = inversesqrt(1.0 - dot(cam_vel, cam_vel));",
+  "float ray_doppler_factor = ray_gamma * (1.0 + dot(ray_dir, -cam_vel));",
 ];
 
 const SHADING = [
