@@ -5,7 +5,6 @@ import {
   FINAL_FRAGMENT,
   FULLSCREEN_VERTEX,
   HIGH_PASS_FRAGMENT,
-  MAX_CROSSINGS,
   blurFragment,
 } from "./shaders";
 
@@ -32,18 +31,36 @@ export interface BakedBlackholeOptions {
 export interface BakedBlackhole {
   /** Size in device pixels. Re-runs the bake when it changes. */
   resize(width: number, height: number): void;
-  /** Advances the bake by one strip, or draws a frame once it is done.
-   *  Returns true when a frame of the black hole was drawn. */
+  /** Moves the camera. The black hole keeps drawing from the last finished
+   *  bake, scaled toward the new distance, while the exact one is integrated
+   *  behind it; it swaps in as soon as it is complete. */
+  setCamera(camera: BlackholeCamera): void;
+  /** Advances any bake by one strip and draws a frame once there is a finished
+   *  bake to draw from. Returns true when a frame was drawn. */
   render(timeSeconds: number): boolean;
-  /** 0 to 1. */
+  /** 0 to 1, for the first bake. */
   readonly bakeProgress: number;
+  /** True while a bake is still being integrated — for the first frame, or a
+   *  camera that has moved. Frames need drawing until it lands. */
+  readonly busy: boolean;
+  /** Bytes of GPU memory the bakes hold right now. */
+  readonly bakeBytes: number;
   dispose(): void;
 }
 
-/** The bake is spread over frames in strips of about this many pixels, so no
- *  single frame asks a phone's GPU for the whole integration at once — a long
- *  enough draw can trip the driver's watchdog and lose the context. */
-const PIXELS_PER_BAKE_STRIP = 160_000;
+/** RGBA32UI plus R32UI: five 32-bit words a pixel. */
+const BYTES_PER_BAKED_PIXEL = 20;
+
+/** Where each strip's size starts, and the bounds it adapts within. A strip is
+ *  sized to the frame budget: grown while frames keep their pace, cut back as
+ *  soon as one runs long, so a slow GPU bakes in small pieces rather than
+ *  stalling the page, and a fast one finishes a re-bake in a frame or two. */
+const STRIP_PIXELS = { start: 120_000, min: 16_000, max: 1_200_000 };
+const FRAME_BUDGET_MS = { grow: 18, shrink: 24 };
+
+/** How long the camera has to sit still before the spare bake is let go. It is
+ *  only needed while something is moving. */
+const SPARE_RELEASE_MS = 2_000;
 
 const BLOOM_KERNELS = [3, 5, 7, 9, 11];
 
@@ -89,6 +106,15 @@ interface Target {
   height: number;
 }
 
+interface Bake {
+  target: Target;
+  camera: BlackholeCamera;
+  rows: number;
+}
+
+const sameCamera = (a: BlackholeCamera, b: BlackholeCamera) =>
+  a.distance === b.distance && a.elevationDeg === b.elevationDeg && a.rollDeg === b.rollDeg && a.fovDeg === b.fovDeg;
+
 /** Camera vectors the way the cinematic's Observer builds them, at orbit
  *  angle 0: on the +z side, raised by the elevation, looking at the origin. */
 export function cameraVectors({ distance, elevationDeg, rollDeg }: BlackholeCamera) {
@@ -111,8 +137,17 @@ export function cameraVectors({ distance, elevationDeg, rollDeg }: BlackholeCame
   return { position, dir, up };
 }
 
-/** Null when this browser cannot run it — no WebGL2, or no float render
- *  targets to hold the bake. The caller keeps the video in that case. */
+/** How much bigger the black hole looks from `to` than from `from`, for the
+ *  stand-in zoom between bakes. Its angular size goes as the inverse of the
+ *  distance, and a pinhole projection turns that into the same ratio on
+ *  screen. */
+export function apparentScale(from: BlackholeCamera, to: BlackholeCamera) {
+  const fov = (f: BlackholeCamera) => Math.tan((f.fovDeg * Math.PI) / 360);
+  return (from.distance * fov(from)) / (to.distance * fov(to));
+}
+
+/** Null when this browser cannot run it — no WebGL2, or a shader the driver
+ *  rejects. The caller keeps the video in that case. */
 export function createBakedBlackhole(
   canvas: HTMLCanvasElement,
   diskImage: TexImageSource,
@@ -120,10 +155,6 @@ export function createBakedBlackhole(
 ): BakedBlackhole | null {
   const gl = canvas.getContext("webgl2", { premultipliedAlpha: true, alpha: true, antialias: false });
   if (!gl) return null;
-  // Float32 holds the angle to well under one of the disk texture's 2048
-  // columns. Half floats would land up to a column off near a full turn.
-  if (!gl.getExtension("EXT_color_buffer_float")) return null;
-  if (gl.getParameter(gl.MAX_DRAW_BUFFERS) < MAX_CROSSINGS) return null;
 
   let programs: {
     bake: Program;
@@ -169,33 +200,36 @@ export function createBakedBlackhole(
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-  function createTarget(width: number, height: number, count: number, float: boolean): Target {
+  type Format = "bake" | "color";
+
+  function createTarget(width: number, height: number, format: Format): Target {
     const fbo = gl!.createFramebuffer()!;
     gl!.bindFramebuffer(gl!.FRAMEBUFFER, fbo);
-    const textures: WebGLTexture[] = [];
-    for (let i = 0; i < count; i++) {
+    // Integer bake targets are only ever texelFetched; colour ones are
+    // filtered the way three's render targets are.
+    const layers =
+      format === "bake"
+        ? [
+            { internal: gl!.RGBA32UI, format: gl!.RGBA_INTEGER, type: gl!.UNSIGNED_INT, filter: gl!.NEAREST },
+            { internal: gl!.R32UI, format: gl!.RED_INTEGER, type: gl!.UNSIGNED_INT, filter: gl!.NEAREST },
+          ]
+        : [{ internal: gl!.RGBA8, format: gl!.RGBA, type: gl!.UNSIGNED_BYTE, filter: gl!.LINEAR }];
+    const textures = layers.map((layer, i) => {
       const texture = gl!.createTexture()!;
       gl!.bindTexture(gl!.TEXTURE_2D, texture);
-      if (float) {
-        gl!.texImage2D(gl!.TEXTURE_2D, 0, gl!.RGBA32F, width, height, 0, gl!.RGBA, gl!.FLOAT, null);
-      } else {
-        gl!.texImage2D(gl!.TEXTURE_2D, 0, gl!.RGBA8, width, height, 0, gl!.RGBA, gl!.UNSIGNED_BYTE, null);
-      }
-      // Float targets are only ever texelFetched; RGBA8 ones are filtered the
-      // way three's render targets are.
-      const filter = float ? gl!.NEAREST : gl!.LINEAR;
-      gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_MIN_FILTER, filter);
-      gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_MAG_FILTER, filter);
+      gl!.texImage2D(gl!.TEXTURE_2D, 0, layer.internal, width, height, 0, layer.format, layer.type, null);
+      gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_MIN_FILTER, layer.filter);
+      gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_MAG_FILTER, layer.filter);
       gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_WRAP_S, gl!.CLAMP_TO_EDGE);
       gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_WRAP_T, gl!.CLAMP_TO_EDGE);
       gl!.framebufferTexture2D(gl!.FRAMEBUFFER, gl!.COLOR_ATTACHMENT0 + i, gl!.TEXTURE_2D, texture, 0);
-      textures.push(texture);
-    }
+      return texture;
+    });
     gl!.drawBuffers(textures.map((_, i) => gl!.COLOR_ATTACHMENT0 + i));
     return { fbo, textures, width, height };
   }
 
-  function deleteTarget(target: Target | null) {
+  function deleteTarget(target: Target | null | undefined) {
     if (!target) return;
     gl!.deleteFramebuffer(target.fbo);
     for (const texture of target.textures) gl!.deleteTexture(texture);
@@ -203,12 +237,29 @@ export function createBakedBlackhole(
 
   let width = 0;
   let height = 0;
-  let bake: Target | null = null;
+  let camera = options.camera;
+  /** What is on screen. Null until the first bake completes. */
+  let front: Bake | null = null;
+  /** Being integrated: the first bake, or the next camera's. */
+  let back: Bake | null = null;
+  /** A finished-with bake kept for reuse while the camera is moving. */
+  let spare: Target | null = null;
+  let stillSince = performance.now();
   let scene: Target | null = null;
   let bright: Target | null = null;
   let horizontal: Target[] = [];
   let vertical: Target[] = [];
-  let bakedRows = 0;
+  let stripPixels = STRIP_PIXELS.start;
+  let lastRender = 0;
+
+  function freeBakes() {
+    deleteTarget(front?.target);
+    deleteTarget(back?.target);
+    deleteTarget(spare);
+    front = null;
+    back = null;
+    spare = null;
+  }
 
   function resize(nextWidth: number, nextHeight: number) {
     nextWidth = Math.max(1, Math.round(nextWidth));
@@ -219,28 +270,26 @@ export function createBakedBlackhole(
     canvas.width = width;
     canvas.height = height;
 
-    deleteTarget(bake);
+    freeBakes();
     deleteTarget(scene);
     deleteTarget(bright);
     horizontal.forEach(deleteTarget);
     vertical.forEach(deleteTarget);
 
-    bake = createTarget(width, height, MAX_CROSSINGS, true);
-    gl!.clearBufferfv(gl!.COLOR, 0, [0, 0, 0, 0]);
-    scene = createTarget(width, height, 1, false);
+    back = { target: createTarget(width, height, "bake"), camera, rows: 0 };
+    scene = createTarget(width, height, "color");
     // UnrealBloomPass.setSize: half size, then halving per mip.
     let rx = Math.round(width / 2);
     let ry = Math.round(height / 2);
-    bright = createTarget(rx, ry, 1, false);
+    bright = createTarget(rx, ry, "color");
     horizontal = [];
     vertical = [];
     for (let i = 0; i < BLOOM_KERNELS.length; i++) {
-      horizontal.push(createTarget(Math.max(1, rx), Math.max(1, ry), 1, false));
-      vertical.push(createTarget(Math.max(1, rx), Math.max(1, ry), 1, false));
+      horizontal.push(createTarget(Math.max(1, rx), Math.max(1, ry), "color"));
+      vertical.push(createTarget(Math.max(1, rx), Math.max(1, ry), "color"));
       rx = Math.round(rx / 2);
       ry = Math.round(ry / 2);
     }
-    bakedRows = 0;
   }
 
   function bind(target: Target | null) {
@@ -258,36 +307,57 @@ export function createBakedBlackhole(
     gl!.drawArrays(gl!.TRIANGLE_STRIP, 0, 4);
   }
 
-  const { position, dir, up } = cameraVectors(options.camera);
-
-  function bakeStrip() {
-    const rows = Math.max(1, Math.floor(PIXELS_PER_BAKE_STRIP / width));
+  function bakeStrip(bake: Bake) {
+    const rows = Math.max(1, Math.floor(stripPixels / width));
+    const { position, dir, up } = cameraVectors(bake.camera);
     const { p, u } = programs.bake;
-    bind(bake);
+    bind(bake.target);
     gl!.useProgram(p);
     gl!.uniform2f(u("resolution"), width, height);
     gl!.uniform3fv(u("cam_pos"), position);
     gl!.uniform3fv(u("cam_dir"), dir);
     gl!.uniform3fv(u("cam_up"), up);
-    gl!.uniform1f(u("fov"), options.camera.fovDeg);
+    gl!.uniform1f(u("fov"), bake.camera.fovDeg);
     gl!.enable(gl!.SCISSOR_TEST);
-    gl!.scissor(0, bakedRows, width, Math.min(rows, height - bakedRows));
+    gl!.scissor(0, bake.rows, width, Math.min(rows, height - bake.rows));
     draw();
     gl!.disable(gl!.SCISSOR_TEST);
-    bakedRows = Math.min(height, bakedRows + rows);
+    bake.rows = Math.min(height, bake.rows + rows);
+  }
+
+  /** Swaps a finished bake in, and starts the next one if the camera has moved
+   *  on since it began. */
+  function advanceBakes(now: number) {
+    if (back && back.rows >= height) {
+      if (front) spare = front.target;
+      front = back;
+      back = null;
+    }
+    if (!back && front && !sameCamera(front.camera, camera)) {
+      back = { target: spare ?? createTarget(width, height, "bake"), camera, rows: 0 };
+      spare = null;
+    }
+    if (back) {
+      stillSince = now;
+      bakeStrip(back);
+    } else if (spare && now - stillSince > SPARE_RELEASE_MS) {
+      deleteTarget(spare);
+      spare = null;
+    }
   }
 
   const tint = options.diskTint ?? [1, 1, 1];
   const exposure = options.exposure ?? 1;
 
-  function drawFrame(timeSeconds: number) {
+  function drawFrame(timeSeconds: number, shown: Bake) {
     // Disk, into the clamped RGBA8 target the cinematic's composer renders to.
     {
       const { p, u } = programs.disk;
       bind(scene);
       gl!.useProgram(p);
-      bake!.textures.forEach((tex, i) => texture(i, tex, u(`crossings${i}`)));
-      texture(4, disk, u("disk_texture"));
+      texture(0, shown.target.textures[0], u("bakeWords"));
+      texture(1, shown.target.textures[1], u("bakeLastWord"));
+      texture(2, disk, u("disk_texture"));
       const turn = timeSeconds / (2 * Math.PI);
       gl!.uniform1f(u("turn"), turn - Math.floor(turn));
       gl!.uniform3fv(u("disk_tint"), tint);
@@ -335,27 +405,46 @@ export function createBakedBlackhole(
       gl!.useProgram(p);
       texture(0, scene!.textures[0], u("sceneTexture"));
       texture(1, horizontal[0].textures[0], u("bloomTexture"));
+      gl!.uniform1f(u("zoom"), apparentScale(shown.camera, camera));
       draw();
     }
   }
 
   return {
     resize,
+    setCamera(next) {
+      camera = next;
+    },
     render(timeSeconds) {
-      if (!bake || gl!.isContextLost()) return false;
-      gl!.bindVertexArray(vao);
-      if (bakedRows < height) {
-        bakeStrip();
-        return false;
+      if (gl!.isContextLost() || (!front && !back)) return false;
+      const now = performance.now();
+      // Size the strips to how this device is keeping up. Measured only while
+      // a bake is running, which is the only time a strip is drawn.
+      if (back && lastRender) {
+        const interval = now - lastRender;
+        if (interval > FRAME_BUDGET_MS.shrink) stripPixels = Math.max(STRIP_PIXELS.min, stripPixels * 0.6);
+        else if (interval < FRAME_BUDGET_MS.grow) stripPixels = Math.min(STRIP_PIXELS.max, stripPixels * 1.25);
       }
-      drawFrame(timeSeconds);
+      lastRender = now;
+      gl!.bindVertexArray(vao);
+      advanceBakes(now);
+      if (!front) return false;
+      drawFrame(timeSeconds, front);
       return true;
     },
     get bakeProgress() {
-      return height === 0 ? 0 : bakedRows / height;
+      if (front) return 1;
+      return back && height ? back.rows / height : 0;
+    },
+    get busy() {
+      return back !== null || (front !== null && !sameCamera(front.camera, camera));
+    },
+    get bakeBytes() {
+      const count = [front?.target, back?.target, spare].filter(Boolean).length;
+      return count * width * height * BYTES_PER_BAKED_PIXEL;
     },
     dispose() {
-      deleteTarget(bake);
+      freeBakes();
       deleteTarget(scene);
       deleteTarget(bright);
       horizontal.forEach(deleteTarget);

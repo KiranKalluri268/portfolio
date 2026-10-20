@@ -28,10 +28,33 @@
 
 /** How many times a ray may cross the disk before the rest are dropped. The
  *  first is the disk itself, the second the lensed far side arching over the
- *  shadow, the third and fourth the thin photon rings. A ray that winds more
- *  times than this passes within a hair of the photon sphere, and what it
- *  would add covers a sliver of a pixel. */
-export const MAX_CROSSINGS = 4;
+ *  shadow, the third the photon ring hugging the shadow's edge. Anything past
+ *  that passes within a hair of the photon sphere and lands on a sliver of a
+ *  pixel: compared with the cinematic, keeping a fourth changed no channel by
+ *  more than the 1/255 the comparison already allows. */
+export const MAX_CROSSINGS = 3;
+
+// ── The bake's format ──
+// Every value is a 16-bit fraction, five 32-bit words a pixel — 20 bytes, where
+// float32 for four crossings was 64. At a phone's 2x that was 180MB of GPU
+// memory for a background; this is a third of it before the resolution cap.
+//
+//   angle    fraction of a turn, 1/65536 steps — 1/32 of a disk-texture column
+//   v        disk texture v, 1/65534 steps; 0xFFFF means "no crossing here"
+//   doppler  the disk's Doppler factor, mapped from [0.5, 1.5]; the physical
+//            range at the disk's inner edge is about 0.88 to 1.26
+//
+//   word 0: angle0 | v0 << 16      word 1: doppler0 | angle1 << 16
+//   word 2: v1 | doppler1 << 16    word 3: angle2 | v2 << 16
+//   word 4: doppler2 | horizon << 16
+//
+// Words 0-3 are one RGBA32UI target, word 4 an R32UI one. Integer targets are
+// renderable in every WebGL2, where float ones needed an extension.
+const PACKING = /* glsl */ `
+const uint NO_CROSSING = 0xFFFFu;
+const float DOPPLER_MIN = 0.5;
+const float DOPPLER_SPAN = 1.0;
+`;
 
 export const FULLSCREEN_VERTEX = /* glsl */ `#version 300 es
 in vec2 position;
@@ -44,6 +67,7 @@ void main() {
 
 export const BAKE_FRAGMENT = /* glsl */ `#version 300 es
 precision highp float;
+precision highp int;
 
 #define STEP 0.055
 #define NSTEPS 850
@@ -58,15 +82,14 @@ const float DISK_IN = 2.0;
 const float DISK_WIDTH = 4.0;
 const float PI = 3.141592653589793238462643383279;
 const float DEG_TO_RAD = PI / 180.0;
+${PACKING}
 
-// One crossing per target: x = angle as a fraction of a turn, before the time
-// is subtracted; y = the disk texture's v; z = the disk's Doppler factor;
-// w = 1 where there is a crossing. The last target's w also carries whether the
-// ray ended on the horizon, as +2, which saves a fifth target for one bit.
-layout(location = 0) out vec4 crossing0;
-layout(location = 1) out vec4 crossing1;
-layout(location = 2) out vec4 crossing2;
-layout(location = 3) out vec4 crossing3;
+layout(location = 0) out uvec4 words;
+layout(location = 1) out uint lastWord;
+
+uint angle16(float turns) { return uint(fract(turns) * 65536.0 + 0.5) & 0xFFFFu; }
+uint v16(float v) { return uint(clamp(v, 0.0, 1.0) * 65534.0 + 0.5); }
+uint doppler16(float d) { return uint(clamp((d - DOPPLER_MIN) / DOPPLER_SPAN, 0.0, 1.0) * 65535.0 + 0.5); }
 
 void main() {
   // The cinematic's projection with its compose shift left out: the shift
@@ -83,13 +106,11 @@ void main() {
   vec3 pixel_pos = cam_pos + forward + nright * uv.x * uvfov + up * uv.y * uvfov;
   vec3 ray_dir = normalize(pixel_pos - cam_pos);
 
-  vec4 found[4];
-  found[0] = vec4(0.0);
-  found[1] = vec4(0.0);
-  found[2] = vec4(0.0);
-  found[3] = vec4(0.0);
+  uint angle[3] = uint[3](0u, 0u, 0u);
+  uint v[3] = uint[3](NO_CROSSING, NO_CROSSING, NO_CROSSING);
+  uint doppler[3] = uint[3](0u, 0u, 0u);
   int count = 0;
-  float horizon = 0.0;
+  uint horizon = 0u;
 
   // ── From the cinematic, unchanged ──
   vec3 point = cam_pos;
@@ -109,11 +130,11 @@ void main() {
     velocity += accel * STEP;
 
     if (distSq < 1.0 && dot(oldpoint, oldpoint) > 1.0) {
-      horizon = 1.0;
+      horizon = 1u;
       break;
     }
 
-    if (oldpoint.y * point.y < 0.0) {
+    if (count < 3 && oldpoint.y * point.y < 0.0) {
       float lambda = -oldpoint.y / velocity.y;
       vec3 intersection = oldpoint + lambda * velocity;
       float r = length(intersection);
@@ -122,11 +143,9 @@ void main() {
         vec3 disk_velocity = vec3(-intersection.x, 0.0, intersection.z) * inversesqrt(2.0 * (r - 1.0)) / (r * r);
         float disk_gamma = inversesqrt(1.0 - dot(disk_velocity, disk_velocity));
         float disk_doppler_factor = disk_gamma * (1.0 + dot(ray_dir / distance, disk_velocity));
-        vec4 crossing = vec4(phi / (2.0 * PI), 1.0 - (r - DISK_IN) / DISK_WIDTH, disk_doppler_factor, 1.0);
-        if (count == 0) found[0] = crossing;
-        else if (count == 1) found[1] = crossing;
-        else if (count == 2) found[2] = crossing;
-        else if (count == 3) found[3] = crossing;
+        angle[count] = angle16(phi / (2.0 * PI));
+        v[count] = v16(1.0 - (r - DISK_IN) / DISK_WIDTH);
+        doppler[count] = doppler16(disk_doppler_factor);
         count++;
       }
     }
@@ -139,10 +158,12 @@ void main() {
     if (distance > DISK_IN + DISK_WIDTH + STEP && dot(point, velocity) > 0.0) break;
   }
 
-  crossing0 = found[0];
-  crossing1 = found[1];
-  crossing2 = found[2];
-  crossing3 = vec4(found[3].xyz, found[3].w + 2.0 * horizon);
+  words = uvec4(
+    angle[0] | (v[0] << 16),
+    doppler[0] | (angle[1] << 16),
+    v[1] | (doppler[1] << 16),
+    angle[2] | (v[2] << 16));
+  lastWord = doppler[2] | (horizon << 16);
 }
 `;
 
@@ -151,40 +172,40 @@ void main() {
 // across that seam would draw a line across the disk.
 export const DISK_FRAGMENT = /* glsl */ `#version 300 es
 precision highp float;
+precision highp int;
 
-uniform highp sampler2D crossings0;
-uniform highp sampler2D crossings1;
-uniform highp sampler2D crossings2;
-uniform highp sampler2D crossings3;
+uniform highp usampler2D bakeWords;
+uniform highp usampler2D bakeLastWord;
 uniform sampler2D disk_texture;
 uniform float turn;       // time / 2pi, already wrapped into [0, 1)
 uniform vec3 disk_tint;
 uniform float exposure;
+${PACKING}
 
 out vec4 outColor;
 
-vec3 shade(vec4 crossing) {
-  if (crossing.w < 0.5) return vec3(0.0);
+vec3 shade(uint angle, uint v, uint doppler) {
+  if (v == NO_CROSSING) return vec3(0.0);
   // The cinematic: phi -= time; mod(phi, 2pi) / 2pi. As fractions of a turn.
-  vec2 tex_coord = vec2(fract(crossing.x - turn), crossing.y);
-  float ddf = crossing.z;
+  vec2 tex_coord = vec2(fract(float(angle) / 65536.0 - turn), float(v) / 65534.0);
+  float ddf = DOPPLER_MIN + DOPPLER_SPAN * float(doppler) / 65535.0;
   // ray_doppler_factor is 1 for a still camera, so it drops out of these.
   vec4 disk_color = texture(disk_texture, tex_coord) / ddf;
-  float disk_alpha = clamp(dot(disk_color, disk_color) / 4.5, 0.0, 1.0);
+  float disk_alpha = clamp(dot(disk_color,disk_color)/4.5,0.0,1.0);
   disk_alpha /= (ddf * ddf * ddf);
   return disk_color.rgb * disk_tint * disk_alpha;
 }
 
 void main() {
   ivec2 p = ivec2(gl_FragCoord.xy);
-  vec4 c3 = texelFetch(crossings3, p, 0);
-  float horizon = c3.w > 1.5 ? 1.0 : 0.0;
-  c3.w -= 2.0 * horizon;
+  uvec4 w = texelFetch(bakeWords, p, 0);
+  uint last = texelFetch(bakeLastWord, p, 0).r;
+  const uint LOW = 0xFFFFu;
 
-  vec3 glow = shade(texelFetch(crossings0, p, 0))
-            + shade(texelFetch(crossings1, p, 0))
-            + shade(texelFetch(crossings2, p, 0))
-            + shade(c3);
+  vec3 glow = shade(w.x & LOW, w.x >> 16, w.y & LOW)
+            + shade(w.y >> 16, w.z & LOW, w.z >> 16)
+            + shade(w.w & LOW, w.w >> 16, last & LOW);
+  float horizon = float(last >> 16);
 
   // The cinematic's background is black here (no sky on this canvas), and the
   // composer's target clamps to [0, 1] before the bloom reads it. Alpha marks
@@ -281,9 +302,16 @@ precision highp float;
 in vec2 vUv;
 uniform sampler2D sceneTexture;
 uniform sampler2D bloomTexture;
+// How much larger than its bake the black hole should look right now. 1 once a
+// bake for the current distance has landed. In between — while the camera is
+// moving and the next exact bake is still being integrated — the last one is
+// scaled about the centre, so the approach stays continuous rather than
+// stepping from bake to bake.
+uniform float zoom;
 out vec4 outColor;
 void main() {
-  vec4 scene = texture(sceneTexture, vUv);
+  vec2 uv = (vUv - 0.5) / zoom + 0.5;
+  vec4 scene = texture(sceneTexture, uv);
   // The one departure from the cinematic's bloom. There it spreads across a
   // full-screen frame; here the frame is a square on the page, and the widest
   // mip's haze reached its edges and stopped dead, drawing the square's outline
@@ -291,7 +319,7 @@ void main() {
   // framed well inside that band, so only the haze is touched.
   vec2 edge = min(vUv, 1.0 - vUv);
   float keep = smoothstep(0.0, 0.1, min(edge.x, edge.y));
-  vec3 bloom = texture(bloomTexture, vUv).rgb * keep;
+  vec3 bloom = texture(bloomTexture, uv).rgb * keep;
   // Premultiplied: rgb with alpha 0 is added over what is behind the canvas.
   outColor = vec4(min(scene.rgb + bloom, vec3(1.0)), scene.a);
 }

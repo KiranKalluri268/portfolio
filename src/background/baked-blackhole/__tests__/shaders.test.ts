@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { fragmentShader as cinematic } from "@/cinematic/scene/graphics/fragmentShader";
 import { BAKE_FRAGMENT, DISK_FRAGMENT } from "../shaders";
-import { cameraVectors } from "../renderer";
+import { apparentScale, cameraVectors } from "../renderer";
 
 /** Whitespace is free to differ between the two; nothing else is. */
 const squash = (source: string) => source.replace(/\s+/g, "");
@@ -18,7 +18,7 @@ const GEODESIC = [
   "float dist5 = distSq * distSq * distance;",
   "vec3 accel = -1.5 * h2 * point / dist5;",
   "velocity += accel * STEP;",
-  "if (oldpoint.y * point.y < 0.0){",
+  "oldpoint.y * point.y < 0.0",
   "float lambda = - oldpoint.y/velocity.y;",
   "vec3 intersection = oldpoint + lambda*velocity;",
   "float phi = atan(intersection.x, intersection.z);",
@@ -87,5 +87,18 @@ describe("cameraVectors", () => {
     const dot = level.up.reduce((sum, v, i) => sum + v * rolled.up[i], 0);
     expect(dot).toBeCloseTo(0);
     expect(rolled.up[0] * rolled.dir[0] + rolled.up[1] * rolled.dir[1] + rolled.up[2] * rolled.dir[2]).toBeCloseTo(0);
+  });
+});
+
+describe("apparentScale", () => {
+  const at = (distance: number) => ({ distance, elevationDeg: 10, rollDeg: 0, fovDeg: 75 });
+
+  it("is 1 when the camera has not moved", () => {
+    expect(apparentScale(at(20), at(20))).toBe(1);
+  });
+
+  it("grows as the inverse of the distance", () => {
+    expect(apparentScale(at(20), at(10))).toBeCloseTo(2);
+    expect(apparentScale(at(12), at(20))).toBeCloseTo(0.6);
   });
 });
