@@ -2,7 +2,8 @@
 import { useRef, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useAudio } from "@/context/AudioContextProvider";
-import BakedBlackhole, { HOME_SCROLL_PATH, STILL_PATH } from "./baked-blackhole/BakedBlackhole";
+import { SECTION_IDS, useActiveSection } from "@/context/SmoothScrollContext";
+import BakedBlackhole, { HOME_PATH, STILL_PATH } from "./baked-blackhole/BakedBlackhole";
 
 const PLACEMENT =
   "fixed top-3/4 left-1/2 z-[1] aspect-square w-[min(220vw,52.5rem)] -translate-x-1/2 -translate-y-1/2 transform [transform-style:preserve-3d] sm:top-1/2 sm:left-[80%] sm:w-[52.5rem]";
@@ -15,10 +16,16 @@ export default function Blackhole() {
   const { hasEntered } = useAudio();
   const pathname = usePathname();
   const backgroundEnabled = hasEntered || pathname !== "/";
+  // On the home page each section has its own resting place along the path,
+  // evenly spaced from the hero to the contact form. It moves only when the
+  // section changes — the one the scene dots light — and holds still while the
+  // section is read.
+  const activeSection = useActiveSection();
+  const stop = Math.max(0, SECTION_IDS.indexOf(activeSection)) / (SECTION_IDS.length - 1);
   // Drawn on every route, so no page puts the video in its HTML or starts
   // downloading it. The video is only the answer for a browser that cannot draw
-  // it — no WebGL2, or a shader its driver rejects. Only the home page moves it
-  // with the scroll.
+  // it — no WebGL2, or a shader its driver rejects. Only the home page moves
+  // it, section by section.
   const [unsupported, setUnsupported] = useState(false);
   const baked = !unsupported;
 
@@ -47,7 +54,8 @@ export default function Blackhole() {
         <BakedBlackhole
           className={DRAWN_PLACEMENT}
           enabled={backgroundEnabled}
-          path={pathname === "/" ? HOME_SCROLL_PATH : STILL_PATH}
+          path={pathname === "/" ? HOME_PATH : STILL_PATH}
+          stop={stop}
           onUnsupported={() => setUnsupported(true)}
         />
       </div>

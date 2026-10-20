@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { fragmentShader as cinematic } from "@/cinematic/scene/graphics/fragmentShader";
 import { BAKE_FRAGMENT, DISK_FRAGMENT } from "../shaders";
 import { cameraVectors } from "../renderer";
-import { HOME_SCROLL_PATH, STILL_PATH, cameraBetween } from "../BakedBlackhole";
+import { HOME_PATH, STILL_PATH, STOP_MOVE_MS, cameraBetween, moveEase } from "../BakedBlackhole";
 
 /** Whitespace is free to differ between the two; nothing else is. */
 const squash = (source: string) => source.replace(/\s+/g, "");
@@ -95,7 +95,7 @@ describe("cameraVectors", () => {
   });
 });
 
-describe("the home page's scroll", () => {
+describe("the home page's path", () => {
   const main = readFileSync(new URL("../../../cinematic/scene/main.js", import.meta.url), "utf8");
   const shader = readFileSync(new URL("../../../cinematic/scene/graphics/fragmentShader.ts", import.meta.url), "utf8");
   const sceneConfig = readFileSync(new URL("../../../cinematic/scene/sceneConfig.js", import.meta.url), "utf8");
@@ -107,7 +107,7 @@ describe("the home page's scroll", () => {
   // elevation, roll and compose shift. A retune there should move the
   // homepage's end with it.
   it("ends on the cinematic's framing of the reference", () => {
-    const { end } = HOME_SCROLL_PATH(desktop);
+    const { end } = HOME_PATH(desktop);
     expect(end.elevationDeg).toBe(number(main, /endElev = ([\d.]+) \*/));
     expect(end.rollDeg).toBe(number(main, /endRoll = ([\d.]+) \*/));
     expect(end.shift).toEqual([
@@ -120,7 +120,7 @@ describe("the home page's scroll", () => {
   // The homepage ends outside it, zoomed in to keep the shadow the same size:
   // the same tan(fov / 2) * distance, near enough.
   it("ends outside the disk, with the shadow the size the cinematic's was", () => {
-    const { end } = HOME_SCROLL_PATH(desktop);
+    const { end } = HOME_PATH(desktop);
     const cinematicDistance = number(main, /blackHoleDist = ([\d.]+) \*/);
     const cinematicFov = number(sceneConfig, /fov: ([\d.]+),/);
     expect(end.distance).toBeGreaterThan(6);
@@ -132,17 +132,17 @@ describe("the home page's scroll", () => {
     const backOff = number(main, /\(1\.0 \+ ([\d.]+) \* narrowFraming\)/);
     const aspect = phone.width / phone.height;
     const narrow = Math.min(1, Math.max(0, (1.2 - aspect) / 0.8));
-    expect(HOME_SCROLL_PATH(phone).end.distance).toBeCloseTo(7 * (1 + backOff * narrow));
+    expect(HOME_PATH(phone).end.distance).toBeCloseTo(7 * (1 + backOff * narrow));
   });
 
   it("starts level and smaller than the video", () => {
-    const { start } = HOME_SCROLL_PATH(desktop);
+    const { start } = HOME_PATH(desktop);
     expect(start.rollDeg).toBe(0);
     expect(start.distance).toBeGreaterThan(20);
   });
 
-  it("grows steadily: the inverse distance moves in step with the scroll", () => {
-    const { start, end } = HOME_SCROLL_PATH(desktop);
+  it("grows steadily: the inverse distance moves in step along the path", () => {
+    const { start, end } = HOME_PATH(desktop);
     const half = cameraBetween(start, end, 0.5);
     expect(1 / half.distance).toBeCloseTo((1 / start.distance + 1 / end.distance) / 2);
     expect(cameraBetween(start, end, 0)).toEqual(start);
@@ -152,6 +152,28 @@ describe("the home page's scroll", () => {
   it("holds the starting frame away from the home page", () => {
     const { start, end } = STILL_PATH(desktop);
     expect(end).toEqual(start);
-    expect(start).toEqual(HOME_SCROLL_PATH(desktop).start);
+    expect(start).toEqual(HOME_PATH(desktop).start);
+  });
+});
+
+describe("moving between stops", () => {
+  it("starts and lands still, and is over in STOP_MOVE_MS", () => {
+    expect(moveEase(0)).toBe(0);
+    expect(moveEase(STOP_MOVE_MS)).toBe(1);
+    expect(moveEase(STOP_MOVE_MS * 2)).toBe(1);
+    expect(moveEase(-100)).toBe(0);
+    expect(moveEase(STOP_MOVE_MS / 2)).toBeCloseTo(0.5);
+    // Eased in and out: slow at both ends, so no jolt on leaving or arriving.
+    const step = STOP_MOVE_MS / 100;
+    expect(moveEase(step)).toBeLessThan(0.001);
+    expect(1 - moveEase(STOP_MOVE_MS - step)).toBeLessThan(0.001);
+  });
+
+  it("never runs backwards", () => {
+    let last = 0;
+    for (let ms = 0; ms <= STOP_MOVE_MS; ms += 10) {
+      expect(moveEase(ms)).toBeGreaterThanOrEqual(last);
+      last = moveEase(ms);
+    }
   });
 });

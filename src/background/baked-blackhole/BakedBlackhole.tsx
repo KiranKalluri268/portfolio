@@ -12,8 +12,8 @@ import {
  *  radius of 1. */
 const CINEMATIC_BLOOM = { strength: 0.2, radius: 1, threshold: 0.1 };
 
-/** Where the scroll starts and ends, for a canvas of the given CSS size. */
-export interface ScrollPath {
+/** Where the path starts and ends, for a canvas of the given CSS size. */
+export interface CameraPath {
   (viewport: { width: number; height: number; wide: boolean }): {
     start: BlackholeCamera;
     end: BlackholeCamera;
@@ -25,7 +25,7 @@ export interface ScrollPath {
  *  length. Held at the start of the scroll whatever the viewport's height. */
 const START_FOCAL_PX = 420 / Math.tan((37.5 * Math.PI) / 180);
 
-/** The home page's scroll, from a small level black hole where the video sat to
+/** The home page's path, from a small level black hole where the video sat to
  *  the reference frame in portfolio-3D's public/goal/last_frame.jpg.
  *
  *  The end takes the cinematic's framing of that reference — 2.5 degrees above
@@ -41,7 +41,7 @@ const START_FOCAL_PX = 420 / Math.tan((37.5 * Math.PI) / 180);
  *
  *  The start is the size and place the video had, pushed further away to 28 so
  *  it starts smaller, and level: no roll until the scroll turns it in. */
-export const HOME_SCROLL_PATH: ScrollPath = ({ width, height, wide }) => {
+export const HOME_PATH: CameraPath = ({ width, height, wide }) => {
   const aspect = Math.max(width / height, 0.4);
   const narrowFraming = Math.min(1, Math.max(0, (1.2 - aspect) / 0.8));
   return {
@@ -65,14 +65,14 @@ export const HOME_SCROLL_PATH: ScrollPath = ({ width, height, wide }) => {
 };
 
 /** Away from the home page it holds the home page's starting frame. */
-export const STILL_PATH: ScrollPath = (viewport) => {
-  const { start } = HOME_SCROLL_PATH(viewport);
+export const STILL_PATH: CameraPath = (viewport) => {
+  const { start } = HOME_PATH(viewport);
   return { start, end: start };
 };
 
 /** Between the two ends. The distance is eased in its inverse, which is what
- *  the black hole's size on screen goes with, so it grows steadily across the
- *  scroll rather than holding small and then rushing up at the very end. */
+ *  the black hole's size on screen goes with, so it grows steadily along the
+ *  path rather than holding small and then rushing up at the very end. */
 export function cameraBetween(start: BlackholeCamera, end: BlackholeCamera, t: number): BlackholeCamera {
   return {
     distance: 1 / lerp(1 / start.distance, 1 / end.distance, t),
@@ -162,22 +162,33 @@ function cornerRadius(element: Element) {
 }
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-const smoothstep = (t: number) => t * t * (3 - 2 * t);
 
-function scrollProgress() {
-  const max = document.documentElement.scrollHeight - window.innerHeight;
-  return max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+/** How long the black hole takes to move to a new stop. Long enough that a big
+ *  approach stays smooth while the bakes catch up, short enough to be over by
+ *  the time the visitor is reading the section it moved for. */
+export const STOP_MOVE_MS = 1400;
+
+/** How far through a move to a new stop it is, eased in and out so it neither
+ *  starts nor lands with a jolt. */
+export function moveEase(elapsedMs: number) {
+  const t = Math.min(1, Math.max(0, elapsedMs / STOP_MOVE_MS));
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
 export default function BakedBlackhole({
   className,
-  path = HOME_SCROLL_PATH,
+  path = HOME_PATH,
+  stop = 0,
   enabled,
   diskTint,
   onUnsupported,
 }: {
   className: string;
-  path?: ScrollPath;
+  path?: CameraPath;
+  /** Where along the path to rest, from 0 at its start to 1 at its end. A new
+   *  stop is moved to over STOP_MOVE_MS, and the black hole holds still there
+   *  until the next. */
+  stop?: number;
   /** Whether it should be moving — the same gate the video plays on. */
   enabled: boolean;
   /** Multiplies the disk's colour, as the cinematic's disk_tint does. */
@@ -190,10 +201,12 @@ export default function BakedBlackhole({
   const enabledRef = useRef(enabled);
   const unsupportedRef = useRef(onUnsupported);
   const pathRef = useRef(path);
+  const stopRef = useRef(stop);
   useEffect(() => {
     enabledRef.current = enabled;
     unsupportedRef.current = onUnsupported;
     pathRef.current = path;
+    stopRef.current = stop;
   });
 
   useEffect(() => {
@@ -206,9 +219,25 @@ export default function BakedBlackhole({
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const wide = window.matchMedia("(min-width: 640px)");
 
-    // Where along the path the page is. Held at the start for anyone who asked
-    // for less motion: scroll-linked movement is still movement.
-    const progress = () => (reducedMotion.matches ? 0 : smoothstep(scrollProgress()));
+    // Where along the path it is. It moves from wherever it was when the stop
+    // changed, so a stop that changes again mid-move turns it round smoothly
+    // rather than jumping back to the last stop first. Held at the start for
+    // anyone who asked for less motion.
+    const move = { from: stopRef.current, to: stopRef.current, at: 0 };
+    let shown = false;
+    const progress = () => {
+      if (reducedMotion.matches) return 0;
+      const now = performance.now();
+      const target = stopRef.current;
+      if (target !== move.to) {
+        // Until the first frame is on screen there is nothing to move from: a
+        // page opened part-way down starts at its own stop.
+        move.from = shown ? lerp(move.from, move.to, moveEase(now - move.at)) : target;
+        move.to = target;
+        move.at = now;
+      }
+      return lerp(move.from, move.to, moveEase(now - move.at));
+    };
     const cameraAt = (t: number): BlackholeCamera => {
       const { start, end } = pathRef.current({
         width: canvas.clientWidth || window.innerWidth,
@@ -270,7 +299,6 @@ export default function BakedBlackhole({
 
       const start = performance.now();
       let drewStill = false;
-      let shown = false;
       let lastProgress = -1;
       let lastPath = pathRef.current;
       let lastDimming = "";
@@ -306,7 +334,7 @@ export default function BakedBlackhole({
 
         // Still while the visitor has not entered, while the tab is hidden, and
         // for anyone who asked for less motion — the video paused in all three.
-        // A scroll still redraws it, so the approach follows the page.
+        // A move to a new stop still redraws it.
         const spinning = enabledRef.current && !document.hidden && !reducedMotion.matches;
         const settling = moved || textMoved || renderer.busy;
         if (!spinning && !settling && drewStill) return;
