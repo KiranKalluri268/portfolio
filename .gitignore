@@ -66,3 +66,7 @@ public/reference/
 # differ per checkout and are nobody else's business. .claude/launch.json is
 # shared configuration and stays tracked.
 .claude/settings.local.json
+
+# Media kept on this machine but not shipped: originals and unused copies of
+# assets the site now loads from Cloudinary.
+/local-assets/
