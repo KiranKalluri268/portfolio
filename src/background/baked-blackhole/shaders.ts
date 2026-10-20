@@ -48,8 +48,8 @@ export const MAX_DIM_RECTS = 12;
 //   doppler  the disk's Doppler factor, mapped from [0.5, 1.5]; the physical
 //            range at the disk's inner edge is about 0.88 to 1.26
 //   ray      the ray's own Doppler factor from the camera's motion, 15 bits
-//            over the same [0.5, 1.5]; exactly 1 for a camera that is not
-//            moving
+//            over the same [0.5, 1.5]; about 0.96 to 1.04 at the closest the
+//            home page comes, and exactly 1 for a camera that is not moving
 //
 //   word 0: angle0 | v0 << 16      word 1: doppler0 | angle1 << 16
 //   word 2: v1 | doppler1 << 16    word 3: angle2 | v2 << 16
@@ -84,6 +84,7 @@ uniform vec3 cam_pos;
 uniform vec3 cam_dir;
 uniform vec3 cam_up;
 uniform float fov;
+uniform vec2 compose_shift;
 // The observer's orbital velocity, as the cinematic's Observer sets it. Zero
 // would be a camera hanging still beside the hole; the cinematic's never is.
 uniform vec3 cam_vel;
@@ -115,11 +116,13 @@ vec3 lorentz_transform_velocity(vec3 u, vec3 v){
 }
 
 void main() {
-  // The cinematic's projection with its compose shift left out: the shift
-  // places the black hole off-centre in a full-screen frame, and this canvas is
-  // already only the black hole.
+  // The cinematic's projection, compose shift included: the canvas is the whole
+  // screen, and the shift puts the black hole where the frame wants it rather
+  // than in the middle — in half-screens, and before the aspect scaling, so a
+  // fraction of the width.
   float uvfov = tan(fov / 2.0 * DEG_TO_RAD);
   vec2 uv = 2.0 * (gl_FragCoord.xy / resolution.xy) - 1.0;
+  uv -= compose_shift;
   uv *= vec2(resolution.x / resolution.y, 1.0);
 
   vec3 forward = normalize(cam_dir);
@@ -333,31 +336,36 @@ precision highp float;
 in vec2 vUv;
 uniform sampler2D sceneTexture;
 uniform sampler2D bloomTexture;
-// How much larger than its bake the black hole should look right now. 1 once a
-// bake for the current distance has landed. In between — while the camera is
-// moving and the next exact bake is still being integrated — the last one is
-// scaled about the centre, so the approach stays continuous rather than
-// stepping from bake to bake.
-uniform float zoom;
-// Where the page's text sits, so the black hole can step back behind it. The
-// canvas is turned and slid by CSS, so each pixel is first carried to where it
-// lands on screen: canvasCenter and canvasSize in CSS pixels, canvasTurn the
-// cosine and sine of its rotation. dimRects are screen rectangles, also in CSS
-// pixels, as left, top, right, bottom. Only the pixels behind them are dimmed,
-// to dimFloor of their brightness, with an edge dimFeather pixels wide.
-uniform vec2 canvasCenter;
+// Between bakes. While the camera moves, the next exact bake is still being
+// integrated, so the last finished one stands in for it: carried from where
+// the shown camera put each direction to where the target camera puts it.
+// Positions are taken about each camera's compose shift, in the tangent plane
+// (aspect-scaled uv times tan of half the fov), then turned by the difference
+// in roll and scaled by the ratio of distances — an approach makes everything
+// near the hole look bigger in proportion. Exact for the shift, the turn and
+// the field of view; close for the distance; and replaced by the real thing as
+// soon as its bake lands. All identity when nothing is moving.
+uniform float aspect;
+uniform vec2 shownShift;
+uniform vec2 targetShift;
+uniform float shownTan;
+uniform float targetTan;
+uniform float distanceRatio; // target distance over shown distance
+uniform vec2 rollTurn;       // cos and sin of shown roll minus target roll
+// Where the page's text sits, so the black hole can step back behind it.
+// canvasOrigin and canvasSize place the canvas on screen in CSS pixels;
+// dimRects are screen rectangles, also in CSS pixels, as left, top, right,
+// bottom. Only the pixels behind them are dimmed, to dimFloor of their
+// brightness, with an edge dimFeather pixels wide.
+uniform vec2 canvasOrigin;
 uniform vec2 canvasSize;
-uniform vec2 canvasTurn;
 uniform vec4 dimRects[${MAX_DIM_RECTS}];
 uniform int dimCount;
 uniform float dimFloor;
 uniform float dimFeather;
 out vec4 outColor;
 float behindText() {
-  vec2 local = (vec2(vUv.x, 1.0 - vUv.y) - 0.5) * canvasSize;
-  vec2 screen = canvasCenter + vec2(
-    local.x * canvasTurn.x - local.y * canvasTurn.y,
-    local.x * canvasTurn.y + local.y * canvasTurn.x);
+  vec2 screen = canvasOrigin + vec2(vUv.x, 1.0 - vUv.y) * canvasSize;
   float covered = 0.0;
   for (int i = 0; i < dimCount; i++) {
     vec4 rect = dimRects[i];
@@ -368,23 +376,27 @@ float behindText() {
   }
   return covered;
 }
+vec2 standIn(vec2 target) {
+  vec2 frame = vec2(aspect, 1.0);
+  vec2 t = (2.0 * target - 1.0 - targetShift) * frame * targetTan * distanceRatio;
+  vec2 s = vec2(rollTurn.x * t.x - rollTurn.y * t.y, rollTurn.y * t.x + rollTurn.x * t.y);
+  return (s / (frame * shownTan) + shownShift + 1.0) * 0.5;
+}
 void main() {
-  vec2 uv = (vUv - 0.5) / zoom + 0.5;
-  vec4 scene = texture(sceneTexture, uv);
-  // The one departure from the cinematic's bloom. There it spreads across a
-  // full-screen frame; here the frame is a square on the page, and the widest
-  // mip's haze reached its edges and stopped dead, drawing the square's outline
-  // over the stars. Faded out over the outer tenth instead. The black hole is
-  // framed well inside that band, so only the haze is touched.
-  vec2 edge = min(vUv, 1.0 - vUv);
-  float keep = smoothstep(0.0, 0.1, min(edge.x, edge.y));
+  vec2 uv = standIn(vUv);
+  // Off the shown bake's edge there is nothing to stand in with: left empty
+  // for the frame or two until the exact bake fills it, rather than smearing
+  // the edge pixels across.
+  vec2 inside = step(0.0, uv) * step(uv, vec2(1.0));
+  float shown = inside.x * inside.y;
+  vec4 scene = texture(sceneTexture, uv) * shown;
   // UnrealBloomPass adds its composite over the scene with three's
   // AdditiveBlending on a material that is not premultiplied: blendFunc(
   // SRC_ALPHA, ONE). The composite's alpha is the same weighted sum as its
   // colour, every blur mip carrying alpha 1 — strength 0.2 times factors that
   // add to 3.0 at radius 1, so 0.6 — and the glow lands at 0.6 of its colour.
   vec4 glow = texture(bloomTexture, uv);
-  vec3 bloom = glow.rgb * glow.a * keep;
+  vec3 bloom = glow.rgb * glow.a * shown;
   // Premultiplied: rgb with alpha 0 is added over what is behind the canvas.
   // The shadow stays as dark as it is; only the light is taken down.
   float light = mix(1.0, dimFloor, behindText());

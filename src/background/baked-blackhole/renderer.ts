@@ -19,6 +19,9 @@ export interface BlackholeCamera {
   rollDeg: number;
   /** Vertical field of view. */
   fovDeg: number;
+  /** The cinematic's compose shift: where the black hole sits in the frame, in
+   *  half-screens from the middle, x a fraction of the width, y up. */
+  shift: [number, number];
 }
 
 export interface BakedBlackholeOptions {
@@ -30,12 +33,11 @@ export interface BakedBlackholeOptions {
 }
 
 /** Where the canvas sits on screen and the text it should dim behind, all in
- *  CSS pixels. The canvas is turned about its centre by `angleDeg`, clockwise,
- *  as CSS's rotateZ turns it. */
+ *  CSS pixels. */
 export interface BlackholeDimming {
-  center: [number, number];
+  /** The canvas's top-left corner. */
+  origin: [number, number];
   size: [number, number];
-  angleDeg: number;
   /** Screen rectangles as left, top, right, bottom. At most MAX_DIM_RECTS. */
   rects: [number, number, number, number][];
   /** What is left of the light behind text, from 0 to 1. */
@@ -72,8 +74,13 @@ const BYTES_PER_BAKED_PIXEL = 20;
 /** Where each strip's size starts, and the bounds it adapts within. A strip is
  *  sized to the frame budget: grown while frames keep their pace, cut back as
  *  soon as one runs long, so a slow GPU bakes in small pieces rather than
- *  stalling the page, and a fast one finishes a re-bake in a frame or two. */
-const STRIP_PIXELS = { start: 120_000, min: 16_000, max: 1_200_000 };
+ *  stalling the page, and a fast one finishes a re-bake in a frame or two.
+ *
+ *  The ceiling is a third of a desktop frame because a pixel's cost is not
+ *  fixed: far out most rays leave in a few steps, close in they wind round the
+ *  hole for hundreds. A strip grown on the cheap rays at the top of the page
+ *  cost 100ms in one frame near the bottom before the budget could cut it. */
+const STRIP_PIXELS = { start: 120_000, min: 16_000, max: 400_000 };
 const FRAME_BUDGET_MS = { grow: 18, shrink: 24 };
 
 /** How long the camera has to sit still before the spare bake is let go. It is
@@ -131,7 +138,12 @@ interface Bake {
 }
 
 const sameCamera = (a: BlackholeCamera, b: BlackholeCamera) =>
-  a.distance === b.distance && a.elevationDeg === b.elevationDeg && a.rollDeg === b.rollDeg && a.fovDeg === b.fovDeg;
+  a.distance === b.distance &&
+  a.elevationDeg === b.elevationDeg &&
+  a.rollDeg === b.rollDeg &&
+  a.fovDeg === b.fovDeg &&
+  a.shift[0] === b.shift[0] &&
+  a.shift[1] === b.shift[1];
 
 /** Camera vectors the way the cinematic's Observer builds them, at orbit
  *  angle 0: on the +z side, raised by the elevation, looking at the origin. */
@@ -155,19 +167,11 @@ export function cameraVectors({ distance, elevationDeg, rollDeg }: BlackholeCame
   // The cinematic's Observer is always in orbit, and at orbit angle 0 its
   // velocity is (-cos(elevation) * angularVelocity, 0, 0) — written as it is
   // there, angular velocity standing in for speed — with angularVelocity at its
-  // orbital ceiling, 1 / sqrt(2(r - 1)) / r.
+  // orbital ceiling, 1 / sqrt(2(r - 1)) / r. Negligible far out; about 0.04 at
+  // the closest the home page comes, distance 7.
   const angularVelocity = 1 / Math.sqrt(2 * (distance - 1)) / distance;
   const velocity = [-Math.cos(e) * angularVelocity, 0, 0];
   return { position, dir, up, velocity };
-}
-
-/** How much bigger the black hole looks from `to` than from `from`, for the
- *  stand-in zoom between bakes. Its angular size goes as the inverse of the
- *  distance, and a pinhole projection turns that into the same ratio on
- *  screen. */
-export function apparentScale(from: BlackholeCamera, to: BlackholeCamera) {
-  const fov = (f: BlackholeCamera) => Math.tan((f.fovDeg * Math.PI) / 360);
-  return (from.distance * fov(from)) / (to.distance * fov(to));
 }
 
 /** Null when this browser cannot run it — no WebGL2, or a shader the driver
@@ -343,6 +347,7 @@ export function createBakedBlackhole(
     gl!.uniform3fv(u("cam_up"), up);
     gl!.uniform3fv(u("cam_vel"), velocity);
     gl!.uniform1f(u("fov"), bake.camera.fovDeg);
+    gl!.uniform2fv(u("compose_shift"), bake.camera.shift);
     gl!.enable(gl!.SCISSOR_TEST);
     gl!.scissor(0, bake.rows, width, Math.min(rows, height - bake.rows));
     draw();
@@ -430,14 +435,20 @@ export function createBakedBlackhole(
       gl!.useProgram(p);
       texture(0, scene!.textures[0], u("sceneTexture"));
       texture(1, horizontal[0].textures[0], u("bloomTexture"));
-      gl!.uniform1f(u("zoom"), apparentScale(shown.camera, camera));
+      const halfTan = (c: BlackholeCamera) => Math.tan((c.fovDeg * Math.PI) / 360);
+      const turn = ((shown.camera.rollDeg - camera.rollDeg) * Math.PI) / 180;
+      gl!.uniform1f(u("aspect"), width / height);
+      gl!.uniform2fv(u("shownShift"), shown.camera.shift);
+      gl!.uniform2fv(u("targetShift"), camera.shift);
+      gl!.uniform1f(u("shownTan"), halfTan(shown.camera));
+      gl!.uniform1f(u("targetTan"), halfTan(camera));
+      gl!.uniform1f(u("distanceRatio"), camera.distance / shown.camera.distance);
+      gl!.uniform2f(u("rollTurn"), Math.cos(turn), Math.sin(turn));
       const count = dimming ? Math.min(dimming.rects.length, MAX_DIM_RECTS) : 0;
       gl!.uniform1i(u("dimCount"), count);
       if (dimming && count > 0) {
-        const angle = (dimming.angleDeg * Math.PI) / 180;
-        gl!.uniform2fv(u("canvasCenter"), dimming.center);
+        gl!.uniform2fv(u("canvasOrigin"), dimming.origin);
         gl!.uniform2fv(u("canvasSize"), dimming.size);
-        gl!.uniform2f(u("canvasTurn"), Math.cos(angle), Math.sin(angle));
         gl!.uniform4fv(u("dimRects"), dimming.rects.slice(0, count).flat());
         gl!.uniform1f(u("dimFloor"), dimming.floor);
         gl!.uniform1f(u("dimFeather"), Math.max(dimming.feather, 1e-3));

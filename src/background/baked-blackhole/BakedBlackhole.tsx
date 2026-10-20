@@ -12,34 +12,76 @@ import {
  *  radius of 1. */
 const CINEMATIC_BLOOM = { strength: 0.2, radius: 1, threshold: 0.1 };
 
-/** Framed to sit in the square the video did at the size the video drew it:
- *  the disk, out to radius 6, about two fifths of the frame across, which
- *  leaves the glow room to fade before the edge. Seen from 10 degrees above
- *  the disk, in the cinematic's own colours. */
-export const DEFAULT_CAMERA: BlackholeCamera = { distance: 20, elevationDeg: 10, rollDeg: 0, fovDeg: 75 };
-
-/** What scrolling the page does to the black hole, from the top of the page
- *  (0) to the bottom (1).
- *
- *  `distance` is the camera's, and is real: every change is integrated again,
- *  so the lensing grows the way it does on an actual approach rather than the
- *  picture being enlarged. 12 keeps the disk and its glow inside the square
- *  the canvas occupies; much closer and the disk runs off its edges.
- *
- *  `rollDeg` and `shift` turn and slide the whole canvas. Both are exact — the
- *  same picture, turned or moved — so they are done in CSS and cost nothing. */
+/** Where the scroll starts and ends, for a canvas of the given CSS size. */
 export interface ScrollPath {
-  distance: [number, number];
-  rollDeg: [number, number];
-  /** Viewport units, [x, y], at the start and the end. */
-  shift: [[number, number], [number, number]];
+  (viewport: { width: number; height: number; wide: boolean }): {
+    start: BlackholeCamera;
+    end: BlackholeCamera;
+  };
 }
 
-export const DEFAULT_SCROLL_PATH: ScrollPath = {
-  distance: [20, 12],
-  rollDeg: [-20, -38],
-  shift: [[0, 0], [-6, -4]],
+/** The pixel scale the black hole started at when it was a video: an 840px
+ *  square drawn at a 75 degree field of view, so 547 CSS pixels of focal
+ *  length. Held at the start of the scroll whatever the viewport's height. */
+const START_FOCAL_PX = 420 / Math.tan((37.5 * Math.PI) / 180);
+
+/** The home page's scroll, from a small level black hole where the video sat to
+ *  the reference frame in portfolio-3D's public/goal/last_frame.jpg.
+ *
+ *  The end takes the cinematic's framing of that reference — 2.5 degrees above
+ *  the disk, rolled 18 degrees so the disk runs up to the right, the compose
+ *  shift that puts the shadow high and to the right, and its back-off of up to
+ *  55% as the screen narrows — but not its distance. The cinematic ends at 3.6,
+ *  inside the disk's outer edge at 6, so the near side of the disk passes under
+ *  the camera and fills the bottom of the frame with a white slab; its own
+ *  notes say the reference is shot from outside its disk. 7 is outside it, and
+ *  a 54 degree field of view keeps the shadow the size the cinematic's 90 gave
+ *  it at 3.6, so the disk now recedes into the dark at the lower left as the
+ *  reference's does.
+ *
+ *  The start is the size and place the video had, pushed further away to 28 so
+ *  it starts smaller, and level: no roll until the scroll turns it in. */
+export const HOME_SCROLL_PATH: ScrollPath = ({ width, height, wide }) => {
+  const aspect = Math.max(width / height, 0.4);
+  const narrowFraming = Math.min(1, Math.max(0, (1.2 - aspect) / 0.8));
+  return {
+    start: {
+      distance: 28,
+      elevationDeg: 10,
+      rollDeg: 0,
+      fovDeg: (2 * Math.atan(height / 2 / START_FOCAL_PX) * 180) / Math.PI,
+      // Where the video sat: at 80% across and halfway down beside the copy, or
+      // centred three quarters of the way down a phone.
+      shift: wide ? [0.6, 0] : [0, -0.5],
+    },
+    end: {
+      distance: 7 * (1 + 0.55 * narrowFraming),
+      elevationDeg: 2.5,
+      rollDeg: 18,
+      fovDeg: 54,
+      shift: [0.67, 0.26],
+    },
+  };
 };
+
+/** Away from the home page it holds the home page's starting frame. */
+export const STILL_PATH: ScrollPath = (viewport) => {
+  const { start } = HOME_SCROLL_PATH(viewport);
+  return { start, end: start };
+};
+
+/** Between the two ends. The distance is eased in its inverse, which is what
+ *  the black hole's size on screen goes with, so it grows steadily across the
+ *  scroll rather than holding small and then rushing up at the very end. */
+export function cameraBetween(start: BlackholeCamera, end: BlackholeCamera, t: number): BlackholeCamera {
+  return {
+    distance: 1 / lerp(1 / start.distance, 1 / end.distance, t),
+    elevationDeg: lerp(start.elevationDeg, end.elevationDeg, t),
+    rollDeg: lerp(start.rollDeg, end.rollDeg, t),
+    fovDeg: lerp(start.fovDeg, end.fovDeg, t),
+    shift: [lerp(start.shift[0], end.shift[0], t), lerp(start.shift[1], end.shift[1], t)],
+  };
+}
 
 /** Device pixels per CSS pixel, capped, and a ceiling on the total. The bake
  *  costs memory and time in proportion to its pixel count: 20 bytes each, so a
@@ -69,26 +111,20 @@ function scrollProgress() {
 
 export default function BakedBlackhole({
   className,
-  style,
+  path = HOME_SCROLL_PATH,
   enabled,
-  camera = DEFAULT_CAMERA,
-  path = DEFAULT_SCROLL_PATH,
   diskTint,
   onUnsupported,
 }: {
   className: string;
-  style?: React.CSSProperties;
+  path?: ScrollPath;
   /** Whether it should be moving — the same gate the video plays on. */
   enabled: boolean;
-  /** Where the camera starts. The scroll path's distance replaces its own. */
-  camera?: BlackholeCamera;
-  path?: ScrollPath;
   /** Multiplies the disk's colour, as the cinematic's disk_tint does. */
   diskTint?: [number, number, number];
   /** Called when this browser cannot run it, so the caller can keep the video. */
   onUnsupported: () => void;
 }) {
-  const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [ready, setReady] = useState(false);
   const enabledRef = useRef(enabled);
@@ -102,48 +138,28 @@ export default function BakedBlackhole({
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    const wrapper = wrapperRef.current;
-    if (!canvas || !wrapper) return;
+    if (!canvas) return;
     let disposed = false;
     let frame = 0;
     let renderer: ReturnType<typeof createBakedBlackhole> = null;
     let observer: ResizeObserver | null = null;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const wide = window.matchMedia("(min-width: 640px)");
 
     // Where along the path the page is. Held at the start for anyone who asked
     // for less motion: scroll-linked movement is still movement.
     const progress = () => (reducedMotion.matches ? 0 : smoothstep(scrollProgress()));
-    const cameraAt = (t: number): BlackholeCamera => ({
-      ...camera,
-      distance: lerp(pathRef.current.distance[0], pathRef.current.distance[1], t),
-    });
-
-    let lastTransform = "";
-    // Where place() last put the canvas: its slide, in vw and vh as CSS holds
-    // it so a resize keeps it right, and its turn.
-    const placed = { x: 0, y: 0, rollDeg: 0 };
-    const shiftPx = () => [(placed.x * window.innerWidth) / 100, (placed.y * window.innerHeight) / 100];
-    const place = (t: number) => {
-      const { rollDeg, shift } = pathRef.current;
-      const x = lerp(shift[0][0], shift[1][0], t);
-      const y = lerp(shift[0][1], shift[1][1], t);
-      const roll = lerp(rollDeg[0], rollDeg[1], t);
-      placed.x = x;
-      placed.y = y;
-      placed.rollDeg = roll;
-      const transform = `translate3d(${x.toFixed(3)}vw, ${y.toFixed(3)}vh, 0) rotateZ(${roll.toFixed(3)}deg)`;
-      if (transform !== lastTransform) {
-        wrapper.style.transform = transform;
-        lastTransform = transform;
-      }
+    const cameraAt = (t: number): BlackholeCamera => {
+      const { start, end } = pathRef.current({
+        width: canvas.clientWidth || window.innerWidth,
+        height: canvas.clientHeight || window.innerHeight,
+        wide: wide.matches,
+      });
+      return cameraBetween(start, end, t);
     };
-    place(progress());
 
     // Reads where the text and the canvas are, before this frame writes
-    // anything, so the reads cost no extra layout. The canvas's centre is
-    // measured as it was last placed and then moved by however far place() is
-    // about to slide it; a square turned about its centre keeps the centre of
-    // its bounding box there.
+    // anything, so the reads cost no extra layout.
     const measureText = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
@@ -155,9 +171,8 @@ export default function BakedBlackhole({
         if (box.right < -DIM.feather || box.left > width + DIM.feather) continue;
         rects.push([box.left - DIM.pad, box.top - DIM.pad, box.right + DIM.pad, box.bottom + DIM.pad]);
       }
-      const box = wrapper.getBoundingClientRect();
-      const [x, y] = shiftPx();
-      return { rects, center: [box.left + box.width / 2 - x, box.top + box.height / 2 - y] };
+      const box = canvas.getBoundingClientRect();
+      return { rects, origin: [box.left, box.top] as [number, number] };
     };
 
     const image = new Image();
@@ -171,12 +186,13 @@ export default function BakedBlackhole({
         return;
       }
       const size = () => {
-        // The layout box, not the bounding rect: the wrapper is rotated, and the
-        // canvas is drawn at its own unrotated size.
         const w = canvas.clientWidth;
         const h = canvas.clientHeight;
         let ratio = Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO);
         if (w * h * ratio * ratio > MAX_BAKE_PIXELS) ratio = Math.sqrt(MAX_BAKE_PIXELS / (w * h));
+        // The frame depends on the canvas's shape, so the camera is set for the
+        // new size before the bake it starts.
+        renderer!.setCamera(cameraAt(progress()));
         renderer!.resize(w * ratio, h * ratio);
       };
       size();
@@ -187,6 +203,7 @@ export default function BakedBlackhole({
       let drewStill = false;
       let shown = false;
       let lastProgress = -1;
+      let lastPath = pathRef.current;
       let lastDimming = "";
       const tick = () => {
         frame = requestAnimationFrame(tick);
@@ -196,25 +213,23 @@ export default function BakedBlackhole({
 
         const text = measureText();
         const t = progress();
-        const scrolled = t !== lastProgress;
-        if (scrolled) {
+        const moved = t !== lastProgress || pathRef.current !== lastPath;
+        if (moved) {
           lastProgress = t;
-          place(t);
+          lastPath = pathRef.current;
           renderer.setCamera(cameraAt(t));
         }
 
         // Text moves without the page scrolling too — the carousel settling, a
         // section revealing — so a change here is a reason to draw on its own.
-        const [shiftX, shiftY] = shiftPx();
         const dimming: BlackholeDimming = {
-          center: [text.center[0] + shiftX, text.center[1] + shiftY],
+          origin: text.origin,
           size: [canvas.clientWidth, canvas.clientHeight],
-          angleDeg: placed.rollDeg,
           rects: text.rects,
           floor: DIM.floor,
           feather: DIM.feather,
         };
-        const signature = JSON.stringify([dimming.center, dimming.size, dimming.angleDeg, dimming.rects]);
+        const signature = JSON.stringify([dimming.origin, dimming.size, dimming.rects]);
         const textMoved = signature !== lastDimming;
         if (textMoved) {
           lastDimming = signature;
@@ -225,7 +240,7 @@ export default function BakedBlackhole({
         // for anyone who asked for less motion — the video paused in all three.
         // A scroll still redraws it, so the approach follows the page.
         const spinning = enabledRef.current && !document.hidden && !reducedMotion.matches;
-        const settling = scrolled || textMoved || renderer.busy;
+        const settling = moved || textMoved || renderer.busy;
         if (!spinning && !settling && drewStill) return;
         const drew = renderer.render(spinning ? (performance.now() - start) / 1000 : 0);
         if (drew) {
@@ -247,21 +262,22 @@ export default function BakedBlackhole({
       observer?.disconnect();
       renderer?.dispose();
     };
-    // The starting camera is fixed for the life of the canvas; a new one is a
-    // new renderer. The path is read through a ref, so it can change freely.
+    // The path is read through a ref, so it can change freely; a new tint is a
+    // new renderer.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [camera.distance, camera.elevationDeg, camera.rollDeg, camera.fovDeg, diskTint?.join()]);
+  }, [diskTint?.join()]);
 
-  // Placed by a wrapper, not on the canvas: globals.css pins every canvas to
-  // the top-left corner, outside any layer, so it beats a utility class. Inside
-  // a transformed wrapper that pin is relative to the wrapper, which is where
-  // the canvas belongs anyway.
+  // The canvas is the whole screen, as the cinematic's is, so the frame can
+  // carry the disk off every edge. Sized to the large viewport so a phone's
+  // address bar coming and going does not resize it, which would re-run the
+  // bake. The wrapper only stacks it: globals.css pins every canvas to the
+  // top-left corner.
   return (
-    <div ref={wrapperRef} className={className} style={style} aria-hidden="true">
+    <div className={className} aria-hidden="true">
       <canvas
         ref={canvasRef}
         data-blackhole-canvas
-        className="h-full w-full"
+        className="h-lvh w-full"
         style={{ opacity: ready ? 1 : 0, transition: "opacity 800ms ease-out" }}
       />
     </div>

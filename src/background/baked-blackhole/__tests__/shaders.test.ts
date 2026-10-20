@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { fragmentShader as cinematic } from "@/cinematic/scene/graphics/fragmentShader";
 import { BAKE_FRAGMENT, DISK_FRAGMENT } from "../shaders";
-import { apparentScale, cameraVectors } from "../renderer";
+import { cameraVectors } from "../renderer";
+import { HOME_SCROLL_PATH, STILL_PATH, cameraBetween } from "../BakedBlackhole";
 
 /** Whitespace is free to differ between the two; nothing else is. */
 const squash = (source: string) => source.replace(/\s+/g, "");
@@ -75,7 +76,7 @@ describe("the baked black hole", () => {
 
 describe("cameraVectors", () => {
   it("places the camera above the disk looking at the hole, as the Observer does", () => {
-    const { position, dir, up } = cameraVectors({ distance: 20, elevationDeg: 30, rollDeg: 0, fovDeg: 60 });
+    const { position, dir, up } = cameraVectors({ distance: 20, elevationDeg: 30, rollDeg: 0, fovDeg: 60, shift: [0, 0] });
     expect(position[0]).toBeCloseTo(0);
     expect(position[1]).toBeCloseTo(10);
     expect(position[2]).toBeCloseTo(20 * Math.cos(Math.PI / 6));
@@ -86,23 +87,71 @@ describe("cameraVectors", () => {
   });
 
   it("rolls up about the view axis", () => {
-    const level = cameraVectors({ distance: 20, elevationDeg: 10, rollDeg: 0, fovDeg: 60 });
-    const rolled = cameraVectors({ distance: 20, elevationDeg: 10, rollDeg: 90, fovDeg: 60 });
+    const level = cameraVectors({ distance: 20, elevationDeg: 10, rollDeg: 0, fovDeg: 60, shift: [0, 0] });
+    const rolled = cameraVectors({ distance: 20, elevationDeg: 10, rollDeg: 90, fovDeg: 60, shift: [0, 0] });
     const dot = level.up.reduce((sum, v, i) => sum + v * rolled.up[i], 0);
     expect(dot).toBeCloseTo(0);
     expect(rolled.up[0] * rolled.dir[0] + rolled.up[1] * rolled.dir[1] + rolled.up[2] * rolled.dir[2]).toBeCloseTo(0);
   });
 });
 
-describe("apparentScale", () => {
-  const at = (distance: number) => ({ distance, elevationDeg: 10, rollDeg: 0, fovDeg: 75 });
+describe("the home page's scroll", () => {
+  const main = readFileSync(new URL("../../../cinematic/scene/main.js", import.meta.url), "utf8");
+  const shader = readFileSync(new URL("../../../cinematic/scene/graphics/fragmentShader.ts", import.meta.url), "utf8");
+  const sceneConfig = readFileSync(new URL("../../../cinematic/scene/sceneConfig.js", import.meta.url), "utf8");
+  const number = (source: string, pattern: RegExp) => Number(source.match(pattern)?.[1]);
+  const desktop = { width: 1440, height: 900, wide: true };
+  const phone = { width: 390, height: 844, wide: false };
 
-  it("is 1 when the camera has not moved", () => {
-    expect(apparentScale(at(20), at(20))).toBe(1);
+  // The scroll ends on the cinematic's framing of the reference image: its
+  // elevation, roll and compose shift. A retune there should move the
+  // homepage's end with it.
+  it("ends on the cinematic's framing of the reference", () => {
+    const { end } = HOME_SCROLL_PATH(desktop);
+    expect(end.elevationDeg).toBe(number(main, /endElev = ([\d.]+) \*/));
+    expect(end.rollDeg).toBe(number(main, /endRoll = ([\d.]+) \*/));
+    expect(end.shift).toEqual([
+      number(shader, /const float COMPOSE_SHIFT = ([\d.]+);/),
+      number(shader, /const float COMPOSE_SHIFT_Y = ([\d.]+);/),
+    ]);
   });
 
-  it("grows as the inverse of the distance", () => {
-    expect(apparentScale(at(20), at(10))).toBeCloseTo(2);
-    expect(apparentScale(at(12), at(20))).toBeCloseTo(0.6);
+  // The cinematic ends at 3.6 with a 90 degree field of view, inside the disk.
+  // The homepage ends outside it, zoomed in to keep the shadow the same size:
+  // the same tan(fov / 2) * distance, near enough.
+  it("ends outside the disk, with the shadow the size the cinematic's was", () => {
+    const { end } = HOME_SCROLL_PATH(desktop);
+    const cinematicDistance = number(main, /blackHoleDist = ([\d.]+) \*/);
+    const cinematicFov = number(sceneConfig, /fov: ([\d.]+),/);
+    expect(end.distance).toBeGreaterThan(6);
+    const size = (distance: number, fov: number) => 1 / (distance * Math.tan((fov * Math.PI) / 360));
+    expect(size(end.distance, end.fovDeg) / size(cinematicDistance, cinematicFov)).toBeCloseTo(1, 1);
+  });
+
+  it("backs off on a narrow screen as the cinematic does", () => {
+    const backOff = number(main, /\(1\.0 \+ ([\d.]+) \* narrowFraming\)/);
+    const aspect = phone.width / phone.height;
+    const narrow = Math.min(1, Math.max(0, (1.2 - aspect) / 0.8));
+    expect(HOME_SCROLL_PATH(phone).end.distance).toBeCloseTo(7 * (1 + backOff * narrow));
+  });
+
+  it("starts level and smaller than the video", () => {
+    const { start } = HOME_SCROLL_PATH(desktop);
+    expect(start.rollDeg).toBe(0);
+    expect(start.distance).toBeGreaterThan(20);
+  });
+
+  it("grows steadily: the inverse distance moves in step with the scroll", () => {
+    const { start, end } = HOME_SCROLL_PATH(desktop);
+    const half = cameraBetween(start, end, 0.5);
+    expect(1 / half.distance).toBeCloseTo((1 / start.distance + 1 / end.distance) / 2);
+    expect(cameraBetween(start, end, 0)).toEqual(start);
+    expect(cameraBetween(start, end, 1).distance).toBeCloseTo(end.distance);
+  });
+
+  it("holds the starting frame away from the home page", () => {
+    const { start, end } = STILL_PATH(desktop);
+    expect(end).toEqual(start);
+    expect(start).toEqual(HOME_SCROLL_PATH(desktop).start);
   });
 });
