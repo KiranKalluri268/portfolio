@@ -135,6 +135,19 @@ test.describe("the Projects heading stays clear of the fixed header", () => {
 
       const title = page.locator("#projects > h2");
       await expect(title).toBeVisible();
+      // The scroll is scrubbed, so the title is still on its way when the
+      // scroll lands. Measuring then catches it mid-flight: at 2560x1440 its
+      // starting point is already clear of the header, so the check below
+      // passed at once and the card was compared with a title that had barely
+      // moved. Wait for two readings in a row to agree first.
+      let previous = "";
+      await expect.poll(async () => {
+        const box = await title.boundingBox();
+        const current = box ? `${Math.round(box.x)},${Math.round(box.y)}` : "";
+        const settled = current !== "" && current === previous;
+        previous = current;
+        return settled;
+      }, { intervals: [100] }).toBe(true);
       await expect.poll(async () => {
         const titleBox = await title.boundingBox();
         const headerBox = await page.getByRole("banner").boundingBox();
