@@ -229,11 +229,11 @@ When changing domains, update every canonical occurrence and the generated socia
 ## Media
 
 - Main audio: `public/audio/final.mp3`
-- Safari alpha video: `public/images/optimized_safari.mov`
-- WebM alpha video: `public/images/optimized.webm`
+- Safari alpha video: `optimized_safari.mov` on Cloudinary (`src/background/BlackholeEffect.tsx`)
+- WebM alpha video: `optimized.webm` on Cloudinary (same file)
 - Static black-hole image: `public/images/blackhole.png`
 
-Keep both transparent video formats unless browser support requirements change. Large media should be optimized before committing.
+Keep both transparent video formats unless browser support requirements change. Large media should be optimized before committing, and anything the site does not load stays out of `public/`: originals and unused copies can be kept in `local-assets/`, which is gitignored.
 
 Project images use the configured Next.js quality value `90`; the default `75` remains available for other images. Add new quality values to `images.qualities` in `next.config.ts` before using them.
 
