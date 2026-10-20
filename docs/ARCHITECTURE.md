@@ -60,11 +60,9 @@ Natural vertical scrolling drives the pinned timeline continuously; there is no 
 
 `StarsBackground` owns one fixed canvas. It creates a deterministic density of stars for the viewport, pauses when appropriate, and allows a limited number of stars to enter a blinking/shooting lifecycle.
 
-`BlackholeEffect` draws the black hole on the home page and plays a video of it everywhere else.
+`BlackholeEffect` draws the black hole on every route with `baked-blackhole/BakedBlackhole`: the cinematic's black hole, drawn in WebGL2 from a one-time bake of its light paths rather than ray-marched every frame. On `/`, scrolling moves the camera and turns and slides the canvas; on other routes it holds the home page's starting position. Its light dims behind any element marked `data-blackhole-dim`.
 
-On `/` it mounts `baked-blackhole/BakedBlackhole`: the cinematic's black hole, drawn in WebGL2 from a one-time bake of its light paths rather than ray-marched every frame. Scrolling moves the camera, turns and slides the canvas, and the light dims behind any element marked `data-blackhole-dim`. The video is never part of the home page's HTML, so it is not downloaded there.
-
-On other routes, and on the home page when a browser cannot run WebGL2 or rejects a shader, it renders a transparent video with two sources:
+Only when a browser cannot run WebGL2, or rejects a shader, does it fall back to a transparent video with two sources:
 
 - QuickTime (`.mov`) for Safari-compatible alpha video
 - WebM for other capable browsers
