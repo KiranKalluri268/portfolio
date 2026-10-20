@@ -36,7 +36,8 @@ html.cinematic-loading body {
    journey is running they are hidden rather than left drawing underneath it.
    Both come back the moment the class is removed, because that is all this is. */
 html.cinematic-journey [data-stars-background],
-html.cinematic-journey [data-blackhole-video] {
+html.cinematic-journey [data-blackhole-video],
+html.cinematic-journey [data-blackhole-canvas] {
   display: none;
 }
 
