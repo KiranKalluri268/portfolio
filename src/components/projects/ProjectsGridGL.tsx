@@ -31,6 +31,7 @@ import {
 } from "./grid-sphere";
 import { CARD_SHAPES, drawCard, textureSizeFor } from "./stack-card";
 import styles from "./projects-grid.module.css";
+import { CARD_TEXTURE_IMAGE_WIDTH, cloudinaryImage } from "@/lib/cloudinary";
 
 export interface GridEntry {
   project: ProjectContent;
@@ -355,7 +356,7 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
       // eleven projects, and the old grid paid for a mounted image per cell.
       const canvases = await Promise.all(
         entries.map(async ({ project, origin }) => {
-          const image = project.image ? await loadImage(project.image) : null;
+          const image = project.image ? await loadImage(cloudinaryImage(project.image, CARD_TEXTURE_IMAGE_WIDTH)) : null;
           const marks = iconSource.querySelectorAll<SVGElement>(
             `[data-grid-icons="${project.slug}"] svg`,
           );

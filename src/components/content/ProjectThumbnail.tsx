@@ -1,4 +1,5 @@
 import Image from "next/image";
+import CloudinaryImage from "./CloudinaryImage";
 import type { ProjectContent } from "@/lib/content/types";
 
 /** Derives a short monogram from the title, e.g. "HealthyMitra – Care …" → "HM". */
@@ -26,14 +27,16 @@ export default function ProjectThumbnail({
   className?: string;
 }) {
   if (project.image) {
+    // Cloudinary resizes its own images, so those skip Next's optimiser and
+    // ask Cloudinary for each width in the srcset instead of the original.
+    const Img = project.image.startsWith("https://res.cloudinary.com/") ? CloudinaryImage : Image;
     return (
-      <Image
+      <Img
         src={project.image}
         alt={project.imageAlt ?? ""}
         fill
         priority={priority}
         quality={90}
-        unoptimized={project.image.startsWith("https://res.cloudinary.com/")}
         sizes={sizes}
         className={className}
       />

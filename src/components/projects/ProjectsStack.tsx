@@ -14,6 +14,7 @@ import { useActiveProjectsView } from "./ProjectsView";
 import gridStyles from "./projects-grid.module.css";
 import { CARD_SHAPES, drawCard, textureSizeFor } from "./stack-card";
 import type { ProjectContent, SkillContent } from "@/lib/content/types";
+import { CARD_TEXTURE_IMAGE_WIDTH, cloudinaryImage } from "@/lib/cloudinary";
 
 export interface StackEntry {
   project: ProjectContent;
@@ -205,7 +206,7 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
 
       const textures = await Promise.all(
         entries.map(async ({ project, origin }) => {
-          const image = project.image ? await loadImage(project.image) : null;
+          const image = project.image ? await loadImage(cloudinaryImage(project.image, CARD_TEXTURE_IMAGE_WIDTH)) : null;
           const marks = iconSource.querySelectorAll<SVGElement>(
             `[data-stack-icons="${project.slug}"] svg`,
           );

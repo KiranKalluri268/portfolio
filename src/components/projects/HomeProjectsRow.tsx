@@ -12,6 +12,7 @@ import type { ProjectContent, SkillContent } from "@/lib/content/types";
 import gridStyles from "./projects-grid.module.css";
 import { CARD_SHAPES, drawCard, drawSeeAllCard, textureSizeFor } from "./stack-card";
 import { homeProjectsLayout, homeProjectsOverlayOffset } from "./home-projects-layout";
+import { CARD_TEXTURE_IMAGE_WIDTH, cloudinaryImage } from "@/lib/cloudinary";
 
 /** The home page's projects carousel, drawn on the GPU.
  *
@@ -249,7 +250,7 @@ export default function HomeProjectsRow({
 
       const projectTextures = await Promise.all(
         entries.map(async ({ project, origin }) => {
-          const image = project.image ? await loadImage(project.image) : null;
+          const image = project.image ? await loadImage(cloudinaryImage(project.image, CARD_TEXTURE_IMAGE_WIDTH)) : null;
           const marks = iconSource.querySelectorAll<SVGElement>(
             `[data-home-icons="${project.slug}"] svg`,
           );
