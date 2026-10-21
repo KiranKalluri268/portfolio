@@ -36,6 +36,12 @@ const ELEMENT_GAP = 10;
 const EDGE = 12;
 /** After a tap, long enough for whatever it opened to be on screen. */
 const COVER_CHECK_MS = 150;
+/** How long a mouse-shown label waits after the cursor leaves its control.
+ *  Reaching the next labelled control in that time — the next scene dot, the
+ *  next arrow — swaps the text in place instead of fading out and back in. */
+const POINTER_GRACE_MS = 100;
+/** The fade's length; a label fading out keeps following the cursor for it. */
+const FADE_MS = 150;
 
 /** What brought the label up: a mouse over the control, a finger tapping it,
  *  or keyboard focus. Each is put away by its own counterpart only. */
@@ -59,7 +65,7 @@ export default function TooltipLayer() {
   const place = useCallback(() => {
     const tooltip = tooltipRef.current;
     const element = target.current;
-    if (!tooltip || !element) return;
+    if (!tooltip || (!element && mode.current !== "pointer")) return;
     const { offsetWidth, offsetHeight } = tooltip;
     let x: number;
     let y: number;
@@ -74,7 +80,7 @@ export default function TooltipLayer() {
       // it. Controls at the top of the screen have no room above, and clamping
       // there would put the label back on top of the control it names, so it
       // goes below instead.
-      const box = element.getBoundingClientRect();
+      const box = element!.getBoundingClientRect();
       x = Math.min(
         Math.max(EDGE, box.left + box.width / 2 - offsetWidth / 2),
         Math.max(EDGE, window.innerWidth - offsetWidth - EDGE),
@@ -82,12 +88,19 @@ export default function TooltipLayer() {
       const above = box.top - ELEMENT_GAP - offsetHeight;
       y = above >= EDGE ? above : box.bottom + ELEMENT_GAP;
     }
-    tooltip.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    // The translate property, not transform: the fade's scale is applied
+    // before transform, so it shrank the offset too and pulled a fading label
+    // towards the corner of the screen. translate is applied after it.
+    tooltip.style.translate = `${x}px ${y}px`;
   }, []);
 
   useEffect(() => {
     let dismiss = 0;
     let covered = 0;
+    let leaving = 0;
+    // Until when a label put away from the cursor still follows it while it
+    // fades, rather than fading out where the cursor left it.
+    let followUntil = 0;
     const observer = new MutationObserver(() => {
       const text = target.current?.getAttribute(TOOLTIP_ATTRIBUTE);
       if (text) setLabel((current) => ({ ...current, text }));
@@ -96,6 +109,7 @@ export default function TooltipLayer() {
 
     function show(element: Element, as: Mode) {
       window.clearTimeout(dismiss);
+      window.clearTimeout(leaving);
       if (target.current !== element) {
         observer.disconnect();
         observer.observe(element, { attributes: true, attributeFilter: [TOOLTIP_ATTRIBUTE] });
@@ -108,6 +122,8 @@ export default function TooltipLayer() {
     function hide() {
       window.clearTimeout(dismiss);
       window.clearTimeout(covered);
+      window.clearTimeout(leaving);
+      if (target.current && mode.current === "pointer") followUntil = performance.now() + FADE_MS;
       observer.disconnect();
       target.current = null;
       // The text stays while it fades out.
@@ -118,12 +134,16 @@ export default function TooltipLayer() {
       node instanceof Element ? node.closest(WITH_TOOLTIP) : null;
 
     // Only two numbers on every move across the page; the layout read in
-    // place() happens only while a label is up and following the cursor.
+    // place() happens only while a label is on screen following the cursor.
     const onPointerMove = (event: PointerEvent) => {
       point.current = { x: event.clientX, y: event.clientY };
-      if (!target.current || mode.current !== "pointer") return;
-      if (!target.current.isConnected) hide();
-      else place();
+      if (mode.current !== "pointer") return;
+      if (target.current) {
+        if (!target.current.isConnected) hide();
+        else place();
+      } else if (performance.now() < followUntil) {
+        place();
+      }
     };
 
     const onPointerOver = (event: PointerEvent) => {
@@ -131,10 +151,12 @@ export default function TooltipLayer() {
       point.current = { x: event.clientX, y: event.clientY };
       const element = labelled(event.target);
       if (element) {
+        window.clearTimeout(leaving);
         const stale = element !== target.current || mode.current !== "pointer";
         if (stale || labelRef.current.path !== window.location.pathname) show(element, "pointer");
       } else if (target.current && mode.current === "pointer") {
-        hide();
+        window.clearTimeout(leaving);
+        leaving = window.setTimeout(hide, POINTER_GRACE_MS);
       }
     };
 
@@ -197,6 +219,7 @@ export default function TooltipLayer() {
     return () => {
       window.clearTimeout(dismiss);
       window.clearTimeout(covered);
+      window.clearTimeout(leaving);
       observer.disconnect();
       window.removeEventListener("pointermove", onPointerMove);
       document.removeEventListener("pointerover", onPointerOver);
@@ -215,12 +238,16 @@ export default function TooltipLayer() {
     if (visible) place();
   }, [visible, label.text, place]);
 
+  // Only the fade is animated, never the position. With one label for the
+  // whole site, an animated position slid it across the screen from whichever
+  // control it last named, and kept it trailing the cursor by the fade's
+  // length.
   return (
     <div
       ref={tooltipRef}
       aria-hidden="true"
       style={{ left: 0, top: 0, zIndex: 9999 }}
-      className={`fixed pointer-events-none whitespace-nowrap text-white text-sm font-semibold tracking-wide bg-black/40 px-2 py-1 rounded-md backdrop-blur-md border border-white/10 transition-[opacity,transform] duration-150 ${visible ? "opacity-100 scale-100" : "opacity-0 scale-80"}`}
+      className={`fixed pointer-events-none whitespace-nowrap text-white text-sm font-semibold tracking-wide bg-black/40 px-2 py-1 rounded-md backdrop-blur-md border border-white/10 transition-[opacity,scale] duration-150 ${visible ? "opacity-100 scale-100" : "opacity-0 scale-80"}`}
     >
       {label.text}
     </div>

@@ -34,13 +34,48 @@ describe("TooltipLayer", () => {
   afterEach(() => vi.useRealTimers());
 
   it("labels whatever the mouse is over, from a child of the control too", () => {
+    vi.useFakeTimers();
     const { button, elsewhere, label, shown } = setup();
     expect(shown()).toBe(false);
     pointer("pointerover", button.querySelector("span")!);
     expect(shown()).toBe(true);
     expect(label.textContent).toBe("Zoom in");
     pointer("pointerover", elsewhere);
+    act(() => vi.advanceTimersByTime(150));
     expect(shown()).toBe(false);
+  });
+
+  it("swaps straight to the next control when the cursor crosses a gap to it", () => {
+    vi.useFakeTimers();
+    const { container } = render(
+      <>
+        <button type="button" data-tooltip="Hero" />
+        <span>gap</span>
+        <button type="button" data-tooltip="About" />
+        <TooltipLayer />
+      </>,
+    );
+    const [first, second] = container.querySelectorAll("button");
+    const gap = container.querySelector("span")!;
+    const label = container.querySelector("[aria-hidden='true']")!;
+    const shown = () => label.className.includes("opacity-100");
+
+    pointer("pointerover", first);
+    pointer("pointerover", gap);
+    act(() => vi.advanceTimersByTime(60));
+    // Still up while crossing the gap, so it never fades out and back in.
+    expect(shown()).toBe(true);
+    pointer("pointerover", second);
+    expect(shown()).toBe(true);
+    expect(label.textContent).toBe("About");
+    act(() => vi.advanceTimersByTime(500));
+    expect(shown()).toBe(true);
+  });
+
+  it("never animates its position, only its fade", () => {
+    const { label } = setup();
+    expect(label.className).toMatch(/transition-\[opacity,scale\]/);
+    expect(label.className).not.toMatch(/transform/);
   });
 
   it("goes when the pointer leaves the window", () => {
