@@ -131,7 +131,7 @@ export default function ContactSection({
   return (
     <section
       id="contact"
-      className="body-text contact-section relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-4 py-24 text-center text-white sm:px-6 sm:py-28 lg:px-8"
+      className="body-text contact-section relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-4 pb-[calc(13rem+env(safe-area-inset-bottom))] pt-24 text-center text-white sm:px-6 sm:pb-56 sm:pt-28 lg:px-8"
       style={{ zIndex: 10 }}
     >
       {recommendations.length > 0 && (
@@ -258,8 +258,15 @@ export default function ContactSection({
             )}
           </form>
         )}
+      </div>
+      <Tooltip text={hoveredLink || ""} isVisible={!!hoveredLink} />
 
-        <div className="contact-socials mt-8 flex w-full justify-center gap-8 text-gray-200 sm:mt-20 sm:gap-16">
+      {/* On a phone the section dots float 3rem off the bottom, so the footer
+          sits above them. */}
+      <footer
+        className="absolute bottom-[calc(6.5rem+env(safe-area-inset-bottom))] left-0 w-full px-4 py-3 text-center text-xs text-gray-500 sm:bottom-4 sm:py-4 sm:text-sm"
+      >
+        <div className="mb-4 flex justify-center gap-8 text-gray-200 sm:mb-5 sm:gap-16">
           {socialLinks.map(({ name, url, svg }) => (
             <a
               key={name}
@@ -275,13 +282,7 @@ export default function ContactSection({
             </a>
           ))}
         </div>
-      </div>
-      <Tooltip text={hoveredLink || ""} isVisible={!!hoveredLink} />
-
-      <footer
-        className="absolute bottom-2 left-0 w-full px-4 py-3 text-center text-xs text-gray-500 sm:bottom-4 sm:py-4 sm:text-sm"
-      >
-        © {new Date().getFullYear()} Saikiran Kalluri · Code MIT · Content CC BY 4.0
+        <p>© {new Date().getFullYear()} Saikiran Kalluri · Code MIT · Content CC BY 4.0</p>
       </footer>
     </section>
   );
