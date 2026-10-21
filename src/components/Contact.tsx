@@ -157,6 +157,11 @@ export default function ContactSection({
         </section>
       )}
 
+      {/* The form's own stage: at least a screen tall, less the section's bottom
+          padding, with the form at its foot. So at the end of the page the
+          stage and the footer fill the whole screen, and the recommendations
+          above have scrolled entirely out of view. */}
+      <div className="contact-stage flex w-full flex-col items-center justify-end min-h-[calc(100svh-13rem-env(safe-area-inset-bottom))] sm:min-h-[calc(100svh-14rem)]">
       <div
         data-scroll-target="contact"
         className="contact-panel relative flex w-full max-w-md scroll-mt-24 flex-col items-center sm:max-w-lg lg:ml-[max(6vw,calc(25vw-15rem))] lg:self-start"
@@ -255,6 +260,7 @@ export default function ContactSection({
             )}
           </form>
         )}
+      </div>
       </div>
 
       {/* On a phone the section dots float 3rem off the bottom, so the footer
