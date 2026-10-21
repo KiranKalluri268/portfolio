@@ -204,6 +204,11 @@ canvas {
     max-width: 29rem;
   }
 
+  .contact-stage {
+    /* Matches the section's compact bottom padding above. */
+    min-height: calc(100svh - 9rem);
+  }
+
   .contact-heading {
     margin-bottom: 0.5rem;
     font-size: 1.625rem;
