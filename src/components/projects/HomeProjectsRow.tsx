@@ -3,6 +3,8 @@
 import { useEffect, useRef, type RefObject } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { usePrefetchProjects } from "@/hooks/usePrefetchProjects";
+import { announceNavigation } from "@/components/skeleton/PendingNavigation";
 import { Camera, Mesh, Plane, Program, Renderer, Texture, Transform } from "ogl";
 import gsap from "gsap";
 import { useGlRecovery } from "@/hooks/useGlRecovery";
@@ -292,6 +294,7 @@ export default function HomeProjectsRow({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const iconSourceRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  usePrefetchProjects(entries.map(({ project }) => project.slug), ["/projects"]);
   const reduceMotion = useReducedMotion();
   // The same breakpoint the list view uses: a phone gets the portrait card,
   // anything wider the landscape one. Crossing it redraws the textures.
@@ -636,8 +639,9 @@ export default function HomeProjectsRow({
         if (hit === -1) return;
         // The last mesh is the row's own "see all" card, one past the real
         // projects rather than one of them.
-        if (hit === entries.length) router.push("/projects");
-        else router.push(`/projects/${entries[hit].project.slug}`);
+        const href = hit === entries.length ? "/projects" : `/projects/${entries[hit].project.slug}`;
+        announceNavigation(href);
+        router.push(href);
       };
 
       container.addEventListener("pointerdown", onPointerDown);

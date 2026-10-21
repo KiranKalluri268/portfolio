@@ -414,3 +414,38 @@ body[data-modal-open] header[role="banner"] {
 @keyframes vanish-fade {
   to { opacity: 0; }
 }
+
+/* Skeleton placeholders: a dim block with a soft band of light passing
+   across it, so a page still on its way reads as coming rather than empty.
+   Translucent, so the black hole shows through as it does behind the cards. */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgb(255 255 255 / 0.06);
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  translate: -100% 0;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.08), transparent);
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  to { translate: 100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+/* While a link's page is on its way, its skeleton stands in for the page being
+   left (PendingNavigation). */
+html[data-navigating] [data-page-content] {
+  visibility: hidden;
+}

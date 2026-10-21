@@ -3,7 +3,10 @@
 import gsap from "gsap";
 import { Observer } from "gsap/dist/Observer";
 import { useRouter } from "next/navigation";
+import { usePrefetchProjects } from "@/hooks/usePrefetchProjects";
+import { announceNavigation } from "@/components/skeleton/PendingNavigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import ProjectsLoading from "./ProjectsLoading";
 import { Camera, Mesh, Plane, Program, Renderer, Texture, Transform } from "ogl";
 import { usePublishHint } from "@/components/hints/HintContext";
 import { hintText } from "@/components/hints/hint-copy";
@@ -248,6 +251,7 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const iconSourceRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  usePrefetchProjects(entries.map(({ project }) => project.slug), []);
   const reduceMotion = useReducedMotion();
   const narrow = useMediaQuery("(max-width: 639px)");
   // One shape at both breakpoints: the cells are square, so a phone and a
@@ -288,6 +292,8 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
   const focusedCellRef = useRef<Cell>({ col: 0, row: 0 });
 
   const [hintVisible, setHintVisible] = useState(false);
+  // Placeholders stand in until the first frame of real cards is drawn.
+  const [drawn, setDrawn] = useState(false);
   const hintDone = useRef(true);
   // TARS says it; the grid only decides when.
   usePublishHint("projects-grid", hintVisible ? hintText("projects-grid", inputMode) : null);
@@ -485,6 +491,7 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
       };
 
       let ready = resize();
+      let firstDrawn = false;
 
       /** How curved the surface is being drawn right now, eased towards what
        *  the current speed asks for. */
@@ -663,6 +670,10 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
         }
 
         renderer.render({ scene, camera });
+        if (!firstDrawn) {
+          firstDrawn = true;
+          setDrawn(true);
+        }
       };
 
       // The animation loop: coast on whatever velocity the drag left behind and
@@ -926,7 +937,10 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
     // The visually hidden list underneath carries real links; let them be.
     if ((event.target as HTMLElement).closest("a, button")) return;
     const entry = entries[projectIndexFor(focusedCellRef.current, entries.length)];
-    if (entry) router.push(`/projects/${entry.project.slug}`);
+    if (entry) {
+      announceNavigation(`/projects/${entry.project.slug}`);
+      router.push(`/projects/${entry.project.slug}`);
+    }
   };
 
   const moveFocus = (dCol: number, dRow: number) => {
@@ -959,6 +973,7 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
       const entry = entries[projectIndexFor(focusedCellRef.current, entries.length)];
       if (!entry) return;
       event.preventDefault();
+      announceNavigation(`/projects/${entry.project.slug}`);
       router.push(`/projects/${entry.project.slug}`);
     }
   };
@@ -986,6 +1001,7 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
             reusing it races WEBGL_lose_context.loseContext() against the new
             context's own getContext() call on the same element. */}
         <canvas key={`${narrow ? "n" : "w"}-${generation}`} ref={canvasRef} className="absolute inset-0 h-full w-full" />
+        <ProjectsLoading view="grid" drawn={drawn} />
 
         {/* The cards are pixels on the GPU and carry no text a crawler or a
             screen reader can reach, so the same content is published here as

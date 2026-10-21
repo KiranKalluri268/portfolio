@@ -18,6 +18,7 @@ import NavBar from "@/components/NavBar1";
 import EntryCurtain from "@/components/EntryCurtain";
 import TooltipLayer from "@/components/Tooltip";
 import Tars from "@/components/bot/Tars";
+import PendingNavigation from "@/components/skeleton/PendingNavigation";
 import { HintProvider } from "@/components/hints/HintContext";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -221,9 +222,13 @@ export default function RootLayout({
                   <EntryCurtain />
 
                   {/* Your main content */}
-                  <div className="relative z-10">
+                  <div className="relative z-10" data-page-content>
                     {children}
                   </div>
+
+                  {/* The page a link leads to, as a skeleton, from the moment
+                      it is clicked until the page itself is there. */}
+                  <PendingNavigation />
 
                   {/* Every control's label, from its data-tooltip. */}
                   <TooltipLayer />

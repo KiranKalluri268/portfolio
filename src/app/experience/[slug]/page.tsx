@@ -11,6 +11,12 @@ interface ExperiencePageProps {
   params: Promise<{ slug: string }>;
 }
 
+// Every page here is generated at build time, so any other address is a 404
+// straight away. Without this it was rendered on request, and with a
+// loading.tsx streaming ahead of it the 200 was already sent by the time the
+// page found there was nothing to show.
+export const dynamicParams = false;
+
 export function generateStaticParams() {
   return getAllExperiences().map((experience) => ({ slug: experience.slug }));
 }

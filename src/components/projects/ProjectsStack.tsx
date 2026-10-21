@@ -1,7 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { usePrefetchProjects } from "@/hooks/usePrefetchProjects";
+import { announceNavigation } from "@/components/skeleton/PendingNavigation";
 import { useEffect, useRef, useState } from "react";
+import ProjectsLoading from "./ProjectsLoading";
 import { Camera, Mesh, Plane, Program, Renderer, Texture, Transform } from "ogl";
 import gsap from "gsap";
 import { Observer } from "gsap/dist/Observer";
@@ -137,6 +140,7 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const iconSourceRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  usePrefetchProjects(entries.map(({ project }) => project.slug), []);
   const activeView = useActiveProjectsView();
   const active = activeView === "list";
   // Read inside the render loop, which must not be torn down and rebuilt every
@@ -154,6 +158,8 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
   // a visitor whose remembered choice is the grid never pays for any of that
   // until they ask for the list once.
   const [everActive, setEverActive] = useState(active);
+  // Placeholders stand in until the first frame of real cards is drawn.
+  const [drawn, setDrawn] = useState(false);
 
   useEffect(() => {
     activeRef.current = active;
@@ -308,6 +314,7 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
 
       let target = 0;
       let current = 0;
+      let firstDrawn = false;
 
       const observer = Observer.create({
         target: container,
@@ -348,6 +355,7 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
           (mesh) => Math.abs(mesh.position.y - worldY) <= cardHeight / 2,
         );
         if (hit === -1) return;
+        announceNavigation(`/projects/${entries[hit].project.slug}`);
         router.push(`/projects/${entries[hit].project.slug}`);
       };
 
@@ -441,6 +449,10 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
         });
 
         renderer.render({ scene, camera });
+        if (!firstDrawn) {
+          firstDrawn = true;
+          setDrawn(true);
+        }
       };
 
       gsap.ticker.add(frame);
@@ -487,6 +499,7 @@ export default function ProjectsStack({ entries }: { entries: StackEntry[] }) {
           it races WEBGL_lose_context.loseContext() against the new context's
           own getContext() call on the same element. */}
       <canvas key={`${narrow ? "n" : "w"}-${generation}`} ref={canvasRef} className="absolute inset-0 h-full w-full" />
+      <ProjectsLoading view="list" drawn={drawn} />
 
       {/* The cards are pixels on the GPU and carry no text a crawler or a
           screen reader can reach, so the same content is published here as
