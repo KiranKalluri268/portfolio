@@ -25,7 +25,9 @@ test.describe("nothing drags sideways", () => {
       await page.setViewportSize(PHONE);
       await page.goto(path);
       await expect(page.getByRole("banner")).toBeVisible();
-      expect(await horizontalOverflow(page)).toEqual([]);
+      // Polled: the server-rendered sheet is full A4 width until PaperViewport
+      // hydrates and scales it, which can land after the banner shows.
+      await expect.poll(() => horizontalOverflow(page)).toEqual([]);
     });
   }
 
@@ -62,11 +64,12 @@ test.describe("the documents keep their controls reachable", () => {
       await page.goto(path);
       const sheet = page.locator("article").first();
       await expect(sheet).toBeVisible();
-      const box = await sheet.boundingBox();
-      expect(box).not.toBeNull();
       // PaperViewport scales A4 down rather than reflowing it, so the painted
-      // sheet must fit even though its layout box is 210mm wide.
-      expect(box!.width).toBeLessThanOrEqual(PHONE.width + 1);
+      // sheet must fit even though its layout box is 210mm wide. Polled, since
+      // the scale is applied on hydration, after the sheet is first visible.
+      await expect
+        .poll(async () => (await sheet.boundingBox())?.width ?? Infinity)
+        .toBeLessThanOrEqual(PHONE.width + 1);
     });
   }
 });
