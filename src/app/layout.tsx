@@ -17,6 +17,8 @@ import { SmoothScrollProvider } from "@/context/SmoothScrollContext";
 import NavBar from "@/components/NavBar1";
 import EntryCurtain from "@/components/EntryCurtain";
 import TooltipLayer from "@/components/Tooltip";
+import Tars from "@/components/bot/Tars";
+import { HintProvider } from "@/components/hints/HintContext";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -203,38 +205,43 @@ export default function RootLayout({
         />
         <SmoothScrollProvider>
               <AudioProvider>
-                <StarsBackground />
+                <HintProvider>
+                  <StarsBackground />
 
-                {/* Blackhole: Interactive gravity field */}
-                <BlackholeEffect />
+                  {/* Blackhole: Interactive gravity field */}
+                  <BlackholeEffect />
 
-                {/* The header is a fixture of the site, not of the home page:
-                    every other route used to have a single back button and no
-                    way to reach anything else. */}
-                <NavBar />
+                  {/* The header is a fixture of the site, not of the home page:
+                      every other route used to have a single back button and no
+                      way to reach anything else. */}
+                  <NavBar />
 
-                {/* Stands in for LoadingScreen's own backdrop until its portal
-                    is ready - see EntryCurtain for why the gap is real. */}
-                <EntryCurtain />
+                  {/* Stands in for LoadingScreen's own backdrop until its portal
+                      is ready - see EntryCurtain for why the gap is real. */}
+                  <EntryCurtain />
 
-                {/* Your main content */}
-                <div className="relative z-10">
-                  {children}
-                </div>
+                  {/* Your main content */}
+                  <div className="relative z-10">
+                    {children}
+                  </div>
 
-                {/* Every control's label, from its data-tooltip. */}
-                <TooltipLayer />
+                  {/* Every control's label, from its data-tooltip. */}
+                  <TooltipLayer />
 
-                {/* Nothing measured this site once it shipped: every frame time
-                    and load figure in its history was taken by hand, on one
-                    machine, before deploy. These are the two that need no
-                    account and no key on Vercel — page views and referrers,
-                    and real Core Web Vitals from real devices. Neither sets a
-                    cookie or collects anything that identifies a visitor.
-                    Error reporting is still missing and needs a service
-                    chosen; see STATUS.md. */}
-                <Analytics />
-                <SpeedInsights />
+                  {/* The site guide, which also says the scenes' hints. */}
+                  <Tars />
+
+                  {/* Nothing measured this site once it shipped: every frame time
+                      and load figure in its history was taken by hand, on one
+                      machine, before deploy. These are the two that need no
+                      account and no key on Vercel — page views and referrers,
+                      and real Core Web Vitals from real devices. Neither sets a
+                      cookie or collects anything that identifies a visitor.
+                      Error reporting is still missing and needs a service
+                      chosen; see STATUS.md. */}
+                  <Analytics />
+                  <SpeedInsights />
+                </HintProvider>
               </AudioProvider>
         </SmoothScrollProvider>
       </body>

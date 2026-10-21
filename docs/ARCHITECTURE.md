@@ -16,6 +16,13 @@ Native document scrolling remains the source of truth. Lenis smooths that scroll
 
 The layout also mounts `TooltipLayer` (`src/components/Tooltip.tsx`), the site's only tooltip. A control opts in with `data-tooltip="Label"`: the layer shows it beside the cursor on hover, above the control on a tap (for 1.6s) and while it has keyboard focus, and follows the attribute while it is up. Give icon-only controls and ones whose word needs explaining a label; leave out controls whose text already says what they do. Keep the `aria-label` as well, since the tooltip is aria-hidden.
 
+It also mounts TARS (`src/components/bot/Tars.tsx`), the site guide: a small black-hole orb fixed bottom-left (beside the scene dots on a phone, above them under 360px). It has two jobs:
+
+- **Saying the scene hints.** Scenes still decide when a visitor has stalled (`hints/useIdleHint`) and what would help (`hints/hint-copy`), but publish the line through `usePublishHint` (`hints/HintContext`) instead of drawing a pill; TARS shows it in a bubble and takes it back with the shared vanish exit (`usePresence`, `.vanish-out`). The home page, the projects grid and the skill web publish hints.
+- **Answering questions.** `bot/tars-brain.ts` fills templates from the content files and nothing else, so it cannot invent a claim; FAQ answers and role summaries are Saikiran's own words and are quoted. `lib/content/bot.ts` gathers the knowledge and `/api/tars` serves it as a static file, fetched when the chat first opens. TARS's own lines and suggested questions are in `src/data/bot.json`. A question it cannot answer can be passed on: it asks for an email and posts to `/api/contact` with `source: "tars"`.
+
+TARS speaks about Saikiran in the third person, never as him. It is hidden on `/admin` and `/cinematic`, and on `/` until the loading screen has handed over.
+
 `src/app/page.tsx` renders:
 
 1. Entry/loading overlay

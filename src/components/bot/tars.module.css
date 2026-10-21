@@ -1,0 +1,332 @@
+/* TARS: the orb, its tip bubble and its chat, fixed to the bottom-left.
+
+   On a phone the scene dots sit centred 3rem off the bottom, 244px wide and
+   38px tall, so from 360px up there is room for the orb beside them, level
+   with the bar. Narrower than that the bar reaches the left edge, and the orb
+   sits above it instead. From sm the dots move to the top and the arrow pad
+   takes the bottom-right, leaving this corner to TARS. */
+
+.dock {
+  position: fixed;
+  left: 12px;
+  bottom: calc(3rem + env(safe-area-inset-bottom));
+  z-index: 1100;
+}
+
+@media (max-width: 359px) {
+  .dock {
+    bottom: calc(3rem + 38px + 10px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (min-width: 640px) {
+  .dock {
+    left: 2rem;
+    bottom: 2rem;
+  }
+}
+
+@media print {
+  .dock {
+    display: none;
+  }
+}
+
+/* --- The orb: a small black hole -------------------------------------- */
+
+.orb {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 9999px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  transition: scale 200ms ease-out;
+}
+
+@media (min-width: 640px) {
+  .orb {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+.orb:hover {
+  scale: 1.08;
+}
+
+.orb:focus-visible {
+  outline: 2px solid var(--color-accent-soft);
+  outline-offset: 4px;
+}
+
+/* The glow of the disk behind it. */
+.orb::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: inherit;
+  background: radial-gradient(circle, rgb(255 122 24 / 0.35) 0%, rgb(224 69 10 / 0.12) 45%, transparent 70%);
+  transition: opacity 300ms;
+}
+
+/* The accretion disk: a hot ring seen almost edge-on, turning. */
+.disk {
+  position: absolute;
+  inset: 2px -7px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from var(--tars-spin),
+    #fff3e0,
+    #ffb27a 18%,
+    #e0450a 40%,
+    #5a1a05 55%,
+    #e0450a 70%,
+    #ffb27a 85%,
+    #fff3e0
+  );
+  mask: radial-gradient(closest-side, transparent 62%, #000 66%, #000 92%, transparent 100%);
+  transform: rotate(-14deg) scaleY(0.32);
+  animation: disk-turn 6s linear infinite;
+  filter: blur(0.3px);
+}
+
+/* The shadow, with its thin photon ring. */
+.core {
+  position: relative;
+  width: 52%;
+  height: 52%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, #000 62%, #1a0d06 74%, #ffd9b8 80%, transparent 86%);
+  box-shadow: 0 0 6px 1px rgb(255 178 122 / 0.45);
+}
+
+/* The colours go round inside the ring, so the disk turns in its own plane
+   rather than the squashed ring tumbling. */
+@property --tars-spin {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes disk-turn {
+  to {
+    --tars-spin: -360deg;
+  }
+}
+
+/* While it has something to say, it breathes. */
+.speaking::before {
+  animation: orb-breathe 1.8s ease-in-out infinite;
+}
+
+@keyframes orb-breathe {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disk,
+  .speaking::before {
+    animation: none;
+  }
+}
+
+/* --- The tip bubble --------------------------------------------------- */
+
+.tip {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 10px);
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 14px 14px 14px 4px;
+  background: rgb(0 0 0 / 0.75);
+  backdrop-filter: blur(12px);
+  padding: 0.5rem 0.85rem;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: rgb(229 231 235);
+  pointer-events: none;
+  /* It is taken back into the orb that said it. */
+  transform-origin: left bottom;
+}
+
+@media (min-width: 640px) {
+  /* Beside the orb rather than above it: nothing else shares this edge. */
+  .tip {
+    left: calc(100% + 12px);
+    bottom: 50%;
+    translate: 0 50%;
+    max-width: min(28rem, calc(100vw - 8rem));
+    border-radius: 14px 14px 14px 4px;
+    font-size: 0.875rem;
+    transform-origin: left center;
+  }
+}
+
+/* --- The chat --------------------------------------------------------- */
+
+.panel {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 12px);
+  display: flex;
+  flex-direction: column;
+  width: min(22rem, calc(100vw - 24px));
+  height: min(30rem, calc(100svh - 10rem));
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 18px;
+  background: rgb(6 6 10 / 0.92);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 0 0 1px rgb(255 122 24 / 0.08), 0 20px 60px rgb(0 0 0 / 0.6);
+  color: white;
+  transform-origin: left bottom;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid rgb(255 255 255 / 0.08);
+  padding: 0.75rem 0.75rem 0.75rem 1rem;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.subtitle {
+  font-size: 0.72rem;
+  color: rgb(156 163 175);
+}
+
+.close {
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  color: rgb(209 213 219);
+}
+
+.close:hover {
+  background: rgb(255 255 255 / 0.08);
+  color: white;
+}
+
+.log {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.bubble {
+  max-width: 88%;
+  border-radius: 14px;
+  padding: 0.55rem 0.8rem;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.fromTars {
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+  background: rgb(255 255 255 / 0.07);
+}
+
+.fromVisitor {
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+  background: var(--color-accent);
+}
+
+.quote {
+  margin-top: 0.5rem;
+  border-left: 2px solid var(--color-accent-soft);
+  padding-left: 0.6rem;
+  color: rgb(209 213 219);
+  font-style: italic;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.55rem;
+}
+
+.chip {
+  border: 1px solid rgb(255 255 255 / 0.18);
+  border-radius: 9999px;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.75rem;
+  color: rgb(229 231 235);
+  transition: border-color 150ms, color 150ms;
+}
+
+.chip:hover {
+  border-color: rgb(255 122 24 / 0.6);
+  color: var(--color-accent-tint);
+}
+
+.form {
+  display: flex;
+  gap: 0.5rem;
+  border-top: 1px solid rgb(255 255 255 / 0.08);
+  padding: 0.65rem;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid rgb(255 255 255 / 0.15);
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.05);
+  padding: 0.5rem 0.9rem;
+  font-size: 16px; /* under 16px, iOS zooms the page on focus */
+  color: white;
+}
+
+.input::placeholder {
+  color: rgb(255 255 255 / 0.4);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-accent-soft);
+}
+
+.send {
+  border-radius: 9999px;
+  background: white;
+  padding: 0 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: black;
+}
+
+.send:hover {
+  background: var(--color-accent-soft);
+}
+
+.send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

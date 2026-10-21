@@ -13,5 +13,9 @@
   "askEmail": "Sure. Which email should Saikiran reply to?",
   "sent": "Sent. Saikiran will reply by email.",
   "sendFailed": "That didn't go through. You can try again, or use the contact form at the bottom of the home page.",
-  "declined": "No problem. Ask me something else whenever you like."
+  "declined": "No problem. Ask me something else whenever you like.",
+  "loading": "One moment, I'm still warming up. Try that again in a second.",
+  "badEmail": "That doesn't look like an email address. Could you check it?",
+  "subtitle": "Saikiran's guide to this site",
+  "placeholder": "Ask about Saikiran…"
 }
