@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { fragmentShader as cinematic } from "@/cinematic/scene/graphics/fragmentShader";
 import { BAKE_FRAGMENT, DISK_FRAGMENT } from "../shaders";
-import { cameraVectors } from "../renderer";
+import { cameraVectors, isSoftwareRenderer } from "../renderer";
 import { HOME_PATH, STILL_PATH, STOP_MOVE_MS, cameraBetween, glideAt, restingAt, retarget, type Glide } from "../BakedBlackhole";
 
 /** Whitespace is free to differ between the two; nothing else is. */
@@ -218,5 +218,27 @@ describe("gliding between stops", () => {
     const near = retarget(fast, switchAt, x + 0.01);
     const path = sample(near, switchAt, switchAt + near.ms);
     expect(Math.max(...path.map((p) => p.x))).toBeLessThanOrEqual(x + 0.01 + 1e-12);
+  });
+});
+
+describe("software renderers", () => {
+  it("are recognised, so the video is kept instead", () => {
+    for (const name of [
+      "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "llvmpipe (LLVM 15.0.7, 256 bits)",
+      "softpipe",
+      "ANGLE (Microsoft, Microsoft Basic Render Driver Direct3D11 vs_5_0 ps_5_0)",
+    ]) expect(isSoftwareRenderer(name), name).toBe(true);
+  });
+
+  it("leave real graphics cards alone", () => {
+    for (const name of [
+      "ANGLE (NVIDIA, NVIDIA GeForce RTX 3050 6GB Laptop GPU Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "ANGLE (Intel, Intel(R) UHD Graphics 620 Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "Apple GPU",
+      "Adreno (TM) 650",
+      "Mali-G78",
+      "WebKit WebGL",
+    ]) expect(isSoftwareRenderer(name), name).toBe(false);
   });
 });

@@ -174,15 +174,40 @@ export function cameraVectors({ distance, elevationDeg, rollDeg }: BlackholeCame
   return { position, dir, up, velocity };
 }
 
-/** Null when this browser cannot run it — no WebGL2, or a shader the driver
- *  rejects. The caller keeps the video in that case. */
+/** Renderers that draw on the CPU: Chrome's SwiftShader, Mesa's llvmpipe and
+ *  softpipe, and Windows' Basic Render Driver (WARP). */
+const SOFTWARE_RENDERER = /swiftshader|llvmpipe|softpipe|software|basic render driver|microsoft warp/i;
+
+export function isSoftwareRenderer(name: string) {
+  return SOFTWARE_RENDERER.test(name);
+}
+
+/** Null when this browser cannot run it — no WebGL2, a shader the driver
+ *  rejects, or no graphics card to run it on. The caller keeps the video in
+ *  that case.
+ *
+ *  Drawn on the CPU, the bake takes most of the machine: with two cores it
+ *  held the page to 13 fps against 56 without it, and on CI's runners it
+ *  starved the résumé's reveal of the frames it waits on. The browser flags
+ *  that as a major performance caveat; the renderer's name catches one that
+ *  does not. */
 export function createBakedBlackhole(
   canvas: HTMLCanvasElement,
   diskImage: TexImageSource,
   options: BakedBlackholeOptions,
 ): BakedBlackhole | null {
-  const gl = canvas.getContext("webgl2", { premultipliedAlpha: true, alpha: true, antialias: false });
+  const gl = canvas.getContext("webgl2", {
+    premultipliedAlpha: true,
+    alpha: true,
+    antialias: false,
+    failIfMajorPerformanceCaveat: true,
+  });
   if (!gl) return null;
+  const info = gl.getExtension("WEBGL_debug_renderer_info");
+  if (isSoftwareRenderer(String(gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER)))) {
+    gl.getExtension("WEBGL_lose_context")?.loseContext();
+    return null;
+  }
 
   let programs: {
     bake: Program;

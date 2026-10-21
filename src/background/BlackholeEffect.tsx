@@ -24,8 +24,8 @@ export default function Blackhole() {
   const stop = Math.max(0, SECTION_IDS.indexOf(activeSection)) / (SECTION_IDS.length - 1);
   // Drawn on every route, so no page puts the video in its HTML or starts
   // downloading it. The video is only the answer for a browser that cannot draw
-  // it — no WebGL2, or a shader its driver rejects. Only the home page moves
-  // it, section by section.
+  // it — no WebGL2, a shader its driver rejects, or only a software renderer.
+  // Only the home page moves it, section by section.
   const [unsupported, setUnsupported] = useState(false);
   const baked = !unsupported;
 
