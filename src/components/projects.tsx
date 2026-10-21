@@ -456,6 +456,7 @@ function CarouselProgress({ entries, lastPanelIndex, activePanel, isInCarousel, 
                 type="button"
                 onClick={() => onSelect(panelIndex)}
                 aria-label={`Go to ${label}`}
+                data-tooltip={label}
                 aria-current={isActive ? "true" : undefined}
                 className="group/dot cursor-pointer px-0.5 py-3"
               >

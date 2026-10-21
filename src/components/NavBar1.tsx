@@ -12,7 +12,7 @@ export default function NavBar() {
       role="banner"
     >
       <div className="pointer-events-auto text-2xl font-bold sm:text-3xl" id="site-title">
-        <Link href="/" aria-label="Saikiran Kalluri Portfolio - Home">
+        <Link href="/" aria-label="Saikiran Kalluri Portfolio - Home" data-tooltip="Home">
           KS
         </Link>
       </div>

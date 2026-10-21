@@ -37,7 +37,7 @@ function SkillGroup({
           key={`${group.category.slug}-${skill.slug}`}
           href={`/skills/${skill.slug}`}
           className="mr-3 flex h-24 w-[104px] min-w-[104px] shrink-0 flex-col items-center justify-center rounded-control text-gray-300 transition-colors duration-200 hover:text-white sm:mr-6 sm:w-[124px] sm:min-w-[124px]"
-          title={skill.name}
+          data-tooltip={skill.name}
           aria-label={duplicate ? undefined : `Learn more about ${skill.name}`}
           tabIndex={duplicate ? -1 : 0}
         >
@@ -46,7 +46,7 @@ function SkillGroup({
           </div>
           {/* Two lines, then an ellipsis. A fixed height rather than a natural
               one so every icon in the row sits at the same level whether its
-              label wraps or not — the full name is on the link's title. */}
+              label wraps or not — the full name is in the link's tooltip. */}
           <span className="mt-1 line-clamp-2 h-8 text-center text-xs leading-4 select-none">
             {skill.name}
           </span>
