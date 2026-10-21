@@ -52,29 +52,35 @@ the background black hole's centre, through the centred card, and off the left
 edge of the screen:
 
 - Right of the centred card it is a funnel into the hole, drawn as a row
-  receding towards a vanishing point: a card is scaled by `L / (along + L)`,
-  with `L` at least `FUNNEL_RECEDE` panels, so the next card is already a narrow
-  wedge and the ones after it line up behind it, each smaller, until they fade
-  out just short of the hole. Width shrinks faster than height, as a receding
-  row's spacing does, and the row's line bends to meet the hole's centre.
-  Always there: it is where the cards come from.
+  receding towards a vanishing point: a card is scaled by
+  `(1 + along / T) ^ -FUNNEL_CURVE`, with `T` set so the row leaves the centred
+  card at its own pace — no corner at the join. Width falls far faster than
+  height, so the next card is a narrow wedge and the ones behind it narrower
+  still, fading out between `FUNNEL_FADE_FROM` and `FUNNEL_FADE_TO` panels in.
+  The row's line bends to meet the hole's centre. Always there: it is where
+  the cards come from.
 - The centred card is its own size.
-- Left of it the channel flares open towards the screen's edge, widths
-  unchanged: a little at rest (`HORN_AT_REST`), opened by speed in either
-  direction to `HORN_FLARE` taller at the edge, eased by `HORN_EASE`. Its walls
-  never rise over less than `HORN_MIN_RAMP` of half the screen.
+- Left of it the channel flares open towards the screen's edge: a card there
+  grows taller and wider (`HORN_FLARE`, `HORN_WIDEN`), a little at rest
+  (`HORN_AT_REST`) and opened by speed in either direction, eased by
+  `HORN_EASE`. The widening is the integral of the same S-curve, so cards never
+  overlap. Its walls never rise over less than `HORN_MIN_RAMP` of half the
+  screen.
 
 The hole's centre comes from `src/background/blackhole-centre.ts`, which
 `BakedBlackhole` writes whenever its camera moves, so the funnel follows the
 black hole as it glides between sections. On a phone the hole sits behind the
 centred card; the funnel then runs off the right edge at the hole's height
-(`FUNNEL_MIN_DEPTH`). With the video fallback it runs to the same place at the
+(`FUNNEL_MIN_DEPTH`, `FUNNEL_FALLBACK_DEPTH`). With the video fallback it runs to the same place at the
 row's own height.
 
-While the section is still rising from below, the row is held where it will sit
-once the section is pinned, so only the "Projects" heading rises with the page
-and the first card is already deep in the funnel: it comes out of the black
-hole as the carousel starts. A tap is tested against the cards where they are
+There are no cards until the "Projects" heading starts its move from the centre
+to the corner. Then the row is drawn out of the hole while the heading moves:
+it waits `EMERGE_DEPTH` panels further into the funnel, fading in over the
+first `EMERGE_FADE` of the way, and the first card is centred as the heading
+settles. Its description waits until the card has arrived. While the section
+is still rising from below, the row is held where it will sit once pinned, so
+only the heading rises with the page. A tap is tested against the cards where they are
 drawn, by undoing the funnel and flare for the point tapped.
 
 The shape is in the vertex shader. The fragment shader divides the stretched

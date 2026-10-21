@@ -80,13 +80,39 @@ const HORN_FULL_SPEED = 90;
 /** How much of the gap to its target the flare closes per 60Hz frame, so it
  *  opens and relaxes smoothly rather than following every jitter in speed. */
 const HORN_EASE = 0.14;
-/** The funnel's mouth is never nearer the centred card's edge than this
- *  fraction of half the screen. On a phone the hole sits behind the centred
- *  card, so there is nowhere to its right to narrow into; the funnel then runs
- *  off the right edge of the screen at the hole's height instead. */
-const FUNNEL_MIN_DEPTH = 0.35;
-/** How far along the row, in panels, a card in the funnel is half its size. */
-const FUNNEL_RECEDE = 1.5;
+/** On a phone the hole sits behind the centred card, so there is nowhere to
+ *  its right to narrow into. When the hole is less than FUNNEL_MIN_DEPTH of
+ *  half the screen past the centred card's edge, the funnel runs off the right
+ *  edge of the screen instead, FUNNEL_FALLBACK_DEPTH of half the screen past
+ *  the card, at the hole's height. Anywhere else it ends at the hole's centre. */
+const FUNNEL_MIN_DEPTH = 0.12;
+const FUNNEL_FALLBACK_DEPTH = 0.35;
+/** How the funnel narrows. A card past the centred one's edge is scaled by
+ *  (1 + along / T) ^ -FUNNEL_CURVE, where T is set so the row leaves the
+ *  centred card at its own pace — no corner at the join — and its place closes
+ *  on the hole as its size goes. Lower is a gentler fall in height and a
+ *  narrower card: at 0.35 the next card is about a tenth of its own width and
+ *  three quarters of its height at its near edge. */
+const FUNNEL_CURVE = 0.35;
+/** Where along the funnel, in panels past the centred card's edge, the cards
+ *  start to fade, and where they are gone. */
+const FUNNEL_FADE_FROM = 2;
+const FUNNEL_FADE_TO = 3;
+/** How much wider a card leaving to the left is at the screen's edge with the
+ *  flare fully open, as a multiple of its own width: it widens as it grows. */
+const HORN_WIDEN = 1.2;
+/** Until the "Projects" heading starts its move from the centre to the corner
+ *  there are no cards. Then the row is drawn out of the hole while the heading
+ *  moves, so the first card arrives as the heading settles: it waits this many
+ *  panels further into the funnel, close enough to the mouth that it can be
+ *  seen growing out of it the whole way, and fades in from nothing over the
+ *  first EMERGE_FADE of the way. Deeper, it was a sliver a few pixels wide for
+ *  most of the move and then arrived at once. The heading's own cues are in
+ *  projects.tsx: it moves from 2% to 16% of the pinned scroll, and the first
+ *  card is centred at one panel. */
+const EMERGE_DEPTH = 1.2;
+const EMERGE_FROM = 0.1;
+const EMERGE_FADE = 0.15;
 
 /** How much travel per 60Hz frame counts as fully moving, for the overlay's
  *  fade. Reading a paragraph mid-flick is not possible anyway, and text held
@@ -110,8 +136,10 @@ const VERTEX_SHADER = /* glsl */ `
   uniform float uHalfView;
   uniform float uHalfCard;
   uniform vec2 uHole;
-  // How far along the row a card has to go to be half its size in the funnel.
-  uniform float uRecede;
+  // The distance between cards, and how much wider a card leaving to the
+  // left is at the screen's edge.
+  uniform float uSpacing;
+  uniform float uWiden;
   // How open the flare is, 0 to 1, and how much taller it is when fully open.
   uniform float uHorn;
   uniform float uFlare;
@@ -138,23 +166,33 @@ const VERTEX_SHADER = /* glsl */ `
       // screen (on a phone the gap is 35px and the wall came up as a spike),
       // in an S-curve so the channel leaves the card level and arrives level.
       float ramp = max(uHalfView - uHalfCard, uHalfView * ${HORN_MIN_RAMP.toFixed(2)});
-      float reach = clamp((-x - uHalfCard) / ramp, 0.0, 1.0);
+      float past = max(-x - uHalfCard, 0.0);
+      float reach = clamp(past / ramp, 0.0, 1.0);
       stretch = 1.0 + uFlare * uHorn * reach * reach * (3.0 - 2.0 * reach);
+      // And wider, by the same S-curve: the extra width is that curve's
+      // integral, so each point moves out by as much as everything between it
+      // and the centred card has grown, and the cards never overlap.
+      float grown = reach < 1.0
+        ? ramp * (reach * reach * reach - 0.5 * reach * reach * reach * reach)
+        : ramp * 0.5 + (past - ramp);
+      placedX = x - uWiden * uHorn * grown;
     } else {
-      // The funnel, drawn as a row receding towards a vanishing point at the
-      // hole: past the centred card's edge a card is scaled by how far along
-      // the row it is, L / (along + L), so it is half its height uRecede in
-      // and keeps shrinking without ever vanishing, and its place closes on
-      // the hole by the same amount. Its width shrinks faster than its height,
-      // as a receding row's spacing does, which is what crowds the cards
-      // together; and the row's line bends from its own height to the hole's.
+      // The funnel: a row receding into a vanishing point at the hole. Past
+      // the centred card's edge a card is scaled by (1 + along / T) ^ -k, and
+      // its place closes on the hole by what it has lost. T = depth * k makes
+      // the slope at the join exactly 1, so the row turns into the funnel
+      // without a corner; the width then falls far faster than the height,
+      // which is what crowds the cards together near the hole. The row's
+      // line bends from its own height to the hole's as it goes.
+      float k = ${FUNNEL_CURVE.toFixed(2)};
       float depth = max(uHole.x - uHalfCard, 1.0);
       float along = max(x - uHalfCard, 0.0);
-      float into = along / (along + uRecede);
+      float scale = pow(1.0 + along / (depth * k), -k);
+      float into = 1.0 - scale;
       placedX = min(x, uHalfCard) + depth * into;
-      stretch = 1.0 - into;
+      stretch = scale;
       lineY = mix(uRow.y, uHole.y, into);
-      fade = 1.0 - smoothstep(0.86, 0.99, into);
+      fade = 1.0 - smoothstep(${FUNNEL_FADE_FROM.toFixed(1)} * uSpacing, ${FUNNEL_FADE_TO.toFixed(1)} * uSpacing, along);
     }
 
     vec3 displaced = vec3(
@@ -177,6 +215,8 @@ const FRAGMENT_SHADER = /* glsl */ `
   varying float vY;
   varying float vStretch;
   varying float vFade;
+  // The whole row, faded in as it starts to come out of the hole.
+  uniform float uAppear;
 
   void main() {
     // Each strip of the card is a trapezoid once it is stretched, and a
@@ -186,7 +226,7 @@ const FRAGMENT_SHADER = /* glsl */ `
     // the exact point on the card. (The plane's v runs from 0 at its bottom,
     // y = -0.5, to 1 at its top.)
     vec4 colour = texture2D(tMap, vec2(vUv.x, vY / vStretch + 0.5));
-    gl_FragColor = vec4(colour.rgb, colour.a * vFade);
+    gl_FragColor = vec4(colour.rgb, colour.a * vFade * uAppear);
   }
 `;
 
@@ -369,7 +409,9 @@ export default function HomeProjectsRow({
             uHalfView: { value: 1 },
             uHalfCard: { value: 0 },
             uHole: { value: [1, 0] },
-            uRecede: { value: 1 },
+            uSpacing: { value: 1 },
+            uWiden: { value: HORN_WIDEN },
+            uAppear: { value: 1 },
             uHorn: { value: HORN_AT_REST },
             uFlare: { value: HORN_FLARE },
           },
@@ -495,7 +537,7 @@ export default function HomeProjectsRow({
       let horn = HORN_AT_REST;
       /** What the last frame drew with, so a tap is tested against the cards
        *  where they were seen rather than where a flat row would put them. */
-      let drawn = { rowY: 0, hole: [1, 0], horn: HORN_AT_REST, recede: 1 };
+      let drawn = { rowY: 0, hole: [1, 0], horn: HORN_AT_REST };
       let reportedPanel = -1;
       // Nothing to draw while the section is off screen, and no reason to hold
       // a GPU loop open behind five other scenes.
@@ -545,15 +587,35 @@ export default function HomeProjectsRow({
         if (worldX > halfCard) {
           const depth = Math.max(drawn.hole[0] - halfCard, 1);
           const into = (worldX - halfCard) / depth;
-          // At the hole's own centre the cards are already gone.
-          if (into >= 0.97) return;
-          flatX = halfCard + (drawn.recede * into) / (1 - into);
+          if (into >= 1) return;
+          const along = depth * FUNNEL_CURVE * (Math.pow(1 - into, -1 / FUNNEL_CURVE) - 1);
+          // Past the fade the cards are not there to be tapped.
+          if (along >= FUNNEL_FADE_FROM * spacing) return;
+          flatX = halfCard + along;
           halfHeight *= 1 - into;
           lineY += (drawn.hole[1] - drawn.rowY) * into;
         } else if (worldX < 0) {
           const halfView = viewWidth / 2;
           const ramp = Math.max(halfView - halfCard, halfView * HORN_MIN_RAMP);
-          const reach = gsap.utils.clamp(0, 1, (-worldX - halfCard) / ramp);
+          // The widening has no closed-form inverse; it only ever grows, so a
+          // bisection finds the flat point that lands where the tap did.
+          const widen = HORN_WIDEN * drawn.horn;
+          const placed = (past: number) => {
+            const r = Math.min(1, past / ramp);
+            const grown = r < 1 ? ramp * (r ** 3 - 0.5 * r ** 4) : ramp * 0.5 + (past - ramp);
+            return past + widen * grown;
+          };
+          const target = Math.max(0, -worldX - halfCard);
+          let low = 0;
+          let high = target;
+          for (let step = 0; step < 24; step += 1) {
+            const mid = (low + high) / 2;
+            if (placed(mid) < target) low = mid;
+            else high = mid;
+          }
+          const past = (low + high) / 2;
+          flatX = worldX < -halfCard ? -(halfCard + past) : worldX;
+          const reach = gsap.utils.clamp(0, 1, past / ramp);
           halfHeight *= 1 + HORN_FLARE * drawn.horn * reach * reach * (3 - 2 * reach);
         }
         if (Math.abs(worldY - lineY) > halfHeight) return;
@@ -632,16 +694,20 @@ export default function HomeProjectsRow({
         // into the same place on the right, at its own height.
         const holeX = blackholeCentre.drawn ? blackholeCentre.x - (box.left + box.width / 2) : viewWidth * 0.35;
         const holeY = blackholeCentre.drawn ? box.top + box.height / 2 - blackholeCentre.y : rowY;
-        const hole = [Math.max(holeX, cardWidth / 2 + (viewWidth / 2) * FUNNEL_MIN_DEPTH), holeY];
-        // Never steeper than the hole's own distance, and never so steep that
-        // the cards after the first are gone: half size FUNNEL_RECEDE of a
-        // panel in, so a few of them can be seen lining up into the hole.
-        const recede = Math.max(hole[0] - cardWidth / 2, spacing * FUNNEL_RECEDE);
-        drawn = { rowY, hole, horn, recede };
+        const holeClear = holeX - cardWidth / 2 >= (viewWidth / 2) * FUNNEL_MIN_DEPTH;
+        const hole = [holeClear ? holeX : cardWidth / 2 + (viewWidth / 2) * FUNNEL_FALLBACK_DEPTH, holeY];
+        // Nothing until the heading starts to move, then drawn out of the hole
+        // while it does: the whole row waits EMERGE_DEPTH panels further in.
+        const emerged = reduceMotion
+          ? 1
+          : gsap.utils.clamp(0, 1, (current / spacing - EMERGE_FROM) / (1 - EMERGE_FROM));
+        const waiting = (1 - emerged) * EMERGE_DEPTH * spacing;
+        const appear = gsap.utils.clamp(0, 1, emerged / EMERGE_FADE);
+        drawn = { rowY, hole, horn };
 
         meshes.forEach((mesh, index) => {
           // Entry 0 is panel 1: panel 0 is the empty lead-in.
-          const flat = (index + 1) * spacing - current;
+          const flat = (index + 1) * spacing - current + waiting;
           mesh.position.x = flat;
           mesh.position.y = rowY;
           const uniforms = mesh.program.uniforms as Record<string, { value: number | number[] }>;
@@ -650,7 +716,8 @@ export default function HomeProjectsRow({
           uniforms.uHalfView.value = viewWidth / 2;
           uniforms.uHalfCard.value = cardWidth / 2;
           uniforms.uHole.value = hole;
-          uniforms.uRecede.value = recede;
+          uniforms.uSpacing.value = spacing;
+          uniforms.uAppear.value = appear;
           uniforms.uHorn.value = horn;
         });
 
@@ -680,7 +747,9 @@ export default function HomeProjectsRow({
           });
           overlay.style.transform = `translate3d(${centredX.toFixed(2)}px, 0, 0)`;
           const speed = gsap.utils.clamp(0, 1, Math.abs(velocity) / OVERLAY_FADE_SPEED);
-          const opacity = gsap.utils.clamp(0, 1, 1 - speed);
+          // And not before its card has come all the way out of the hole.
+          const arrived = gsap.utils.clamp(0, 1, (emerged - 0.75) / 0.25);
+          const opacity = gsap.utils.clamp(0, 1, 1 - speed) * arrived;
           overlay.style.opacity = `${opacity}`;
           // Never a link a visitor can reach but not read. The flag goes on
           // the container and the links opt in through it, because the
