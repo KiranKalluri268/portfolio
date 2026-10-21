@@ -47,6 +47,41 @@ stays fixed and the detail region yields that combined height.
 On mobile, that region may follow its card horizontally because there is no
 progress rail to settle on and a swipe may stop between panels.
 
+The cards come out of the black hole. Seen from the front, the row runs out of
+the background black hole's centre, through the centred card, and off the left
+edge of the screen:
+
+- Right of the centred card it is a funnel into the hole, drawn as a row
+  receding towards a vanishing point: a card is scaled by `L / (along + L)`,
+  with `L` at least `FUNNEL_RECEDE` panels, so the next card is already a narrow
+  wedge and the ones after it line up behind it, each smaller, until they fade
+  out just short of the hole. Width shrinks faster than height, as a receding
+  row's spacing does, and the row's line bends to meet the hole's centre.
+  Always there: it is where the cards come from.
+- The centred card is its own size.
+- Left of it the channel flares open towards the screen's edge, widths
+  unchanged: a little at rest (`HORN_AT_REST`), opened by speed in either
+  direction to `HORN_FLARE` taller at the edge, eased by `HORN_EASE`. Its walls
+  never rise over less than `HORN_MIN_RAMP` of half the screen.
+
+The hole's centre comes from `src/background/blackhole-centre.ts`, which
+`BakedBlackhole` writes whenever its camera moves, so the funnel follows the
+black hole as it glides between sections. On a phone the hole sits behind the
+centred card; the funnel then runs off the right edge at the hole's height
+(`FUNNEL_MIN_DEPTH`). With the video fallback it runs to the same place at the
+row's own height.
+
+While the section is still rising from below, the row is held where it will sit
+once the section is pinned, so only the "Projects" heading rises with the page
+and the first card is already deep in the funnel: it comes out of the black
+hole as the carousel starts. A tap is tested against the cards where they are
+drawn, by undoing the funnel and flare for the point tapped.
+
+The shape is in the vertex shader. The fragment shader divides the stretched
+height by the stretch per pixel, because an affine texture coordinate across a
+trapezoid's two triangles kinks into a saw-tooth along every edge. Reduced
+motion keeps the funnel and the resting flare and never opens the flare.
+
 ### Projects — list view (the card stack)
 
 `/projects` has two views and opens on the list. The grid is DOM; the list is a single WebGL canvas

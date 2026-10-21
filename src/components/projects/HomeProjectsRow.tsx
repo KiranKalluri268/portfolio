@@ -13,6 +13,7 @@ import gridStyles from "./projects-grid.module.css";
 import { CARD_SHAPES, drawCard, drawSeeAllCard, textureSizeFor } from "./stack-card";
 import { homeProjectsLayout, homeProjectsOverlayOffset } from "./home-projects-layout";
 import { CARD_TEXTURE_IMAGE_WIDTH, cloudinaryImage } from "@/lib/cloudinary";
+import { blackholeCentre } from "@/background/blackhole-centre";
 
 /** The home page's projects carousel, drawn on the GPU.
  *
@@ -51,49 +52,41 @@ export const SCROLL_MULTIPLIER = 2;
  *  the scroll there is no lag, and with no lag there is no speed to draw. */
 const ROW_EASE = 0.12;
 
-/** Travel per 60Hz frame, as a fraction of the card's *height* — the axis the
- *  bow spans, now that the row runs sideways. */
-const BULGE_PER_PIXEL = 0.00071;
-const MAX_BULGE = 0.09;
-
-/** Curvature of the row, per pixel of travel per 60Hz frame. The row is rolled
- *  onto a cylinder about a vertical axis, so a card away from the middle is
- *  turned to sit on it and seen as a trapezoid, while the card being read stays
- *  square on. The sign follows the direction of travel.
+/** The shape the row moves through: the cards come out of the black hole.
  *
- *  Calibrated against measured travel rather than borrowed from the list view.
- *  With the row moving at the scroll's own pace, one wheel tick moved it about
- *  11.5 px per 60Hz frame, an ordinary scroll 27, and a hard flick 98. The list
- *  view's own numbers put a flick past a 77 degree turn here, which is a sliver
- *  rather than a card: its cards travel up the short axis of the screen, so far
- *  fewer of them are on it at once and the steep ones are already gone.
- *  Sideways, the same curvature is applied across nearly twice the distance.
- *
- *  This and the bulge above were then divided by the multiplier's own effect on
- *  speed, so the same gesture still draws the same bend. The row moves faster
- *  now, but a bend that grew with it would have put an ordinary scroll at 90
- *  per cent of the ceiling and everything quicker at exactly the ceiling —
- *  which is the failure this was tuned away from in the first place. */
-const CURVE_PER_PIXEL = 0.0000071;
-const MAX_CURVE = 0.0011;
-
-/** A phone bends further. What reads as the bend is the turn across one card,
- *  and a phone's card is well under half the width of a desktop's, so the same
- *  curvature spans far less of it. This is set so the turn from a card's near
- *  edge to its far one comes out about the same on both. */
-const MAX_CURVE_NARROW = 0.003;
-
-/** How far a card is ever turned, in radians. Past a quarter turn it faces away
- *  and is culled, blinking out while still well inside the screen; well before
- *  that it has stopped reading as a card at all. At the curvature above this
- *  stops the bend growing about one card's width out from the middle. */
-const MAX_TILT = 0.9;
-
-/** How far the whole row is pushed towards or away from the camera at full
- *  speed, as a fraction of the camera's distance. Without it the middle card
- *  never changes size: the cylinder rolls about that point, so its tilt and its
- *  z are both zero there by definition. */
-const MAX_CENTRE_PUSH = 0.09;
+ *  Seen from the front, the row runs out of the background black hole's centre
+ *  on the right, through the centred card, and off the left edge of the screen.
+ *  - Right of the centred card it is a funnel narrowing into the hole: a card
+ *    there is shorter and narrower the closer it is, the cards crowd together
+ *    as if receding into it, and they fade out just before they reach it. The
+ *    row's own line bends to meet the hole's centre, wherever on the screen the
+ *    hole is. Always there: it is where the cards come from.
+ *  - The centred card is its own size.
+ *  - Left of it the channel flares open towards the screen's edge: a card there
+ *    grows taller towards the edge, widths unchanged. A little at rest, opened
+ *    by speed in either direction to HORN_FLARE times the card's height taller
+ *    at the edge — a little past the proportions of the sketch it was drawn
+ *    from. */
+const HORN_FLARE = 2.2;
+/** The shortest the flare's walls may be, as a fraction of half the screen's
+ *  width. Only a phone, where the centred card nearly fills the screen, falls
+ *  back on it. */
+const HORN_MIN_RAMP = 0.55;
+/** How much of the flare is there with the row standing still. */
+const HORN_AT_REST = 0.18;
+/** Travel per 60Hz frame at which the flare is fully open: about a hard flick.
+ *  An ordinary scroll opens it a little over half way. */
+const HORN_FULL_SPEED = 90;
+/** How much of the gap to its target the flare closes per 60Hz frame, so it
+ *  opens and relaxes smoothly rather than following every jitter in speed. */
+const HORN_EASE = 0.14;
+/** The funnel's mouth is never nearer the centred card's edge than this
+ *  fraction of half the screen. On a phone the hole sits behind the centred
+ *  card, so there is nowhere to its right to narrow into; the funnel then runs
+ *  off the right edge of the screen at the hole's height instead. */
+const FUNNEL_MIN_DEPTH = 0.35;
+/** How far along the row, in panels, a card in the funnel is half its size. */
+const FUNNEL_RECEDE = 1.5;
 
 /** How much travel per 60Hz frame counts as fully moving, for the overlay's
  *  fade. Reading a paragraph mid-flick is not possible anyway, and text held
@@ -109,17 +102,69 @@ const VERTEX_SHADER = /* glsl */ `
 
   uniform mat4 modelViewMatrix;
   uniform mat4 projectionMatrix;
-  uniform float uBulge;
+  // In pixels from the middle of the canvas, y up: this card's centre, its
+  // plane's size, half the canvas's width, half the centred card's width, and
+  // the black hole's centre.
+  uniform vec2 uRow;
+  uniform vec2 uPlane;
+  uniform float uHalfView;
+  uniform float uHalfCard;
+  uniform vec2 uHole;
+  // How far along the row a card has to go to be half its size in the funnel.
+  uniform float uRecede;
+  // How open the flare is, 0 to 1, and how much taller it is when fully open.
+  uniform float uHorn;
+  uniform float uFlare;
 
   varying vec2 vUv;
+  // The stretched height and the stretch itself, divided again per pixel;
+  // and how much of the card is left before the hole takes it.
+  varying float vY;
+  varying float vStretch;
+  varying float vFade;
 
   void main() {
     vUv = uv;
-    vec3 displaced = position;
-    // Zero at the top and bottom edges, greatest across the middle, so the
-    // card's centre leads and its ends trail. The list view bows the other
-    // way about, because its run of cards travels the other way.
-    displaced.x += sin(uv.y * 3.14159265) * uBulge;
+    // Where this point would be in a straight, flat row.
+    float x = uRow.x + position.x * uPlane.x;
+    float stretch = 1.0;
+    float placedX = x;
+    float lineY = uRow.y;
+    float fade = 1.0;
+
+    if (x < 0.0) {
+      // The flare. Its walls rise over the gap between the centred card and
+      // the screen's edge, never over less than HORN_MIN_RAMP of half the
+      // screen (on a phone the gap is 35px and the wall came up as a spike),
+      // in an S-curve so the channel leaves the card level and arrives level.
+      float ramp = max(uHalfView - uHalfCard, uHalfView * ${HORN_MIN_RAMP.toFixed(2)});
+      float reach = clamp((-x - uHalfCard) / ramp, 0.0, 1.0);
+      stretch = 1.0 + uFlare * uHorn * reach * reach * (3.0 - 2.0 * reach);
+    } else {
+      // The funnel, drawn as a row receding towards a vanishing point at the
+      // hole: past the centred card's edge a card is scaled by how far along
+      // the row it is, L / (along + L), so it is half its height uRecede in
+      // and keeps shrinking without ever vanishing, and its place closes on
+      // the hole by the same amount. Its width shrinks faster than its height,
+      // as a receding row's spacing does, which is what crowds the cards
+      // together; and the row's line bends from its own height to the hole's.
+      float depth = max(uHole.x - uHalfCard, 1.0);
+      float along = max(x - uHalfCard, 0.0);
+      float into = along / (along + uRecede);
+      placedX = min(x, uHalfCard) + depth * into;
+      stretch = 1.0 - into;
+      lineY = mix(uRow.y, uHole.y, into);
+      fade = 1.0 - smoothstep(0.86, 0.99, into);
+    }
+
+    vec3 displaced = vec3(
+      (placedX - uRow.x) / uPlane.x,
+      position.y * stretch + (lineY - uRow.y) / uPlane.y,
+      position.z
+    );
+    vY = position.y * stretch;
+    vStretch = max(stretch, 0.0001);
+    vFade = fade;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(displaced, 1.0);
   }
 `;
@@ -129,9 +174,19 @@ const FRAGMENT_SHADER = /* glsl */ `
 
   uniform sampler2D tMap;
   varying vec2 vUv;
+  varying float vY;
+  varying float vStretch;
+  varying float vFade;
 
   void main() {
-    gl_FragColor = texture2D(tMap, vUv);
+    // Each strip of the card is a trapezoid once it is stretched, and a
+    // texture coordinate interpolated across its two triangles kinks along
+    // their shared diagonal: a saw-tooth down every edge. The height and the
+    // stretch both vary linearly across a strip, so dividing them here gives
+    // the exact point on the card. (The plane's v runs from 0 at its bottom,
+    // y = -0.5, to 1 at its top.)
+    vec4 colour = texture2D(tMap, vec2(vUv.x, vY / vStretch + 0.5));
+    gl_FragColor = vec4(colour.rgb, colour.a * vFade);
   }
 `;
 
@@ -307,12 +362,22 @@ export default function HomeProjectsRow({
         const program = new Program(gl, {
           vertex: VERTEX_SHADER,
           fragment: FRAGMENT_SHADER,
-          uniforms: { tMap: { value: texture }, uBulge: { value: 0 } },
+          uniforms: {
+            tMap: { value: texture },
+            uRow: { value: [0, 0] },
+            uPlane: { value: [1, 1] },
+            uHalfView: { value: 1 },
+            uHalfCard: { value: 0 },
+            uHole: { value: [1, 0] },
+            uRecede: { value: 1 },
+            uHorn: { value: HORN_AT_REST },
+            uFlare: { value: HORN_FLARE },
+          },
           transparent: true,
         });
-        // The displacement runs sideways and varies down the card, so the
-        // segments are needed the other way round from the list view's.
-        const geometry = new Plane(gl, { widthSegments: 8, heightSegments: 48 });
+        // The horn's height changes across the card, so the segments run
+        // across it; down it, the card only stretches, which needs none.
+        const geometry = new Plane(gl, { widthSegments: 48, heightSegments: 1 });
         const mesh = new Mesh(gl, { geometry, program });
         mesh.setParent(scene);
         return mesh;
@@ -324,7 +389,6 @@ export default function HomeProjectsRow({
       let planeHeight = 0;
       let spacing = 0;
       let rowCentreY = 0;
-      let bendBand = 0;
       let viewWidth = 0;
 
       /** How far the text may follow its card before falling off the screen.
@@ -389,7 +453,6 @@ export default function HomeProjectsRow({
 
         // World y is positive upwards from the middle of the section.
         rowCentreY = height / 2 - (layout.cardTop + cardHeight / 2);
-        bendBand = width;
 
         // The browser tests cannot inspect pixels inside WebGL. Publish the
         // calculated card bounds so they can verify the same geometry the
@@ -429,6 +492,10 @@ export default function HomeProjectsRow({
       let ready = resize();
 
       let current = 0;
+      let horn = HORN_AT_REST;
+      /** What the last frame drew with, so a tap is tested against the cards
+       *  where they were seen rather than where a flat row would put them. */
+      let drawn = { rowY: 0, hole: [1, 0], horn: HORN_AT_REST, recede: 1 };
       let reportedPanel = -1;
       // Nothing to draw while the section is off screen, and no reason to hold
       // a GPU loop open behind five other scenes.
@@ -467,10 +534,32 @@ export default function HomeProjectsRow({
         const rect = container.getBoundingClientRect();
         const worldX = event.clientX - rect.left - rect.width / 2;
         const worldY = rect.height / 2 - (event.clientY - rect.top);
-        if (Math.abs(worldY - rowCentreY) > cardHeight / 2) return;
+
+        // The vertex shader's shape, undone for one point: back from where the
+        // tap landed to where it would be in a flat row, and how tall the row
+        // is there and where its line runs.
+        const halfCard = cardWidth / 2;
+        let flatX = worldX;
+        let halfHeight = cardHeight / 2;
+        let lineY = drawn.rowY;
+        if (worldX > halfCard) {
+          const depth = Math.max(drawn.hole[0] - halfCard, 1);
+          const into = (worldX - halfCard) / depth;
+          // At the hole's own centre the cards are already gone.
+          if (into >= 0.97) return;
+          flatX = halfCard + (drawn.recede * into) / (1 - into);
+          halfHeight *= 1 - into;
+          lineY += (drawn.hole[1] - drawn.rowY) * into;
+        } else if (worldX < 0) {
+          const halfView = viewWidth / 2;
+          const ramp = Math.max(halfView - halfCard, halfView * HORN_MIN_RAMP);
+          const reach = gsap.utils.clamp(0, 1, (-worldX - halfCard) / ramp);
+          halfHeight *= 1 + HORN_FLARE * drawn.horn * reach * reach * (3 - 2 * reach);
+        }
+        if (Math.abs(worldY - lineY) > halfHeight) return;
 
         const hit = meshes.findIndex(
-          (mesh) => Math.abs(mesh.position.x - worldX) <= cardWidth / 2,
+          (mesh) => Math.abs(mesh.position.x - flatX) <= cardWidth / 2,
         );
         if (hit === -1) return;
         // The last mesh is the row's own "see all" card, one past the real
@@ -523,44 +612,46 @@ export default function HomeProjectsRow({
         current += (target - current) * ease;
         const velocity = (current - previous) / deltaRatio;
 
-        // Negated against the direction of travel: the card's middle trails and
-        // its ends lead, rather than the other way about. Bowed the way the
-        // maths first put it, the row read as leaning into the scroll instead
-        // of being dragged along by it.
-        const bulge = gsap.utils.clamp(
-          -MAX_BULGE,
-          MAX_BULGE,
-          reduceMotion ? 0 : -velocity * BULGE_PER_PIXEL,
-        );
-        // The shader displaces in the plane's own units, where 1 is the plane's
-        // width, so a height-relative bow is converted on the way in.
-        const localBulge = (bulge * planeHeight) / planeWidth;
+        // How open the horn is: a little at rest, opening with speed in either
+        // direction, eased so it neither snaps open nor jitters.
+        const hornTarget = reduceMotion
+          ? HORN_AT_REST
+          : HORN_AT_REST + (1 - HORN_AT_REST) * gsap.utils.clamp(0, 1, Math.abs(velocity) / HORN_FULL_SPEED);
+        horn += (hornTarget - horn) * (reduceMotion ? 1 : 1 - Math.pow(1 - HORN_EASE, deltaRatio));
 
-        const curveCeiling = narrow ? MAX_CURVE_NARROW : MAX_CURVE;
-        const curve = gsap.utils.clamp(
-          -curveCeiling,
-          curveCeiling,
-          reduceMotion ? 0 : velocity * CURVE_PER_PIXEL,
-        );
-        // Whichever runs out first: a screen's worth of distance, or the turn
-        // at which a card would start facing away. Both z and the tilt come
-        // from the same bounded distance so they cannot disagree.
-        const band = curve === 0 ? bendBand : Math.min(bendBand, MAX_TILT / Math.abs(curve));
-        const centrePush = (curve / curveCeiling) * MAX_CENTRE_PUSH * camera.position.z;
+        // Where the canvas is on screen. While the section is still coming up
+        // from below, the row is held where it will sit once the section has
+        // arrived, so only the heading rises with the page: the cards come out
+        // of the black hole rather than up from the bottom of the screen. Once
+        // the section is pinned this is zero; leaving it, or arriving from
+        // below it, the row goes with the page.
+        const box = container.getBoundingClientRect();
+        const rowY = rowCentreY + Math.max(0, box.top);
+        // The hole, in the canvas's own terms: pixels from its middle, y up.
+        // Without a drawn black hole (the video fallback) the row still runs
+        // into the same place on the right, at its own height.
+        const holeX = blackholeCentre.drawn ? blackholeCentre.x - (box.left + box.width / 2) : viewWidth * 0.35;
+        const holeY = blackholeCentre.drawn ? box.top + box.height / 2 - blackholeCentre.y : rowY;
+        const hole = [Math.max(holeX, cardWidth / 2 + (viewWidth / 2) * FUNNEL_MIN_DEPTH), holeY];
+        // Never steeper than the hole's own distance, and never so steep that
+        // the cards after the first are gone: half size FUNNEL_RECEDE of a
+        // panel in, so a few of them can be seen lining up into the hole.
+        const recede = Math.max(hole[0] - cardWidth / 2, spacing * FUNNEL_RECEDE);
+        drawn = { rowY, hole, horn, recede };
 
         meshes.forEach((mesh, index) => {
           // Entry 0 is panel 1: panel 0 is the empty lead-in.
           const flat = (index + 1) * spacing - current;
-          const bent = gsap.utils.clamp(-band, band, flat);
-
-          // Rolling the row onto a cylinder of radius 1/curve. Only z and the
-          // turn come from the curve — x stays as it was, so the spacing never
-          // changes and cards cannot pile up at the far end.
           mesh.position.x = flat;
-          mesh.position.y = rowCentreY;
-          mesh.position.z = (-bent * bent * curve) / 2 + centrePush;
-          mesh.rotation.y = bent * curve;
-          (mesh.program.uniforms.uBulge as { value: number }).value = localBulge;
+          mesh.position.y = rowY;
+          const uniforms = mesh.program.uniforms as Record<string, { value: number | number[] }>;
+          uniforms.uRow.value = [flat, rowY];
+          uniforms.uPlane.value = [planeWidth, planeHeight];
+          uniforms.uHalfView.value = viewWidth / 2;
+          uniforms.uHalfCard.value = cardWidth / 2;
+          uniforms.uHole.value = hole;
+          uniforms.uRecede.value = recede;
+          uniforms.uHorn.value = horn;
         });
 
         // The rail, the counter and the overlay all follow the eased row rather
