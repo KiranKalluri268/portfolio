@@ -99,8 +99,16 @@ const MAX_BAKE_PIXELS = 1_000_000;
  *    hugging the words, not the block they sit in.
  *  - `data-blackhole-dim="box"` dims the element's own outline, rounded
  *    corners included, as if the box were tinted glass. For things drawn as
- *    boxes: cards, form fields, buttons. */
+ *    boxes: cards, form fields, buttons.
+ *
+ *  Something still too faint to read is left out with `data-blackhole-undimmed`
+ *  — on a box, or on the part of a text element that has not appeared yet —
+ *  or the dimming draws its shadow with nothing in it. A text element whose
+ *  parts come and go says so by changing `data-blackhole-dim-key`, which is
+ *  what tells its cached lines to be measured again. */
 export const DIM_BEHIND_ATTRIBUTE = "data-blackhole-dim";
+const UNDIMMED_ATTRIBUTE = "data-blackhole-undimmed";
+const DIM_KEY_ATTRIBUTE = "data-blackhole-dim-key";
 
 /** Behind text the light drops to this fraction. Each shape fades in from its
  *  outline over its soft width, so no edge is drawn where the dimming starts.
@@ -117,7 +125,7 @@ type DimShape = BlackholeDimming["rects"][number];
 const lineCache = new WeakMap<Element, { key: string; lines: [number, number, number, number][] }>();
 
 function textLines(element: Element, box: DOMRect) {
-  const key = `${box.width.toFixed(1)}x${box.height.toFixed(1)}:${element.textContent?.length ?? 0}`;
+  const key = `${box.width.toFixed(1)}x${box.height.toFixed(1)}:${element.textContent?.length ?? 0}:${element.getAttribute(DIM_KEY_ATTRIBUTE) ?? ""}`;
   const cached = lineCache.get(element);
   if (cached?.key === key) return cached.lines;
 
@@ -127,7 +135,7 @@ function textLines(element: Element, box: DOMRect) {
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
     if (!node.textContent?.trim()) continue;
     const parent = node.parentElement;
-    if (parent && (parent.closest(".sr-only") || getComputedStyle(parent).visibility === "hidden")) continue;
+    if (parent && (parent.closest(`.sr-only, [${UNDIMMED_ATTRIBUTE}]`) || getComputedStyle(parent).visibility === "hidden")) continue;
     range.selectNodeContents(node);
     for (const r of range.getClientRects()) {
       if (r.width === 0 || r.height === 0) continue;
@@ -287,7 +295,7 @@ export default function BakedBlackhole({
       const rects: DimShape[] = [];
       for (const element of document.querySelectorAll(`[${DIM_BEHIND_ATTRIBUTE}]`)) {
         const box = element.getBoundingClientRect();
-        if (box.width === 0 || box.height === 0) continue;
+        if (box.width === 0 || box.height === 0 || element.hasAttribute(UNDIMMED_ATTRIBUTE)) continue;
         if (box.bottom < 0 || box.top > height || box.right < 0 || box.left > width) continue;
         if (element.getAttribute(DIM_BEHIND_ATTRIBUTE) === "box") {
           rects.push([box.left, box.top, box.right, box.bottom, cornerRadius(element), DIM.boxSoft]);
