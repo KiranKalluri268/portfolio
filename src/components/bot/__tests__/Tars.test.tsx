@@ -42,7 +42,9 @@ describe("TARS", () => {
         <Tars />
       </HintProvider>,
     );
-    expect(screen.getByText("Drag to explore")).toBeInTheDocument();
+    // Not before TARS has walked its couple of steps.
+    expect(screen.queryByText("Drag to explore")).not.toBeInTheDocument();
+    expect(await screen.findByText("Drag to explore", {}, { timeout: 2000 })).toBeInTheDocument();
     rerender(
       <HintProvider>
         <Scene hint={null} />
@@ -54,7 +56,7 @@ describe("TARS", () => {
     await waitFor(() => expect(screen.queryByText("Drag to explore")).not.toBeInTheDocument());
   });
 
-  it("opens its slabs while it speaks, and wider while the chat is out", async () => {
+  it("walks, then raises an arm to speak, and opens both arms for the chat", async () => {
     const user = userEvent.setup();
     render(
       <HintProvider>
@@ -63,7 +65,8 @@ describe("TARS", () => {
       </HintProvider>,
     );
     const pose = () => screen.getByRole("button", { name: /TARS/ }).querySelector("svg")!.getAttribute("data-pose");
-    expect(pose()).toBe("speaking");
+    expect(pose()).toBe("walking");
+    await waitFor(() => expect(pose()).toBe("speaking"), { timeout: 2000 });
     await user.click(screen.getByRole("button", { name: /Ask TARS/ }));
     expect(pose()).toBe("open");
   });

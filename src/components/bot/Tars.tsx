@@ -9,7 +9,7 @@ import { useCurrentHint } from "@/components/hints/HintContext";
 import { usePresence } from "@/hooks/usePresence";
 import { answer, type BotKnowledge, type BotLink, type BotReply } from "./tars-brain";
 import styles from "./tars.module.css";
-import TarsFigure, { type TarsPose } from "./TarsFigure";
+import TarsFigure, { TARS_WALK_MS, type TarsPose } from "./TarsFigure";
 
 /**
  * TARS, the site's guide, in the bottom-left corner: the robot from
@@ -69,10 +69,24 @@ export default function Tars() {
   // own words rather than blanking first.
   const [lastTip, setLastTip] = useState<string | null>(null);
   if (tipText && tipText !== lastTip) setLastTip(tipText);
-  const tip = usePresence(Boolean(tipText), TIP_EXIT_MS, { enter: styles.tipIn, exit: styles.tipOut });
+  // A new tip: TARS walks a couple of steps first, then raises its arm and
+  // the tip comes out. `walkedFor` is the tip it has finished walking for.
+  const [walkedFor, setWalkedFor] = useState<string | null>(null);
+  if (!tipText && walkedFor) setWalkedFor(null);
+  useEffect(() => {
+    if (!tipText || walkedFor === tipText) return;
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timer = window.setTimeout(() => setWalkedFor(tipText), still ? 0 : TARS_WALK_MS);
+    return () => window.clearTimeout(timer);
+  }, [tipText, walkedFor]);
+  const tip = usePresence(Boolean(tipText) && walkedFor === tipText, TIP_EXIT_MS, {
+    enter: styles.tipIn,
+    exit: styles.tipOut,
+  });
   const panel = usePresence(open && shown, PANEL_EXIT_MS, { enter: styles.panelIn, exit: styles.panelOut });
-  // The slabs stay apart until what came out of them has gone back in.
-  const pose: TarsPose = panel.mounted && !panel.leaving ? "open" : tip.mounted || panel.mounted ? "speaking" : "closed";
+  // The arm stays up until the tip has gone back in.
+  const pose: TarsPose =
+    panel.mounted && !panel.leaving ? "open" : tip.mounted ? "speaking" : tipText ? "walking" : "closed";
 
   // Fetched once, the first time it is wanted.
   useEffect(() => {
