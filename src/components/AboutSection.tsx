@@ -51,8 +51,22 @@ export default function AboutSection() {
     // pulling the link out of the tab order.
     let linkFocused = false;
     let linkProgress = 0;
+    let reached = 0;
+
+    // The link's text is part of the copy's, so the copy's dimmed lines are
+    // re-measured whenever a word or the link comes or goes.
+    const updateDimKey = () => {
+      const linkShown = !resumeLink.hasAttribute("data-blackhole-undimmed");
+      copy.setAttribute("data-blackhole-dim-key", `${reached}${linkShown ? "+link" : ""}`);
+    };
 
     const applyLinkVisibility = () => {
+      // No dimming behind it until it is there to see.
+      const linkShown = linkFocused || linkProgress >= 0.5;
+      if (linkShown === resumeLink.hasAttribute("data-blackhole-undimmed")) {
+        resumeLink.toggleAttribute("data-blackhole-undimmed", !linkShown);
+        updateDimKey();
+      }
       if (linkFocused) {
         resumeLink.style.opacity = "1";
         resumeLink.style.pointerEvents = "auto";
@@ -82,6 +96,8 @@ export default function AboutSection() {
             word.dataset.accent === "true" ? accentColor : "#ffffff",
         });
         gsap.set(resumeLink, { opacity: 1, pointerEvents: "auto" });
+        words.forEach((word) => word.removeAttribute("data-blackhole-undimmed"));
+        resumeLink.removeAttribute("data-blackhole-undimmed");
         return;
       }
 
@@ -131,6 +147,7 @@ export default function AboutSection() {
           (revealPosition - activeLineStart) / Math.max(1, activeLineEnd - activeLineStart + 1),
         );
 
+        let nowReached = 0;
         words.forEach((word, index) => {
           const wordProgress = gsap.utils.clamp(0, 1, revealPosition - index);
           const wordLine = wordLines[index] ?? 0;
@@ -146,9 +163,19 @@ export default function AboutSection() {
                 : 0.1;
           const readColor = word.dataset.accent === "true" ? accentColor : "#ffffff";
 
+          const isReached = wordProgress > 0 || isReadLine;
+
           word.style.opacity = String(opacity);
-          word.style.color = wordProgress > 0 || isReadLine ? readColor : unreadColor;
+          word.style.color = isReached ? readColor : unreadColor;
+          // Only the words already lit are dimmed behind: the rest are too
+          // faint to read, and a shadow under them shows with nothing in it.
+          word.toggleAttribute("data-blackhole-undimmed", !isReached);
+          if (isReached) nowReached += 1;
         });
+        if (nowReached !== reached) {
+          reached = nowReached;
+          updateDimKey();
+        }
 
         linkProgress = gsap.utils.clamp(0, 1, (progress - 0.87) / 0.05);
         applyLinkVisibility();
@@ -184,6 +211,7 @@ export default function AboutSection() {
       <div className="sticky top-0 flex h-[100svh] items-center px-5 py-20 sm:px-10 lg:px-20">
         <div
           ref={copyRef}
+          data-blackhole-dim="text"
           className="relative top-[clamp(1.5rem,4svh,3rem)] mx-auto w-full max-w-5xl sm:-left-[3vw] lg:-left-[5vw]"
         >
           <h2 className="mb-5 text-sm font-semibold uppercase tracking-[0.24em] text-white/55 sm:mb-8 sm:text-base">
@@ -200,6 +228,7 @@ export default function AboutSection() {
                 }}
                 key={key}
                 data-accent={accent}
+                data-blackhole-undimmed=""
                 className="inline text-slate-500 opacity-10"
                 aria-hidden="true"
               >
@@ -209,6 +238,8 @@ export default function AboutSection() {
           </p>
           <Link
             ref={resumeLinkRef}
+            data-blackhole-dim="box"
+            data-blackhole-undimmed=""
             href="/resume"
             className="pointer-events-none mt-7 inline-flex items-center rounded-full border border-accent-soft/50 bg-accent/10 px-4 py-2 text-sm font-semibold tracking-wide text-white opacity-[0.08] shadow-[0_0_22px_rgba(255,122,24,0.12)] transition-[background-color,border-color,box-shadow] hover:border-accent-soft hover:bg-accent/20 hover:shadow-[0_0_28px_rgba(255,122,24,0.25)] sm:mt-9 sm:text-base"
           >

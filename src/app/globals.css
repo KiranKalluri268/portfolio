@@ -195,7 +195,9 @@ canvas {
    remains visible without changing the touch layout. */
 @media (min-width: 640px) and (max-height: 800px) {
   .contact-section {
-    padding-block: 4rem;
+    padding-top: 4rem;
+    /* Room for the footer and its social icons. */
+    padding-bottom: 9rem;
   }
 
   .contact-panel {
@@ -222,10 +224,6 @@ canvas {
 
   .contact-submit {
     padding-block: 0.625rem;
-  }
-
-  .contact-socials {
-    margin-top: 2.5rem;
   }
 }
 

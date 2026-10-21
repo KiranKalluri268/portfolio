@@ -131,7 +131,7 @@ export default function ContactSection({
   return (
     <section
       id="contact"
-      className="body-text contact-section relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-4 py-24 text-center text-white sm:px-6 sm:py-28 lg:px-8"
+      className="body-text contact-section relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-4 pb-[calc(13rem+env(safe-area-inset-bottom))] pt-24 text-center text-white sm:px-6 sm:pb-56 sm:pt-28 lg:px-8"
       style={{ zIndex: 10 }}
     >
       {recommendations.length > 0 && (
@@ -141,11 +141,12 @@ export default function ContactSection({
         >
           <h2
             id="recommendations-heading"
+            data-blackhole-dim="text"
             className="mb-2 text-center text-sm font-semibold uppercase tracking-[0.22em] text-accent-soft"
           >
             Recommendations
           </h2>
-          <p className="mx-auto mb-8 max-w-xl text-center text-sm text-gray-400">
+          <p data-blackhole-dim="text" className="mx-auto mb-8 max-w-xl text-center text-sm text-gray-400">
             From the people who managed me.
           </p>
           <div className="grid gap-5 md:grid-cols-2">
@@ -161,28 +162,29 @@ export default function ContactSection({
 
       <div
         data-scroll-target="contact"
-        className="contact-panel relative flex w-full max-w-md scroll-mt-24 flex-col items-center sm:max-w-lg"
+        className="contact-panel relative flex w-full max-w-md scroll-mt-24 flex-col items-center sm:max-w-lg lg:ml-[max(6vw,calc(25vw-15rem))] lg:self-start"
       >
-        <div>
+        <div data-blackhole-dim="text">
           <h2 className="contact-heading text-3xl font-bold sm:mb-4 mb-2">Contact Me</h2>
           <p className="contact-intro text-gray-400 mb-8">Feel free to reach out!</p>
         </div>
 
         {submitted ? (
-          <div className="animate-fade-in mb-8 flex flex-col items-center gap-5">
+          <div data-blackhole-dim="text" className="animate-fade-in mb-8 flex flex-col items-center gap-5">
             <p className="font-semibold text-green-500" role="status" aria-live="polite">
               Thanks for reaching out! I will get back to you soon.
             </p>
             <button
               type="button"
               onClick={() => setSubmitted(false)}
+              data-blackhole-dim="box"
               className="rounded-full border border-white/25 bg-black/40 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:border-accent hover:text-accent-soft"
             >
               Send another message
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} noValidate className="contact-form flex w-full flex-col gap-4 text-left sm:gap-6" aria-label="Contact form">
+          <form data-blackhole-dim="text" onSubmit={handleSubmit} noValidate className="contact-form flex w-full flex-col gap-4 text-left sm:gap-6" aria-label="Contact form">
             <div>
               <label htmlFor="name" className="block text-sm font-medium mb-1">
                 Name <span className="text-red-500">*</span>
@@ -191,6 +193,7 @@ export default function ContactSection({
                 id="name"
                 name="name"
                 type="text"
+                data-blackhole-dim="box"
                 value={form.name}
                 onChange={handleChange}
                 className={fieldClasses(Boolean(errors.name))}
@@ -209,6 +212,7 @@ export default function ContactSection({
                 id="email"
                 name="email"
                 type="email"
+                data-blackhole-dim="box"
                 value={form.email}
                 onChange={handleChange}
                 className={fieldClasses(Boolean(errors.email))}
@@ -227,6 +231,7 @@ export default function ContactSection({
                 id="message"
                 name="message"
                 rows={4}
+                data-blackhole-dim="box"
                 value={form.message}
                 onChange={handleChange}
                 className={`${fieldClasses(Boolean(errors.message))} contact-message`}
@@ -253,8 +258,15 @@ export default function ContactSection({
             )}
           </form>
         )}
+      </div>
+      <Tooltip text={hoveredLink || ""} isVisible={!!hoveredLink} />
 
-        <div className="contact-socials mt-8 flex w-full justify-center gap-8 text-gray-200 sm:mt-20 sm:gap-16">
+      {/* On a phone the section dots float 3rem off the bottom, so the footer
+          sits above them. */}
+      <footer
+        className="absolute bottom-[calc(6.5rem+env(safe-area-inset-bottom))] left-0 w-full px-4 py-3 text-center text-xs text-gray-500 sm:bottom-4 sm:py-4 sm:text-sm"
+      >
+        <div className="mb-4 flex justify-center gap-8 text-gray-200 sm:mb-5 sm:gap-16">
           {socialLinks.map(({ name, url, svg }) => (
             <a
               key={name}
@@ -270,13 +282,7 @@ export default function ContactSection({
             </a>
           ))}
         </div>
-      </div>
-      <Tooltip text={hoveredLink || ""} isVisible={!!hoveredLink} />
-
-      <footer
-        className="absolute bottom-2 left-0 w-full px-4 py-3 text-center text-xs text-gray-500 sm:bottom-4 sm:py-4 sm:text-sm"
-      >
-        © {new Date().getFullYear()} Saikiran Kalluri · Code MIT · Content CC BY 4.0
+        <p>© {new Date().getFullYear()} Saikiran Kalluri · Code MIT · Content CC BY 4.0</p>
       </footer>
     </section>
   );

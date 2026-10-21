@@ -60,12 +60,14 @@ Natural vertical scrolling drives the pinned timeline continuously; there is no 
 
 `StarsBackground` owns one fixed canvas. It creates a deterministic density of stars for the viewport, pauses when appropriate, and allows a limited number of stars to enter a blinking/shooting lifecycle.
 
-`BlackholeEffect` renders a transparent video with two sources:
+`BlackholeEffect` draws the black hole on every route with `baked-blackhole/BakedBlackhole`: the cinematic's black hole, drawn in WebGL2 from a one-time bake of its light paths rather than ray-marched every frame. The canvas covers the screen and frames the black hole inside it. On `/`, each section has its own camera along a path from a small, level black hole where the video used to sit (the hero) to the framing of the reference image in portfolio-3D's `public/goal/last_frame.jpg` (contact): closer, turned and shifted up to the right. The stops are evenly spaced along the path. When the active section changes — the same one `SceneIndicator` shows, from `useActiveSection()` — the camera glides to that section's stop — 1.4s for one section, about 2.5s for five — and then holds still while the section is read. A new section arriving mid-move is taken at the speed the camera already has, so it never stalls; reversing eases it to a halt and turns it back. On other routes it holds the starting frame. Its light dims behind any element marked `data-blackhole-dim`. Anything marked `data-blackhole-undimmed` is left out, so text still too faint to read — the About paragraph's unlit words, the résumé link before it fades in — has no shadow behind it; an element whose parts come and go changes `data-blackhole-dim-key` to have its lines re-measured.
+
+Only when a browser cannot run WebGL2, rejects a shader, or has no graphics card to run it on (a software renderer such as SwiftShader or llvmpipe, where the bake holds a two-core machine to 13 fps), does it fall back to a transparent video with two sources:
 
 - QuickTime (`.mov`) for Safari-compatible alpha video
 - WebM for other capable browsers
 
-The video pauses when the tab is hidden, before entry, or when reduced motion is requested.
+Both pause when the tab is hidden, before entry, or when reduced motion is requested.
 
 `SpaceBackground.tsx` is retained as an intentional reference/alternative implementation but is not part of the active page composition.
 
