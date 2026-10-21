@@ -86,6 +86,11 @@ const HORN_EASE = 0.14;
  *  edge of the screen instead, FUNNEL_FALLBACK_DEPTH of half the screen past
  *  the card, at the hole's height. Anywhere else it ends at the hole's centre. */
 const FUNNEL_MIN_DEPTH = 0.12;
+/** The funnel ends this fraction of the screen's width past the hole's centre.
+ *  At the centre itself the cards had faded out by the time they reached the
+ *  shadow's near edge, so they read as coming from in front of the hole rather
+ *  than out of it. */
+const FUNNEL_PAST_CENTRE = 0.05;
 const FUNNEL_FALLBACK_DEPTH = 0.35;
 /** How the funnel narrows. A card past the centred one's edge is scaled by
  *  (1 + along / T) ^ -FUNNEL_CURVE, where T is set so the row leaves the
@@ -475,7 +480,11 @@ export default function HomeProjectsRow({
           narrow,
           cardAspect: aspect,
           titleHeight: title?.offsetHeight ?? 0,
+          titleWidth: title?.offsetWidth ?? 0,
           headerBottom,
+          navBottom: document
+            .querySelector<HTMLElement>("[aria-label='Scene navigation indicator']")
+            ?.getBoundingClientRect().bottom ?? 0,
         });
         const { railBand, overlayBand } = layout;
         cardWidth = layout.cardWidth;
@@ -501,6 +510,7 @@ export default function HomeProjectsRow({
         // renderer and pointer hit-test use.
         container.dataset.cardTop = layout.cardTop.toFixed(2);
         container.dataset.cardBottom = layout.cardBottom.toFixed(2);
+        container.dataset.cardLeft = ((width - cardWidth) / 2).toFixed(2);
         container.dataset.overlayTop = layout.overlayTop.toFixed(2);
         container.dataset.railTop = layout.railTop.toFixed(2);
 
@@ -692,7 +702,9 @@ export default function HomeProjectsRow({
         // The hole, in the canvas's own terms: pixels from its middle, y up.
         // Without a drawn black hole (the video fallback) the row still runs
         // into the same place on the right, at its own height.
-        const holeX = blackholeCentre.drawn ? blackholeCentre.x - (box.left + box.width / 2) : viewWidth * 0.35;
+        const holeX = blackholeCentre.drawn
+          ? blackholeCentre.x - (box.left + box.width / 2) + viewWidth * FUNNEL_PAST_CENTRE
+          : viewWidth * 0.35;
         const holeY = blackholeCentre.drawn ? box.top + box.height / 2 - blackholeCentre.y : rowY;
         const holeClear = holeX - cardWidth / 2 >= (viewWidth / 2) * FUNNEL_MIN_DEPTH;
         const hole = [holeClear ? holeX : cardWidth / 2 + (viewWidth / 2) * FUNNEL_FALLBACK_DEPTH, holeY];

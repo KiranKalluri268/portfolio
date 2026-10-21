@@ -39,6 +39,11 @@ One pinned ScrollTrigger maps scroll progress to word readability. Previously re
 
 One scrubbed GSAP timeline translates the project track while pinning the section. Lenis keeps the underlying vertical scroll smooth without forcing the viewport to a panel after input settles. Do not add custom or CSS scroll snapping, or a second transform owner to the track.
 
+On desktop the card rises beside the settled heading, to just under the scene
+dots, when that gives it more height than sitting below the heading would
+(`homeProjectsLayout`); it stays clear of the heading sideways at rest, though
+cards passing and the flared left card go behind it.
+
 On desktop, the focused project's summary and actions stay in one centred DOM
 region below the WebGL carousel and switch when focus moves to another card.
 The cards retain a small height-responsive downward offset. The detail region
@@ -67,7 +72,7 @@ edge of the screen:
   overlap. Its walls never rise over less than `HORN_MIN_RAMP` of half the
   screen.
 
-The hole's centre comes from `src/background/blackhole-centre.ts`, which
+The funnel ends `FUNNEL_PAST_CENTRE` of the screen past the hole's centre, so the cards are still visible as they cross into the shadow and read as coming out of it. The hole's centre comes from `src/background/blackhole-centre.ts`, which
 `BakedBlackhole` writes whenever its camera moves, so the funnel follows the
 black hole as it glides between sections. On a phone the hole sits behind the
 centred card; the funnel then runs off the right edge at the hole's height
