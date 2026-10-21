@@ -19,6 +19,7 @@ const AudioToggle = () => {
       className="ml-6 flex items-center space-x-0.5 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-black rounded px-2 py-1"
       aria-label={audioEnabled ? "Pause audio playback" : "Play audio playback"}
       aria-pressed={audioEnabled}
+      data-tooltip={audioEnabled ? "Turn audio off" : "Turn audio on"}
       type="button"
     >
       {[1, 2, 3, 4].map((bar) => (

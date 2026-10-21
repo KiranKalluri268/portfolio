@@ -1,15 +1,10 @@
 'use client';
 
-import { useHoverLabel } from "@/hooks/useHoverLabel";
 import Link from 'next/link';
 import AudioToggle from './AudioToggle';
 import SiteMenu from './nav/SiteMenu';
-import Tooltip from './Tooltip';
-import { useAudio } from '@/context/AudioContextProvider';
 
 export default function NavBar() {
-  const [hoveredItem, setHoveredItem] = useHoverLabel<string>();
-  const { audioEnabled } = useAudio();
 
   return (
     <header
@@ -26,12 +21,7 @@ export default function NavBar() {
 
 
           <li role="listitem">
-            <div
-              onMouseEnter={() => setHoveredItem("Audio")}
-              onMouseLeave={() => setHoveredItem(null)}
-            >
-              <AudioToggle />
-            </div>
+            <AudioToggle />
           </li>
 
           {/* The way to every other page. The header is on every route now, so
@@ -41,7 +31,6 @@ export default function NavBar() {
           </li>
         </ul>
       </nav>
-      <Tooltip text={audioEnabled ? "Click to turn off audio" : "Click to turn on audio"} isVisible={hoveredItem === "Audio"} />
     </header>
   );
 }

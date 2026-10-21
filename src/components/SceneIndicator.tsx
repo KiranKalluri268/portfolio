@@ -4,7 +4,7 @@ import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useActiveSection, useScrollActions, type SectionId } from "@/context/SmoothScrollContext";
 import { useAudio } from "@/context/AudioContextProvider";
-import { useCoarsePointer, useReducedMotion } from "@/hooks/useMediaQuery";
+import { useReducedMotion } from "@/hooks/useMediaQuery";
 import { useHoverLabel } from "@/hooks/useHoverLabel";
 import { ENTRY_DISMISS_MS } from "./entry-timing";
 import {
@@ -31,8 +31,6 @@ const scenes: SceneInfo[] = [
   { index: 4, id: "skills", name: "Tech Stack" },
   { index: 5, id: "contact", name: "Contact" },
 ];
-
-const TOOLTIP_GAP = 20;
 
 /** Movement, in px, before a press on the bar counts as a drag rather than a
  *  tap. Below it nothing moves and the button's own click still fires. */
@@ -115,7 +113,6 @@ export default function SceneIndicator() {
   const { scrollToSection, toggleProjectsEndpoint } = useScrollActions();
   const [hoveredIndex, setHoveredIndex] = useHoverLabel<number>();
   const [portalReady, setPortalReady] = useState(false);
-  const isCoarsePointer = useCoarsePointer();
   const reduceMotion = useReducedMotion();
 
   /** The bar sits well under the entry screen's own stacking order, so it is
@@ -140,7 +137,6 @@ export default function SceneIndicator() {
     return () => window.clearTimeout(timer);
   }, [hasEntered, curtainGone, reduceMotion, entrySkipped]);
 
-  const tooltipRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
   const rowRef = useRef<HTMLDivElement>(null);
   const dotRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -244,28 +240,6 @@ export default function SceneIndicator() {
       window.removeEventListener("resize", measure);
     };
   }, [portalReady, hasEntered]);
-
-  useEffect(() => {
-    // Touch devices get a tooltip anchored to the dot instead, so there is no
-    // pointer to track. A drag has its own label and does not want this one.
-    if (hoveredIndex === null || isCoarsePointer || drag) return;
-    const updateMouse = (event: PointerEvent) => {
-      const tooltip = tooltipRef.current;
-      if (!tooltip) return;
-      const { offsetWidth, offsetHeight } = tooltip;
-      const overflowsRight = event.clientX + TOOLTIP_GAP + offsetWidth > window.innerWidth;
-      const overflowsBottom = event.clientY + TOOLTIP_GAP + offsetHeight > window.innerHeight;
-      const x = overflowsRight
-        ? Math.max(0, event.clientX - TOOLTIP_GAP - offsetWidth)
-        : event.clientX + TOOLTIP_GAP;
-      const y = overflowsBottom
-        ? Math.max(0, event.clientY - TOOLTIP_GAP - offsetHeight)
-        : event.clientY + TOOLTIP_GAP;
-      tooltip.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-    };
-    window.addEventListener("pointermove", updateMouse, { passive: true });
-    return () => window.removeEventListener("pointermove", updateMouse);
-  }, [hoveredIndex, isCoarsePointer, drag]);
 
   // Lenis listens for touch on the window, so its handler runs after ours, and
   // with syncTouch off it treats every touch as native scrolling and calls
@@ -700,6 +674,8 @@ export default function SceneIndicator() {
                   onClick={() => handleDotClick(scene.index, scene.id)}
                   onMouseEnter={() => setHoveredIndex(scene.index)}
                   onMouseLeave={() => setHoveredIndex(null)}
+                  // A drag has its own label, the pill's destination.
+                  data-tooltip={drag ? "" : scene.name}
                   type="button"
                 >
                   {/* One size for every dot — the colour carries which scene is
@@ -729,16 +705,6 @@ export default function SceneIndicator() {
                   />
                 </button>
 
-                {/* Touch devices have no cursor to follow, so the label anchors
-                    above its own dot. Suppressed mid-drag, which has its own. */}
-                {isCoarsePointer && isHovered && !drag && (
-                  <span
-                    className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1 -translate-x-1/2 whitespace-nowrap rounded-md border border-white/10 bg-black/70 px-2 py-1 text-xs font-semibold tracking-wide text-white backdrop-blur-md"
-                    aria-hidden="true"
-                  >
-                    {scene.name}
-                  </span>
-                )}
               </div>
             );
           })}
@@ -757,22 +723,6 @@ export default function SceneIndicator() {
         </div>
       </nav>
 
-      {/* Floating Cursor Tooltip */}
-      {!isCoarsePointer && hoveredIndex !== null && !drag && (
-        <div
-          ref={tooltipRef}
-          style={{
-            position: "fixed",
-            left: 0,
-            top: 0,
-            pointerEvents: "none",
-            zIndex: 9999, // Ensure it's on top of everything
-          }}
-          className="whitespace-nowrap text-white text-sm font-semibold tracking-wide bg-black/40 px-3 py-1 rounded-md backdrop-blur-md border border-white/10"
-        >
-          {scenes[hoveredIndex].name}
-        </div>
-      )}
     </>,
     document.body,
   );

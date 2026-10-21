@@ -16,6 +16,7 @@ import { AudioProvider } from "@/context/AudioContextProvider";
 import { SmoothScrollProvider } from "@/context/SmoothScrollContext";
 import NavBar from "@/components/NavBar1";
 import EntryCurtain from "@/components/EntryCurtain";
+import TooltipLayer from "@/components/Tooltip";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -220,6 +221,9 @@ export default function RootLayout({
                 <div className="relative z-10">
                   {children}
                 </div>
+
+                {/* Every control's label, from its data-tooltip. */}
+                <TooltipLayer />
 
                 {/* Nothing measured this site once it shipped: every frame time
                     and load figure in its history was taken by hand, on one

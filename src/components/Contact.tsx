@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useHoverLabel } from "@/hooks/useHoverLabel";
 import type { ContactForm, FormErrors, SocialLink } from "@/types";
 
-import Tooltip from "./Tooltip";
 import RecommendationCard from "./content/RecommendationCard";
 import type { RecommendationEntry } from "@/lib/content/experience";
 
@@ -85,7 +83,6 @@ export default function ContactSection({
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
-  const [hoveredLink, setHoveredLink] = useHoverLabel<string>();
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
@@ -259,7 +256,6 @@ export default function ContactSection({
           </form>
         )}
       </div>
-      <Tooltip text={hoveredLink || ""} isVisible={!!hoveredLink} />
 
       {/* On a phone the section dots float 3rem off the bottom, so the footer
           sits above them. */}
@@ -274,9 +270,8 @@ export default function ContactSection({
               target={url.startsWith("mailto") ? undefined : "_blank"}
               rel={url.startsWith("mailto") ? undefined : "noopener noreferrer"}
               aria-label={name}
+              data-tooltip={name}
               className="hover:text-accent transition-colors"
-              onMouseEnter={() => setHoveredLink(name)}
-              onMouseLeave={() => setHoveredLink(null)}
             >
               {svg}
             </a>
