@@ -39,6 +39,11 @@ One pinned ScrollTrigger maps scroll progress to word readability. Previously re
 
 One scrubbed GSAP timeline translates the project track while pinning the section. Lenis keeps the underlying vertical scroll smooth without forcing the viewport to a panel after input settles. Do not add custom or CSS scroll snapping, or a second transform owner to the track.
 
+On desktop the card rises beside the settled heading, to just under the scene
+dots, when that gives it more height than sitting below the heading would
+(`homeProjectsLayout`); it stays clear of the heading sideways at rest, though
+cards passing and the flared left card go behind it.
+
 On desktop, the focused project's summary and actions stay in one centred DOM
 region below the WebGL carousel and switch when focus moves to another card.
 The cards retain a small height-responsive downward offset. The detail region
@@ -46,6 +51,47 @@ adds another height-responsive offset beneath them, while the progress rail
 stays fixed and the detail region yields that combined height.
 On mobile, that region may follow its card horizontally because there is no
 progress rail to settle on and a swipe may stop between panels.
+
+The cards come out of the black hole. Seen from the front, the row runs out of
+the background black hole's centre, through the centred card, and off the left
+edge of the screen:
+
+- Right of the centred card it is a funnel into the hole, drawn as a row
+  receding towards a vanishing point: a card is scaled by
+  `(1 + along / T) ^ -FUNNEL_CURVE`, with `T` set so the row leaves the centred
+  card at its own pace — no corner at the join. Width falls far faster than
+  height, so the next card is a narrow wedge and the ones behind it narrower
+  still, fading out between `FUNNEL_FADE_FROM` and `FUNNEL_FADE_TO` panels in.
+  The row's line bends to meet the hole's centre. Always there: it is where
+  the cards come from.
+- The centred card is its own size.
+- Left of it the channel flares open towards the screen's edge: a card there
+  grows taller and wider (`HORN_FLARE`, `HORN_WIDEN`), a little at rest
+  (`HORN_AT_REST`) and opened by speed in either direction, eased by
+  `HORN_EASE`. The widening is the integral of the same S-curve, so cards never
+  overlap. Its walls never rise over less than `HORN_MIN_RAMP` of half the
+  screen.
+
+The funnel ends `FUNNEL_PAST_CENTRE` of the screen past the hole's centre, so the cards are still visible as they cross into the shadow and read as coming out of it. The hole's centre comes from `src/background/blackhole-centre.ts`, which
+`BakedBlackhole` writes whenever its camera moves, so the funnel follows the
+black hole as it glides between sections. On a phone the hole sits behind the
+centred card; the funnel then runs off the right edge at the hole's height
+(`FUNNEL_MIN_DEPTH`, `FUNNEL_FALLBACK_DEPTH`). With the video fallback it runs to the same place at the
+row's own height.
+
+There are no cards until the "Projects" heading starts its move from the centre
+to the corner. Then the row is drawn out of the hole while the heading moves:
+it waits `EMERGE_DEPTH` panels further into the funnel, fading in over the
+first `EMERGE_FADE` of the way, and the first card is centred as the heading
+settles. Its description waits until the card has arrived. While the section
+is still rising from below, the row is held where it will sit once pinned, so
+only the heading rises with the page. A tap is tested against the cards where they are
+drawn, by undoing the funnel and flare for the point tapped.
+
+The shape is in the vertex shader. The fragment shader divides the stretched
+height by the stretch per pixel, because an affine texture coordinate across a
+trapezoid's two triangles kinks into a saw-tooth along every edge. Reduced
+motion keeps the funnel and the resting flare and never opens the flare.
 
 ### Projects — list view (the card stack)
 

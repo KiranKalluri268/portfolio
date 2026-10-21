@@ -185,8 +185,10 @@ cards are pixels, so the section publishes a hidden list to carry the content.
 Do not extend that pattern to sections whose content *is* the text.
 
 **Everything becomes the same effect.** Physicality per section is the goal, not
-one animation applied six times. The bend in the carousel works because a row of
-cards is the kind of thing that can sit on a cylinder. A paragraph is not. This
+one animation applied six times. The bend in the card stack works because a run of
+cards is the kind of thing that can sit on a cylinder, and the home carousel's
+funnel because a row of cards can recede into a vanishing point. A paragraph can
+do neither. This
 was already tried the lazy way — a velocity-driven skew across the whole home
 page — and it failed, because the feel never came from "something driven by
 velocity", it came from objects that can plausibly exist in three dimensions.

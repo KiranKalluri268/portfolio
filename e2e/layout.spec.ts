@@ -161,14 +161,17 @@ test.describe("the Projects heading stays clear of the fixed header", () => {
       const projectsGeometry = await page.locator("[data-home-projects-row]").evaluate((row) => ({
         cardTop: Number((row as HTMLElement).dataset.cardTop),
         cardBottom: Number((row as HTMLElement).dataset.cardBottom),
+        cardLeft: Number((row as HTMLElement).dataset.cardLeft),
         overlayTop: Number((row as HTMLElement).dataset.overlayTop),
         railTop: Number((row as HTMLElement).dataset.railTop),
       }));
       const titleBox = await title.boundingBox();
       expect(titleBox).not.toBeNull();
-      expect(projectsGeometry.cardTop).toBeGreaterThanOrEqual(
-        titleBox!.y + titleBox!.height + 15,
-      );
+      // The card may rise beside the heading on a wide screen, but never into
+      // it: it is either below the heading or clear of it to the right.
+      const belowTitle = projectsGeometry.cardTop >= titleBox!.y + titleBox!.height + 15;
+      const besideTitle = projectsGeometry.cardLeft >= titleBox!.x + titleBox!.width + 15;
+      expect(belowTitle || besideTitle).toBe(true);
       expect(projectsGeometry.cardBottom).toBeLessThan(projectsGeometry.overlayTop);
       expect(projectsGeometry.overlayTop).toBeLessThan(projectsGeometry.railTop);
     });

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  PROJECTS_CARD_CLEARANCE,
+  PROJECTS_CARD_MAX_WIDTH,
   PROJECTS_CONTENT_GAP,
   desktopProjectsTitleCentre,
   homeProjectsLayout,
@@ -23,15 +25,25 @@ describe("home Projects desktop layout", () => {
         headerBottom: 96,
         titleHeight,
       }) + titleHeight / 2;
+      const titleWidth = 232;
       const layout = homeProjectsLayout({
         ...viewport,
         narrow: false,
         cardAspect: 690 / 1200,
         titleHeight,
+        titleWidth,
         headerBottom: 96,
+        navBottom: 86,
       });
 
-      expect(layout.cardTop).toBeGreaterThanOrEqual(titleBottom + PROJECTS_CONTENT_GAP);
+      // Below the heading, or beside it and clear of it.
+      const cardLeft = (viewport.width - layout.cardWidth) / 2;
+      const titleRight = viewport.width * 0.1 + titleWidth / 2;
+      expect(
+        layout.cardTop >= titleBottom + PROJECTS_CONTENT_GAP
+          || cardLeft >= titleRight + PROJECTS_CARD_CLEARANCE - 0.01,
+      ).toBe(true);
+      expect(layout.cardTop).toBeGreaterThanOrEqual(86 + PROJECTS_CARD_CLEARANCE);
       expect(layout.cardBottom).toBeLessThan(layout.overlayTop);
       expect(layout.overlayTop).toBeLessThan(layout.railTop);
       expect(layout.railTop).toBeLessThan(viewport.height);
@@ -42,17 +54,26 @@ describe("home Projects desktop layout", () => {
     });
   }
 
-  it("preserves the 680px reference cap when height allows it", () => {
+  it("uses the room under the scene dots for a taller card", () => {
+    const options = { width: 1440, height: 900, narrow: false, cardAspect: 690 / 1200, titleHeight: 72, headerBottom: 96 };
+    const after = homeProjectsLayout({ ...options, titleWidth: 232, navBottom: 86 });
+    // Below the heading, the card at 1440x900 was 618x355.
+    expect(after.cardHeight).toBeGreaterThan(355 * 1.2);
+  });
+
+  it("never draws a desktop card wider than its cap", () => {
     const layout = homeProjectsLayout({
-      width: 1920,
-      height: 1080,
+      width: 2560,
+      height: 1440,
       narrow: false,
       cardAspect: 690 / 1200,
       titleHeight: 72,
+      titleWidth: 232,
       headerBottom: 96,
+      navBottom: 86,
     });
 
-    expect(layout.cardWidth).toBe(680);
+    expect(layout.cardWidth).toBe(PROJECTS_CARD_MAX_WIDTH);
   });
 
   it("does not offset the mobile card and details", () => {

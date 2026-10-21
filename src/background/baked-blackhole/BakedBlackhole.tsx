@@ -6,6 +6,7 @@ import {
   type BlackholeCamera,
   type BlackholeDimming,
 } from "./renderer";
+import { blackholeCentre, centreOnScreen } from "../blackhole-centre";
 
 /** The cinematic's settled black-hole frame: the bloom it ends the approach on.
  *  main.js lerps strength to 0.2 and threshold to 0.1 across the fall, from a
@@ -278,6 +279,14 @@ export default function BakedBlackhole({
       }
       return glideAt(glide, now).x;
     };
+    // Where the canvas is, taken when it is sized rather than every frame.
+    let canvasBox = { left: 0, top: 0, width: 0, height: 0 };
+    const publishCentre = (camera: BlackholeCamera) => {
+      const { x, y } = centreOnScreen(camera, canvasBox);
+      blackholeCentre.x = x;
+      blackholeCentre.y = y;
+      blackholeCentre.drawn = true;
+    };
     const cameraAt = (t: number): BlackholeCamera => {
       const { start, end } = pathRef.current({
         width: canvas.clientWidth || window.innerWidth,
@@ -330,7 +339,11 @@ export default function BakedBlackhole({
         if (w * h * ratio * ratio > MAX_BAKE_PIXELS) ratio = Math.sqrt(MAX_BAKE_PIXELS / (w * h));
         // The frame depends on the canvas's shape, so the camera is set for the
         // new size before the bake it starts.
-        renderer!.setCamera(cameraAt(progress()));
+        const box = canvas.getBoundingClientRect();
+        canvasBox = { left: box.left, top: box.top, width: w, height: h };
+        const camera = cameraAt(progress());
+        renderer!.setCamera(camera);
+        publishCentre(camera);
         renderer!.resize(w * ratio, h * ratio);
       };
       size();
@@ -346,7 +359,11 @@ export default function BakedBlackhole({
         frame = requestAnimationFrame(tick);
         if (!renderer) return;
         // display: none while the cinematic journey runs over the top of it.
-        if (canvas.clientWidth === 0) return;
+        if (canvas.clientWidth === 0) {
+          blackholeCentre.drawn = false;
+          return;
+        }
+        if (!blackholeCentre.drawn) publishCentre(cameraAt(progress()));
 
         const text = measureText();
         const t = progress();
@@ -354,7 +371,9 @@ export default function BakedBlackhole({
         if (moved) {
           lastProgress = t;
           lastPath = pathRef.current;
-          renderer.setCamera(cameraAt(t));
+          const camera = cameraAt(t);
+          renderer.setCamera(camera);
+          publishCentre(camera);
         }
 
         // Text moves without the page scrolling too — the carousel settling, a
@@ -394,6 +413,7 @@ export default function BakedBlackhole({
 
     return () => {
       disposed = true;
+      blackholeCentre.drawn = false;
       cancelAnimationFrame(frame);
       observer?.disconnect();
       renderer?.dispose();
