@@ -32,7 +32,7 @@
   }
 }
 
-/* --- The orb: a small black hole -------------------------------------- */
+/* --- TARS ------------------------------------------------------------- */
 
 .orb {
   position: relative;
@@ -40,12 +40,11 @@
   place-items: center;
   width: 38px;
   height: 38px;
-  border-radius: 9999px;
+  border-radius: 10px;
   border: 0;
   padding: 0;
   background: transparent;
   cursor: pointer;
-  transition: scale 200ms ease-out;
 }
 
 @media (min-width: 640px) {
@@ -55,85 +54,74 @@
   }
 }
 
-.orb:hover {
-  scale: 1.08;
-}
-
 .orb:focus-visible {
   outline: 2px solid var(--color-accent-soft);
   outline-offset: 4px;
 }
 
-/* The glow of the disk behind it. */
+/* A little light at its feet, so it stands on the dark rather than floating. */
 .orb::before {
   content: "";
   position: absolute;
-  inset: -6px;
-  border-radius: inherit;
-  background: radial-gradient(circle, rgb(255 122 24 / 0.35) 0%, rgb(224 69 10 / 0.12) 45%, transparent 70%);
-  transition: opacity 300ms;
-}
-
-/* The accretion disk: a hot ring seen almost edge-on, turning. */
-.disk {
-  position: absolute;
-  inset: 2px -7px;
+  left: 15%;
+  right: 15%;
+  bottom: -2px;
+  height: 6px;
   border-radius: 50%;
-  background: conic-gradient(
-    from var(--tars-spin),
-    #fff3e0,
-    #ffb27a 18%,
-    #e0450a 40%,
-    #5a1a05 55%,
-    #e0450a 70%,
-    #ffb27a 85%,
-    #fff3e0
-  );
-  mask: radial-gradient(closest-side, transparent 62%, #000 66%, #000 92%, transparent 100%);
-  transform: rotate(-14deg) scaleY(0.32);
-  animation: disk-turn 6s linear infinite;
-  filter: blur(0.3px);
+  background: radial-gradient(closest-side, rgb(255 122 24 / 0.35), transparent);
 }
 
-/* The shadow, with its thin photon ring. */
-.core {
+.figure {
+  /* Positioned, so it paints over the glow at its feet. */
   position: relative;
-  width: 52%;
-  height: 52%;
-  border-radius: 50%;
-  background: radial-gradient(circle at 50% 50%, #000 62%, #1a0d06 74%, #ffd9b8 80%, transparent 86%);
-  box-shadow: 0 0 6px 1px rgb(255 178 122 / 0.45);
+  height: 100%;
+  overflow: visible;
 }
 
-/* The colours go round inside the ring, so the disk turns in its own plane
-   rather than the squashed ring tumbling. */
-@property --tars-spin {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
+/* Each slab pivots at its foot, as TARS's do when it walks. The poses are a
+   few pixels and degrees apart, eased with a small overshoot, so it moves
+   like something mechanical settling rather than something sliding. */
+.slab {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  transition: transform 260ms cubic-bezier(0.3, 1.35, 0.5, 1);
 }
 
-@keyframes disk-turn {
-  to {
-    --tars-spin: -360deg;
-  }
+.figure[data-pose="speaking"] [data-slab="0"] { transform: translateX(-1.6px) rotate(-7deg); }
+.figure[data-pose="speaking"] [data-slab="1"] { transform: translateX(-0.5px); }
+.figure[data-pose="speaking"] [data-slab="2"] { transform: translateX(0.5px); }
+.figure[data-pose="speaking"] [data-slab="3"] { transform: translateX(1.6px) rotate(7deg); }
+
+.figure[data-pose="open"] [data-slab="0"] { transform: translateX(-3.5px) rotate(-16deg); }
+.figure[data-pose="open"] [data-slab="1"] { transform: translateX(-1.2px) rotate(-3deg); }
+.figure[data-pose="open"] [data-slab="2"] { transform: translateX(1.2px) rotate(3deg); }
+.figure[data-pose="open"] [data-slab="3"] { transform: translateX(3.5px) rotate(16deg); }
+
+.orb:hover .figure[data-pose="closed"] [data-slab="0"] { transform: rotate(-3deg); }
+.orb:hover .figure[data-pose="closed"] [data-slab="3"] { transform: rotate(3deg); }
+
+/* Its display flickers while it is talking. */
+.figure[data-pose="speaking"] .display,
+.figure[data-pose="open"] .display {
+  animation: tars-display 1.4s steps(1) infinite;
 }
 
-/* While it has something to say, it breathes. */
-.speaking::before {
-  animation: orb-breathe 1.8s ease-in-out infinite;
+.figure[data-pose="speaking"] .display:nth-of-type(3),
+.figure[data-pose="open"] .display:nth-of-type(3) {
+  animation-delay: 0.45s;
 }
 
-@keyframes orb-breathe {
-  50% {
-    opacity: 0.45;
-  }
+@keyframes tars-display {
+  50% { opacity: 0.25; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .disk,
-  .speaking::before {
-    animation: none;
+  .slab {
+    transition: none;
+  }
+
+  .display {
+    animation: none !important;
   }
 }
 
@@ -154,8 +142,6 @@
   line-height: 1.35;
   color: rgb(229 231 235);
   pointer-events: none;
-  /* It is taken back into the orb that said it. */
-  transform-origin: left bottom;
 }
 
 @media (min-width: 640px) {
@@ -167,7 +153,6 @@
     max-width: min(28rem, calc(100vw - 8rem));
     border-radius: 14px 14px 14px 4px;
     font-size: 0.875rem;
-    transform-origin: left center;
   }
 }
 
@@ -188,7 +173,6 @@
   backdrop-filter: blur(16px);
   box-shadow: 0 0 0 1px rgb(255 122 24 / 0.08), 0 20px 60px rgb(0 0 0 / 0.6);
   color: white;
-  transform-origin: left bottom;
 }
 
 .header {
@@ -329,4 +313,99 @@
 .send:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* --- Coming and going ------------------------------------------------- */
+
+/* Revealed rather than scaled or blurred: the bubble and the panel already
+   blur the page behind them, and animating a blur or a scale on top of that
+   made the browser redraw both every frame. A clip-path and a short slide
+   are cheap. Both wait a beat for TARS's slabs to open first. */
+
+/* The tip slides out from between TARS's slabs: upwards on a phone, where it
+   sits above it, and sideways beside it from sm. */
+.tipIn {
+  animation: tip-out-of-tars-up 280ms 120ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.tipOut {
+  animation: tip-into-tars-up 180ms cubic-bezier(0.5, 0, 0.8, 0.3) forwards;
+}
+
+@keyframes tip-out-of-tars-up {
+  from { opacity: 0; clip-path: inset(100% 0 0 0 round 14px); transform: translateY(8px); }
+  to { opacity: 1; clip-path: inset(0 0 0 0 round 14px); transform: none; }
+}
+
+@keyframes tip-into-tars-up {
+  from { opacity: 1; clip-path: inset(0 0 0 0 round 14px); transform: none; }
+  to { opacity: 0; clip-path: inset(100% 0 0 0 round 14px); transform: translateY(8px); }
+}
+
+@media (min-width: 640px) {
+  .tipIn {
+    animation-name: tip-out-of-tars-side;
+  }
+
+  .tipOut {
+    animation-name: tip-into-tars-side;
+  }
+}
+
+@keyframes tip-out-of-tars-side {
+  from { opacity: 0; clip-path: inset(0 100% 0 0 round 14px); transform: translateX(-10px); }
+  to { opacity: 1; clip-path: inset(0 0 0 0 round 14px); transform: none; }
+}
+
+@keyframes tip-into-tars-side {
+  from { opacity: 1; clip-path: inset(0 0 0 0 round 14px); transform: none; }
+  to { opacity: 0; clip-path: inset(0 100% 0 0 round 14px); transform: translateX(-10px); }
+}
+
+/* The chat unfolds upwards out of TARS, like a slab swinging open, and its
+   contents come up once there is room for them. */
+.panelIn {
+  animation: panel-unfold 340ms 100ms cubic-bezier(0.2, 0.85, 0.25, 1) both;
+}
+
+.panelIn > * {
+  animation: panel-contents 220ms 300ms ease-out both;
+}
+
+.panelOut {
+  animation: panel-fold 220ms cubic-bezier(0.55, 0, 0.85, 0.35) forwards;
+  pointer-events: none;
+}
+
+@keyframes panel-unfold {
+  from { clip-path: inset(100% 0 0 0 round 18px); transform: translateY(12px); }
+  to { clip-path: inset(0 0 0 0 round 18px); transform: none; }
+}
+
+@keyframes panel-contents {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes panel-fold {
+  from { clip-path: inset(0 0 0 0 round 18px); transform: none; opacity: 1; }
+  to { clip-path: inset(100% 0 0 0 round 18px); transform: translateY(12px); opacity: 0.4; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tipIn,
+  .panelIn,
+  .panelIn > * {
+    animation: tars-fade 150ms ease-out both;
+  }
+
+  .tipOut,
+  .panelOut {
+    animation: tars-fade 150ms ease-in reverse forwards;
+  }
+}
+
+@keyframes tars-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

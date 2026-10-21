@@ -49,9 +49,23 @@ describe("TARS", () => {
         <Tars />
       </HintProvider>,
     );
-    // It vanishes rather than blinking out.
-    expect(screen.getByText("Drag to explore").className).toContain("vanish-out");
+    // It goes back into TARS rather than blinking out.
+    expect(screen.getByText("Drag to explore").className).toMatch(/tipOut/);
     await waitFor(() => expect(screen.queryByText("Drag to explore")).not.toBeInTheDocument());
+  });
+
+  it("opens its slabs while it speaks, and wider while the chat is out", async () => {
+    const user = userEvent.setup();
+    render(
+      <HintProvider>
+        <Scene hint="Drag to explore" />
+        <Tars />
+      </HintProvider>,
+    );
+    const pose = () => screen.getByRole("button", { name: /TARS/ }).querySelector("svg")!.getAttribute("data-pose");
+    expect(pose()).toBe("speaking");
+    await user.click(screen.getByRole("button", { name: /Ask TARS/ }));
+    expect(pose()).toBe("open");
   });
 
   it("waits for the loading screen on the home page, and stays off the admin pages", () => {

@@ -9,9 +9,12 @@ import { useCurrentHint } from "@/components/hints/HintContext";
 import { usePresence } from "@/hooks/usePresence";
 import { answer, type BotKnowledge, type BotLink, type BotReply } from "./tars-brain";
 import styles from "./tars.module.css";
+import TarsFigure, { type TarsPose } from "./TarsFigure";
 
 /**
- * TARS, the site's guide: a small black hole in the bottom-left corner.
+ * TARS, the site's guide, in the bottom-left corner: the robot from
+ * Interstellar, four hinged slabs that swing apart when it has something to
+ * say.
  *
  * It says the scene hints — "Scroll down to take a look around" — in a bubble
  * beside it, and opens a chat when pressed. Its answers come from tars-brain,
@@ -37,6 +40,9 @@ type Pending =
 
 const HIDDEN_ON = [/^\/admin/, /^\/cinematic/];
 const EMAIL = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+/** How long the tip and the chat take to go back into TARS (tars.module.css). */
+const TIP_EXIT_MS = 180;
+const PANEL_EXIT_MS = 220;
 
 export default function Tars() {
   const pathname = usePathname();
@@ -63,8 +69,10 @@ export default function Tars() {
   // own words rather than blanking first.
   const [lastTip, setLastTip] = useState<string | null>(null);
   if (tipText && tipText !== lastTip) setLastTip(tipText);
-  const tip = usePresence(Boolean(tipText));
-  const panel = usePresence(open && shown);
+  const tip = usePresence(Boolean(tipText), TIP_EXIT_MS, { enter: styles.tipIn, exit: styles.tipOut });
+  const panel = usePresence(open && shown, PANEL_EXIT_MS, { enter: styles.panelIn, exit: styles.panelOut });
+  // The slabs stay apart until what came out of them has gone back in.
+  const pose: TarsPose = panel.mounted && !panel.leaving ? "open" : tip.mounted || panel.mounted ? "speaking" : "closed";
 
   // Fetched once, the first time it is wanted.
   useEffect(() => {
@@ -199,9 +207,8 @@ export default function Tars() {
           aria-labelledby={titleId}
         >
           <header className={styles.header}>
-            <span className={styles.orb} aria-hidden="true" style={{ width: 30, height: 30, cursor: "default" }}>
-              <span className={styles.disk} />
-              <span className={styles.core} />
+            <span aria-hidden="true" style={{ display: "grid", height: 32 }}>
+              <TarsFigure pose="closed" />
             </span>
             <div>
               <h2 id={titleId} className={styles.title}>{lines.name}</h2>
@@ -273,14 +280,13 @@ export default function Tars() {
       <button
         ref={orbRef}
         type="button"
-        className={`${styles.orb} ${tipText ? styles.speaking : ""}`}
+        className={styles.orb}
         onClick={() => (open ? close() : setOpen(true))}
         aria-label={open ? "Close TARS, the site guide" : "Ask TARS, the site guide"}
         aria-expanded={open}
         data-tooltip={open ? "" : "Ask TARS"}
       >
-        <span className={styles.disk} aria-hidden="true" />
-        <span className={styles.core} aria-hidden="true" />
+        <TarsFigure pose={pose} />
       </button>
     </div>
   );

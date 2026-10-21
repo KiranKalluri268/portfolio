@@ -9,14 +9,20 @@ export const VANISH_MS = 360;
  * Keeps an element on the page long enough for it to leave visibly.
  *
  * `visible` going false does not unmount at once: the element stays for
- * `exitMs` with the `vanish-out` class, then goes. Coming back mid-exit just
- * turns it round. Use `className` on the element and render it while
- * `mounted`.
+ * `exitMs` with the exit class, then goes. Coming back mid-exit just turns it
+ * round. Use `className` on the element and render it while `mounted`.
+ *
+ * The classes default to the shared vanish (`vanish-in` / `vanish-out`); pass
+ * an element's own pair for a different entrance and exit.
  *
  * Reduced motion shortens the CSS to a 150ms fade; the element is kept for
  * the full `exitMs` either way, which is invisible once it has faded.
  */
-export function usePresence(visible: boolean, exitMs: number = VANISH_MS) {
+export function usePresence(
+  visible: boolean,
+  exitMs: number = VANISH_MS,
+  classes: { enter: string; exit: string } = { enter: "vanish-in", exit: "vanish-out" },
+) {
   const [mounted, setMounted] = useState(visible);
   const [leaving, setLeaving] = useState(false);
 
@@ -35,5 +41,5 @@ export function usePresence(visible: boolean, exitMs: number = VANISH_MS) {
     return () => window.clearTimeout(timer);
   }, [leaving, exitMs]);
 
-  return { mounted, leaving, className: leaving ? "vanish-out" : "vanish-in" };
+  return { mounted, leaving, className: leaving ? classes.exit : classes.enter };
 }
