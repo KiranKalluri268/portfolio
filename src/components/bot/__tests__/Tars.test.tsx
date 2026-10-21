@@ -113,6 +113,21 @@ describe("TARS", () => {
     });
   });
 
+  it("closes when the visitor presses anywhere outside it", async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <p>Elsewhere on the page</p>
+        <Tars />
+      </>,
+    );
+    await user.click(screen.getByRole("button", { name: /Ask TARS/ }));
+    await user.click(screen.getByRole("dialog"));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    await user.click(screen.getByText("Elsewhere on the page"));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
+
   it("closes on Escape and hands focus back to the orb", async () => {
     const user = userEvent.setup();
     render(<Tars />);

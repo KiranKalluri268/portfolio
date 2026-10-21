@@ -105,6 +105,19 @@ export default function Tars() {
     if (panel.mounted && !panel.leaving) inputRef.current?.focus();
   }, [panel.mounted, panel.leaving, pending.kind]);
 
+  // A press anywhere outside the chat and TARS puts the chat away. Focus is
+  // left where the visitor put it, unlike Escape and the close button, which
+  // hand it back to TARS.
+  const dockRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.target instanceof Node && !dockRef.current?.contains(event.target)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [open]);
+
   const close = useCallback(() => {
     setOpen(false);
     orbRef.current?.focus();
@@ -193,7 +206,7 @@ export default function Tars() {
   const showSuggestions = messages.length === 1 && pending.kind === "none";
 
   return (
-    <div className={styles.dock}>
+    <div ref={dockRef} className={styles.dock}>
       {tip.mounted && lastTip && (
         <div className={`${styles.tip} ${tip.className}`} data-tars-tip aria-hidden="true">
           {lastTip}
