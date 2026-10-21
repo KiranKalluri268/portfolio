@@ -14,6 +14,8 @@ Native document scrolling remains the source of truth. Lenis smooths that scroll
 
 `src/app/layout.tsx` provides the global fonts, metadata, JSON-LD, smooth-scroll provider, audio provider, star background, and black-hole media. Page content is rendered above those fixed decorative layers.
 
+The layout also mounts `TooltipLayer` (`src/components/Tooltip.tsx`), the site's only tooltip. A control opts in with `data-tooltip="Label"`: the layer shows it beside the cursor on hover, above the control on a tap (for 1.6s) and while it has keyboard focus, and follows the attribute while it is up. Give icon-only controls and ones whose word needs explaining a label; leave out controls whose text already says what they do. Keep the `aria-label` as well, since the tooltip is aria-hidden.
+
 `src/app/page.tsx` renders:
 
 1. Entry/loading overlay

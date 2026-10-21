@@ -310,6 +310,7 @@ export default function Hero() {
         className="scroll-hint absolute bottom-[env(safe-area-inset-bottom)] left-1/2 z-20 flex -translate-x-1/2 cursor-pointer items-center justify-center rounded bg-transparent p-2 text-white/50 transition-colors hover:text-white sm:bottom-1"
         onClick={scrollNext}
         aria-label="Scroll down"
+        data-tooltip="Scroll down"
       >
         <svg
           className="h-4 w-4 sm:h-6 sm:w-6"

@@ -1,15 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useHoverLabel } from "@/hooks/useHoverLabel";
-import Tooltip from "./Tooltip";
 import { SECTION_IDS, useActiveSection, useScrollActions } from "@/context/SmoothScrollContext";
 
 export default function NavigationControls() {
     const activeSection = useActiveSection();
     const { scrollNext, scrollPrev } = useScrollActions();
     const activeIndex = SECTION_IDS.indexOf(activeSection);
-    const [hoveredButton, setHoveredButton] = useHoverLabel<string>();
 
     const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
 
@@ -89,8 +86,7 @@ export default function NavigationControls() {
                     className="top-0 left-1/2 -translate-x-1/2" // Top center
                     isPressed={pressedKeys.has("ArrowUp")}
                     onPress={handlePress}
-                    onMouseEnter={() => setHoveredButton("Up/Previous")}
-                    onMouseLeave={() => setHoveredButton(null)}
+                    label="Up/Previous"
                 />
 
                 {/* Left */}
@@ -102,8 +98,7 @@ export default function NavigationControls() {
                         className="bottom-0 left-0" // Bottom left
                         isPressed={pressedKeys.has("ArrowLeft")}
                         onPress={handlePress}
-                        onMouseEnter={() => setHoveredButton("Left/Previous")}
-                        onMouseLeave={() => setHoveredButton(null)}
+                        label="Left/Previous"
                     />
                 )}
 
@@ -115,8 +110,7 @@ export default function NavigationControls() {
                     className="bottom-0 left-1/2 -translate-x-1/2" // Bottom center
                     isPressed={pressedKeys.has("ArrowDown")}
                     onPress={handlePress}
-                    onMouseEnter={() => setHoveredButton("Down/Next")}
-                    onMouseLeave={() => setHoveredButton(null)}
+                    label="Down/Next"
                 />
 
                 {/* Right */}
@@ -128,12 +122,10 @@ export default function NavigationControls() {
                         className="bottom-0 right-0" // Bottom right
                         isPressed={pressedKeys.has("ArrowRight")}
                         onPress={handlePress}
-                        onMouseEnter={() => setHoveredButton("Right/Next")}
-                        onMouseLeave={() => setHoveredButton(null)}
+                        label="Right/Next"
                     />
                 )}
             </div>
-            <Tooltip text={hoveredButton || ""} isVisible={!!hoveredButton} />
         </>
     );
 }
@@ -145,8 +137,7 @@ interface ArrowButtonProps {
     className?: string;
     isPressed: boolean;
     onPress: (direction: string) => void;
-    onMouseEnter: () => void;
-    onMouseLeave: () => void;
+    label: string;
 }
 
 const ArrowButton = ({
@@ -156,8 +147,7 @@ const ArrowButton = ({
     className = "",
     isPressed,
     onPress,
-    onMouseEnter,
-    onMouseLeave,
+    label,
 }: ArrowButtonProps) => {
     return (
         <button
@@ -169,8 +159,7 @@ const ArrowButton = ({
                     : "bg-black/50 text-white border-white/30 shadow-lg hover:bg-white/20 active:bg-white/20"
                 } ${className}`}
             onClick={() => enabled && onPress(direction)}
-            onMouseEnter={onMouseEnter}
-            onMouseLeave={onMouseLeave}
+            data-tooltip={label}
             aria-label={`Navigate ${direction.replace("Arrow", "")}`}
             disabled={!enabled}
         >

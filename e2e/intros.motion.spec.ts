@@ -93,7 +93,7 @@ test.describe("the entry screen", () => {
     const audio = page.getByRole("button", { name: "Play audio playback" });
     await expect(audio).toBeVisible();
     await audio.hover();
-    await expect(page.getByText("Click to turn on audio")).toBeVisible();
+    await expect(page.getByText("Turn audio on")).toBeVisible();
     await page.mouse.move(1100, 78);
     await page.waitForTimeout(200);
     await page.screenshot({ path: "test-results/automatic-reveal-desktop.png" });

@@ -240,6 +240,7 @@ export default function SiteMenu() {
         aria-expanded={open}
         aria-controls="site-menu-panel"
         aria-label="Open menu"
+        data-tooltip="Menu"
       >
         <span className={styles.bars} aria-hidden="true">
           <span />
@@ -272,6 +273,7 @@ export default function SiteMenu() {
             style={{ left: circle.x, top: circle.y }}
             onClick={close}
             aria-label="Close menu"
+            data-tooltip="Close menu"
           >
             <span className={styles.bars} data-open="true" aria-hidden="true">
               <span />

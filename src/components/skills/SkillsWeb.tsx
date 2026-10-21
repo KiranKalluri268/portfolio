@@ -752,10 +752,10 @@ export default function SkillsWeb({
         className="absolute bottom-4 right-4 z-50 flex items-center gap-1 rounded-full border border-white/10 bg-black/70 p-1.5 shadow-xl backdrop-blur-xl sm:bottom-6 sm:right-6"
         aria-label="Skill universe zoom controls"
       >
-        <button type="button" onClick={() => zoomAtCenter(1.22)} className="flex h-10 w-10 items-center justify-center rounded-full text-xl hover:bg-white/10" aria-label="Zoom in">+</button>
-        <button type="button" onClick={() => zoomAtCenter(0.82)} className="flex h-10 w-10 items-center justify-center rounded-full text-xl hover:bg-white/10" aria-label="Zoom out">−</button>
-        <button type="button" onClick={() => fitWeb()} className="h-10 rounded-full px-3 text-xs font-semibold uppercase tracking-wider hover:bg-white/10" aria-label="Fit entire skill universe">Fit</button>
-        <button type="button" onClick={() => showDirectory(true)} className="h-10 rounded-full px-3 text-xs font-semibold uppercase tracking-wider hover:bg-white/10" aria-label="Open accessible skill directory">List</button>
+        <button type="button" onClick={() => zoomAtCenter(1.22)} className="flex h-10 w-10 items-center justify-center rounded-full text-xl hover:bg-white/10" aria-label="Zoom in" data-tooltip="Zoom in">+</button>
+        <button type="button" onClick={() => zoomAtCenter(0.82)} className="flex h-10 w-10 items-center justify-center rounded-full text-xl hover:bg-white/10" aria-label="Zoom out" data-tooltip="Zoom out">−</button>
+        <button type="button" onClick={() => fitWeb()} className="h-10 rounded-full px-3 text-xs font-semibold uppercase tracking-wider hover:bg-white/10" aria-label="Fit entire skill universe" data-tooltip="Fit the whole web on screen">Fit</button>
+        <button type="button" onClick={() => showDirectory(true)} className="h-10 rounded-full px-3 text-xs font-semibold uppercase tracking-wider hover:bg-white/10" aria-label="Open accessible skill directory" data-tooltip="See every skill as a list">List</button>
       </div>
 
       {/* Same hint system as the homepage: it waits until someone has stalled
