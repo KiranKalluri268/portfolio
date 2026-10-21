@@ -37,14 +37,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 
-  const source = payload.source === "faq" ? "faq" : "contact";
+  // Where the message came from: the contact form, the FAQ page's question
+  // form, or a question TARS could not answer and offered to pass on.
+  const source = payload.source === "faq" || payload.source === "tars" ? payload.source : "contact";
   const name = typeof payload.name === "string" ? payload.name.trim() : "";
   const email = typeof payload.email === "string" ? payload.email.trim() : "";
   const message = typeof payload.message === "string" ? payload.message.trim() : "";
   const emailPattern = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 
-  // The contact form always sends a name; the FAQ question form only asks for
-  // an email and a question, so a name is not expected there.
+  // The contact form always sends a name; the FAQ question form and TARS only
+  // ask for an email and a question, so a name is not expected there.
   if (
     (source === "contact" && (name.length < 1 || name.length > 100)) ||
     !emailPattern.test(email) ||
@@ -67,11 +69,17 @@ export async function POST(request: Request) {
   // Subject and body both carry the source, so a message can be told apart
   // from a question by looking at the mail alone.
   const subject =
-    source === "faq" ? `Portfolio FAQ question from ${email}` : `Portfolio message from ${name}`;
+    source === "faq"
+      ? `Portfolio FAQ question from ${email}`
+      : source === "tars"
+        ? `Portfolio question via TARS from ${email}`
+        : `Portfolio message from ${name}`;
   const text =
     source === "faq"
       ? `Source: FAQ page\nEmail: ${email}\n\n${message}`
-      : `Source: Contact section\nName: ${name}\nEmail: ${email}\n\n${message}`;
+      : source === "tars"
+        ? `Source: TARS, the site guide (a question it could not answer)\nEmail: ${email}\n\n${message}`
+        : `Source: Contact section\nName: ${name}\nEmail: ${email}\n\n${message}`;
 
   const resendResponse = await fetch("https://api.resend.com/emails", {
     method: "POST",

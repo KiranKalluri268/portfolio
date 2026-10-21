@@ -5,7 +5,7 @@ import { Observer } from "gsap/dist/Observer";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Camera, Mesh, Plane, Program, Renderer, Texture, Transform } from "ogl";
-import HintPill from "@/components/hints/HintPill";
+import { usePublishHint } from "@/components/hints/HintContext";
 import { hintText } from "@/components/hints/hint-copy";
 import { useInputMode } from "@/components/hints/useIdleHint";
 import { SkillMark } from "@/components/skills/skill-icons";
@@ -289,6 +289,8 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
 
   const [hintVisible, setHintVisible] = useState(false);
   const hintDone = useRef(true);
+  // TARS says it; the grid only decides when.
+  usePublishHint("projects-grid", hintVisible ? hintText("projects-grid", inputMode) : null);
 
   const dismissHint = useCallback(() => {
     if (hintDone.current) return;
@@ -1018,12 +1020,6 @@ export default function ProjectsGridGL({ entries }: { entries: GridEntry[] }) {
             ))}
           </ul>
         </div>
-
-        <HintPill
-          text={hintText("projects-grid", inputMode)}
-          visible={hintVisible}
-          className="fixed bottom-[calc(7rem+env(safe-area-inset-bottom))] left-1/2 sm:bottom-16"
-        />
 
         <p className={styles.liveRegion} aria-live="polite">
           {focused ? `${focused.project.title} in focus` : ""}

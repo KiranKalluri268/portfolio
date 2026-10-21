@@ -1,0 +1,21 @@
+{
+  "name": "TARS",
+  "greeting": "Hi, I'm TARS. I can tell you about Saikiran's projects, experience and skills, or how to get in touch. What would you like to know?",
+  "self": "TARS: Saikiran's guide to this site. Honesty setting: 100%. I only know what's on these pages, so I won't make anything up. Humor setting: 75%, but I'm keeping it professional.",
+  "thanks": "Anytime. That's what I'm here for.",
+  "unknown": "That's not something I have on file, and I'd rather not guess. Want me to pass the question to Saikiran? You'll get an answer by email.",
+  "suggestions": [
+    "What has Saikiran built?",
+    "Where has Saikiran worked?",
+    "Is Saikiran looking for a job?",
+    "How can I get in touch?"
+  ],
+  "askEmail": "Sure. Which email should Saikiran reply to?",
+  "sent": "Sent. Saikiran will reply by email.",
+  "sendFailed": "That didn't go through. You can try again, or use the contact form at the bottom of the home page.",
+  "declined": "No problem. Ask me something else whenever you like.",
+  "loading": "One moment, I'm still warming up. Try that again in a second.",
+  "badEmail": "That doesn't look like an email address. Could you check it?",
+  "subtitle": "Saikiran's guide to this site",
+  "placeholder": "Ask about Saikiran…"
+}

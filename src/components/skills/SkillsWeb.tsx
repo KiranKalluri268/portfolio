@@ -21,7 +21,7 @@ import {
   type GraphNode,
 } from "./skill-web-layout";
 import { SkillMark } from "./skill-icons";
-import HintPill from "../hints/HintPill";
+import { usePublishHint } from "../hints/HintContext";
 import { useReducedMotion } from "@/hooks/useMediaQuery";
 import { useIdleHint, useInputMode } from "../hints/useIdleHint";
 import { whenUncovered } from "../nav/navigation-cover";
@@ -212,6 +212,10 @@ export default function SkillsWeb({
   const [assembly, setAssembly] = useState<"waiting" | "building" | "done">("waiting");
   const inputMode = useInputMode();
   const webHint = useIdleHint(hasInteracted || assembly !== "done" ? null : "skill-web");
+  // Same hint system as the homepage: it waits until someone has stalled
+  // rather than greeting everyone, and retires once they start dragging.
+  // TARS says it.
+  usePublishHint("skill-web", webHint.visible ? hintText("skill-web", inputMode) : null);
 
   // The directory is a full-screen dialog, and the site header is fixed in the
   // layout, so it paints over the top of it. That put the logo on top of
@@ -757,19 +761,6 @@ export default function SkillsWeb({
         <button type="button" onClick={() => fitWeb()} className="h-10 rounded-full px-3 text-xs font-semibold uppercase tracking-wider hover:bg-white/10" aria-label="Fit entire skill universe" data-tooltip="Fit the whole web on screen">Fit</button>
         <button type="button" onClick={() => showDirectory(true)} className="h-10 rounded-full px-3 text-xs font-semibold uppercase tracking-wider hover:bg-white/10" aria-label="Open accessible skill directory" data-tooltip="See every skill as a list">List</button>
       </div>
-
-      {/* Same hint system as the homepage: it waits until someone has stalled
-          rather than greeting everyone, and retires once they start dragging.
-          Absolute rather than fixed so it sits inside the canvas.
-
-          Clear of the zoom controls, which are 52px tall and sit 16px off the
-          bottom (24px above sm) — the pill used to sit at 20px and the two
-          overlapped, with the controls painting over the middle of the hint. */}
-      <HintPill
-        text={hintText("skill-web", inputMode)}
-        visible={webHint.visible}
-        className="absolute bottom-20 left-1/2 sm:bottom-24"
-      />
 
       {activeNode && activeNode.kind !== "center" && (
         <aside

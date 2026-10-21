@@ -113,6 +113,20 @@ describe("POST /api/contact", () => {
     expect(sentBody.reply_to).toBe(faqPayload.email);
   });
 
+  it("accepts a question passed on by TARS with no name and marks it distinctly", async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 200 }));
+    const payload = { email: "asker@example.com", message: "Does he know Kubernetes?", source: "tars" };
+
+    const response = await POST(makeRequest(payload, "11.11.11.11"));
+
+    expect(response.status).toBe(200);
+    const [, init] = vi.mocked(fetch).mock.calls[0];
+    const sentBody = JSON.parse(init!.body as string);
+    expect(sentBody.subject).toBe("Portfolio question via TARS from asker@example.com");
+    expect(sentBody.text).toContain("Source: TARS");
+    expect(sentBody.text).toContain(payload.message);
+  });
+
   it("rejects an FAQ question with no email", async () => {
     const response = await POST(
       makeRequest({ message: "Do you know DSA?", source: "faq" }, "10.10.10.10"),
