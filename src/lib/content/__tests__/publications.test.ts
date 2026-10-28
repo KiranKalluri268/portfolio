@@ -16,8 +16,6 @@ const valid = {
   venue: "A Journal",
   date: "April 2026",
   url: "https://example.com/paper",
-  showInResume: false,
-  showInResumeAi: true,
 };
 
 describe("getAllPublications", () => {
@@ -56,10 +54,8 @@ describe("validatePublication", () => {
     );
   });
 
-  it("rejects missing visibility flags", () => {
-    expect(() => validatePublication({ ...valid, showInResumeAi: undefined }, "test.json")).toThrow(
-      /visibility/,
-    );
+  it("rejects a publication without a link", () => {
+    expect(() => validatePublication({ ...valid, url: undefined }, "test.json")).toThrow(/url/);
   });
 });
 

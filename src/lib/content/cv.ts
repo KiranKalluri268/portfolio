@@ -160,7 +160,6 @@ export function getCvData(): CvData {
     projects: projects
       .filter((project) => !employmentProjects.has(project.slug))
       .map((project) => toCvProject(project, skillsBySlug)),
-    // The CV lists everything, so the résumé flags don't apply here.
     publications: getAllPublications().map((publication) => ({
       slug: publication.slug,
       title: publication.title,

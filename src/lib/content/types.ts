@@ -277,8 +277,6 @@ export interface PublicationContent {
   url: string;
   /** Slug of the project the paper is the research behind. */
   relatedProject?: string;
-  showInResume: boolean;
-  showInResumeAi: boolean;
 }
 
 export interface CvPublication {

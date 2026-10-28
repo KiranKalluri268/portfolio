@@ -114,7 +114,7 @@ describe("getCvData", () => {
     expect(cv.strengths.length).toBeGreaterThan(0);
   });
 
-  it("lists every publication, whatever its résumé flags", () => {
+  it("lists every publication", () => {
     const cv = getCvData();
     expect(cv.publications.map((publication) => publication.slug)).toEqual(
       getAllPublications().map((publication) => publication.slug),

@@ -18,9 +18,6 @@ export function validatePublication(value: unknown, source: string): Publication
   if (!(value.authors as string[]).includes(value.selfAuthor as string)) {
     throw new Error(`${source}: "selfAuthor" must be one of "authors"`);
   }
-  if (typeof value.showInResume !== "boolean" || typeof value.showInResumeAi !== "boolean") {
-    throw new Error(`${source}: visibility fields must be booleans`);
-  }
 
   return value as unknown as PublicationContent;
 }
