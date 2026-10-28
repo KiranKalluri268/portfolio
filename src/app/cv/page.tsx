@@ -64,7 +64,13 @@ function roleBlocks(role: CvRole): CvBlock[] {
             <span className={styles.entryMeta}>{role.period}</span>
           </div>
           <p className={styles.entrySubtitle}>
-            {role.company}
+            {role.companyUrl ? (
+              <a className={styles.companyLink} href={role.companyUrl} target="_blank" rel="noopener noreferrer">
+                {role.company}
+              </a>
+            ) : (
+              role.company
+            )}
             {role.employmentType && (
               <>
                 {" "}

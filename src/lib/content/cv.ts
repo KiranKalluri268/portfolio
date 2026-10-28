@@ -49,6 +49,7 @@ function toCvRole(
     slug: experience.slug,
     role: experience.role,
     company: experience.company,
+    companyUrl: experience.companyUrl,
     employmentType: experience.employmentType,
     period: formatPeriod(experience),
     location: experience.location,

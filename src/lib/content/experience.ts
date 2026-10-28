@@ -114,6 +114,8 @@ export function validateExperience(value: unknown, source: string): ExperienceCo
     (item, index) => validateRecommendation(item, `${source}.recommendations[${index}]`),
   );
 
+  if (value.companyUrl !== undefined) assertString(value.companyUrl, "companyUrl", source);
+
   if (value.resume !== undefined) {
     assertRecord(value.resume, `${source}.resume`);
     assertStringArray(value.resume.highlights, "highlights", `${source}.resume`);
@@ -190,6 +192,7 @@ export function getResumeInternships(): ResumeInternship[] {
     .map((experience) => ({
       role: experience.resume?.role ?? experience.role,
       company: experience.company,
+      companyUrl: experience.companyUrl,
       period: experience.resumePeriod,
       highlights: experience.resume?.highlights ?? experience.highlights,
     }));

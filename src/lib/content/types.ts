@@ -170,6 +170,7 @@ export interface ExperienceResumeEntry {
 export interface ResumeInternship {
   role: string;
   company: string;
+  companyUrl?: string;
   period: string;
   highlights: string[];
 }
@@ -195,6 +196,7 @@ export interface CvRole {
   slug: string;
   role: string;
   company: string;
+  companyUrl?: string;
   employmentType?: string;
   period: string;
   location?: string;

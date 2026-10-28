@@ -30,6 +30,7 @@ const styles = StyleSheet.create({
   headline: { fontFamily: "Times-Bold", fontSize: 10.5, color: "#444444", marginBottom: 5 },
   contact: { flexDirection: "row", flexWrap: "wrap" },
   contactLink: { color: "#111111", textDecoration: "none" },
+  companyLink: { color: "#333333", textDecoration: "underline" },
   links: { flexDirection: "row", flexWrap: "wrap", gap: 4, marginTop: 2 },
   link: { color: "#0563c1", textDecoration: "underline" },
 
@@ -157,9 +158,8 @@ function MetaLine({ label, value }: { label: string; value: string }) {
 }
 
 function RoleEntry({ role }: { role: CvRole }) {
-  const subtitle = [role.company, role.employmentType, role.location]
-    .filter(Boolean)
-    .join("  |  ");
+  // The company leads the subtitle and links out when it has a page.
+  const rest = [role.employmentType, role.location].filter(Boolean).join("  |  ");
 
   return (
     <View style={styles.entry}>
@@ -169,7 +169,16 @@ function RoleEntry({ role }: { role: CvRole }) {
           <Text style={styles.entryTitle}>{role.role}</Text>
           <Text style={styles.entryMeta}>{role.period}</Text>
         </View>
-        <Text style={styles.entrySubtitle}>{subtitle}</Text>
+        <Text style={styles.entrySubtitle}>
+          {role.companyUrl ? (
+            <Link src={role.companyUrl} style={styles.companyLink}>
+              {role.company}
+            </Link>
+          ) : (
+            role.company
+          )}
+          {rest && `  |  ${rest}`}
+        </Text>
         <Text style={styles.paragraph}>{role.summary}</Text>
       </View>
 
