@@ -28,7 +28,7 @@
     {
       "title": "AWS Cloud curriculum",
       "description": "Completed a three-month virtual internship focused on AWS Cloud technologies, delivered through a collaboration between Eduskills and AWS Academy.",
-      "cvLine": "Completed a three-month AWS Cloud curriculum through AWS Academy.",
+      "showOnCv": false,
       "kind": "research",
       "skills": ["aws"]
     }

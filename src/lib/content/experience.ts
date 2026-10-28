@@ -38,6 +38,10 @@ function validateWorkItem(value: unknown, source: string): ExperienceWorkItem {
   if (value.projectSlug !== undefined) {
     assertString(value.projectSlug, "projectSlug", source);
   }
+  if (value.cvLine !== undefined) assertString(value.cvLine, "cvLine", source);
+  if (value.showOnCv !== undefined && typeof value.showOnCv !== "boolean") {
+    throw new Error(`${source}: "showOnCv" must be a boolean`);
+  }
 
   return {
     ...(value as unknown as ExperienceWorkItem),

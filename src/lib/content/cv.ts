@@ -54,17 +54,19 @@ function toCvRole(
     workMode: experience.workMode,
     summary: experience.summary,
     overview: experience.overview,
-    workItems: experience.workItems.map((item) => ({
-      title: item.title,
-      description: item.description,
-      line: item.cvLine ?? item.description,
-      kind: item.kind,
-      impact: item.impact,
-      technologies: toNames(item.skills, skillsBySlug),
-      projectTitle: item.projectSlug
-        ? projectsBySlug.get(item.projectSlug)?.title
-        : undefined,
-    })),
+    workItems: experience.workItems
+      .filter((item) => item.showOnCv !== false)
+      .map((item) => ({
+        title: item.title,
+        description: item.description,
+        line: item.cvLine ?? item.description,
+        kind: item.kind,
+        impact: item.impact,
+        technologies: toNames(item.skills, skillsBySlug),
+        projectTitle: item.projectSlug
+          ? projectsBySlug.get(item.projectSlug)?.title
+          : undefined,
+      })),
     technologies: toNames(experience.skills, skillsBySlug),
     outcomes: experience.outcomes,
     lessonsLearned: experience.lessonsLearned,

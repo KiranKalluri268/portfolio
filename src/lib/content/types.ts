@@ -102,6 +102,9 @@ export interface ExperienceWorkItem {
   /** One sentence standing in for the description on the CV, where a
    *  paragraph per item is more than a reader will get through. */
   cvLine?: string;
+  /** False leaves the item off the CV, e.g. when it only repeats the role's
+   *  summary. Defaults to shown. */
+  showOnCv?: boolean;
   /** Skill slugs, resolved to real skill pages through the content graph. */
   skills: string[];
   /** Optional slug of a project case study this work item belongs to. */
