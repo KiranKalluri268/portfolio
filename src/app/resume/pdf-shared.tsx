@@ -1,7 +1,8 @@
 "use client";
 
-import { Font, Text } from "@react-pdf/renderer";
+import { Font, Link, Text } from "@react-pdf/renderer";
 import "@/lib/pdf-hyphenation";
+import { absoluteUrl } from "@/lib/site";
 import { splitEmphasis } from "./emphasis";
 
 /** The family both résumé PDFs set their text in: the same CMU Serif subset
@@ -20,19 +21,29 @@ Font.register({
   ],
 });
 
-/** A bullet's text with its `**…**` figures set in bold. */
+/** A bullet's text with its `**…**` figures set in bold and its `[…](…)`
+ *  links live. A PDF is read away from the site, so site paths become
+ *  absolute. */
 export function PdfEmphasised({ text }: { text: string }) {
   return (
     <Text style={{ flex: 1 }}>
-      {splitEmphasis(text).map((run, index) =>
-        run.bold ? (
-          <Text key={index} style={{ fontWeight: 700 }}>
+      {splitEmphasis(text).map((run, index) => {
+        const style = {
+          ...(run.bold ? { fontWeight: 700 } : {}),
+          ...(run.href ? { color: "#000000", textDecoration: "underline" as const } : {}),
+        };
+        return run.href ? (
+          <Link key={index} src={absoluteUrl(run.href)} style={style}>
+            {run.text}
+          </Link>
+        ) : run.bold ? (
+          <Text key={index} style={style}>
             {run.text}
           </Text>
         ) : (
           run.text
-        ),
-      )}
+        );
+      })}
     </Text>
   );
 }
