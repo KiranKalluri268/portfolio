@@ -114,6 +114,16 @@ describe("getCvData", () => {
     expect(cv.strengths.length).toBeGreaterThan(0);
   });
 
+  it("links a work item to its case study only when the project is published", () => {
+    const published = new Set(getAllProjects().map((project) => project.slug));
+    const items = getCvData().roles.flatMap((role) => role.workItems);
+    const linked = items.filter((item) => item.projectHref);
+    expect(linked.length).toBeGreaterThan(0);
+    for (const item of linked) {
+      expect(published).toContain(item.projectHref!.replace("/projects/", ""));
+    }
+  });
+
   it("lists every publication", () => {
     const cv = getCvData();
     expect(cv.publications.map((publication) => publication.slug)).toEqual(

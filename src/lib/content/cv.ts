@@ -68,6 +68,11 @@ function toCvRole(
         projectTitle: item.projectSlug
           ? projectsBySlug.get(item.projectSlug)?.title
           : undefined,
+        // Only published case studies are in the map, so a draft never links.
+        projectHref:
+          item.projectSlug && projectsBySlug.has(item.projectSlug)
+            ? `/projects/${item.projectSlug}`
+            : undefined,
       })),
     technologies: toNames(experience.skills, skillsBySlug),
     outcomes: experience.outcomes,
