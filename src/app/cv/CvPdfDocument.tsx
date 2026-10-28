@@ -165,24 +165,26 @@ function RoleEntry({ role }: { role: CvRole }) {
 
       <Text style={styles.paragraph}>{role.summary}</Text>
 
-      {role.workItems.length > 0 && (
-        <>
-          <Text style={styles.subheading}>WHAT I WORKED ON</Text>
-          {role.workItems.map((item) => (
-            <View style={styles.workItem} key={item.title}>
-              <View style={styles.workItemHeader}>
-                <Text style={styles.workItemTitle}>{item.title}</Text>
-                {item.kind && <Text style={styles.kind}>{item.kind.toUpperCase()}</Text>}
-              </View>
-              <Text style={styles.paragraph}>{item.description}</Text>
-              {item.impact && <MetaLine label="Impact" value={item.impact} />}
-              {item.projectTitle && <MetaLine label="Project" value={item.projectTitle} />}
-              <MetaLine label="Technologies" value={item.technologies.join(" · ")} />
-            </View>
-          ))}
-        </>
+      {/* Matches the web CV: one line per piece of work. */}
+      <View style={styles.list}>
+        {role.workItems.map((item) => (
+          <View style={styles.listItem} key={item.title} wrap={false}>
+            <Text style={styles.bullet}>•</Text>
+            <Text style={styles.listText}>
+              <Text style={styles.bold}>{item.title}:</Text> {item.line}
+            </Text>
+          </View>
+        ))}
+      </View>
+      {role.technologies.length > 0 && (
+        <MetaLine label="Technologies" value={role.technologies.join(" · ")} />
       )}
-
+      {role.outcomes.length > 0 && (
+        <MetaLine
+          label="Outcomes"
+          value={role.outcomes.map((o) => `${o.value} ${o.label}`).join(" · ")}
+        />
+      )}
     </View>
   );
 }
@@ -203,7 +205,7 @@ function ProjectEntry({ project }: { project: CvProject }) {
       </View>
 
       <Text style={styles.paragraph}>{project.summary}</Text>
-      <BulletList items={project.highlights} />
+      <BulletList items={project.highlights.slice(0, 3)} />
 
       {project.outcomes.length > 0 && (
         <MetaLine
