@@ -260,6 +260,27 @@ export interface CvResumeLane {
   strengths: string[];
 }
 
+/** A published paper. Authors are listed in the order the paper prints
+ *  them; selfAuthor is the one of them to set in bold. */
+export interface PublicationContent {
+  slug: string;
+  title: string;
+  authors: string[];
+  selfAuthor: string;
+  venue: string;
+  venueShort?: string;
+  volume?: string;
+  issue?: string;
+  date: string;
+  issn?: string;
+  paperId?: string;
+  url: string;
+  /** Slug of the project the paper is the research behind. */
+  relatedProject?: string;
+  showInResume: boolean;
+  showInResumeAi: boolean;
+}
+
 export interface CvData {
   basics: {
     name: string;
