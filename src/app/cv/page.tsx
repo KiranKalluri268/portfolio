@@ -168,7 +168,7 @@ function publicationBlocks(publication: CvPublication): CvBlock[] {
             </span>
           ))}
           . “
-          <a href={publication.url} target="_blank" rel="noopener noreferrer">
+          <a className={styles.inlineLink} href={publication.url} target="_blank" rel="noopener noreferrer">
             {publication.title}
           </a>
           .” <em>{publication.venue}</em>

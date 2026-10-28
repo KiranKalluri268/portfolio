@@ -263,7 +263,7 @@ function PublicationEntry({ publication }: { publication: CvPublication }) {
           </Text>
         ))}
         . “
-        <Link src={publication.url} style={styles.contactLink}>
+        <Link src={publication.url} style={styles.inlineLink}>
           {publication.title}
         </Link>
         .” {publication.venue}
