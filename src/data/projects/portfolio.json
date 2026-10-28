@@ -12,7 +12,7 @@
     "title": "Portfolio – Content-Driven Case-Study Platform",
     "technologies": "Next.js, TypeScript, Git",
     "highlights": [
-      "Built a CI pipeline gating every change on lint, type checks, unit tests, and a Playwright browser-test suite (**266 tests**) against a production build before it reaches the live site.",
+      "Built a CI pipeline gating every change on lint, type checks, and **300+** unit and Playwright browser tests against a production build before it reaches the live site.",
       "Traced an iPad frame-rate regression to backdrop-filter by measuring it, cutting frame time from **83ms** to **16.7ms**."
     ],
     "order": 2
