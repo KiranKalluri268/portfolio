@@ -39,6 +39,7 @@
     {
       "title": "Product work and UI bug fixes",
       "description": "Started in the existing Aude product — a Next.js frontend with a Node and Express backend using Redis — exploring the codebase and fixing bugs across it, mostly on the UI. This first month built up the familiarity with the product's data flows that the diagnostics work later depended on.",
+      "cvLine": "Fixed bugs across the Next.js and Node/Express product, mostly in the UI, and learned the data flows the diagnostics work later relied on.",
       "kind": "improvement",
       "skills": [
         "next-js",
@@ -51,6 +52,7 @@
     {
       "title": "Internal diagnostics dashboard",
       "description": "After the first month I was given the chance to design and build an internal diagnostics application, which I built as a Next.js monolith. It talks directly to the database, checks whether the main app is generating correct data for every client, and shows the state of all of them in one dashboard. The interface is built for the engineers who debug it: what is not working is visible at a glance, an investigation can be deep-linked and shared as a URL, and a user's-eye view shows the UI as the user sees it next to the API response behind it.",
+      "cvLine": "Designed and built an internal Next.js diagnostics dashboard that checks the main app's data for every client, with shareable deep links and the user's view shown next to the API response behind it.",
       "kind": "feature",
       "projectSlug": "aude-diagnostics",
       "skills": [
@@ -61,6 +63,7 @@
     {
       "title": "Deployment behind the existing single sign-on",
       "description": "Containerised the diagnostics app with Docker and deployed it on AWS, serving it from the same origin as the main application so it reuses the existing single sign-on instead of introducing a second authentication system. Access is further restricted to authorized members of the engineering team.",
+      "cvLine": "Containerised it with Docker and deployed it on AWS behind the main app's existing single sign-on, open only to the engineering team.",
       "kind": "infrastructure",
       "projectSlug": "aude-diagnostics",
       "skills": [
@@ -72,6 +75,7 @@
     {
       "title": "Skeleton loading states",
       "description": "Took part in UX improvement discussions and proposed skeleton loading for the app, which had no loading view. The proposal was approved, I implemented it, and it is now in production.",
+      "cvLine": "Proposed skeleton loading states for an app that had no loading view, then built them; they are now in production.",
       "kind": "improvement",
       "skills": [
         "next-js",

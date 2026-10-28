@@ -99,6 +99,9 @@ export interface ExperienceWorkItem {
   kind?: "feature" | "integration" | "research" | "infrastructure" | "improvement";
   periodLabel?: string;
   impact?: string;
+  /** One sentence standing in for the description on the CV, where a
+   *  paragraph per item is more than a reader will get through. */
+  cvLine?: string;
   /** Skill slugs, resolved to real skill pages through the content graph. */
   skills: string[];
   /** Optional slug of a project case study this work item belongs to. */
@@ -177,6 +180,8 @@ export interface ResumeInternship {
 export interface CvWorkItem {
   title: string;
   description: string;
+  /** What the CV prints: the item's cvLine, or its description if it has none. */
+  line: string;
   kind?: string;
   impact?: string;
   technologies: string[];

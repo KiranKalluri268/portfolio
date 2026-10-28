@@ -38,6 +38,7 @@
     {
       "title": "Digichikitsak — voice-enabled prescriptions and AWS deployment",
       "description": "A MERN web application implementing electronic prescriptions: creating new ones, converting existing records, and storing them securely. I implemented voice input and commands using the ElevenLabs and Bhashini APIs, then containerised it with Docker and deployed the project to AWS ECS — setting up the infrastructure through to CloudWatch alerts — with CI/CD through GitHub Actions.",
+      "cvLine": "Added voice input and commands to a MERN e-prescription app using the ElevenLabs and Bhashini APIs, and deployed it on AWS ECS with Docker, CloudWatch alerts and GitHub Actions CI/CD.",
       "kind": "feature",
       "projectSlug": "digichikitsak",
       "skills": [
@@ -53,6 +54,7 @@
     {
       "title": "Elphie — cloud video and live streaming for dental imaging",
       "description": "Elphie pairs a C++ desktop application, which drives an intraoral camera and runs a caries-detection model, with a web application. I worked inside the C++ application itself to upload the captured video to AWS S3 and publish a live stream through AWS IVS, so a patient's family or dental students can watch an examination as it happens. I also built the web application from scratch as a Next.js monolith to show recordings and carry the live stream, with AWS Cognito authentication and appointment booking — a doctor selects a patient, streams live from the C++ app, and the recording is stored against that patient automatically before the diagnosis is written up. I deployed the web application on AWS Amplify.",
+      "cvLine": "Added S3 video upload and AWS IVS live streaming to a C++ dental imaging application, and built its Next.js web app from scratch with Cognito sign-in and appointment booking, deployed on AWS Amplify.",
       "kind": "infrastructure",
       "projectSlug": "elphie",
       "skills": [
@@ -65,6 +67,7 @@
     {
       "title": "Axion — mobile-driven desktop automation",
       "description": "A Docker-based desktop automation tool in three parts: a MERN cloud relay, a mobile-first Next.js web application, and a Python desktop application. A user types a prompt or speaks into the web app, which creates a task and pushes it to the relay; the desktop app picks it up and executes it. Every step of the run is visible from the phone, and the user can steer the task midway.",
+      "cvLine": "Built a desktop automation tool where a typed or spoken prompt on the phone becomes a task a Python desktop app carries out, with every step visible and steerable from the phone.",
       "kind": "feature",
       "projectSlug": "axion",
       "skills": [

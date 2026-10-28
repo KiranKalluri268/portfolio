@@ -57,6 +57,7 @@ function toCvRole(
     workItems: experience.workItems.map((item) => ({
       title: item.title,
       description: item.description,
+      line: item.cvLine ?? item.description,
       kind: item.kind,
       impact: item.impact,
       technologies: toNames(item.skills, skillsBySlug),
