@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from "@react-pdf/renderer";
+import { Children } from "react";
 import "@/lib/pdf-hyphenation";
 import type { CvData, CvProject, CvPublication, CvRole } from "@/lib/content/types";
 
@@ -115,13 +116,18 @@ const styles = StyleSheet.create({
 });
 
 function PdfSection({ title, children }: { title: string; children: React.ReactNode }) {
+  // The heading must never be the last thing on a page. minPresenceAhead was
+  // meant to ensure that and didn't: EDUCATION ended page 2 with its degree on
+  // page 3. Binding the heading to its first entry in one unbreakable view
+  // does, since react-pdf moves an unbreakable view whole.
+  const [first, ...rest] = Children.toArray(children);
   return (
     <View style={styles.section}>
-      {/* The heading must not be the last thing on a page. */}
-      <Text style={styles.sectionTitle} minPresenceAhead={40}>
-        {title}
-      </Text>
-      {children}
+      <View wrap={false}>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        {first}
+      </View>
+      {rest}
     </View>
   );
 }
@@ -157,13 +163,15 @@ function RoleEntry({ role }: { role: CvRole }) {
 
   return (
     <View style={styles.entry}>
-      <View style={styles.entryHeader} wrap={false}>
-        <Text style={styles.entryTitle}>{role.role}</Text>
-        <Text style={styles.entryMeta}>{role.period}</Text>
+      {/* A role's title is never left at the foot of a page without its summary. */}
+      <View wrap={false}>
+        <View style={styles.entryHeader}>
+          <Text style={styles.entryTitle}>{role.role}</Text>
+          <Text style={styles.entryMeta}>{role.period}</Text>
+        </View>
+        <Text style={styles.entrySubtitle}>{subtitle}</Text>
+        <Text style={styles.paragraph}>{role.summary}</Text>
       </View>
-      <Text style={styles.entrySubtitle}>{subtitle}</Text>
-
-      <Text style={styles.paragraph}>{role.summary}</Text>
 
       {/* Matches the web CV: one line per piece of work. */}
       <View style={styles.list}>
@@ -199,12 +207,14 @@ function ProjectEntry({ project }: { project: CvProject }) {
 
   return (
     <View style={styles.entry}>
-      <View style={styles.entryHeader} wrap={false}>
-        <Text style={styles.entryTitle}>{project.title}</Text>
-        <Text style={styles.entryMeta}>{project.role}</Text>
+      {/* Likewise a project's title and its summary. */}
+      <View wrap={false}>
+        <View style={styles.entryHeader}>
+          <Text style={styles.entryTitle}>{project.title}</Text>
+          <Text style={styles.entryMeta}>{project.role}</Text>
+        </View>
+        <Text style={styles.paragraph}>{project.summary}</Text>
       </View>
-
-      <Text style={styles.paragraph}>{project.summary}</Text>
       <BulletList items={project.highlights.slice(0, 3)} />
 
       {project.outcomes.length > 0 && (
@@ -311,11 +321,14 @@ export default function CvPdfDocument({ cv }: { cv: CvData }) {
         </PdfSection>
 
         <PdfSection title="EDUCATION">
-          <Text style={styles.bold}>{cv.education.degree}</Text>
-          <Text>
-            {cv.education.institution} | {cv.education.period} | CGPA:{" "}
-            {cv.education.cgpa}
-          </Text>
+          {/* One entry, so the heading keeps both lines with it. */}
+          <View>
+            <Text style={styles.bold}>{cv.education.degree}</Text>
+            <Text>
+              {cv.education.institution} | {cv.education.period} | CGPA:{" "}
+              {cv.education.cgpa}
+            </Text>
+          </View>
         </PdfSection>
 
         <PdfSection title="CERTIFICATIONS">
