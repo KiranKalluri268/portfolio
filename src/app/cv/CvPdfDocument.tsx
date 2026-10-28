@@ -231,7 +231,11 @@ function ProjectEntry({ project }: { project: CvProject }) {
       {/* Likewise a project's title and its summary. */}
       <View wrap={false}>
         <View style={styles.entryHeader}>
-          <Text style={styles.entryTitle}>{project.title}</Text>
+          <Text style={styles.entryTitle}>
+            <Link src={absoluteUrl(`/projects/${project.slug}`)} style={styles.inlineLink}>
+              {project.title}
+            </Link>
+          </Text>
           <Text style={styles.entryMeta}>{project.role}</Text>
         </View>
         <Text style={styles.paragraph}>{project.summary}</Text>

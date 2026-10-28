@@ -135,13 +135,10 @@ export default function ResumeSheet({
           <div className={styles.entry} key={project.slug}>
             <p className={styles.entryRow}>
               <span>
-                {project.liveUrl ? (
-                  <a href={project.liveUrl} target="_blank" rel="noopener noreferrer" className={styles.projectLink}>
-                    {project.name}
-                  </a>
-                ) : (
-                  project.name
-                )}{" "}
+                {/* Every résumé project is published, so each has a case study. */}
+                <Link href={`/projects/${project.slug}`} className={styles.projectLink}>
+                  {project.name}
+                </Link>{" "}
                 <span className={styles.technologies}>({project.technologies})</span>
               </span>
             </p>

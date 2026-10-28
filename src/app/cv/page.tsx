@@ -190,7 +190,11 @@ function projectBlocks(project: CvProject): CvBlock[] {
       node: (
         <article className={styles.entry}>
           <div className={styles.entryHeader}>
-            <h3 className={styles.entryTitle}>{project.title}</h3>
+            <h3 className={styles.entryTitle}>
+              <Link className={styles.inlineLink} href={`/projects/${project.slug}`}>
+                {project.title}
+              </Link>
+            </h3>
             <span className={styles.entryMeta}>{project.role}</span>
           </div>
 
