@@ -281,6 +281,18 @@ export interface PublicationContent {
   showInResumeAi: boolean;
 }
 
+export interface CvPublication {
+  slug: string;
+  title: string;
+  authors: string[];
+  selfAuthor: string;
+  venue: string;
+  /** "Vol. 4, Issue 4", or empty when the paper has neither. */
+  volumeIssue: string;
+  date: string;
+  url: string;
+}
+
 export interface CvData {
   basics: {
     name: string;
@@ -292,6 +304,7 @@ export interface CvData {
   profile: string;
   roles: CvRole[];
   projects: CvProject[];
+  publications: CvPublication[];
   skillGroups: CvSkillGroup[];
   education: {
     degree: string;

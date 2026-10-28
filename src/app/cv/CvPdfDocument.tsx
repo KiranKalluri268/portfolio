@@ -9,7 +9,7 @@ import {
   View,
 } from "@react-pdf/renderer";
 import "@/lib/pdf-hyphenation";
-import type { CvData, CvProject, CvRole } from "@/lib/content/types";
+import type { CvData, CvProject, CvPublication, CvRole } from "@/lib/content/types";
 
 const styles = StyleSheet.create({
   page: {
@@ -219,6 +219,29 @@ function ProjectEntry({ project }: { project: CvProject }) {
   );
 }
 
+/** Matches the web CV's citation: authors with mine in bold, then the title
+ *  linked to the paper, the venue, and the date. */
+function PublicationEntry({ publication }: { publication: CvPublication }) {
+  return (
+    <View style={styles.entry} wrap={false}>
+      <Text>
+        {publication.authors.map((author, index) => (
+          <Text key={author}>
+            {index > 0 && ", "}
+            {author === publication.selfAuthor ? <Text style={styles.bold}>{author}</Text> : author}
+          </Text>
+        ))}
+        . “
+        <Link src={publication.url} style={styles.contactLink}>
+          {publication.title}
+        </Link>
+        .” {publication.venue}
+        {publication.volumeIssue && `, ${publication.volumeIssue}`}, {publication.date}.
+      </Text>
+    </View>
+  );
+}
+
 export default function CvPdfDocument({ cv }: { cv: CvData }) {
   const phoneUrl = `tel:${cv.basics.phone.replace(/[^+\d]/g, "")}`;
 
@@ -269,6 +292,14 @@ export default function CvPdfDocument({ cv }: { cv: CvData }) {
             <ProjectEntry key={project.slug} project={project} />
           ))}
         </PdfSection>
+
+        {cv.publications.length > 0 && (
+          <PdfSection title="PUBLICATIONS">
+            {cv.publications.map((publication) => (
+              <PublicationEntry key={publication.slug} publication={publication} />
+            ))}
+          </PdfSection>
+        )}
 
         <PdfSection title="TECHNICAL SKILLS">
           {cv.skillGroups.map((group) => (

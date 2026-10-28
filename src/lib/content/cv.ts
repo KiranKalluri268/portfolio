@@ -4,6 +4,7 @@ import resume from "@/data/resume.json";
 import resumeAi from "@/data/resume-ai.json";
 import { getAllExperiences } from "./experience";
 import { getAllProjects } from "./projects";
+import { formatVolumeIssue, getAllPublications } from "./publications";
 import { getAllSkillCategories, getAllSkills } from "./skills";
 import type {
   CvData,
@@ -159,6 +160,19 @@ export function getCvData(): CvData {
     projects: projects
       .filter((project) => !employmentProjects.has(project.slug))
       .map((project) => toCvProject(project, skillsBySlug)),
+    // The CV lists everything, so the résumé flags don't apply here.
+    publications: getAllPublications().map((publication) => ({
+      slug: publication.slug,
+      title: publication.title,
+      authors: publication.authors,
+      selfAuthor: publication.selfAuthor,
+      venue: publication.venueShort
+        ? `${publication.venue} (${publication.venueShort})`
+        : publication.venue,
+      volumeIssue: formatVolumeIssue(publication),
+      date: publication.date,
+      url: publication.url,
+    })),
     skillGroups: buildSkillGroups(skills),
     education: resume.education,
     certifications: resume.certifications,

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import BackNavigationButton from "@/components/BackNavigationButton";
 import { getCvData } from "@/lib/content/cv";
-import type { CvProject, CvRole, CvSkillGroup } from "@/lib/content/types";
+import type { CvProject, CvPublication, CvRole, CvSkillGroup } from "@/lib/content/types";
 import PaperViewport from "@/components/PaperViewport";
 import PaperReveal from "@/components/PaperReveal";
 import CvPages, { type CvBlock } from "./CvPages";
@@ -137,6 +137,32 @@ function skillGroupBlocks(group: CvSkillGroup): CvBlock[] {
   ];
 }
 
+/** One citation: the authors as the paper prints them with mine in bold,
+ *  then the title, where and when it appeared. */
+function publicationBlocks(publication: CvPublication): CvBlock[] {
+  return [
+    {
+      id: `publication-${publication.slug}`,
+      node: (
+        <p className={styles.paragraph}>
+          {publication.authors.map((author, index) => (
+            <span key={author}>
+              {index > 0 && ", "}
+              {author === publication.selfAuthor ? <strong>{author}</strong> : author}
+            </span>
+          ))}
+          . “
+          <a href={publication.url} target="_blank" rel="noopener noreferrer">
+            {publication.title}
+          </a>
+          .” <em>{publication.venue}</em>
+          {publication.volumeIssue && `, ${publication.volumeIssue}`}, {publication.date}.
+        </p>
+      ),
+    },
+  ];
+}
+
 /** At most this many highlights per project; the rest are on its page. */
 const PROJECT_HIGHLIGHTS = 3;
 
@@ -257,6 +283,7 @@ export default function CvPage() {
     ]),
     ...sectionBlocks("Experience", cv.roles.map(roleBlocks)),
     ...sectionBlocks("Projects", cv.projects.map(projectBlocks)),
+    ...sectionBlocks("Publications", cv.publications.map(publicationBlocks)),
     ...sectionBlocks("Technical Skills", cv.skillGroups.map(skillGroupBlocks)),
     ...sectionBlocks("Education", [
       [
