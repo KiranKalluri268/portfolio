@@ -63,7 +63,7 @@
     {
       "title": "Deployment behind the existing single sign-on",
       "description": "Containerised the diagnostics app with Docker and deployed it on AWS, serving it from the same origin as the main application so it reuses the existing single sign-on instead of introducing a second authentication system. Access is further restricted to authorized members of the engineering team.",
-      "cvLine": "Containerised it with Docker and deployed it on AWS behind the main app's existing single sign-on, open only to the engineering team.",
+      "cvLine": "Containerised and deployed it on AWS, open only to the engineering team.",
       "kind": "infrastructure",
       "projectSlug": "aude-diagnostics",
       "skills": [
