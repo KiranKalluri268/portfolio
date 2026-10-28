@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import ProjectDetail from "@/components/content/ProjectDetail";
 import { getAllProjects, getProjectBySlug } from "@/lib/content/projects";
 import { getSkillsForProject } from "@/lib/content/relationships";
+import { getPublicationsForProject } from "@/lib/content/publications";
 
 interface ProjectPageProps {
   params: Promise<{ slug: string }>;
@@ -41,5 +42,11 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   const { slug } = await params;
   const project = getProjectBySlug(slug);
   if (!project) notFound();
-  return <ProjectDetail project={project} skills={getSkillsForProject(project)} />;
+  return (
+    <ProjectDetail
+      project={project}
+      skills={getSkillsForProject(project)}
+      publications={getPublicationsForProject(project.slug)}
+    />
+  );
 }
