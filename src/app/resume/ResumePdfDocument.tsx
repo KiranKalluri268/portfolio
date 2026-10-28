@@ -143,7 +143,13 @@ export default function ResumePdfDocument({
           {internships.map((internship) => (
             <View style={styles.entry} key={`${internship.company}-${internship.role}`}>
               <View style={styles.row}>
-                <Text>{internship.company}</Text>
+                {internship.companyUrl ? (
+                  <Link src={internship.companyUrl} style={styles.link}>
+                    {internship.company}
+                  </Link>
+                ) : (
+                  <Text>{internship.company}</Text>
+                )}
                 <Text>{internship.period}</Text>
               </View>
               <View style={styles.subRow}>

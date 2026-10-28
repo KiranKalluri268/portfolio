@@ -5,7 +5,7 @@ import { getProjectGalleryImages } from "@/lib/content/projects";
 import { getProjectActionLinks } from "@/lib/content/project-links";
 import ProjectThumbnail from "./ProjectThumbnail";
 import SkillLink from "./SkillLink";
-import type { ProjectContent, SkillContent } from "@/lib/content/types";
+import type { ProjectContent, PublicationContent, SkillContent } from "@/lib/content/types";
 
 function TextList({ items }: { items: string[] }) {
   if (items.length === 0) return null;
@@ -39,9 +39,11 @@ function Section({
 export default function ProjectDetail({
   project,
   skills,
+  publications = [],
 }: {
   project: ProjectContent;
   skills: SkillContent[];
+  publications?: PublicationContent[];
 }) {
   const galleryImages = getProjectGalleryImages(project);
   const actionLinks = getProjectActionLinks(project);
@@ -93,6 +95,21 @@ export default function ProjectDetail({
               </button>
             )}
           </div>
+          {publications.map((publication) => (
+            <p key={publication.slug} className="mt-5 text-sm leading-relaxed text-gray-400">
+              The research behind this was published in{" "}
+              <a
+                href={publication.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="whitespace-nowrap text-accent-tint underline decoration-accent-soft/50 underline-offset-4 hover:decoration-accent-tint"
+              >
+                {publication.venueShort ?? publication.venue}, {publication.date}
+                <span aria-hidden="true"> ↗</span>
+              </a>
+              .
+            </p>
+          ))}
         </header>
 
         <div className="relative aspect-[16/9] overflow-hidden rounded-3xl border border-white/10 bg-black/60 shadow-2xl">

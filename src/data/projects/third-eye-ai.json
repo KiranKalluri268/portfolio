@@ -20,7 +20,7 @@
   "resumeAi": {
     "technologies": "MERN, TensorFlow.js, WebRTC, Python",
     "highlights": [
-      "Engineered a hybrid ensemble bagging model (1D CNN and 1D ResNet) trained on the DAiSEE dataset to achieve 94.25% accuracy in detecting student engagement.",
+      "Engineered a hybrid ensemble bagging model (1D CNN and 1D ResNet) trained on the DAiSEE dataset to achieve 94.25% accuracy in detecting student engagement; published in IJNTI (Vol. 4, Issue 4, April 2026).",
       "Implemented client-side inference using TensorFlow.js, enabling infinite horizontal scaling and ensuring user privacy by processing video streams locally within the browser.",
       "Built the full WebRTC meeting engine the model runs inside — a real-time video platform for online classes with live engagement visualization for instructors.",
       "Integrated a RAG (Retrieval-Augmented Generation) system to allow instructors to query session data using natural language, providing instant insights into student participation and distractions."

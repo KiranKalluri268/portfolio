@@ -38,6 +38,10 @@ function validateWorkItem(value: unknown, source: string): ExperienceWorkItem {
   if (value.projectSlug !== undefined) {
     assertString(value.projectSlug, "projectSlug", source);
   }
+  if (value.cvLine !== undefined) assertString(value.cvLine, "cvLine", source);
+  if (value.showOnCv !== undefined && typeof value.showOnCv !== "boolean") {
+    throw new Error(`${source}: "showOnCv" must be a boolean`);
+  }
 
   return {
     ...(value as unknown as ExperienceWorkItem),
@@ -109,6 +113,8 @@ export function validateExperience(value: unknown, source: string): ExperienceCo
   const recommendations = ((value.recommendations as unknown[] | undefined) ?? []).map(
     (item, index) => validateRecommendation(item, `${source}.recommendations[${index}]`),
   );
+
+  if (value.companyUrl !== undefined) assertString(value.companyUrl, "companyUrl", source);
 
   if (value.resume !== undefined) {
     assertRecord(value.resume, `${source}.resume`);
@@ -186,6 +192,7 @@ export function getResumeInternships(): ResumeInternship[] {
     .map((experience) => ({
       role: experience.resume?.role ?? experience.role,
       company: experience.company,
+      companyUrl: experience.companyUrl,
       period: experience.resumePeriod,
       highlights: experience.resume?.highlights ?? experience.highlights,
     }));

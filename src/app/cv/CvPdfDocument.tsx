@@ -8,8 +8,9 @@ import {
   Text,
   View,
 } from "@react-pdf/renderer";
+import { Children } from "react";
 import "@/lib/pdf-hyphenation";
-import type { CvData, CvProject, CvRole } from "@/lib/content/types";
+import type { CvData, CvProject, CvPublication, CvRole } from "@/lib/content/types";
 
 const styles = StyleSheet.create({
   page: {
@@ -29,6 +30,7 @@ const styles = StyleSheet.create({
   headline: { fontFamily: "Times-Bold", fontSize: 10.5, color: "#444444", marginBottom: 5 },
   contact: { flexDirection: "row", flexWrap: "wrap" },
   contactLink: { color: "#111111", textDecoration: "none" },
+  companyLink: { color: "#333333", textDecoration: "underline" },
   links: { flexDirection: "row", flexWrap: "wrap", gap: 4, marginTop: 2 },
   link: { color: "#0563c1", textDecoration: "underline" },
 
@@ -115,13 +117,18 @@ const styles = StyleSheet.create({
 });
 
 function PdfSection({ title, children }: { title: string; children: React.ReactNode }) {
+  // The heading must never be the last thing on a page. minPresenceAhead was
+  // meant to ensure that and didn't: EDUCATION ended page 2 with its degree on
+  // page 3. Binding the heading to its first entry in one unbreakable view
+  // does, since react-pdf moves an unbreakable view whole.
+  const [first, ...rest] = Children.toArray(children);
   return (
     <View style={styles.section}>
-      {/* The heading must not be the last thing on a page. */}
-      <Text style={styles.sectionTitle} minPresenceAhead={40}>
-        {title}
-      </Text>
-      {children}
+      <View wrap={false}>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        {first}
+      </View>
+      {rest}
     </View>
   );
 }
@@ -151,38 +158,50 @@ function MetaLine({ label, value }: { label: string; value: string }) {
 }
 
 function RoleEntry({ role }: { role: CvRole }) {
-  const subtitle = [role.company, role.employmentType, role.location]
-    .filter(Boolean)
-    .join("  |  ");
+  // The company leads the subtitle and links out when it has a page.
+  const rest = [role.employmentType, role.location].filter(Boolean).join("  |  ");
 
   return (
     <View style={styles.entry}>
-      <View style={styles.entryHeader} wrap={false}>
-        <Text style={styles.entryTitle}>{role.role}</Text>
-        <Text style={styles.entryMeta}>{role.period}</Text>
+      {/* A role's title is never left at the foot of a page without its summary. */}
+      <View wrap={false}>
+        <View style={styles.entryHeader}>
+          <Text style={styles.entryTitle}>{role.role}</Text>
+          <Text style={styles.entryMeta}>{role.period}</Text>
+        </View>
+        <Text style={styles.entrySubtitle}>
+          {role.companyUrl ? (
+            <Link src={role.companyUrl} style={styles.companyLink}>
+              {role.company}
+            </Link>
+          ) : (
+            role.company
+          )}
+          {rest && `  |  ${rest}`}
+        </Text>
+        <Text style={styles.paragraph}>{role.summary}</Text>
       </View>
-      <Text style={styles.entrySubtitle}>{subtitle}</Text>
 
-      <Text style={styles.paragraph}>{role.summary}</Text>
-
-      {role.workItems.length > 0 && (
-        <>
-          <Text style={styles.subheading}>WHAT I WORKED ON</Text>
-          {role.workItems.map((item) => (
-            <View style={styles.workItem} key={item.title}>
-              <View style={styles.workItemHeader}>
-                <Text style={styles.workItemTitle}>{item.title}</Text>
-                {item.kind && <Text style={styles.kind}>{item.kind.toUpperCase()}</Text>}
-              </View>
-              <Text style={styles.paragraph}>{item.description}</Text>
-              {item.impact && <MetaLine label="Impact" value={item.impact} />}
-              {item.projectTitle && <MetaLine label="Project" value={item.projectTitle} />}
-              <MetaLine label="Technologies" value={item.technologies.join(" · ")} />
-            </View>
-          ))}
-        </>
+      {/* Matches the web CV: one line per piece of work. */}
+      <View style={styles.list}>
+        {role.workItems.map((item) => (
+          <View style={styles.listItem} key={item.title} wrap={false}>
+            <Text style={styles.bullet}>•</Text>
+            <Text style={styles.listText}>
+              <Text style={styles.bold}>{item.title}:</Text> {item.line}
+            </Text>
+          </View>
+        ))}
+      </View>
+      {role.technologies.length > 0 && (
+        <MetaLine label="Technologies" value={role.technologies.join(" · ")} />
       )}
-
+      {role.outcomes.length > 0 && (
+        <MetaLine
+          label="Outcomes"
+          value={role.outcomes.map((o) => `${o.value} ${o.label}`).join(" · ")}
+        />
+      )}
     </View>
   );
 }
@@ -197,13 +216,15 @@ function ProjectEntry({ project }: { project: CvProject }) {
 
   return (
     <View style={styles.entry}>
-      <View style={styles.entryHeader} wrap={false}>
-        <Text style={styles.entryTitle}>{project.title}</Text>
-        <Text style={styles.entryMeta}>{project.role}</Text>
+      {/* Likewise a project's title and its summary. */}
+      <View wrap={false}>
+        <View style={styles.entryHeader}>
+          <Text style={styles.entryTitle}>{project.title}</Text>
+          <Text style={styles.entryMeta}>{project.role}</Text>
+        </View>
+        <Text style={styles.paragraph}>{project.summary}</Text>
       </View>
-
-      <Text style={styles.paragraph}>{project.summary}</Text>
-      <BulletList items={project.highlights} />
+      <BulletList items={project.highlights.slice(0, 3)} />
 
       {project.outcomes.length > 0 && (
         <MetaLine
@@ -213,6 +234,29 @@ function ProjectEntry({ project }: { project: CvProject }) {
       )}
       <MetaLine label="Technologies" value={project.technologies.join(" · ")} />
       {links && <MetaLine label="Links" value={links} />}
+    </View>
+  );
+}
+
+/** Matches the web CV's citation: authors with mine in bold, then the title
+ *  linked to the paper, the venue, and the date. */
+function PublicationEntry({ publication }: { publication: CvPublication }) {
+  return (
+    <View style={styles.entry} wrap={false}>
+      <Text>
+        {publication.authors.map((author, index) => (
+          <Text key={author}>
+            {index > 0 && ", "}
+            {author === publication.selfAuthor ? <Text style={styles.bold}>{author}</Text> : author}
+          </Text>
+        ))}
+        . “
+        <Link src={publication.url} style={styles.contactLink}>
+          {publication.title}
+        </Link>
+        .” {publication.venue}
+        {publication.volumeIssue && `, ${publication.volumeIssue}`}, {publication.date}.
+      </Text>
     </View>
   );
 }
@@ -268,6 +312,14 @@ export default function CvPdfDocument({ cv }: { cv: CvData }) {
           ))}
         </PdfSection>
 
+        {cv.publications.length > 0 && (
+          <PdfSection title="PUBLICATIONS">
+            {cv.publications.map((publication) => (
+              <PublicationEntry key={publication.slug} publication={publication} />
+            ))}
+          </PdfSection>
+        )}
+
         <PdfSection title="TECHNICAL SKILLS">
           {cv.skillGroups.map((group) => (
             <View style={styles.skillLine} key={group.label}>
@@ -278,11 +330,14 @@ export default function CvPdfDocument({ cv }: { cv: CvData }) {
         </PdfSection>
 
         <PdfSection title="EDUCATION">
-          <Text style={styles.bold}>{cv.education.degree}</Text>
-          <Text>
-            {cv.education.institution} | {cv.education.period} | CGPA:{" "}
-            {cv.education.cgpa}
-          </Text>
+          {/* One entry, so the heading keeps both lines with it. */}
+          <View>
+            <Text style={styles.bold}>{cv.education.degree}</Text>
+            <Text>
+              {cv.education.institution} | {cv.education.period} | CGPA:{" "}
+              {cv.education.cgpa}
+            </Text>
+          </View>
         </PdfSection>
 
         <PdfSection title="CERTIFICATIONS">

@@ -44,55 +44,74 @@ export default function CvPages({ blocks, label }: { blocks: CvBlock[]; label: s
   const sheetRef = useRef<HTMLDivElement>(null);
   const [pages, setPages] = useState<number[][] | null>(null);
 
+  // Measuring only means anything on the unsplit sheet: once split, each
+  // block's position also carries the footers and gaps of the sheets above it.
   useLayoutEffect(() => {
+    if (pages !== null) return;
     const sheet = sheetRef.current;
     if (!sheet) return;
 
-    const measure = () => {
-      const children = Array.from(sheet.querySelectorAll<HTMLElement>("[data-cv-block]"));
-      if (children.length === 0) return;
-      const usable = mmToPx(PAGE_MM) - mmToPx(PADDING_MM) * 2 - mmToPx(FOOTER_MM);
+    const children = Array.from(sheet.querySelectorAll<HTMLElement>("[data-cv-block]"));
+    if (children.length === 0) return;
+    const usable = mmToPx(PAGE_MM) - mmToPx(PADDING_MM) * 2 - mmToPx(FOOTER_MM);
 
-      const next: number[][] = [];
-      let current: number[] = [];
-      let pageTop = children[0].offsetTop;
+    const next: number[][] = [];
+    let current: number[] = [];
+    let pageTop = children[0].offsetTop;
 
-      children.forEach((child, index) => {
-        const bottom = child.offsetTop + child.offsetHeight;
-        if (current.length > 0 && bottom - pageTop > usable) {
-          // Carry a trailing heading down with the block it introduces.
-          const held: number[] = [];
-          while (current.length > 0 && blocks[current[current.length - 1]]?.keepWithNext) {
-            held.unshift(current.pop() as number);
-          }
-          // A heading held down on its own leaves nothing to finish this page
-          // with — pushing it anyway would render as a blank sheet.
-          if (current.length > 0) next.push(current);
-          current = held;
-          pageTop = children[held[0] ?? index].offsetTop;
+    children.forEach((child, index) => {
+      const bottom = child.offsetTop + child.offsetHeight;
+      if (current.length > 0 && bottom - pageTop > usable) {
+        // Carry a trailing heading down with the block it introduces.
+        const held: number[] = [];
+        while (current.length > 0 && blocks[current[current.length - 1]]?.keepWithNext) {
+          held.unshift(current.pop() as number);
         }
-        current.push(index);
-      });
-      if (current.length > 0) next.push(current);
-      setPages(next);
-    };
+        // A heading held down on its own leaves nothing to finish this page
+        // with — pushing it anyway would render as a blank sheet.
+        if (current.length > 0) next.push(current);
+        current = held;
+        pageTop = children[held[0] ?? index].offsetTop;
+      }
+      current.push(index);
+    });
+    if (current.length > 0) next.push(current);
+    setPages(next);
+  }, [blocks, pages]);
 
-    measure();
-    // Web fonts change how tall everything is, so the split is re-measured once
-    // they land rather than being left wrong.
-    document.fonts?.ready.then(measure).catch(() => {});
+  // Web fonts change how tall everything is, so if they were still loading
+  // when the split was made, go back to the single sheet and split it again.
+  // That happens inside one layout pass, so the single sheet is never painted.
+  useLayoutEffect(() => {
+    const fonts = document.fonts;
+    if (!fonts || fonts.status === "loaded") return;
+    let cancelled = false;
+    fonts.ready.then(() => !cancelled && setPages(null)).catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, [blocks]);
 
   // Before measuring: one sheet holding everything, which is also what the
   // server renders and what a reader without JavaScript keeps.
   if (pages === null) {
     return (
-      <article ref={sheetRef} className={styles.paper} aria-label={label}>
-        {blocks.map((block, index) => (
-          <div data-cv-block key={block.id} {...revealProps(REVEAL_LEAD_IN_MS + index * CV_STEP_MS)}>
-            {block.node}
-          </div>
-        ))}
+      <article className={styles.paper} aria-label={label}>
+        {/* The same wrapper the split sheets use. Directly inside .paper the
+            blocks would be flex items, whose margins never collapse, so every
+            gap measured here would be taller than it renders once split and
+            each sheet would break early. */}
+        <div ref={sheetRef} className={styles.pageBody}>
+          {blocks.map((block, index) => (
+            <div
+              data-cv-block
+              key={block.id}
+              {...revealProps(REVEAL_LEAD_IN_MS + index * CV_STEP_MS)}
+            >
+              {block.node}
+            </div>
+          ))}
+        </div>
       </article>
     );
   }

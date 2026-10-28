@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import BackNavigationButton from "@/components/BackNavigationButton";
 import { getCvData } from "@/lib/content/cv";
-import type { CvProject, CvRole, CvSkillGroup } from "@/lib/content/types";
+import type { CvProject, CvPublication, CvRole, CvSkillGroup } from "@/lib/content/types";
 import PaperViewport from "@/components/PaperViewport";
 import PaperReveal from "@/components/PaperReveal";
 import CvPages, { type CvBlock } from "./CvPages";
@@ -12,12 +12,12 @@ import styles from "./cv.module.css";
 export const metadata: Metadata = {
   title: "CV",
   description:
-    "The full curriculum vitae of software engineer Saikiran Kalluri: every role, the work shipped in each, project case studies, and technical skills.",
+    "The full curriculum vitae of software engineer Saikiran Kalluri: every role, the work shipped in each, projects, and technical skills.",
   alternates: { canonical: "/cv" },
   openGraph: {
     title: "CV | Saikiran Kalluri",
     description:
-      "A detailed, multi-page curriculum vitae covering experience, work shipped, projects, and skills.",
+      "Curriculum vitae covering experience, work shipped, projects, and skills.",
     url: "/cv",
   },
 };
@@ -64,7 +64,13 @@ function roleBlocks(role: CvRole): CvBlock[] {
             <span className={styles.entryMeta}>{role.period}</span>
           </div>
           <p className={styles.entrySubtitle}>
-            {role.company}
+            {role.companyUrl ? (
+              <a className={styles.companyLink} href={role.companyUrl} target="_blank" rel="noopener noreferrer">
+                {role.company}
+              </a>
+            ) : (
+              role.company
+            )}
             {role.employmentType && (
               <>
                 {" "}
@@ -81,49 +87,30 @@ function roleBlocks(role: CvRole): CvBlock[] {
           </p>
 
           <p className={`${styles.paragraph} ${styles.summary}`}>{role.summary}</p>
-
-          {role.overview.map((paragraph) => (
-            <p className={styles.paragraph} key={paragraph}>
-              {paragraph}
-            </p>
-          ))}
         </article>
       ),
     },
   ];
 
-  if (role.workItems.length > 0) {
+  // The CV is skimmed, not read: one line per piece of work. The full
+  // write-up of each lives on the role's own page.
+  role.workItems.forEach((item, index) => {
     blocks.push({
-      id: `role-${role.slug}-work-heading`,
-      keepWithNext: true,
-      node: <h4 className={styles.subheading}>What I worked on</h4>,
+      id: `role-${role.slug}-work-${index}`,
+      node: (
+        <ul className={styles.list}>
+          <li>
+            <strong>{item.title}:</strong> {item.line}
+          </li>
+        </ul>
+      ),
     });
-    role.workItems.forEach((item, index) => {
-      blocks.push({
-        id: `role-${role.slug}-work-${index}`,
-        node: (
-          <div className={styles.workItem}>
-            <p className={styles.workItemTitle}>
-              {item.title}
-              {item.kind && <span className={styles.kind}>{item.kind}</span>}
-            </p>
-            <p className={styles.workItemBody}>{item.description}</p>
-            {item.impact && (
-              <p className={styles.impact}>
-                <strong>Impact:</strong> {item.impact}
-              </p>
-            )}
-            {item.projectTitle && (
-              <p className={styles.techLine}>
-                <span className={styles.techLabel}>Project:</span> {item.projectTitle}
-              </p>
-            )}
-            <TechLine label="Technologies" items={item.technologies} />
-          </div>
-        ),
-      });
-    });
-  }
+  });
+
+  blocks.push({
+    id: `role-${role.slug}-tech`,
+    node: <TechLine label="Technologies" items={role.technologies} />,
+  });
 
   if (role.outcomes.length > 0) {
     blocks.push({
@@ -137,75 +124,54 @@ function roleBlocks(role: CvRole): CvBlock[] {
     });
   }
 
-  if (role.lessonsLearned.length > 0) {
-    blocks.push({
-      id: `role-${role.slug}-lessons`,
-      node: (
-        <>
-          <h4 className={styles.subheading}>Lessons learned</h4>
-          <ul className={styles.list}>
-            {role.lessonsLearned.map((lesson) => (
-              <li key={lesson}>{lesson}</li>
-            ))}
-          </ul>
-        </>
-      ),
-    });
-  }
-
-  role.recommendations.forEach((recommendation, index) => {
-    blocks.push({
-      id: `role-${role.slug}-recommendation-${index}`,
-      node: (
-        <blockquote className={styles.quote}>
-          {recommendation.quote.map((paragraph) => (
-            <p key={paragraph}>{paragraph}</p>
-          ))}
-          <p className={styles.quoteAttribution}>
-            <span className={styles.quoteAuthor}>{recommendation.author}</span>
-            {recommendation.authorTitle && `, ${recommendation.authorTitle}`}
-          </p>
-        </blockquote>
-      ),
-    });
-  });
-
   return blocks;
 }
 
-/** One block per skill, so a long skill group can still hand off remaining
- *  page space to whatever comes next instead of moving as one unit. */
+/** A group is one line of names, as on any CV; what each skill is and how I
+ *  use it is on the skill's own page. */
 function skillGroupBlocks(group: CvSkillGroup): CvBlock[] {
-  const groupId = `skills-${group.label}`;
   return [
     {
-      id: `${groupId}-heading`,
-      keepWithNext: true,
+      id: `skills-${group.label}`,
       node: (
-        <article className={styles.entry}>
-          <h3 className={styles.entryTitle}>{group.label}</h3>
-        </article>
+        <p className={styles.techLine}>
+          <span className={styles.techLabel}>{group.label}:</span>{" "}
+          {group.skills.map((skill) => skill.name).join(", ")}
+        </p>
       ),
     },
-    ...group.skills.map((skill) => ({
-      id: `${groupId}-${skill.name}`,
-      node: (
-        <div className={styles.workItem}>
-          <p className={styles.workItemTitle}>{skill.name}</p>
-          <p className={styles.workItemBody}>{skill.shortDescription}</p>
-          {skill.howIUseIt.length > 0 && (
-            <p className={styles.impact}>
-              <strong>How I use it:</strong> {skill.howIUseIt.join(" ")}
-            </p>
-          )}
-        </div>
-      ),
-    })),
   ];
 }
 
-/** Same reasoning as roleBlocks: one block per process step and challenge
- *  rather than one block for the whole project. */
+/** One citation: the authors as the paper prints them with mine in bold,
+ *  then the title, where and when it appeared. */
+function publicationBlocks(publication: CvPublication): CvBlock[] {
+  return [
+    {
+      id: `publication-${publication.slug}`,
+      node: (
+        <p className={styles.paragraph}>
+          {publication.authors.map((author, index) => (
+            <span key={author}>
+              {index > 0 && ", "}
+              {author === publication.selfAuthor ? <strong>{author}</strong> : author}
+            </span>
+          ))}
+          . “
+          <a href={publication.url} target="_blank" rel="noopener noreferrer">
+            {publication.title}
+          </a>
+          .” <em>{publication.venue}</em>
+          {publication.volumeIssue && `, ${publication.volumeIssue}`}, {publication.date}.
+        </p>
+      ),
+    },
+  ];
+}
+
+/** At most this many highlights per project; the rest are on its page. */
+const PROJECT_HIGHLIGHTS = 3;
+
 function projectBlocks(project: CvProject): CvBlock[] {
   const blocks: CvBlock[] = [
     {
@@ -219,81 +185,17 @@ function projectBlocks(project: CvProject): CvBlock[] {
           </div>
 
           <p className={`${styles.paragraph} ${styles.summary}`}>{project.summary}</p>
-
-          {project.overview.map((paragraph) => (
-            <p className={styles.paragraph} key={paragraph}>
-              {paragraph}
-            </p>
-          ))}
-
-          {project.problem && (
-            <p className={styles.paragraph}>
-              <strong>Problem:</strong> {project.problem}
-            </p>
-          )}
-          {project.solution && (
-            <p className={styles.paragraph}>
-              <strong>Solution:</strong> {project.solution}
-            </p>
-          )}
         </article>
       ),
     },
   ];
-
-  function processSteps(label: string, key: string, items: CvProject["howItWorks"]) {
-    if (items.length === 0) return;
-    blocks.push({
-      id: `project-${project.slug}-${key}-heading`,
-      keepWithNext: true,
-      node: <h4 className={styles.subheading}>{label}</h4>,
-    });
-    items.forEach((item, index) => {
-      blocks.push({
-        id: `project-${project.slug}-${key}-${index}`,
-        node: (
-          <div className={styles.workItem}>
-            <p className={styles.workItemTitle}>{item.title}</p>
-            <p className={styles.workItemBody}>{item.description}</p>
-          </div>
-        ),
-      });
-    });
-  }
-
-  processSteps("How it works", "how-it-works", project.howItWorks);
-  processSteps("How it was built", "building-process", project.buildingProcess);
-
-  if (project.challenges.length > 0) {
-    blocks.push({
-      id: `project-${project.slug}-challenges-heading`,
-      keepWithNext: true,
-      node: <h4 className={styles.subheading}>Challenges</h4>,
-    });
-    project.challenges.forEach((item, index) => {
-      blocks.push({
-        id: `project-${project.slug}-challenge-${index}`,
-        node: (
-          <div className={styles.workItem}>
-            <p className={styles.workItemTitle}>{item.challenge}</p>
-            <p className={styles.workItemBody}>{item.solution}</p>
-            {item.lesson && (
-              <p className={styles.impact}>
-                <strong>Lesson:</strong> {item.lesson}
-              </p>
-            )}
-          </div>
-        ),
-      });
-    });
-  }
 
   if (project.highlights.length > 0) {
     blocks.push({
       id: `project-${project.slug}-highlights`,
       node: (
         <ul className={styles.list}>
-          {project.highlights.map((highlight) => (
+          {project.highlights.slice(0, PROJECT_HIGHLIGHTS).map((highlight) => (
             <li key={highlight}>{highlight}</li>
           ))}
         </ul>
@@ -309,22 +211,6 @@ function projectBlocks(project: CvProject): CvBlock[] {
           <span className={styles.techLabel}>Outcomes:</span>{" "}
           {project.outcomes.map((outcome) => `${outcome.value} ${outcome.label}`).join(" · ")}
         </p>
-      ),
-    });
-  }
-
-  if (project.lessonsLearned.length > 0) {
-    blocks.push({
-      id: `project-${project.slug}-lessons`,
-      node: (
-        <>
-          <h4 className={styles.subheading}>Lessons learned</h4>
-          <ul className={styles.list}>
-            {project.lessonsLearned.map((lesson) => (
-              <li key={lesson}>{lesson}</li>
-            ))}
-          </ul>
-        </>
       ),
     });
   }
@@ -403,6 +289,7 @@ export default function CvPage() {
     ]),
     ...sectionBlocks("Experience", cv.roles.map(roleBlocks)),
     ...sectionBlocks("Projects", cv.projects.map(projectBlocks)),
+    ...sectionBlocks("Publications", cv.publications.map(publicationBlocks)),
     ...sectionBlocks("Technical Skills", cv.skillGroups.map(skillGroupBlocks)),
     ...sectionBlocks("Education", [
       [
@@ -458,8 +345,8 @@ export default function CvPage() {
           <DownloadCvButton cv={cv} />
         </div>
         <p className={styles.cvNote}>
-          This is the long form of the résumé — every role, the work shipped in each, and
-          full project detail. For the one-page version, see the{" "}
+          This is my full CV — every role and project, one line each. The detail behind
+          each one is on its own page. For the one-page version, see my{" "}
           <Link href="/resume">résumé</Link>.
         </p>
       </div>

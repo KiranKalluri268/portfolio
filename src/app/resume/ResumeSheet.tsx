@@ -100,7 +100,18 @@ export default function ResumeSheet({
       <Section title="Experience" order={2}>
         {internships.map((internship) => (
           <div className={styles.entry} key={`${internship.company}-${internship.role}`}>
-            <EntryRow left={internship.company} right={internship.period} />
+            <EntryRow
+              left={
+                internship.companyUrl ? (
+                  <a href={internship.companyUrl} target="_blank" rel="noopener noreferrer">
+                    {internship.company}
+                  </a>
+                ) : (
+                  internship.company
+                )
+              }
+              right={internship.period}
+            />
             <EntryRow left={internship.role} italic />
             <Highlights items={internship.highlights} />
           </div>

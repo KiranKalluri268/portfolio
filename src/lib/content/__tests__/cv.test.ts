@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { getCvData } from "../cv";
 import { getAllExperiences } from "../experience";
 import { getAllProjects } from "../projects";
+import { getAllPublications } from "../publications";
 import { getAllSkills } from "../skills";
 
 describe("getCvData", () => {
@@ -111,5 +112,15 @@ describe("getCvData", () => {
     expect(cv.certifications.length).toBeGreaterThan(0);
     expect(cv.languages.length).toBeGreaterThan(0);
     expect(cv.strengths.length).toBeGreaterThan(0);
+  });
+
+  it("lists every publication", () => {
+    const cv = getCvData();
+    expect(cv.publications.map((publication) => publication.slug)).toEqual(
+      getAllPublications().map((publication) => publication.slug),
+    );
+    for (const publication of cv.publications) {
+      expect(publication.authors).toContain(publication.selfAuthor);
+    }
   });
 });

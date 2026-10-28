@@ -99,6 +99,12 @@ export interface ExperienceWorkItem {
   kind?: "feature" | "integration" | "research" | "infrastructure" | "improvement";
   periodLabel?: string;
   impact?: string;
+  /** One sentence standing in for the description on the CV, where a
+   *  paragraph per item is more than a reader will get through. */
+  cvLine?: string;
+  /** False leaves the item off the CV, e.g. when it only repeats the role's
+   *  summary. Defaults to shown. */
+  showOnCv?: boolean;
   /** Skill slugs, resolved to real skill pages through the content graph. */
   skills: string[];
   /** Optional slug of a project case study this work item belongs to. */
@@ -164,6 +170,7 @@ export interface ExperienceResumeEntry {
 export interface ResumeInternship {
   role: string;
   company: string;
+  companyUrl?: string;
   period: string;
   highlights: string[];
 }
@@ -177,6 +184,8 @@ export interface ResumeInternship {
 export interface CvWorkItem {
   title: string;
   description: string;
+  /** What the CV prints: the item's cvLine, or its description if it has none. */
+  line: string;
   kind?: string;
   impact?: string;
   technologies: string[];
@@ -187,6 +196,7 @@ export interface CvRole {
   slug: string;
   role: string;
   company: string;
+  companyUrl?: string;
   employmentType?: string;
   period: string;
   location?: string;
@@ -252,6 +262,37 @@ export interface CvResumeLane {
   strengths: string[];
 }
 
+/** A published paper. Authors are listed in the order the paper prints
+ *  them; selfAuthor is the one of them to set in bold. */
+export interface PublicationContent {
+  slug: string;
+  title: string;
+  authors: string[];
+  selfAuthor: string;
+  venue: string;
+  venueShort?: string;
+  volume?: string;
+  issue?: string;
+  date: string;
+  issn?: string;
+  paperId?: string;
+  url: string;
+  /** Slug of the project the paper is the research behind. */
+  relatedProject?: string;
+}
+
+export interface CvPublication {
+  slug: string;
+  title: string;
+  authors: string[];
+  selfAuthor: string;
+  venue: string;
+  /** "Vol. 4, Issue 4", or empty when the paper has neither. */
+  volumeIssue: string;
+  date: string;
+  url: string;
+}
+
 export interface CvData {
   basics: {
     name: string;
@@ -263,6 +304,7 @@ export interface CvData {
   profile: string;
   roles: CvRole[];
   projects: CvProject[];
+  publications: CvPublication[];
   skillGroups: CvSkillGroup[];
   education: {
     degree: string;

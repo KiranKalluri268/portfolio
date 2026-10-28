@@ -4,6 +4,7 @@ import resume from "@/data/resume.json";
 import resumeAi from "@/data/resume-ai.json";
 import { getAllExperiences } from "./experience";
 import { getAllProjects } from "./projects";
+import { formatVolumeIssue, getAllPublications } from "./publications";
 import { getAllSkillCategories, getAllSkills } from "./skills";
 import type {
   CvData,
@@ -48,22 +49,26 @@ function toCvRole(
     slug: experience.slug,
     role: experience.role,
     company: experience.company,
+    companyUrl: experience.companyUrl,
     employmentType: experience.employmentType,
     period: formatPeriod(experience),
     location: experience.location,
     workMode: experience.workMode,
     summary: experience.summary,
     overview: experience.overview,
-    workItems: experience.workItems.map((item) => ({
-      title: item.title,
-      description: item.description,
-      kind: item.kind,
-      impact: item.impact,
-      technologies: toNames(item.skills, skillsBySlug),
-      projectTitle: item.projectSlug
-        ? projectsBySlug.get(item.projectSlug)?.title
-        : undefined,
-    })),
+    workItems: experience.workItems
+      .filter((item) => item.showOnCv !== false)
+      .map((item) => ({
+        title: item.title,
+        description: item.description,
+        line: item.cvLine ?? item.description,
+        kind: item.kind,
+        impact: item.impact,
+        technologies: toNames(item.skills, skillsBySlug),
+        projectTitle: item.projectSlug
+          ? projectsBySlug.get(item.projectSlug)?.title
+          : undefined,
+      })),
     technologies: toNames(experience.skills, skillsBySlug),
     outcomes: experience.outcomes,
     lessonsLearned: experience.lessonsLearned,
@@ -156,6 +161,18 @@ export function getCvData(): CvData {
     projects: projects
       .filter((project) => !employmentProjects.has(project.slug))
       .map((project) => toCvProject(project, skillsBySlug)),
+    publications: getAllPublications().map((publication) => ({
+      slug: publication.slug,
+      title: publication.title,
+      authors: publication.authors,
+      selfAuthor: publication.selfAuthor,
+      venue: publication.venueShort
+        ? `${publication.venue} (${publication.venueShort})`
+        : publication.venue,
+      volumeIssue: formatVolumeIssue(publication),
+      date: publication.date,
+      url: publication.url,
+    })),
     skillGroups: buildSkillGroups(skills),
     education: resume.education,
     certifications: resume.certifications,

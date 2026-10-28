@@ -144,6 +144,13 @@
   text-underline-offset: 1px;
 }
 
+.companyLink {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 0.5pt;
+  text-underline-offset: 1.5pt;
+}
+
 .contactLink {
   color: inherit;
   text-decoration: none;
