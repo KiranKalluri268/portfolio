@@ -27,8 +27,8 @@
   "resume": {
     "role": "Forward Deployed Engineer Intern",
     "highlights": [
-      "Implemented voice input (ElevenLabs, Bhashini APIs) for prescription creation on a MERN platform ([Digichikitsak](/projects/digichikitsak)), cutting form-filling time by an estimated **3x** versus manual entry; containerized it with Docker and deployed to AWS ECS with CI/CD via GitHub Actions and CloudWatch monitoring.",
-      "Replaced local video storage (previously **~3 minutes** to save and access, depending on file size) with direct-to-cloud capture and live streaming (AWS S3, AWS IVS) inside a production C++ desktop application, cutting footage availability to **under 30 seconds**."
+      "Implemented voice input (ElevenLabs, Bhashini APIs) for prescription creation on a MERN platform ([Digichikitsak](/projects/digichikitsak)), cutting form-filling time by an estimated **3x** versus manual entry, and deployed it with Docker on AWS ECS through GitHub Actions CI/CD.",
+      "Moved a production C++ desktop application's video capture from local storage (**~3 minutes** to save and access) to direct-to-cloud capture and live streaming on AWS S3 and IVS, making footage available in **under 30 seconds**."
     ]
   },
   "overview": [

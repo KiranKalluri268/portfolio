@@ -27,8 +27,8 @@
   ],
   "resume": {
     "highlights": [
-      "Containerized an internal diagnostics application with Docker and deployed it to AWS, open only to the engineering team.",
       "Designed and built a Next.js/React diagnostics dashboard giving engineers real-time, deep-linkable visibility into data-integrity issues across the product.",
+      "Containerized an internal diagnostics application with Docker and deployed it to AWS, open only to the engineering team.",
       "Found that the app gave no feedback between a click and the data arriving, and shipped a skeleton-loading UX improvement to production, improving perceived performance by an estimated **50%**."
     ]
   },
