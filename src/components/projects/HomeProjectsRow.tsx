@@ -808,6 +808,21 @@ export default function HomeProjectsRow({
       resizeObserver.observe(container);
       cleanups.push(() => resizeObserver.disconnect());
 
+      // The card is sized to sit under the scene dots, but the dots can mount
+      // after this row first lays out. Laid out without them, the card rose
+      // to the header and grew ~40px wider, and stayed that way, since nothing
+      // else here changes size when they arrive. Lay out again once they do.
+      const sceneDots = "[aria-label='Scene navigation indicator']";
+      if (!document.querySelector(sceneDots)) {
+        const dotsObserver = new MutationObserver(() => {
+          if (!document.querySelector(sceneDots)) return;
+          dotsObserver.disconnect();
+          ready = resize();
+        });
+        dotsObserver.observe(document.body, { childList: true, subtree: true });
+        cleanups.push(() => dotsObserver.disconnect());
+      }
+
       // A browser only allows a handful of live WebGL contexts, and leaving to
       // a case study and coming back would take a new one each time.
       cleanups.push(() => releaseContext(gl));
