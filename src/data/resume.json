@@ -20,7 +20,7 @@
       }
     ]
   },
-  "objective": "Full-stack engineer working in React, Next.js, TypeScript, Node/Express, and Python, building products end to end, from the interface and APIs through to deployment on AWS with Docker and GitHub Actions CI/CD. Recently built an internal data-integrity diagnostics platform at Aude.ai, and shipped a caregiving platform with WebRTC calling and payments at AarogyalinQ.",
+  "objective": "Full-stack engineer working in React, Next.js, TypeScript, Node/Express, and Python, building products end to end, from the interface and APIs through to deployment on AWS with Docker and GitHub Actions CI/CD. Most recently shipped a caregiving platform with WebRTC calling and payments at AarogyalinQ, and before that built an internal data-integrity diagnostics platform at Aude.ai.",
   "skillGroupOrder": [
     "Languages",
     "Web & Backend",
