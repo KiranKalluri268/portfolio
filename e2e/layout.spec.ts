@@ -123,18 +123,37 @@ test.describe("the Projects heading stays clear of the fixed header", () => {
       expect(heroActionsBox).not.toBeNull();
       expect(heroActionsBox!.y + heroActionsBox!.height).toBeLessThanOrEqual(viewport.height);
 
+      // The row lays itself out asynchronously, after fonts and WebGL are
+      // ready, and only then publishes its card bounds. Under load that lands
+      // late, and the checks below compared the heading with NaN.
+      await expect(page.locator("[data-home-projects-row]")).toHaveAttribute(
+        "data-card-top",
+        /\d/,
+        { timeout: 20_000 },
+      );
+
       // Put the scrubbed timeline just past the heading's first movement. The
       // pin spacer contains the full ScrollTrigger range, so this follows the
       // real browser geometry instead of duplicating the animation's scroll
-      // distance in the test.
-      await page.evaluate(() => {
-        const section = document.querySelector<HTMLElement>("#projects");
-        const spacer = section?.parentElement;
-        if (!section || !spacer) throw new Error("Projects pin was not created");
-        const start = spacer.getBoundingClientRect().top + window.scrollY;
-        const range = spacer.offsetHeight - window.innerHeight;
-        window.scrollTo(0, start + range * 0.18);
-      });
+      // distance in the test. The pin's length is set a frame after the row
+      // lays out, so scroll again until it has stopped changing: aiming at
+      // 18% of the old, shorter pin landed before the heading had moved at
+      // all, and the card was then compared with a heading still at its start.
+      let previousLength = -1;
+      await expect.poll(async () => {
+        const length = await page.evaluate(() => {
+          const section = document.querySelector<HTMLElement>("#projects");
+          const spacer = section?.parentElement;
+          if (!section || !spacer) throw new Error("Projects pin was not created");
+          const start = spacer.getBoundingClientRect().top + window.scrollY;
+          const range = spacer.offsetHeight - window.innerHeight;
+          window.scrollTo(0, start + range * 0.18);
+          return spacer.offsetHeight;
+        });
+        const settled = length === previousLength;
+        previousLength = length;
+        return settled;
+      }, { intervals: [200] }).toBe(true);
 
       const title = page.locator("#projects > h2");
       await expect(title).toBeVisible();
