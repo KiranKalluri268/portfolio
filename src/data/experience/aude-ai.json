@@ -22,7 +22,7 @@
     "Worked across the product — a Next.js frontend with a Node and Express backend using Redis — starting with UI bug fixes before taking on larger work.",
     "Was given ownership of an internal diagnostics application after the first month, and built it as a Next.js monolith that verifies per-client data integrity for the main product.",
     "Designed the dashboard for troubleshooting, with failures visible at a glance, deep-linkable investigations, and a user's-eye UI view paired with its API response.",
-    "Containerised it with Docker and deployed it on AWS so it reuses the main product's existing single sign-on, with access restricted to authorized members of the engineering team.",
+    "Containerised it with Docker and deployed it on AWS, with access restricted to authorized members of the engineering team.",
     "Proposed and shipped skeleton loading states, now in production."
   ],
   "resume": {
@@ -62,8 +62,8 @@
       ]
     },
     {
-      "title": "Deployment behind the existing single sign-on",
-      "description": "Containerised the diagnostics app with Docker and deployed it on AWS, serving it from the same origin as the main application so it reuses the existing single sign-on instead of introducing a second authentication system. Access is further restricted to authorized members of the engineering team.",
+      "title": "Deployment on AWS",
+      "description": "Containerised the diagnostics app with Docker and deployed it on AWS, with access restricted to authorized members of the engineering team.",
       "cvLine": "Deployed it on AWS, open only to the engineering team.",
       "kind": "infrastructure",
       "projectSlug": "aude-diagnostics",
@@ -115,6 +115,6 @@
   ],
   "seo": {
     "title": "Software Engineer Intern at Aude.ai",
-    "description": "Building an internal data-integrity diagnostics dashboard, deploying it behind existing single sign-on on AWS, and shipping UX improvements."
+    "description": "Building an internal data-integrity diagnostics dashboard, deploying it on AWS, and shipping UX improvements."
   }
 }
