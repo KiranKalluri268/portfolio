@@ -27,6 +27,7 @@
   ],
   "resume": {
     "highlights": [
+      "Worked across the product, a Next.js frontend with a Node and Express backend using Redis, fixing UI bugs before being given ownership of the diagnostics app.",
       "Designed and built a Next.js/React diagnostics dashboard giving engineers real-time, deep-linkable visibility into data-integrity issues across the product.",
       "Containerized the diagnostics app with Docker and deployed it to AWS, open only to the engineering team.",
       "Found that the app gave no feedback between a click and the data arriving, and shipped a skeleton-loading UX improvement to production, improving perceived performance by an estimated **50%**."
