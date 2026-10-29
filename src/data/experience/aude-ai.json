@@ -110,7 +110,6 @@
   ],
   "lessonsLearned": [
     "How to design an internal tool around a debugging workflow rather than around the data model.",
-    "That an authentication constraint can often be resolved through deployment topology rather than by adding a second identity system.",
     "That a well-argued UX proposal can go from discussion to production as an intern."
   ],
   "seo": {

@@ -57,14 +57,9 @@
   ],
   "challenges": [
     {
-      "challenge": "Reusing the main product's existing authentication for a second, separately deployed internal application.",
-      "solution": "Deployed the diagnostics app on AWS and served it from the same origin as the main application, so a signed-in engineer carries straight over and is sent to the existing login when they are not.",
-      "lesson": "Deployment topology can answer an authentication constraint that would otherwise call for a whole second identity system."
-    },
-    {
-      "challenge": "The dashboard exposes internal data, so being signed in is not by itself sufficient authorization.",
-      "solution": "Layered an authorization check on top of the session so the app only serves authorized members of the engineering team.",
-      "lesson": "Authentication and authorization are separate problems, and internal tooling needs both."
+      "challenge": "The dashboard exposes internal data, so it had to be open only to the engineering team.",
+      "solution": "Restricted access so the app only serves authorized members of the engineering team.",
+      "lesson": "Internal tooling needs access control as deliberate as the product's own."
     }
   ],
   "features": [
@@ -83,8 +78,7 @@
   "outcomes": [],
   "lessonsLearned": [
     "How to design an interface around a debugging workflow instead of around the data model.",
-    "That deep-linkable state turns an investigation into something a team can share and reproduce.",
-    "How deployment topology can resolve an authentication constraint without adding a second identity system."
+    "That deep-linkable state turns an investigation into something a team can share and reproduce."
   ],
   "gallery": {
     "image-1": null,
