@@ -151,6 +151,9 @@ export interface ExperienceContent {
   /** Résumé-specific wording, for when the one-page résumé needs a different
    *  title or tighter bullets than the timeline card carries. */
   resume?: ExperienceResumeEntry;
+  /** The AI/ML résumé's own wording for the role, when it should differ from
+   *  the full-stack résumé's. Falls back to `resume`, then the timeline. */
+  resumeAi?: ExperienceResumeEntry;
   overview: string[];
   workItems: ExperienceWorkItem[];
   skills: string[];

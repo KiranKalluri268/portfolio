@@ -64,7 +64,7 @@ export interface ResumeAiData {
 
 export function getResumeAiData(): ResumeAiData {
   return {
-    internships: getResumeInternships(),
+    internships: getResumeInternships("ai"),
     projects: getResumeAiProjects(),
     skillGroups: getResumeAiSkillGroups(),
   };

@@ -28,6 +28,15 @@
     "role": "Forward Deployed Engineer Intern",
     "highlights": [
       "Implemented voice input (ElevenLabs, Bhashini APIs) for prescription creation on a MERN platform ([Digichikitsak](/projects/digichikitsak)), cutting form-filling time by an estimated **3x** versus manual entry, and deployed it with Docker on AWS ECS through GitHub Actions CI/CD.",
+      "Moved a production C++ desktop application's video capture from local storage (**~3 minutes** to save and access) to direct-to-cloud capture and live streaming on AWS S3 and IVS, making footage available in **under 30 seconds**.",
+      "Built the companion [Elphie](/projects/elphie) web app from scratch as a Next.js app with AWS Cognito sign-in, appointment booking, and diagnosis entry, deployed on AWS Amplify.",
+      "Built [Axion](/projects/axion), a phone-driven desktop automation system (a Next.js web app, a MERN cloud relay, and a Python desktop agent) that streams each step back to the phone so the user can steer it."
+    ]
+  },
+  "resumeAi": {
+    "role": "Forward Deployed Engineer Intern",
+    "highlights": [
+      "Implemented voice input (ElevenLabs, Bhashini APIs) for prescription creation on a MERN platform ([Digichikitsak](/projects/digichikitsak)), cutting form-filling time by an estimated **3x** versus manual entry, and deployed it with Docker on AWS ECS through GitHub Actions CI/CD.",
       "Moved a production C++ desktop application's video capture from local storage (**~3 minutes** to save and access) to direct-to-cloud capture and live streaming on AWS S3 and IVS, making footage available in **under 30 seconds**."
     ]
   },
