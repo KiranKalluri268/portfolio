@@ -1,7 +1,7 @@
 {
   "basics": {
     "name": "SAIKIRAN KALLURI",
-    "headline": "Full-Stack Software Engineer — Cloud, Storage & DevOps",
+    "headline": "Full-Stack Engineer — Frontend · Backend · AWS Deployment",
     "location": "Hyderabad, Telangana, India",
     "phone": "+91-8897008268",
     "email": "kirankalluri888@gmail.com",
@@ -20,12 +20,12 @@
       }
     ]
   },
-  "objective": "Full-stack engineer working across React/Next.js, Node/Express, and Python, with hands-on experience containerizing applications with Docker, deploying them to AWS, and building CI/CD pipelines with GitHub Actions and automated test suites. Also moved a production C++ desktop client's video capture from local storage straight to cloud storage and live streaming, cutting availability time from minutes to seconds.",
+  "objective": "Full-stack engineer working in React, Next.js, TypeScript, Node/Express, and Python, building products end to end, from the interface and APIs through to deployment on AWS with Docker and GitHub Actions CI/CD. Most recently shipped a caregiving platform with WebRTC calling and payments at AarogyalinQ, and before that built an internal data-integrity diagnostics platform at Aude.ai.",
   "skillGroupOrder": [
-    "Cloud & DevOps",
     "Languages",
     "Web & Backend",
-    "Databases"
+    "Databases",
+    "Cloud & DevOps"
   ],
   "skillExtras": [
     {

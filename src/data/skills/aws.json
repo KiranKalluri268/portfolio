@@ -10,7 +10,7 @@
   "skillsSectionOrder": 21,
   "showInResume": true,
   "resumeGroup": "Cloud & DevOps",
-  "resumeLabel": "AWS (ECS, S3, IVS, Amplify, Cognito, CloudWatch)",
+  "resumeLabel": "AWS (ECS, S3, IVS, Amplify, Cognito)",
   "resumeOrder": 1,
   "showInResumeAi": true,
   "resumeAiGroup": "Cloud & DevOps",

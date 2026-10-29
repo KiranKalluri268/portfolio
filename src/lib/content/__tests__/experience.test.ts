@@ -126,6 +126,17 @@ describe("getResumeInternships", () => {
     });
   });
 
+  it("gives the AI/ML résumé a role's own wording, falling back to the full-stack one", () => {
+    const internships = getResumeInternships("ai");
+    const roles = getAllExperiences().filter((experience) => experience.showInResume);
+    expect(roles.some((experience) => experience.resumeAi)).toBe(true);
+    roles.forEach((experience, index) => {
+      const entry = experience.resumeAi ?? experience.resume;
+      expect(internships[index].role).toBe(entry?.role ?? experience.role);
+      expect(internships[index].highlights).toEqual(entry?.highlights ?? experience.highlights);
+    });
+  });
+
   it("projects each role into the flat shape the résumé and PDF render", () => {
     for (const internship of getResumeInternships()) {
       expect(typeof internship.role).toBe("string");

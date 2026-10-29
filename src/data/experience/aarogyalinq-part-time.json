@@ -23,7 +23,8 @@
   ],
   "resume": {
     "highlights": [
-      "Shipped a Next.js caregiving platform ([HealthyMitra](/projects/healthymitra)) with WebRTC calling, Razorpay payments, and an admin dashboard, containerized with Docker and deployed to AWS ECS via GitHub Actions CI/CD."
+      "Shipped a Next.js caregiving platform ([HealthyMitra](/projects/healthymitra)) with WebRTC calling, Razorpay payments, and an admin dashboard, deployed with Docker on AWS ECS through GitHub Actions CI/CD.",
+      "Designed care circles so caregivers can act for a patient, book appointments and diagnostics, and get instant updates from doctors and labs, with per-post visibility control."
     ]
   },
   "overview": [

@@ -15,7 +15,7 @@
       "Led a four-member team to build and deploy an institutional certificate-management platform, storing structured records in DynamoDB and media through Cloudinary; onboarded **95+** users.",
       "Shipped a working institutional platform, not a prototype: certificate records, cloud-hosted media, and user workflow."
     ],
-    "order": 1
+    "order": 2
   },
   "image": "https://res.cloudinary.com/dytobweya/image/upload/v1790666369/project1.png",
   "imageAlt": "CertiSafe certificate management dashboard",

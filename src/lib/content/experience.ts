@@ -116,12 +116,12 @@ export function validateExperience(value: unknown, source: string): ExperienceCo
 
   if (value.companyUrl !== undefined) assertString(value.companyUrl, "companyUrl", source);
 
-  if (value.resume !== undefined) {
-    assertRecord(value.resume, `${source}.resume`);
-    assertStringArray(value.resume.highlights, "highlights", `${source}.resume`);
-    if (value.resume.role !== undefined) {
-      assertString(value.resume.role, "role", `${source}.resume`);
-    }
+  for (const field of ["resume", "resumeAi"] as const) {
+    const entry = value[field];
+    if (entry === undefined) continue;
+    assertRecord(entry, `${source}.${field}`);
+    assertStringArray(entry.highlights, "highlights", `${source}.${field}`);
+    if (entry.role !== undefined) assertString(entry.role, "role", `${source}.${field}`);
   }
 
   assertRecord(value.seo, `${source}.seo`);
@@ -186,14 +186,17 @@ export function getAllRecommendations(): RecommendationEntry[] {
   );
 }
 
-export function getResumeInternships(): ResumeInternship[] {
+export function getResumeInternships(variant: "fullstack" | "ai" = "fullstack"): ResumeInternship[] {
   return getAllExperiences()
     .filter((experience) => experience.showInResume)
-    .map((experience) => ({
-      role: experience.resume?.role ?? experience.role,
-      company: experience.company,
-      companyUrl: experience.companyUrl,
-      period: experience.resumePeriod,
-      highlights: experience.resume?.highlights ?? experience.highlights,
-    }));
+    .map((experience) => {
+      const entry = (variant === "ai" ? experience.resumeAi : undefined) ?? experience.resume;
+      return {
+        role: entry?.role ?? experience.role,
+        company: experience.company,
+        companyUrl: experience.companyUrl,
+        period: experience.resumePeriod,
+        highlights: entry?.highlights ?? experience.highlights,
+      };
+    });
 }

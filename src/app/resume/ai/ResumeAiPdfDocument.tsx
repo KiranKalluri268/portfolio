@@ -50,7 +50,6 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     fontWeight: 700,
   },
-  paragraph: { fontSize: 10.5, lineHeight: 1.22 },
   entry: { marginBottom: 2.5 },
   row: { flexDirection: "row", justifyContent: "space-between", fontSize: 10.5, fontWeight: 700, lineHeight: 1.22 },
   subRow: { flexDirection: "row", justifyContent: "space-between", fontSize: 9.75, fontStyle: "italic", lineHeight: 1.22 },
@@ -124,10 +123,6 @@ export default function ResumeAiPdfDocument({
           </View>
         </View>
 
-        <PdfSection title="Summary">
-          <Text style={styles.paragraph}>{resume.objective}</Text>
-        </PdfSection>
-
         <PdfSection title="Experience">
           {internships.map((internship) => (
             <View style={styles.entry} key={`${internship.company}-${internship.role}`}>
@@ -184,6 +179,7 @@ export default function ResumeAiPdfDocument({
             {/* A non-breaking space keeps "CGPA:" and its value together. */}
             <Text>CGPA:{" "}{education.cgpa}</Text>
           </View>
+          <Text style={styles.footer}>Certifications: {resume.certifications.join("; ")}</Text>
           <Text style={styles.footer}>
             Languages: {resume.languages.join(", ")} | Strengths: {resume.strengths.join(", ")}
           </Text>

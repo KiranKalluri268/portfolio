@@ -8,9 +8,9 @@
   "iconText": "TW",
   "showInSkillsSection": true,
   "skillsSectionOrder": 7,
-  "showInResume": false,
-  "resumeGroup": "Web/Frameworks",
-  "resumeOrder": 5,
+  "showInResume": true,
+  "resumeGroup": "Web & Backend",
+  "resumeOrder": 7,
   "whatItIs": [
     "Tailwind CSS provides small utility classes for styling directly from component markup."
   ],

@@ -15,7 +15,7 @@
       "Built a CI pipeline gating every change on lint, type checks, and **300+** unit and Playwright browser tests against a production build before it reaches the live site.",
       "Traced an iPad frame-rate regression to backdrop-filter by measuring it, cutting frame time from **83ms** to **16.7ms**."
     ],
-    "order": 2
+    "order": 3
   },
   "image": "https://res.cloudinary.com/dytobweya/image/upload/v1790665080/Screenshot_316.png",
   "imageAlt": "portfolio hero screenshot",
