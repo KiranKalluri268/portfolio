@@ -190,6 +190,8 @@ export interface CvWorkItem {
   impact?: string;
   technologies: string[];
   projectTitle?: string;
+  /** Site path of the item's case study, when it has one. */
+  projectHref?: string;
 }
 
 export interface CvRole {

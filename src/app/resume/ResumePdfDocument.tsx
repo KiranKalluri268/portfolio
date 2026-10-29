@@ -12,6 +12,7 @@ import resume from "@/data/resume.json";
 import type { ResumeInternship } from "@/lib/content/types";
 import type { ResumeProject, ResumeSkillGroup } from "@/lib/content/resume";
 import { plainText } from "./emphasis";
+import { absoluteUrl } from "@/lib/site";
 import { PdfEmphasised, RESUME_PDF_FONT } from "./pdf-shared";
 
 // The Page below leaves react-pdf's default `wrap` behaviour (true) rather
@@ -65,7 +66,7 @@ const styles = StyleSheet.create({
   entry: { marginBottom: 2.5 },
   row: { flexDirection: "row", justifyContent: "space-between", fontSize: 10.5, fontWeight: 700, lineHeight: 1.22 },
   subRow: { flexDirection: "row", justifyContent: "space-between", fontSize: 9.75, fontStyle: "italic", lineHeight: 1.22 },
-  projectLink: { color: "#000000", textDecoration: "none" },
+  projectLink: { color: "#000000", textDecoration: "underline" },
   technologies: { fontSize: 9.75, fontStyle: "italic", fontWeight: 400 },
   list: { marginTop: 1, paddingLeft: 12, fontSize: 9.75, lineHeight: 1.22 },
   listItem: { flexDirection: "row" },
@@ -164,11 +165,9 @@ export default function ResumePdfDocument({
           {projects.map((project) => (
             <View style={styles.entry} key={project.slug}>
               <Text style={styles.row}>
-                {project.liveUrl ? (
-                  <Link src={project.liveUrl} style={styles.projectLink}>{project.name}</Link>
-                ) : (
-                  project.name
-                )}{" "}
+                <Link src={absoluteUrl(`/projects/${project.slug}`)} style={styles.projectLink}>
+                  {project.name}
+                </Link>{" "}
                 <Text style={styles.technologies}>({project.technologies})</Text>
               </Text>
               <BulletList items={project.highlights} />

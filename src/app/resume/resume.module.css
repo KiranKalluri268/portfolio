@@ -207,7 +207,7 @@
 
 .paper .projectLink {
   font-weight: 700;
-  text-decoration: none;
+  /* Underlined by .paper a, like every other link on the sheet. */
 }
 
 .technologies {

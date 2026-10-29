@@ -22,12 +22,12 @@
     "Worked across the product — a Next.js frontend with a Node and Express backend using Redis — starting with UI bug fixes before taking on larger work.",
     "Was given ownership of an internal diagnostics application after the first month, and built it as a Next.js monolith that verifies per-client data integrity for the main product.",
     "Designed the dashboard for troubleshooting, with failures visible at a glance, deep-linkable investigations, and a user's-eye UI view paired with its API response.",
-    "Containerised it with Docker and deployed it on AWS so it reuses the main product's existing single sign-on, with access restricted to authorized members of the engineering team.",
+    "Containerised it with Docker and deployed it on AWS, with access restricted to authorized members of the engineering team.",
     "Proposed and shipped skeleton loading states, now in production."
   ],
   "resume": {
     "highlights": [
-      "Containerized an internal diagnostics application with Docker and deployed it to AWS, serving it from the main app's origin to reuse the existing single sign-on instead of adding a second auth system.",
+      "Containerized an internal diagnostics application with Docker and deployed it to AWS, open only to the engineering team.",
       "Designed and built a Next.js/React diagnostics dashboard giving engineers real-time, deep-linkable visibility into data-integrity issues across the product.",
       "Found that the app gave no feedback between a click and the data arriving, and shipped a skeleton-loading UX improvement to production, improving perceived performance by an estimated **50%**."
     ]
@@ -62,8 +62,8 @@
       ]
     },
     {
-      "title": "Deployment behind the existing single sign-on",
-      "description": "Containerised the diagnostics app with Docker and deployed it on AWS, serving it from the same origin as the main application so it reuses the existing single sign-on instead of introducing a second authentication system. Access is further restricted to authorized members of the engineering team.",
+      "title": "Deployment on AWS",
+      "description": "Containerised the diagnostics app with Docker and deployed it on AWS, with access restricted to authorized members of the engineering team.",
       "cvLine": "Deployed it on AWS, open only to the engineering team.",
       "kind": "infrastructure",
       "projectSlug": "aude-diagnostics",
@@ -110,11 +110,10 @@
   ],
   "lessonsLearned": [
     "How to design an internal tool around a debugging workflow rather than around the data model.",
-    "That an authentication constraint can often be resolved through deployment topology rather than by adding a second identity system.",
     "That a well-argued UX proposal can go from discussion to production as an intern."
   ],
   "seo": {
     "title": "Software Engineer Intern at Aude.ai",
-    "description": "Building an internal data-integrity diagnostics dashboard, deploying it behind existing single sign-on on AWS, and shipping UX improvements."
+    "description": "Building an internal data-integrity diagnostics dashboard, deploying it on AWS, and shipping UX improvements."
   }
 }

@@ -51,20 +51,15 @@
       "description": "Built the dashboard as a separate Next.js monolith talking directly to the database, and shaped the interface around how engineers actually debug: broad status first, then drill-down, then a shareable link."
     },
     {
-      "title": "Deploying behind the existing authentication",
-      "description": "Containerised the app with Docker, deployed it to AWS, and served it from the same origin as the main application so it could reuse the existing single sign-on instead of introducing a second authentication system."
+      "title": "Deploying for the engineering team",
+      "description": "Containerised the app with Docker, deployed it to AWS, with access restricted to authorized members of the engineering team."
     }
   ],
   "challenges": [
     {
-      "challenge": "Reusing the main product's existing authentication for a second, separately deployed internal application.",
-      "solution": "Deployed the diagnostics app on AWS and served it from the same origin as the main application, so a signed-in engineer carries straight over and is sent to the existing login when they are not.",
-      "lesson": "Deployment topology can answer an authentication constraint that would otherwise call for a whole second identity system."
-    },
-    {
-      "challenge": "The dashboard exposes internal data, so being signed in is not by itself sufficient authorization.",
-      "solution": "Layered an authorization check on top of the session so the app only serves authorized members of the engineering team.",
-      "lesson": "Authentication and authorization are separate problems, and internal tooling needs both."
+      "challenge": "The dashboard exposes internal data, so it had to be open only to the engineering team.",
+      "solution": "Restricted access so the app only serves authorized members of the engineering team.",
+      "lesson": "Internal tooling needs access control as deliberate as the product's own."
     }
   ],
   "features": [
@@ -72,19 +67,18 @@
     "Troubleshooting-first dashboard showing failures at a glance",
     "Deep linking so a specific investigation can be shared as a URL",
     "User's-eye UI view paired with the API response behind it",
-    "Access limited to authorized team members on top of the existing single sign-on",
+    "Access limited to authorized members of the engineering team",
     "Containerised with Docker for deployment"
   ],
   "highlights": [
     "Built an internal diagnostics dashboard as a Next.js monolith that verifies per-client data integrity straight from the database.",
     "Designed the interface for engineers: failures visible at a glance, deep-linkable investigations, and a user's-eye view paired with its API response.",
-    "Deployed on AWS so it reuses the main product's existing single sign-on, with access restricted to authorized members of the engineering team."
+    "Deployed on AWS, with access restricted to authorized members of the engineering team."
   ],
   "outcomes": [],
   "lessonsLearned": [
     "How to design an interface around a debugging workflow instead of around the data model.",
-    "That deep-linkable state turns an investigation into something a team can share and reproduce.",
-    "How deployment topology can resolve an authentication constraint without adding a second identity system."
+    "That deep-linkable state turns an investigation into something a team can share and reproduce."
   ],
   "gallery": {
     "image-1": null,
@@ -96,6 +90,6 @@
   "liveUrl": null,
   "seo": {
     "title": "Aude Diagnostics Dashboard Case Study",
-    "description": "An internal data-integrity dashboard with per-client checks, deep-linkable investigations, and reuse of the product's existing single sign-on."
+    "description": "An internal data-integrity dashboard with per-client checks, deep-linkable investigations, and a user's-eye view paired with each API response."
   }
 }

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import type { ResumeInternship, ResumeJson } from "@/lib/content/types";
 import type { ResumeProject, ResumeSkillGroup } from "@/lib/content/resume";
 import { REVEAL_LEAD_IN_MS, RESUME_STEP_MS, revealProps } from "@/components/paper-reveal";
@@ -22,9 +23,20 @@ function Section({ title, order, children }: { title: string; order: number; chi
 }
 
 function Emphasised({ text }: { text: string }) {
-  return splitEmphasis(text).map((run, index) =>
-    run.bold ? <strong key={index}>{run.text}</strong> : run.text,
-  );
+  return splitEmphasis(text).map((run, index) => {
+    const content = run.bold ? <strong key={index}>{run.text}</strong> : run.text;
+    if (!run.href) return content;
+    // A site page opens in place; anything else, like a paper, in a new tab.
+    return run.href.startsWith("/") ? (
+      <Link key={index} href={run.href}>
+        {content}
+      </Link>
+    ) : (
+      <a key={index} href={run.href} target="_blank" rel="noopener noreferrer">
+        {content}
+      </a>
+    );
+  });
 }
 
 function Highlights({ items }: { items: string[] }) {
@@ -123,13 +135,10 @@ export default function ResumeSheet({
           <div className={styles.entry} key={project.slug}>
             <p className={styles.entryRow}>
               <span>
-                {project.liveUrl ? (
-                  <a href={project.liveUrl} target="_blank" rel="noopener noreferrer" className={styles.projectLink}>
-                    {project.name}
-                  </a>
-                ) : (
-                  project.name
-                )}{" "}
+                {/* Every résumé project is published, so each has a case study. */}
+                <Link href={`/projects/${project.slug}`} className={styles.projectLink}>
+                  {project.name}
+                </Link>{" "}
                 <span className={styles.technologies}>({project.technologies})</span>
               </span>
             </p>

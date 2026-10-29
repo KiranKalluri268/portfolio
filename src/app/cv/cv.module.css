@@ -144,7 +144,7 @@
   text-underline-offset: 1px;
 }
 
-.companyLink {
+.inlineLink {
   color: inherit;
   text-decoration: underline;
   text-decoration-thickness: 0.5pt;

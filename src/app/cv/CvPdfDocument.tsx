@@ -10,6 +10,7 @@ import {
 } from "@react-pdf/renderer";
 import { Children } from "react";
 import "@/lib/pdf-hyphenation";
+import { absoluteUrl } from "@/lib/site";
 import type { CvData, CvProject, CvPublication, CvRole } from "@/lib/content/types";
 
 const styles = StyleSheet.create({
@@ -30,7 +31,8 @@ const styles = StyleSheet.create({
   headline: { fontFamily: "Times-Bold", fontSize: 10.5, color: "#444444", marginBottom: 5 },
   contact: { flexDirection: "row", flexWrap: "wrap" },
   contactLink: { color: "#111111", textDecoration: "none" },
-  companyLink: { color: "#333333", textDecoration: "underline" },
+  // Takes the colour of the text around it.
+  inlineLink: { textDecoration: "underline" },
   links: { flexDirection: "row", flexWrap: "wrap", gap: 4, marginTop: 2 },
   link: { color: "#0563c1", textDecoration: "underline" },
 
@@ -171,7 +173,7 @@ function RoleEntry({ role }: { role: CvRole }) {
         </View>
         <Text style={styles.entrySubtitle}>
           {role.companyUrl ? (
-            <Link src={role.companyUrl} style={styles.companyLink}>
+            <Link src={role.companyUrl} style={styles.inlineLink}>
               {role.company}
             </Link>
           ) : (
@@ -188,7 +190,17 @@ function RoleEntry({ role }: { role: CvRole }) {
           <View style={styles.listItem} key={item.title} wrap={false}>
             <Text style={styles.bullet}>•</Text>
             <Text style={styles.listText}>
-              <Text style={styles.bold}>{item.title}:</Text> {item.line}
+              <Text style={styles.bold}>
+                {item.projectHref ? (
+                  <Link src={absoluteUrl(item.projectHref)} style={styles.inlineLink}>
+                    {item.title}
+                  </Link>
+                ) : (
+                  item.title
+                )}
+                :
+              </Text>{" "}
+              {item.line}
             </Text>
           </View>
         ))}
@@ -219,7 +231,11 @@ function ProjectEntry({ project }: { project: CvProject }) {
       {/* Likewise a project's title and its summary. */}
       <View wrap={false}>
         <View style={styles.entryHeader}>
-          <Text style={styles.entryTitle}>{project.title}</Text>
+          <Text style={styles.entryTitle}>
+            <Link src={absoluteUrl(`/projects/${project.slug}`)} style={styles.inlineLink}>
+              {project.title}
+            </Link>
+          </Text>
           <Text style={styles.entryMeta}>{project.role}</Text>
         </View>
         <Text style={styles.paragraph}>{project.summary}</Text>
@@ -251,7 +267,7 @@ function PublicationEntry({ publication }: { publication: CvPublication }) {
           </Text>
         ))}
         . “
-        <Link src={publication.url} style={styles.contactLink}>
+        <Link src={publication.url} style={styles.inlineLink}>
           {publication.title}
         </Link>
         .” {publication.venue}

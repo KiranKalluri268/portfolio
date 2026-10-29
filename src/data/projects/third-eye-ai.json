@@ -12,7 +12,8 @@
     "title": "ThirdEyeAI – Real-Time Engagement Detection Platform",
     "technologies": "React, Node.js, Python, WebRTC",
     "highlights": [
-      "Built a WebRTC meeting platform with privacy-first, client-side engagement inference (TensorFlow.js), trained on a hybrid CNN/ResNet ensemble reaching **94.25%** accuracy."
+      "Built a WebRTC meeting platform with privacy-first, client-side engagement inference (TensorFlow.js), trained on a hybrid CNN/ResNet ensemble reaching **94.25%** accuracy.",
+      "Added instructor engagement views and RAG, so instructors can query participation data in natural language."
     ],
     "order": 3
   },
@@ -20,7 +21,7 @@
   "resumeAi": {
     "technologies": "MERN, TensorFlow.js, WebRTC, Python",
     "highlights": [
-      "Engineered a hybrid ensemble bagging model (1D CNN and 1D ResNet) trained on the DAiSEE dataset to achieve 94.25% accuracy in detecting student engagement; published in IJNTI (Vol. 4, Issue 4, April 2026).",
+      "Engineered a hybrid ensemble bagging model (1D CNN and 1D ResNet) trained on the DAiSEE dataset to achieve 94.25% accuracy in detecting student engagement; published in [IJNTI (Vol. 4, Issue 4, April 2026)](https://rjpn.org/ijnti/viewpaperforall.php?paper=IJNTI2604159).",
       "Implemented client-side inference using TensorFlow.js, enabling infinite horizontal scaling and ensuring user privacy by processing video streams locally within the browser.",
       "Built the full WebRTC meeting engine the model runs inside — a real-time video platform for online classes with live engagement visualization for instructors.",
       "Integrated a RAG (Retrieval-Augmented Generation) system to allow instructors to query session data using natural language, providing instant insights into student participation and distractions."

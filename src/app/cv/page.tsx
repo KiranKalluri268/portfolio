@@ -65,7 +65,7 @@ function roleBlocks(role: CvRole): CvBlock[] {
           </div>
           <p className={styles.entrySubtitle}>
             {role.companyUrl ? (
-              <a className={styles.companyLink} href={role.companyUrl} target="_blank" rel="noopener noreferrer">
+              <a className={styles.inlineLink} href={role.companyUrl} target="_blank" rel="noopener noreferrer">
                 {role.company}
               </a>
             ) : (
@@ -100,7 +100,17 @@ function roleBlocks(role: CvRole): CvBlock[] {
       node: (
         <ul className={styles.list}>
           <li>
-            <strong>{item.title}:</strong> {item.line}
+            <strong>
+              {item.projectHref ? (
+                <Link className={styles.inlineLink} href={item.projectHref}>
+                  {item.title}
+                </Link>
+              ) : (
+                item.title
+              )}
+              :
+            </strong>{" "}
+            {item.line}
           </li>
         </ul>
       ),
@@ -158,7 +168,7 @@ function publicationBlocks(publication: CvPublication): CvBlock[] {
             </span>
           ))}
           . “
-          <a href={publication.url} target="_blank" rel="noopener noreferrer">
+          <a className={styles.inlineLink} href={publication.url} target="_blank" rel="noopener noreferrer">
             {publication.title}
           </a>
           .” <em>{publication.venue}</em>
@@ -180,7 +190,11 @@ function projectBlocks(project: CvProject): CvBlock[] {
       node: (
         <article className={styles.entry}>
           <div className={styles.entryHeader}>
-            <h3 className={styles.entryTitle}>{project.title}</h3>
+            <h3 className={styles.entryTitle}>
+              <Link className={styles.inlineLink} href={`/projects/${project.slug}`}>
+                {project.title}
+              </Link>
+            </h3>
             <span className={styles.entryMeta}>{project.role}</span>
           </div>
 
