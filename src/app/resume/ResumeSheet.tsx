@@ -105,11 +105,7 @@ export default function ResumeSheet({
         </p>
       </header>
 
-      <Section title="Summary" order={1}>
-        <p className={styles.paragraph}>{resume.objective}</p>
-      </Section>
-
-      <Section title="Experience" order={2}>
+      <Section title="Experience" order={1}>
         {internships.map((internship) => (
           <div className={styles.entry} key={`${internship.company}-${internship.role}`}>
             <EntryRow
@@ -130,7 +126,7 @@ export default function ResumeSheet({
         ))}
       </Section>
 
-      <Section title="Projects" order={3}>
+      <Section title="Projects" order={2}>
         {projects.map((project) => (
           <div className={styles.entry} key={project.slug}>
             <p className={styles.entryRow}>
@@ -147,7 +143,7 @@ export default function ResumeSheet({
         ))}
       </Section>
 
-      <Section title="Core Skills" order={4}>
+      <Section title="Core Skills" order={3}>
         <div className={styles.skills}>
           {skillGroups.map((skill) => (
             <p className={styles.skill} key={skill.category}>
@@ -157,7 +153,7 @@ export default function ResumeSheet({
         </div>
       </Section>
 
-      <Section title="Education" order={5}>
+      <Section title="Education" order={4}>
         <div className={styles.entry}>
           <EntryRow left={education.institution} right={education.period} />
           <EntryRow
@@ -166,6 +162,7 @@ export default function ResumeSheet({
             italic
           />
         </div>
+        <p className={styles.footerLine}>Certifications: {resume.certifications.join("; ")}</p>
         <p className={styles.footerLine}>
           Languages: {resume.languages.join(", ")} <span className={styles.separator}>|</span> Strengths:{" "}
           {resume.strengths.join(", ")}
